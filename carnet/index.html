@@ -780,6 +780,24 @@ html.tuto-lock,html.tuto-lock body{overflow:hidden;overscroll-behavior:none}
 .fresh-empty .t{font-size:18px;font-weight:700}.fresh-empty .s{color:var(--fg2);font-size:15px;margin-top:4px}
 .jc-code{text-align:center;letter-spacing:.18em;font-weight:700;text-transform:uppercase;font-size:22px!important}
 .wz-hero .brand-logo{margin:0 auto}
+/* Language: one clean control + a sheet */
+.lang-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;padding:8px 14px;border-radius:999px;background:var(--fill);color:var(--fg);font-size:15px;font-weight:500;transition:transform .12s,background-color .2s}
+.lang-btn:active{transform:scale(.97)}
+.lang-l,.lang-v{display:inline-flex;align-items:center;gap:8px}
+.lang-l svg{color:var(--accent);flex:none}
+.lang-t{display:none}
+.lang-v{color:var(--fg2)}
+.lang-v svg{width:14px;height:14px;transform:rotate(90deg);opacity:.7}
+.row>.lang-btn{width:100%;background:none;padding:0;border-radius:0;min-height:28px}
+.row>.lang-btn .lang-t{display:inline;font-size:16px;font-weight:500;color:var(--fg)}
+.row>.lang-btn .lang-v svg{transform:none}
+.card>.row:has(>.lang-btn){padding-top:14px;padding-bottom:14px}
+.lang-list .row{min-height:58px}
+.lang-code{width:36px;height:36px;border-radius:10px;background:var(--fill);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--fg2);flex:none}
+.lang-list .row[aria-pressed="true"] .lang-code{background:var(--accent);color:#fff}
+.lang-ok{color:var(--accent);display:grid;place-items:center}
+.lang-ok svg{width:20px;height:20px}
+body.wiz-open .scrim{z-index:85}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -1642,7 +1660,15 @@ async function resolveNames(){
   if (!ids.size) return;
   try { const ps = await user.profiles([...ids]); let changed = false; ids.forEach(id => { const n = (ps[id] && ps[id].name) || ""; if (S.names[id] !== n) { S.names[id] = n; changed = true; } }); if (changed) render(true); } catch(e) {}
 }
-const langSeg = () => `<div class="seg" role="group" aria-label="Langue / Language / Jezik" style="max-width:340px;width:100%">${LANGS.map(([k,l]) => `<button class="${LANG===k?"on":""}" data-act="lang" data-v="${k}" aria-pressed="${LANG===k}">${l}</button>`).join("")}</div>`;
+const GLOBE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9M12 3C9.5 5.6 8.2 8.6 8.2 12s1.3 6.4 3.8 9"/></svg>';
+const LANG_SUB = {fr:{fr:"Français", en:"French", hr:"Francuski"}, en:{fr:"Anglais", en:"English", hr:"Engleski"}, hr:{fr:"Croate", en:"Croatian", hr:"Hrvatski"}};
+// a single tidy control: "🌐 Langue … Français ›" in lists, a pill elsewhere; the choice opens a sheet
+const langSeg = () => { const cur = (LANGS.find(x => x[0] === LANG) || LANGS[0])[1];
+  return `<button type="button" class="lang-btn" data-act="langSheet" aria-label="Langue / Language / Jezik : ${esc(cur)}"><span class="lang-l">${GLOBE}<span class="lang-t">${T("Langue")}</span></span><span class="lang-v">${esc(cur)}${I.chevR}</span></button>`; };
+function langSheet(){
+  openSheet(T("Langue"), `<div class="card list lang-list">${LANGS.map(([k, l]) => `<button type="button" class="row" data-act="lang" data-v="${k}" aria-pressed="${LANG === k}"><span class="lang-code">${k.toUpperCase()}</span><div class="main"><div class="t">${l}</div>${LANG_SUB[k][LANG] !== l ? `<div class="s">${esc(LANG_SUB[k][LANG])}</div>` : ""}</div>${LANG === k ? `<span class="lang-ok">${I.tick}</span>` : ""}</button>`).join("")}</div>`, null);
+  const ok = $("#sheet-root .save"); if (ok) ok.style.visibility = "hidden";
+}
 
 /* ---------- views ---------- */
 function viewToday(){
@@ -4318,7 +4344,8 @@ document.addEventListener("click", async e => {
     case "report": reportSheet(); break;
     case "reportCopy": { if (await copyText(gardeReport())) toast(T("Rapport copié")); break; }
     case "reportSend": { const m = meMember(); await put("notes", newId(), {text: gardeReport(), mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString(), kind: "report"}); closeSheet(); toast(T("Rapport envoyé dans les messages de la famille")); break; }
-    case "lang": { LANG = el.dataset.v; try { localStorage.setItem("carnet-lang", LANG); } catch(_){} document.documentElement.lang = LANG; S.pageAnim = {cls:"enter-u", until: Date.now() + 500}; S.lastHTML = ""; S.lastTabs = ""; render();
+    case "langSheet": langSheet(); break;
+    case "lang": { if ($("#sheet-root .scrim")) closeSheet(); LANG = el.dataset.v; try { localStorage.setItem("carnet-lang", LANG); } catch(_){} document.documentElement.lang = LANG; S.pageAnim = {cls:"enter-u", until: Date.now() + 500}; S.lastHTML = ""; S.lastTabs = ""; render();
       if (S.wiz) { const sc = ($("#wiz-root .wz-body") || {}).scrollTop || 0; S.wiz.still = true; if (S.wiz.routine) S.wiz.routine = null; renderWiz(); S.wiz.still = false; const b = $("#wiz-root .wz-body"); if (b) b.scrollTop = sc; }
       if ($("#wiz-root .join")) { S.joinDirty = true; renderJoin(); }
       if (S.tuto != null) renderTuto();
