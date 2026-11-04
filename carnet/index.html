@@ -802,6 +802,10 @@ body.wiz-open .scrim{z-index:85}
 .cc-rings{position:relative;width:72px;height:72px}
 .cc-rings .rings{width:72px;height:72px;display:block}
 .cc-rings .avatar.cc-av{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);font-size:12px;box-shadow:0 0 0 1.5px var(--card)}
+.ql-who{display:inline-flex;align-items:center;gap:4px;color:var(--fg2);font-weight:600;margin-left:2px}
+.notif.live .s{display:flex;align-items:center;gap:6px}
+.live-k{width:18px;height:18px;border-radius:50%;background:var(--c);color:#fff;display:inline-grid;place-items:center;flex:none}
+.live-k svg{width:11px;height:11px}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -1490,6 +1494,9 @@ Object.assign(HR, {"Créer une famille":"Stvori obitelj","Vous créez le carnet 
   "Code reçu":"Primljeni kod","Votre prénom":"Vaše ime","Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.":"Osoba koja vas poziva nalazi kod u Obitelj → Dodaj nekoga.","Entrez le code.":"Unesite kod.","Indiquez votre prénom.":"Upišite svoje ime.","Rejoindre":"Pridruži se",
   "Créons le carnet de votre chien":"Izradimo dnevnik vašeg psa","4 étapes rapides. Tout se modifie ensuite.":"4 brza koraka. Sve se može kasnije promijeniti."});
 
+Object.assign(EN, {"Quelqu'un":"Someone"});
+Object.assign(HR, {"Quelqu'un":"Netko"});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -1562,7 +1569,10 @@ function startDb(){
   const done = (col, snap) => { if (!snap.metadata.fromCache) pending.delete(col); if (pending.size === 0 && !S.ready) { S.ready = true; S.stale = false; clearTimeout(timer); } render(); };
   const onErr = col => e => { pending.delete(col); if (!S.ready && pending.size === 0) { S.ready = true; clearTimeout(timer); } if (e && e.code === "revoked") S.readOnly = true; render(); };
   ["config","routine","meds","weights","appts","members","notes","dogs","train","vax","invites"].forEach(col => db.collection(col).onSnapshot(q => { const m = {}; q.docs.forEach(d => m[d.id] = d.data()); C[col] = m; done(col, q); }, onErr(col)));
-  ["days","ticks","logs"].forEach(col => db.collection(col).where("date", ">=", cutoff).onSnapshot(q => { const m = {}; q.docs.forEach(d => m[d.id] = d.data()); C[col] = m; done(col, q); }, onErr(col)));
+  ["days","ticks","logs"].forEach(col => { let first = true; db.collection(col).where("date", ">=", cutoff).onSnapshot(q => { const m = {}; q.docs.forEach(d => m[d.id] = d.data());
+    // someone else in the family just logged something: say it right away
+    if (col === "logs" && !first) Object.entries(m).forEach(([id, x]) => { if (!C.logs[id] && x && x.date === ymd(new Date()) && !(S.me && x.by === S.me) && !(x.mid && x.mid === ME)) liveLogNotice(x); });
+    first = false; C[col] = m; done(col, q); }, onErr(col)); });
 }
 
 /* ---------- derived ---------- */
@@ -2869,13 +2879,22 @@ function quickLog(){
   const items = log.slice(-6).reverse().map(x => { const q = QL[x.k] || QL.pipi, m = memberOf(x.mid);
     const extra = x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" + (x.pee ? " · " + T("pipi") : "") + (x.poo ? " · " + T("caca") : "") : "";
     if (x.photo) return `<button class="ql-item ph ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="photoView" data-src="${esc(x.photo)}"><img src="${esc(x.photo)}" alt=""><span class="num">${esc(x.at)}</span>${x.note ? esc(x.note.slice(0, 24)) : ""}${m ? mav(m, 18) : ""}</button>`;
-    return `<button class="ql-item ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="qlItem" data-id="${esc(x.id)}" style="--c:${q.c}"><i>${q.i}</i><span class="num">${esc(x.at)}</span>${esc((x.k === "photo" && x.note ? x.note.slice(0, 28) : T(q.l)) + extra)}${m ? mav(m, 18) : ""}</button>`; }).join("");
+    return `<button class="ql-item ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="qlItem" data-id="${esc(x.id)}" style="--c:${q.c}"><i>${q.i}</i><span class="num">${esc(x.at)}</span>${esc((x.k === "photo" && x.note ? x.note.slice(0, 28) : T(q.l)) + extra)}${m || x.byName ? `<span class="ql-who">${m ? mav(m, 18) : ""}${esc(((m && m.name) || x.byName || "").split(" ")[0])}</span>` : ""}</button>`; }).join("");
   return `<div class="sec ql"><div class="sec-h"><h2>${T("Journal rapide")}</h2>${log.length > 6 ? `<button class="link" data-act="qlAll">${T("Tout voir")}</button>` : ""}</div><div class="card pad">
     ${walkCard}
     <div class="ql-row">${["pipi","caca","balade","accident","plus"].map(btn).join("")}</div>
     <div class="ql-since">${lp ? `<span>${QL.pipi.i}${T("Pipi")} ${esc(agoTxt(lp.t))}</span>` : ""}${lc ? `<span>${QL.caca.i}${T("Caca")} ${esc(agoTxt(lc.t))}</span>` : ""}${hint}</div>
     ${items ? `<div class="ql-items">${items}</div>` : `<div class="empty-s" style="margin-top:8px">${T("Touchez un bouton dès que c'est fait : l'heure et votre prénom sont notés, toute la famille le voit.")}</div>`}
   </div></div>`;
+}
+let liveTok = 0;
+function liveLogNotice(x){
+  if ((x.dog || "main") !== dogId()) return;
+  const q = QL[x.k] || QL.pipi, m = memberOf(x.mid), who = (m && m.name) || x.byName || T("Quelqu'un"), tok = ++liveTok;
+  const what = x.k === "photo" && x.note ? x.note.slice(0, 40) : T(q.l) + (x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" : "");
+  $("#notif-root").innerHTML = `<div class="notif live" role="status">${m ? mav(m, 36) : `<span class="ico" style="background:${q.c}">${q.i}</span>`}<div class="main"><div class="t">${esc(who)}</div><div class="s"><span class="live-k" style="--c:${q.c}">${q.i}</span>${esc(what)} · ${esc(x.at || "")}</div></div><button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
+  try { if (navigator.vibrate) navigator.vibrate(10); } catch(_){}
+  setTimeout(() => { if (tok === liveTok) { const n = $("#notif-root .notif.live"); if (n) n.remove(); } }, 6000);
 }
 async function addLog(k, extra){
   const ds = ymd(new Date()), m = meMember(), id = newId();
