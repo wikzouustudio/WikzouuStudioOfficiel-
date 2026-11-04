@@ -3901,7 +3901,7 @@ const B3D = (() => {
   async function buildSTL(THREE, cfg, my){
     const M = await loadModel(); if (my !== buildTok) throw "stale";
     const C = Object.assign({}, COATS._, COATS[cfg.breed] || {});
-    const soft = h => { const c = new THREE.Color(h); c.lerp(new THREE.Color("#FFF4E8"), .06); return c.convertSRGBToLinear(); };
+    const soft = h => { const c = new THREE.Color(h); c.offsetHSL(0, .07, -.035); return c.convertSRGBToLinear(); }; // a touch richer: tone mapping washes colours out
     const pal = [soft(C.base), soft(C.belly || C.muzzle), (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.75) : new THREE.Color("#16100e")).convertSRGBToLinear(), new THREE.Color("#1d1513").convertSRGBToLinear(),
       new THREE.Color("#E97E8C").convertSRGBToLinear(), soft("#F2B7A6"), soft(C.ear || C.base)];
     if (C.base && /^#[0-3]/.test(C.base)) pal[5] = soft("#C9858A"); // dark coats: deeper inner ear
