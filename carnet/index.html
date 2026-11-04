@@ -685,6 +685,21 @@ body.locked .tabbar{display:none}
 .vitals .legend{display:grid;gap:10px;flex:1;min-width:0;margin:0;font-size:14px;color:var(--fg)}
 .vitals{min-width:0;overflow:hidden}
 
+/* Guided tour: smooth moves, page frozen underneath */
+html.tuto-lock,html.tuto-lock body{overflow:hidden;overscroll-behavior:none}
+.tuto{touch-action:none;animation:tutoIn .3s ease both}
+.tuto.leaving{animation:tutoOut .25s ease forwards}
+@keyframes tutoIn{from{opacity:0}}
+@keyframes tutoOut{to{opacity:0}}
+.tuto-hole{opacity:0;transition:left .45s cubic-bezier(.2,.8,.2,1),top .45s cubic-bezier(.2,.8,.2,1),width .45s cubic-bezier(.2,.8,.2,1),height .45s cubic-bezier(.2,.8,.2,1),opacity .25s}
+.tuto-hole.on{opacity:1}
+.tuto-card{animation:none!important;transition:opacity .22s ease,transform .3s cubic-bezier(.2,.8,.2,1)}
+.tuto-card.out{opacity:0;transform:translateY(8px) scale(.98);pointer-events:none}
+.tuto-prog{display:flex;gap:4px;margin:0 0 10px}
+.tuto-prog i{flex:1;height:3px;border-radius:2px;background:var(--fill2);transition:background-color .3s}
+.tuto-prog i.on{background:var(--accent)}
+.tuto-step{display:none}
+@media (prefers-reduced-motion:reduce){.tuto-hole,.tuto-card{transition:none}}
 /* Dark mode: Apple's elevated surfaces, so selected and layered things stay visible */
 :root{--seg-on:#FFFFFF}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--seg-on:#636366}
@@ -1404,6 +1419,9 @@ Object.assign(HR, {"Programme":"Program","Commandes":"Naredbe","commandes":"nare
   "Donnez un nom à la commande.":"Dajte naredbi ime.","« {c} » ajoutée. Touchez-la pour l'entraîner.":"„{c}“ dodana. Dodirnite je za vježbu.","Commande supprimée":"Naredba izbrisana","{n} commande(s) · {f} fiable(s)":"Naredbi: {n} · pouzdanih: {f}",
   "Assis":"Sjedni","Couché":"Lezi","Pas bouger":"Ostani","Viens":"Dođi","Au pied":"Uz nogu","Donne la patte":"Daj šapu","Lâche":"Pusti","Laisse":"Ostavi","Panier":"Mjesto","Attends":"Čekaj","Tourne":"Okreni se","Check":"Daj pet"});
 
+Object.assign(EN, {"Adulte selon la race (estimation)":"Adult for the breed (estimate)"});
+Object.assign(HR, {"Adulte selon la race (estimation)":"Odrasli za pasminu (procjena)"});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -2022,6 +2040,7 @@ function adviceInput(ds, chat){
   const bk = breedKey(d.breed), traits = (BREED_TRAITS[bk] || []).map(k => TRAITS[k] && TRAITS[k].en[0]).filter(Boolean);
   L.push(`You help a family in Switzerland look after their dog. Write the answer in ${lang}. Short, concrete sentences.`);
   L.push("Rules: never give medication doses or treatment changes. If a sign could be serious, recommend the vet. Use only the data below; don't invent facts about the day.");
+  L.push("Fields marked \"?\" or \"not filled\" are unknown: never guess or state them (no assumed age, size, sex, weight, appetite, energy or stools). Don't describe this particular dog's health, weight or behaviour unless the data below says so; breed points are general tendencies, so phrase them as such (\"Golden Retrievers often…\"), not as facts about this dog.");
   L.push("The advice MUST be tailored to the breed: at least 2 of the tips have to rely on what is typical for this breed (energy and exercise needs, coat, known predispositions, temperament), and say so explicitly (e.g. \"As a Border Collie…\"). If the breed is mixed or unknown, use the size and age instead.");
   L.push("\n## Dog");
   L.push(`Name: ${d.name||"?"} · Breed: ${bk ? BREED_EN[bk] || bk : d.breed || "unknown"} · Sex: ${d.sex ? EN[d.sex] || d.sex : "?"} · Age: ${d.birth ? ctx.age.toFixed(1) + " years" : "?"} · Size: ${d.size ? EN[d.size] || d.size : "?"} · Neutered: ${d.sterilized ? EN[d.sterilized] || d.sterilized : "?"}`);
@@ -2651,24 +2670,49 @@ const TUTO = [
   {sel:'.tabbar [data-tab="chien"]', t:"Votre chien", x:"Sa fiche, son compagnon 3D, l'éducation, vos autres chiens et les réglages."}
 ];
 function tutoStart(){ if (!dog()) return; S.tab = "aujourdhui"; S.sub = null; S.lastHTML = ""; render(); S.tuto = 0; window.scrollTo(0,0); setTimeout(renderTuto, 150); }
-function tutoEnd(){ S.tuto = null; $("#tuto-root").innerHTML = ""; try { LS.set("carnet-tuto", "1"); } catch(_){} }
+function tutoLock(on){
+  document.documentElement.classList.toggle("tuto-lock", !!on);
+  if (on && !window.__tutoGuard) { window.__tutoGuard = true;
+    const stop = e => { if (S.tuto != null) e.preventDefault(); };
+    window.addEventListener("touchmove", stop, {passive:false});
+    window.addEventListener("wheel", stop, {passive:false});
+    window.addEventListener("keydown", e => { if (S.tuto != null && [" ", "PageDown", "PageUp", "ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) e.preventDefault(); }, {passive:false});
+  }
+}
+function tutoEnd(){ S.tuto = null; S.tutoTok = (S.tutoTok || 0) + 1; const t = $("#tuto-root .tuto");
+  if (t) { t.classList.add("leaving"); setTimeout(() => { if (S.tuto == null) $("#tuto-root").innerHTML = ""; }, 260); } else $("#tuto-root").innerHTML = "";
+  tutoLock(false); try { LS.set("carnet-tuto", "1"); } catch(_){} }
+// waits until the page has stopped moving (smooth scroll) before measuring
+function tutoSettle(el, cb, tok){ let last = null, still = 0, n = 0;
+  const f = () => { if (tok !== S.tutoTok) return; const t = el.getBoundingClientRect().top;
+    still = last !== null && Math.abs(t - last) < .5 ? still + 1 : 0; last = t;
+    if (still >= 4 || ++n > 70) cb(); else requestAnimationFrame(f); };
+  requestAnimationFrame(f); }
 function renderTuto(){
-  const root = $("#tuto-root"); if (S.tuto == null) { root.innerHTML = ""; return; }
+  const root = $("#tuto-root"); if (S.tuto == null) { root.innerHTML = ""; tutoLock(false); return; }
   const st = TUTO[S.tuto]; let el = document.querySelector(st.sel);
   if (!el || !el.getBoundingClientRect().height) { if (S.tuto < TUTO.length - 1) { S.tuto++; return renderTuto(); } return tutoEnd(); }
-  const inBar = !!el.closest(".tabbar");
-  if (!inBar) el.scrollIntoView({block: el.offsetHeight > innerHeight * .5 ? "start" : "center"});
-  setTimeout(() => {
+  tutoLock(true);
+  const tok = S.tutoTok = (S.tutoTok || 0) + 1, inBar = !!el.closest(".tabbar");
+  let wrap = root.querySelector(".tuto");
+  if (!wrap) { root.innerHTML = `<div class="tuto" role="dialog" aria-modal="true" aria-label="${T("Tutoriel")}"><div class="tuto-hole"></div><div class="tuto-card out"></div></div>`; wrap = root.querySelector(".tuto"); }
+  const hole = wrap.querySelector(".tuto-hole"), card = wrap.querySelector(".tuto-card");
+  card.classList.add("out");
+  if (!inBar) { const r0 = el.getBoundingClientRect(), big = el.offsetHeight > innerHeight * .5;
+    const target = big ? r0.top - 70 : r0.top + r0.height / 2 - innerHeight * .4;
+    if (Math.abs(target) > 4) window.scrollBy({top: target, behavior: "smooth"}); }
+  tutoSettle(el, () => {
     const r = el.getBoundingClientRect(), pad = 8, vh = innerHeight;
     const top = Math.max(6, r.top - pad), h = Math.min(r.height + pad*2, vh * .55);
     const below = top + h + 190 < vh;
-    root.innerHTML = `<div class="tuto" role="dialog" aria-modal="true" aria-label="${T("Tutoriel")}">
-      <div class="tuto-hole" style="left:${Math.max(6, r.left - pad)}px;top:${top}px;width:${Math.min(innerWidth - 12, r.width + pad*2)}px;height:${h}px"></div>
-      <div class="tuto-card" style="${below ? `top:${top + h + 12}px` : `bottom:${vh - top + 12}px`}">
-        <div class="tuto-step">${S.tuto + 1} / ${TUTO.length}</div><b>${T(st.t)}</b><p>${T(st.x)}</p>
-        <div class="tuto-b"><button class="wz-later" data-act="tutoSkip">${T("Passer")}</button><button class="btn" data-act="tutoNext">${S.tuto === TUTO.length - 1 ? T("C'est parti !") : T("Suivant")}</button></div>
-      </div></div>`;
-  }, inBar ? 0 : 320);
+    Object.assign(hole.style, {left: Math.max(6, r.left - pad) + "px", top: top + "px", width: Math.min(innerWidth - 12, r.width + pad*2) + "px", height: h + "px"});
+    hole.classList.add("on");
+    setTimeout(() => { if (tok !== S.tutoTok) return;
+      card.style.top = below ? (top + h + 12) + "px" : "auto"; card.style.bottom = below ? "auto" : (vh - top + 12) + "px";
+      card.innerHTML = `<div class="tuto-step">${S.tuto + 1} / ${TUTO.length}</div><div class="tuto-prog">${TUTO.map((_, i) => `<i class="${i <= S.tuto ? "on" : ""}"></i>`).join("")}</div><b>${T(st.t)}</b><p>${T(st.x)}</p>
+        <div class="tuto-b"><button class="wz-later" data-act="tutoSkip">${T("Passer")}</button><button class="btn" data-act="tutoNext">${S.tuto === TUTO.length - 1 ? T("C'est parti !") : T("Suivant")}</button></div>`;
+      card.classList.remove("out"); }, 120);
+  }, tok);
 }
 
 /* ---------- quick log: one tap for what isn't on the schedule ---------- */
@@ -3067,7 +3111,7 @@ function growthView(){
   return `${subBar(T("Santé"))}${pageHead(T("Croissance et poids"), d.name)}
     <div class="card pad">
       ${ws.length ? `<div class="g-head"><div><div class="eyebrow" style="text-transform:none;letter-spacing:0">${T("Dernière pesée · {d}",{d:esc(fmt(parseYmd(ws[ws.length-1].date),{day:"numeric",month:"short"}))})}</div><div class="big num">${nf(ws[ws.length-1].kg)}<small>kg</small></div></div>
-        ${ar ? `<div class="g-adult"><span>${T("Adulte, environ")}</span><b class="num">${nf(Math.round(ar.lo))}–${nf(Math.round(ar.hi))} kg</b></div>` : ""}</div>` : ""}
+        ${ar ? `<div class="g-adult"><span>${T("Adulte selon la race (estimation)")}</span><b class="num">${nf(Math.round(ar.lo))}–${nf(Math.round(ar.hi))} kg</b></div>` : ""}</div>` : ""}
       ${d.birth && ar ? growthChart() : `<div class="empty-s">${T(!d.birth ? "Ajoutez la date de naissance dans la fiche pour voir la courbe de croissance." : "Indiquez la race ou le gabarit dans la fiche pour voir la courbe de croissance.")}</div>`}
       ${gs ? `<div class="g-msg ${gs.st}">${T(msg)}</div>` : ws.length ? "" : `<div class="empty-s" style="margin-top:8px">${T("Aucune pesée enregistrée.")}</div>`}
       ${canEdit() ? `<form class="inl" data-form="weight" style="margin:12px -16px -16px"><input class="f num" id="w-kg" type="number" step="0.1" min="0.5" max="120" inputmode="decimal" placeholder="${T("Poids en kg")}" required><input class="f" id="w-date" type="date" value="${today}" required><button class="btn" type="submit">${T("Ajouter")}</button></form>` : ""}
