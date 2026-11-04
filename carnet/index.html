@@ -3844,7 +3844,171 @@ const B3D = (() => {
   let buildTok = 0;
   const idle = () => new Promise(r => setTimeout(r, 0));
   const disposeTree = t => t.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); });
+  /* ---- the real dog model (HappyDog), coloured per breed and animated in the vertex shader ---- */
+  let modelP = null;
+  const MODEL_URL = "dog.bin";
+  function loadModel(){
+    if (modelP) return modelP;
+    modelP = fetch(MODEL_URL).then(r => { if (!r.ok) throw "model"; return r.arrayBuffer(); }).then(buf => {
+      const dv = new DataView(buf); if (dv.getUint32(0, true) !== 0x31474F44) throw "model"; // "DOG1"
+      const nV = dv.getUint32(4, true), nF = dv.getUint32(8, true), mn = [], mx = [];
+      for (let i = 0; i < 3; i++) { mn.push(dv.getFloat32(12 + i*4, true)); mx.push(dv.getFloat32(24 + i*4, true)); }
+      let o = 36; const q = new Uint16Array(buf.slice(o, o + nV*6)); o += nV*6;
+      const idx = new Uint16Array(buf.slice(o, o + nF*6)); o += nF*6;
+      const cls = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const w = new Uint8Array(buf.slice(o, o + nV*4));
+      return {nV, nF, mn, mx, q, idx, cls, w};
+    }).catch(e => { modelP = null; throw e; });
+    return modelP;
+  }
+  // model-space landmarks (the STL is Y-up, facing +Z, ~65 units tall)
+  const MC = [25.5, 0, 33.7], MS = .9 / 64.8;
+  const mw = (x, y, z) => [(x - MC[0]) * MS, (y - MC[1]) * MS, (z - MC[2]) * MS];
+  const LM = {head: mw(25.5, 31, 40), earL: mw(9.5, 51, 45.5), earR: mw(41.5, 51, 45), tail: mw(26, 9, 20), body: mw(25.5, 15, 35),
+    eyeL: mw(14.5, 41.4, 60.4), eyeR: mw(36.5, 41.4, 60.3), eyeY: 41.45 * MS, chin: mw(25.5, 27, 52)};
+  const VS_HEAD = `
+    attribute vec4 aW; attribute float aCls;
+    uniform vec3 uHead, uEarL, uEarR, uTail, uHeadP, uEarLP, uEarRP, uTailP, uBodyC;
+    uniform float uBreath, uEye, uEyeY, uTongue, uSquash;
+    varying float vGloss;
+    mat3 rotE(vec3 e){ // = Rx * Ry * Rz (three.js Euler "XYZ")
+      float cx = cos(e.x), sx = sin(e.x), cy = cos(e.y), sy = sin(e.y), cz = cos(e.z), sz = sin(e.z);
+      mat3 X = mat3(1.,0.,0., 0.,cx,sx, 0.,-sx,cx), Y = mat3(cy,0.,-sy, 0.,1.,0., sy,0.,cy), Z = mat3(cz,sz,0., -sz,cz,0., 0.,0.,1.);
+      return X * Y * Z; }
+  `;
+  const VS_NORMAL = `
+    #include <beginnormal_vertex>
+    mat3 rEL = rotE(uEarL * aW.y), rER = rotE(uEarR * aW.z), rH = rotE(uHead * aW.x), rT = rotE(uTail * aW.w);
+    objectNormal = rH * (rER * (rEL * objectNormal)); objectNormal = rT * objectNormal;
+  `;
+  const VS_POS = `
+    #include <begin_vertex>
+    vGloss = (aCls > 1.5 && aCls < 4.5) ? 1.0 : 0.0;
+    float bodyW = (1.0 - aW.x) * (1.0 - aW.w);
+    transformed.xz = mix(transformed.xz, uBodyC.xz + (transformed.xz - uBodyC.xz) * (1.0 + uBreath * 0.014), bodyW);
+    transformed.y = mix(transformed.y, uBodyC.y + (transformed.y - uBodyC.y) * (1.0 + uBreath * 0.006), bodyW);
+    if (aCls > 1.5 && aCls < 2.5) transformed.y = uEyeY + (transformed.y - uEyeY) * uEye;
+    if (aCls > 3.5 && aCls < 4.5) transformed.y += uTongue;
+    transformed = rEL * (transformed - uEarLP) + uEarLP;
+    transformed = rER * (transformed - uEarRP) + uEarRP;
+    transformed = rH * (transformed - uHeadP) + uHeadP;
+    transformed = rT * (transformed - uTailP) + uTailP;
+    transformed.y *= uSquash; transformed.xz *= 1.0 + (1.0 - uSquash) * 0.5;
+  `;
+  async function buildSTL(THREE, cfg, my){
+    const M = await loadModel(); if (my !== buildTok) throw "stale";
+    const C = Object.assign({}, COATS._, COATS[cfg.breed] || {});
+    const soft = h => { const c = new THREE.Color(h); c.lerp(new THREE.Color("#FFF4E8"), .06); return c.convertSRGBToLinear(); };
+    const pal = [soft(C.base), soft(C.belly || C.muzzle), new THREE.Color(C.eyes ? "#1b1412" : "#16100e").convertSRGBToLinear(), new THREE.Color("#1d1513").convertSRGBToLinear(),
+      new THREE.Color("#E97E8C").convertSRGBToLinear(), soft("#F2B7A6"), soft(C.ear || C.base)];
+    if (C.base && /^#[0-3]/.test(C.base)) pal[5] = soft("#C9858A"); // dark coats: deeper inner ear
+    const {nV, nF, mn, mx, q, idx, cls, w} = M;
+    const pos = new Float32Array(nV*3), col = new Float32Array(nV*3), cf = new Float32Array(nV);
+    for (let i = 0; i < nV; i++) {
+      const X = mn[0] + q[i*3]/65535*(mx[0]-mn[0]), Y = mn[1] + q[i*3+1]/65535*(mx[1]-mn[1]), Z = mn[2] + q[i*3+2]/65535*(mx[2]-mn[2]);
+      pos[i*3] = (X - MC[0]) * MS; pos[i*3+1] = (Y - MC[1]) * MS; pos[i*3+2] = (Z - MC[2]) * MS;
+      const c = pal[cls[i]] || pal[0], s = Math.sin(X*12.9898 + Y*78.233 + Z*37.719) * 43758.5453, g = 1 + ((s - Math.floor(s)) - .5) * .05;
+      // coat a touch darker on the back and top of the head, like real fur
+      const shade = cls[i] === 0 ? 1 - Math.max(0, (33.7 - Z) / 40) * .12 : 1;
+      col[i*3] = c.r*g*shade; col[i*3+1] = c.g*g*shade; col[i*3+2] = c.b*g*shade; cf[i] = cls[i];
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    geo.setAttribute("aW", new THREE.BufferAttribute(new Uint8Array(w), 4, true));
+    geo.setAttribute("aCls", new THREE.BufferAttribute(cf, 1));
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    geo.computeVertexNormals(); geo.computeBoundingSphere(); geo.boundingSphere.radius *= 1.6; // animation moves parts outside the rest pose
+    const v3 = a => new THREE.Vector3(a[0], a[1], a[2]);
+    const U = {uHead:{value:new THREE.Vector3()}, uEarL:{value:new THREE.Vector3()}, uEarR:{value:new THREE.Vector3()}, uTail:{value:new THREE.Vector3()},
+      uHeadP:{value:v3(LM.head)}, uEarLP:{value:v3(LM.earL)}, uEarRP:{value:v3(LM.earR)}, uTailP:{value:v3(LM.tail)}, uBodyC:{value:v3(LM.body)},
+      uBreath:{value:0}, uEye:{value:1}, uEyeY:{value:LM.eyeY}, uTongue:{value:0}, uSquash:{value:1}};
+    const mat = new THREE.MeshStandardMaterial({vertexColors:true, roughness:.78, metalness:0, envMapIntensity:.7});
+    mat.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, U);
+      sh.vertexShader = VS_HEAD + sh.vertexShader.replace("#include <beginnormal_vertex>", VS_NORMAL).replace("#include <begin_vertex>", VS_POS);
+      sh.fragmentShader = "varying float vGloss;\n" + sh.fragmentShader.replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.12, vGloss);")
+        .replace("#include <clearcoat_normal_fragment_begin>", "#include <clearcoat_normal_fragment_begin>");
+    };
+    const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = false; mesh.frustumCulled = false;
+    const root = new THREE.Group(), body = new THREE.Group(); root.add(body); body.add(mesh);
+    // head-attached extras follow the shader's head rotation exactly
+    const headG = new THREE.Group(); headG.position.copy(v3(LM.head)); body.add(headG);
+    const inHead = (o, p) => { o.position.set(p[0] - LM.head[0], p[1] - LM.head[1], p[2] - LM.head[2]); headG.add(o); return o; };
+    const glint = new THREE.MeshBasicMaterial({color:0xffffff}), glints = [];
+    [LM.eyeL, LM.eyeR].forEach(e => { const g1 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0085, 16, 12), glint), [e[0] - .012, e[1] + .014, e[2] + .004]);
+      const g2 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0045, 12, 8), glint), [e[0] + .011, e[1] - .011, e[2] + .003]); glints.push(g1, g2); });
+    const gold = new THREE.MeshStandardMaterial({color:new THREE.Color("#E9B949").convertSRGBToLinear(), roughness:.25, metalness:.85, envMapIntensity:1.4});
+    let bell = null;
+    if (cfg.stage >= 1) { // collar, then a golden bell from stage 2
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(.215, .016, 12, 48), new THREE.MeshStandardMaterial({color:new THREE.Color(cfg.stage >= 3 ? "#7B4BC4" : "#D64550").convertSRGBToLinear(), roughness:.55}));
+      collar.rotation.x = Math.PI/2 - .32; collar.scale.set(1, 1.08, 1); collar.position.copy(v3(mw(25.5, 29.6, 40.5))); body.add(collar);
+      if (cfg.stage >= 2) { bell = new THREE.Mesh(new THREE.SphereGeometry(.03, 24, 16), gold); bell.position.copy(v3(mw(25.5, 26.4, 57.5))); body.add(bell); }
+    }
+    if (cfg.stage >= 4) { const cr = new THREE.Group(); const top = mw(25.5, 64.5, 41); cr.rotation.x = -.18;
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(.1, .11, .06, 32, 1, true), gold); ring.material.side = THREE.DoubleSide; cr.add(ring);
+      for (let i = 0; i < 6; i++) { const a = i/6*Math.PI*2, sp = new THREE.Mesh(new THREE.ConeGeometry(.024, .07, 12), gold); sp.position.set(Math.cos(a)*.1, .06, Math.sin(a)*.1); cr.add(sp); }
+      inHead(cr, [top[0], top[1] + .01, top[2]]); }
+    const box = new THREE.Box3().setFromObject(mesh), sz = new THREE.Vector3(), ctr = new THREE.Vector3(); box.getSize(sz); box.getCenter(ctr);
+    return {root, Q:{stl:true, U, body, headG, glints, bell, frame:{h: sz.y, len: Math.max(sz.z, sz.x), cy: ctr.y}, size: sz}};
+  }
+  // little director: ear twitches, curious head tilts, look-arounds
+  const LIFE = {twitch:0, twitchSide:1, nextTwitch:3, tilt:0, tiltDir:1, nextTilt:6, look:0};
+  function tickSTL(t, now, rm, jy){
+    const U = P.U, tg = TARGET[mood] || TARGET.content, awake = 1 - cur.lying * (mood === "dort" ? 1 : .6), sleepy = mood === "dort";
+    if (t > LIFE.nextTwitch) { LIFE.twitch = t; LIFE.twitchSide = Math.random() < .5 ? -1 : 1; LIFE.nextTwitch = t + 3 + Math.random() * 4; }
+    if (t > LIFE.nextTilt && !sleepy) { LIFE.tilt = t; LIFE.tiltDir = Math.random() < .5 ? -1 : 1; LIFE.nextTilt = t + 6 + Math.random() * 6; }
+    const tw = rm ? 0 : Math.max(0, Math.sin(Math.min(1, (t - LIFE.twitch) / .35) * Math.PI)) * (t - LIFE.twitch < .35 ? 1 : 0);
+    const tiltP = Math.min(1, Math.max(0, (t - LIFE.tilt) / 1.6)), tilt = rm ? 0 : Math.sin(tiltP * Math.PI) * .26 * LIFE.tiltDir;
+    const idleLook = rm ? 0 : Math.sin(t * .37) * .22 + Math.sin(t * .91) * .06;
+    const ptrOn = Math.abs(ptr.x) + Math.abs(ptr.y) > .01;
+    const breathe = Math.sin(t * (sleepy ? 1.3 : mood === "ravi" ? 3.6 : 2.4));
+    U.uBreath.value = breathe * (sleepy ? 1.6 : 1);
+    // head: pointer when there is one, otherwise a lazy look-around and the odd curious tilt
+    const hx = cur.headX * .9 + (sleepy ? .1 : 0) + Math.sin(t * 1.3) * .035 * awake + (ptrOn ? ptr.y * .2 : 0) * awake;
+    const hy = ((ptrOn ? ptr.x * .42 : idleLook) * awake) + (sleepy ? .28 : 0);
+    const hz = ((mood === "ravi" ? Math.sin(t * 2.4) * .14 : Math.sin(t * .7) * .03) + tilt) * awake + (sleepy ? .22 : 0);
+    U.uHead.value.set(hx, hy, hz); P.headG.rotation.set(hx, hy, hz, "XYZ");
+    // ears: droop when sad or sleepy, perk when happy, twitch now and then, bounce with hops
+    const droop = cur.ear, bounce = Math.sin(t * 11) * .05 * cur.hop;
+    const earL = .1 + droop * .45 - (mood === "ravi" ? .05 : 0) + (LIFE.twitchSide < 0 ? tw * .35 : 0) + bounce;
+    const earR = .1 + droop * .45 - (mood === "ravi" ? .05 : 0) + (LIFE.twitchSide > 0 ? tw * .35 : 0) - bounce;
+    U.uEarL.value.set(-.1 * droop, 0, earL); U.uEarR.value.set(-.1 * droop, 0, -earR);
+    // tail: wag around its base, faster and wider when happy; higher when happy, low when sad
+    const wag = rm ? 0 : Math.sin(t * cur.tailSpeed) * cur.tailAmp * 1.15;
+    U.uTail.value.set(-(cur.tailUp - .6) * .35, wag, wag * .25);
+    // eyes: blinks, happy squint after a pet, closed when asleep
+    if (t > nextBlink) { nextBlink = t + 2.2 + Math.random() * 3.2; P.blinkT = t; }
+    const bl = P.blinkT != null ? (t - P.blinkT) / .16 : 9, blink = bl >= 0 && bl < 1 ? Math.sin(bl * Math.PI) : 0;
+    const petAgo = (now - jumpT) / 1000, squint = petAgo >= 0 && petAgo < 1.3 ? Math.sin(Math.min(1, petAgo / 1.3) * Math.PI) * .7 : 0;
+    const open = Math.max(.06, Math.min(cur.eye, 1 - blink * .94, 1 - squint));
+    U.uEye.value = open; P.glints.forEach(g => g.visible = open > .45);
+    U.uTongue.value = Math.sin(t * 8) * .0018 * cur.tongue + (1 - cur.tongue) * .004;
+    // squash & stretch: pet jump, happy hops, landing
+    const jp = (now - jumpT) / 900; let sq = 1;
+    if (!rm && jp >= 0 && jp < 1) sq = jp < .14 ? 1 - Math.sin(jp / .14 * Math.PI) * .12 : jp < .78 ? 1 + Math.sin((jp - .14) / .64 * Math.PI) * .06 : 1 - Math.sin((jp - .78) / .22 * Math.PI) * .09;
+    const hopPh = (t * 5.5) % Math.PI, hopSq = cur.hop > .05 && !rm ? (hopPh < .35 ? 1 - Math.sin(hopPh / .35 * Math.PI) * .05 * cur.hop : 1) : 1;
+    U.uSquash.value = sq * hopSq;
+    // pop-in when it first appears
+    const ap = Math.min(1, (now - (P.bornAt || (P.bornAt = now))) / 650), pop = rm ? 1 : 1 - Math.pow(1 - ap, 3) * Math.cos(ap * Math.PI * 2.2) * .35;
+    P.body.scale.setScalar(Math.max(.6, pop));
+    P.body.position.y = -cur.lying * .03;
+    if (P.bell) P.bell.rotation.z = Math.sin(t * 6) * .25 * (cur.hop + .3);
+    P.blob.scale.set((P.size.x * 1.9 + .3) * (1 - jy * .7), P.size.z * 1.25 * (1 - jy * .7), 1); P.blob.material.opacity = 1 - jy * 1.2;
+  }
   async function build(THREE, cfg){
+    const my = ++buildTok; let res;
+    try { res = await buildSTL(THREE, cfg, my); }
+    catch(e) { if (e === "stale") throw e; console.warn("dog model", e); return buildProc(THREE, cfg); }
+    if (my !== buildTok) { disposeTree(res.root); throw "stale"; }
+    if (dog) { scene.remove(dog); disposeTree(dog); }
+    dog = res.root; scene.add(dog);
+    for (const k of Object.keys(P)) if (k !== "blob") delete P[k];
+    Object.assign(P, res.Q);
+    P.blob.scale.set(res.Q.size.x * 1.9 + .3, res.Q.size.z * 1.25, 1);
+    frame();
+  }
+  async function buildProc(THREE, cfg){
     const my = ++buildTok, Q = {};
     const sculptA = async (...a) => { await idle(); if (my !== buildTok) throw "stale"; return sculpt(...a); };
     const C = Object.assign({}, COATS._, COATS[cfg.breed] || {});
@@ -4095,6 +4259,7 @@ const B3D = (() => {
     dog.rotation.y = rotY + spin;
     const hop = rm ? 0 : Math.abs(Math.sin(t * 5.5)) * .1 * cur.hop;
     dog.position.y = jy + hop;
+    if (P.stl) { tickSTL(t, now, rm, jy); R.render(scene, cam); raf = requestAnimationFrame(tick); return; }
     const breathe = Math.sin(t * (mood === "dort" ? 1.4 : 2.6));
     P.body.position.y = P.bodyY - cur.lying * (P.bodyY - .3);
     P.torso.scale.set(1 + breathe * .008, 1 + breathe * .016, 1);
