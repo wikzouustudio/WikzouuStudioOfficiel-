@@ -810,10 +810,10 @@ body.wiz-open .scrim{z-index:85}
 @keyframes blub{0%{transform:scale(1)}28%{transform:scale(.95,.96)}55%{transform:scale(1.025,1.015)}78%{transform:scale(.995)}100%{transform:scale(1)}}
 @keyframes blubRings{0%{transform:scale(1)}35%{transform:scale(.9)}65%{transform:scale(1.06)}100%{transform:scale(1)}}
 /* idle: a soft blub every few seconds to draw the eye, then rest */
-@keyframes blubIdle{0%,84%,100%{transform:scale(1)}88%{transform:scale(.982,.986)}92%{transform:scale(1.012,1.008)}96%{transform:scale(.997)}}
-@keyframes blubIdleRings{0%,84%,100%{transform:scale(1)}88%{transform:scale(.94)}92%{transform:scale(1.05)}96%{transform:scale(.99)}}
-.ccard[data-sub="buddy"]{animation:blubIdle 4.5s ease-in-out 1.2s infinite}
-.ccard[data-sub="buddy"] .cc-rings{animation:blubIdleRings 4.5s ease-in-out 1.2s infinite}
+@keyframes blubIdle{0%,72%,100%{transform:scale(1)}79%{transform:scale(.982,.986)}86%{transform:scale(1.012,1.008)}93%{transform:scale(.997)}}
+@keyframes blubIdleRings{0%,72%,100%{transform:scale(1)}79%{transform:scale(.94)}86%{transform:scale(1.05)}93%{transform:scale(.99)}}
+.ccard[data-sub="buddy"]{animation:blubIdle 2.4s ease-in-out .8s infinite}
+.ccard[data-sub="buddy"] .cc-rings{animation:blubIdleRings 2.4s ease-in-out .8s infinite}
 @media (prefers-reduced-motion: reduce){.ccard[data-sub="buddy"],.ccard[data-sub="buddy"] .cc-rings{animation:none}}
 .ccard.blub{animation:blub .42s cubic-bezier(.3,1.2,.5,1)}
 .ccard.blub .cc-rings{animation:blubRings .42s cubic-bezier(.3,1.4,.5,1)}
