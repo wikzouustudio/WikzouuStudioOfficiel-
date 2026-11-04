@@ -1,0 +1,46 @@
+rules_version = '2';
+// Carnet du chien — each family only sees its own data.
+// A person enters a family by creating it (owner) or with a valid join code made by a member.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isMember(fid) {
+      return signedIn() && exists(/databases/$(database)/documents/families/$(fid)/access/$(request.auth.uid));
+    }
+
+    // which family an account belongs to: only that account
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // join codes, stored under their hash: you can only find one if you know the code
+    match /codes/{h} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create, update: if isMember(request.resource.data.family);
+      allow delete: if isMember(resource.data.family);
+    }
+
+    match /families/{fid} {
+      allow get: if isMember(fid) || (signedIn() && resource.data.owner == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.owner == request.auth.uid;
+      allow update: if isMember(fid);
+
+      match /access/{uid} {
+        allow read: if isMember(fid);
+        allow create: if signedIn() && request.auth.uid == uid && (
+          get(/databases/$(database)/documents/families/$(fid)).data.owner == uid
+          || (exists(/databases/$(database)/documents/codes/$(request.resource.data.code))
+              && get(/databases/$(database)/documents/codes/$(request.resource.data.code)).data.family == fid
+              && get(/databases/$(database)/documents/codes/$(request.resource.data.code)).data.exp > request.time.toMillis())
+        );
+        allow delete: if isMember(fid);
+      }
+
+      // everything in the carnet (dog, routine, health, ticks, messages…): members only
+      match /{col}/{docId} {
+        allow read, write: if isMember(fid);
+      }
+    }
+  }
+}

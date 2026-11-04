@@ -13,7 +13,17 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<script>window.CARNET_SITE = true;</script>
+<script>
+// The app below speaks claude.ai's window.claude API; on this site, firebase-bridge.js answers it once the person has signed in.
+window.CARNET_SITE = true;
+(function(){
+  var res, ready = new Promise(function(r){ res = r; });
+  window.__carnetBridge = {resolve: function(api){ res(api); }, started: false};
+  window.claude = {use: function(name){ return ready.then(function(api){ return api[name] || null; }); }};
+  setTimeout(function(){ if (!window.__carnetBridge.started) { var g = document.getElementById("gate"); if (g) g.innerHTML = '<div class="gate"><div class="g-in"><h1>Carnet du chien</h1><p class="g-sub">Connexion impossible. Vérifiez internet puis rechargez la page.</p><button class="g-btn g-main" onclick="location.reload()">Recharger</button></div></div>'; } }, 15000);
+})();
+</script>
+<script type="module" src="firebase-bridge.js"></script>
 <title>Carnet du chien</title>
 <style>
 /* Layout: iOS-style grouped lists in a 680px column, large titles, bottom tab bar with blur */
@@ -693,8 +703,45 @@ body.locked .tabbar{display:none}
 .code-card span{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
 .code-card b{font-size:42px;letter-spacing:.14em;font-weight:800}.code-card small{font-size:13px;color:var(--fg2)}
 </style>
+<style>
+/* sign-in gate (site only) */
+body.gated .wrap, body.gated .tabbar{display:none}
+.gate{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.g-in{max-width:420px;margin:0 auto;padding:calc(56px + env(safe-area-inset-top,0px)) 22px 40px;display:flex;flex-direction:column;gap:12px;text-align:center;animation:wzIn .35s ease}
+.g-logo{display:flex;justify-content:center;margin-bottom:4px}.g-logo svg{width:112px;height:112px;filter:drop-shadow(0 12px 24px rgba(217,120,58,.35))}
+.gate h1{font-size:30px;margin:4px 0 0;letter-spacing:-.02em}
+.g-sub{color:var(--fg2);font-size:16px;line-height:1.45;margin:0 0 10px}
+.g-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-radius:14px;font:inherit;font-size:17px;font-weight:600;cursor:pointer;border:0}
+.g-google{background:var(--card);color:var(--fg);box-shadow:inset 0 0 0 1px var(--sep)}
+.g-main{background:var(--accent);color:#fff}.g-btn:disabled{opacity:.55}
+.g-or{display:flex;align-items:center;gap:12px;color:var(--fg3);font-size:13px;margin:4px 0}.g-or:before,.g-or:after{content:"";flex:1;height:1px;background:var(--sep)}
+.g-f{width:100%;min-height:50px;border-radius:12px;border:0;background:var(--fill);color:var(--fg);font:inherit;font-size:17px;padding:0 14px;box-sizing:border-box}
+.g-code{text-align:center;letter-spacing:.18em;font-weight:700;text-transform:uppercase;font-size:22px}
+.g-lab{text-align:left;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--fg2);margin:6px 0 -6px 4px}
+.g-msg{background:color-mix(in srgb,var(--red) 12%,var(--card));color:var(--fg);border-radius:12px;padding:10px 12px;font-size:15px;text-align:left}
+.g-links{display:flex;justify-content:center;gap:18px;margin-top:6px}.g-links button{background:none;border:0;color:var(--accent);font:inherit;font-size:15px;cursor:pointer}
+.g-fine{color:var(--fg3);font-size:12px;margin-top:10px}
+.g-card{display:flex;align-items:center;gap:14px;text-align:left;width:100%;background:var(--card);border:0;border-radius:18px;padding:16px;font:inherit;color:var(--fg);cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.g-card:active{transform:scale(.98)}.g-card span:last-child{display:flex;flex-direction:column;gap:3px}.g-card b{font-size:17px}.g-card small{font-size:14px;color:var(--fg2)}
+.g-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:none}
+.g-spin{width:28px;height:28px;margin:20px auto;border-radius:50%;border:3px solid var(--fill2);border-top-color:var(--accent);animation:sp .8s linear infinite}
+</style>
 </head>
 <body>
+<div id="gate"></div>
+<template id="gate-dog"><svg viewBox="0 0 160 160" aria-hidden="true">
+  <defs><linearGradient id="wzg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6B26B"/><stop offset="1" stop-color="#D9783A"/></linearGradient>
+  <linearGradient id="wzs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+  <rect x="8" y="8" width="144" height="144" rx="38" fill="url(#wzg)"/>
+  <rect x="8" y="8" width="144" height="144" rx="38" fill="url(#wzs)"/>
+  <g class="wz-ears"><path d="M44 52c-13 2-20 20-17 38 2 10 12 12 17 4l8-30c2-8-1-13-8-12Z" fill="#7A4A2A"/><path d="M116 52c13 2 20 20 17 38-2 10-12 12-17 4l-8-30c-2-8 1-13 8-12Z" fill="#7A4A2A"/></g>
+  <path d="M80 44c22 0 38 15 38 37 0 24-17 41-38 41S42 105 42 81c0-22 16-37 38-37Z" fill="#FFF6EC"/>
+  <ellipse cx="80" cy="100" rx="21" ry="16" fill="#F4E1CC"/>
+  <g class="wz-eyes"><ellipse cx="65" cy="80" rx="6" ry="7.5" fill="#2A1C14"/><ellipse cx="95" cy="80" rx="6" ry="7.5" fill="#2A1C14"/><circle cx="67" cy="77" r="2.2" fill="#fff"/><circle cx="97" cy="77" r="2.2" fill="#fff"/></g>
+  <path d="M73 92c0-3 3-5 7-5s7 2 7 5c0 3-4 6-7 6s-7-3-7-6Z" fill="#2A1C14"/>
+  <path d="M80 98v5m0 0c-2 4-7 5-10 2m10-2c2 4 7 5 10 2" stroke="#2A1C14" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="57" cy="94" rx="6" ry="3.5" fill="#FF9AA8" opacity=".55"/><ellipse cx="103" cy="94" rx="6" ry="3.5" fill="#FF9AA8" opacity=".55"/>
+</svg></template>
 
 
 <div class="wrap" id="view">
@@ -1136,6 +1183,8 @@ const TRAITS_HR = {
 };
 Object.keys(TRAITS_HR).forEach(k => { if (TRAITS[k]) TRAITS[k].hr = TRAITS_HR[k]; });
 EN["Moyen (appétit)"] = "Fair"; EN["Moyen"] = "Medium";
+Object.assign(EN, {"Compte": "Account", "Connecté sur cet appareil": "Signed in on this device", "Se déconnecter": "Sign out"});
+Object.assign(HR, {"Compte": "Račun", "Connecté sur cet appareil": "Prijavljeni na ovom uređaju", "Se déconnecter": "Odjava"});
 Object.assign(EN, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Your account can only view this logbook (“Can view”), so it can't join the family yet. The owner needs to add your email address as “Editor”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "You open the logbook again and enter the code they gave you", "Un instant…": "One moment…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Your account can't join yet: ask the owner to add you as “Editor”."});
 Object.assign(HR, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Vaš račun može samo gledati ovaj dnevnik („Može gledati”) pa se još ne može pridružiti obitelji. Vlasnik vas mora dodati putem e-adrese kao „Urednik”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "Ponovno otvorite dnevnik i unesite kod koji ste dobili", "Un instant…": "Trenutak…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Vaš se račun još ne može pridružiti: zamolite vlasnika da vas doda kao „Urednik”."});
 Object.assign(EN, {"Ajouter quelqu'un": "Add someone", "Choisissez son rôle : le carnet crée un code à lui donner. Avec ce code, elle rejoint la famille depuis son propre compte.": "Choose their role: the logbook creates a code to give them. With it, they join the family from their own account.", "Créer le code": "Create the code", "Code à donner": "Code to give", "Valable 7 jours, pour une seule personne": "Valid 7 days, for one person", "Copier le code": "Copy the code", "Donnez-lui ce code": "Give them this code", "De vive voix ou par message. Il ne sera plus affiché ensuite : si vous le perdez, créez-en un nouveau.": "In person or by message. It won't be shown again: if you lose it, create a new one.", "Elle ouvre le carnet avec son compte": "They open the logbook with their account", "Elle entre le code, puis son prénom : elle rejoint la famille avec le rôle choisi.": "They enter the code, then their name: they join the family with the chosen role.", "Pour qu'elle puisse ouvrir le carnet, ajoutez aussi son e-mail en « Éditeur » dans « Partager » en haut de la page.": "So they can open the logbook, also add their email as “Editor” under “Share” at the top of the page.", "Terminé": "Done", "Votre code": "Your code", "Le code vous est donné par un membre de la famille.": "A family member gives you the code.", "Code valide": "Valid code", "Vous rejoignez avec le rôle {r}": "You join with the {r} role", "Entrez le code que la famille vous a donné.": "Enter the code the family gave you.", "Code incorrect ou expiré. Encore {n} essai(s).": "Wrong or expired code. {n} tries left.", "Ce code n'est plus valable.": "This code is no longer valid.", "Code copié": "Code copied", "Code {r} en attente": "{r} code pending", "Expire dans {n} j": "Expires in {n} d", "Chaque personne a son propre compte. « Ajouter quelqu'un » crée un code avec le rôle choisi ; la personne l'entre avec son compte et rejoint la famille.": "Everyone has their own account. “Add someone” creates a code with the chosen role; the person enters it with their account and joins the family.", "Code en attente": "Pending code", "Le code n'est plus affichable. S'il est perdu, créez-en un nouveau : l'ancien ne marchera plus.": "The code can't be shown again. If it's lost, create a new one: the old one will stop working.", "Créer un nouveau code": "Create a new code", "Annuler ce code": "Cancel this code", "Code annulé": "Code cancelled"});
@@ -1608,6 +1657,9 @@ function viewSettings(){
   return `${subBar((dog() || {}).name || T("Chien"))}
   <div class="top" style="padding-top:4px"><div><h1>${T("Réglages")}</h1></div></div>
   ${notifSection()}
+  ${SITE && window.carnetAccount ? `<div class="sec"><div class="sec-h"><h2>${T("Compte")}</h2></div><div class="card list">
+    <div class="row"><span class="ico" style="background:var(--blue)">${I_FAM}</span><div class="main"><div class="t">${esc(window.carnetAccount.email || "")}</div><div class="s">${T("Connecté sur cet appareil")}</div></div></div>
+    <button class="row" data-act="signOut"><span class="main t" style="color:var(--red)">${T("Se déconnecter")}</span></button></div></div>` : ""}
   <div class="sec"><div class="sec-h"><h2>${T("Langue")}</h2></div><div class="card"><div class="row">${langSeg()}</div></div></div>
   <div class="sec"><div class="sec-h"><h2>${T("Aide")}</h2></div><div class="card list">
     <button class="row" data-act="tutoAgain"><span class="ico" style="background:var(--purple)">${I.dot}</span><span class="main t">${T("Revoir le tutoriel")}</span><span class="chev">${I.chevR}</span></button>
@@ -2134,7 +2186,7 @@ function codeShow(code, role){
     <button type="button" class="btn" style="width:100%;margin-top:14px" data-act="codeCopy" data-v="${esc(code)}">${T("Copier le code")}</button>
     <div class="inv-s" style="margin-top:16px"><b>1</b><div><div class="t">${T("Donnez-lui ce code")}</div><div class="s">${T("De vive voix ou par message. Il ne sera plus affiché ensuite : si vous le perdez, créez-en un nouveau.")}</div></div></div>
     <div class="inv-s" style="margin-top:10px"><b>2</b><div><div class="t">${T("Elle ouvre le carnet avec son compte")}</div><div class="s">${T("Elle entre le code, puis son prénom : elle rejoint la famille avec le rôle choisi.")}</div></div></div>
-    ${SITE ? "" : `<div class="hint" style="margin-top:12px">${T("Pour qu'elle puisse ouvrir le carnet, ajoutez aussi son e-mail en « Éditeur » dans « Partager » en haut de la page.")}</div>`}`);
+    ${SITE ? `<div class="sh-link" style="margin-top:14px"><code>${esc(ART_URL.replace(/^https?:\/\//, ""))}</code><button type="button" class="btn ghost" data-act="copyLink">${T("Copier le lien")}</button></div>` : `<div class="hint" style="margin-top:12px">${T("Pour qu'elle puisse ouvrir le carnet, ajoutez aussi son e-mail en « Éditeur » dans « Partager » en haut de la page.")}</div>`}`);
   const ok = document.querySelector("#sheet-root .save"); if (ok) ok.textContent = T("Terminé");
 }
 const SH_ICONS = {
@@ -3945,6 +3997,7 @@ document.addEventListener("click", async e => {
       if (!el.dataset.skip && !wizCanNext(k, w.d)) break;
       w.i++; w.dir = 1; renderWiz(); break; }
     case "joinCode": await checkCode(); break;
+    case "signOut": if (window.carnetAccount) await window.carnetAccount.signOut(); break;
     case "codeCopy": { if (await copyText(el.dataset.v)) { el.textContent = T("Copié ✓"); toast(T("Code copié")); } else toast(fmtCode(el.dataset.v)); break; }
     case "joinNew": { const i = $("#j-name"), n = i && i.value.trim(); if (!n) { i && i.focus(); toast(T("Indiquez votre prénom.")); break; }
       if (family().some(m => m.name.toLowerCase() === n.toLowerCase())) { toast(T("Ce prénom est déjà dans la famille.")); break; }
@@ -4078,7 +4131,7 @@ function goLocal(){ if (booted) return; booted = true; S.mode = "local"; local =
   // outside claude.ai: files are saved with a plain browser download
   if (!downloader) downloader = {save: async ({filename, data}) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], {type: /\.html$/.test(filename) ? "text/html" : "text/plain"})); a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }};
   render(); }
-const fallback = setTimeout(goLocal, 4000);
+const fallback = SITE ? 0 : setTimeout(goLocal, 4000); // the site signs in first: no silent fallback to a local copy
 (async () => {
   try {
     if (!window.claude || !window.claude.use) { clearTimeout(fallback); goLocal(); return; }
