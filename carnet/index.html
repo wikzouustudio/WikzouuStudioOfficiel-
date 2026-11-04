@@ -685,6 +685,20 @@ body.locked .tabbar{display:none}
 .vitals .legend{display:grid;gap:10px;flex:1;min-width:0;margin:0;font-size:14px;color:var(--fg)}
 .vitals{min-width:0;overflow:hidden}
 
+/* Dark mode: Apple's elevated surfaces, so selected and layered things stay visible */
+:root{--seg-on:#FFFFFF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--seg-on:#636366}
+  :root:not([data-theme="light"]) .sheet{--bg:#1C1C1E;--card:#2C2C2E;--fill:rgba(118,118,128,.28);--fill2:rgba(118,118,128,.36);--sep:rgba(84,84,88,.6)}
+  :root:not([data-theme="light"]) .tuto-card,:root:not([data-theme="light"]) .notif{--card:#2C2C2E}
+  :root:not([data-theme="light"]) .scrim{background:rgba(0,0,0,.6)}
+  :root:not([data-theme="light"]) .seg button.on{box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  :root:not([data-theme="light"]) .pl-day.on .dots i{box-shadow:none}}
+:root[data-theme="dark"]{--seg-on:#636366}
+:root[data-theme="dark"] .sheet{--bg:#1C1C1E;--card:#2C2C2E;--fill:rgba(118,118,128,.28);--fill2:rgba(118,118,128,.36);--sep:rgba(84,84,88,.6)}
+:root[data-theme="dark"] .tuto-card,:root[data-theme="dark"] .notif{--card:#2C2C2E}
+:root[data-theme="dark"] .scrim{background:rgba(0,0,0,.6)}
+:root[data-theme="dark"] .seg button.on{box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.seg button.on{background:var(--seg-on)!important}
 /* Education ring: "3/14" on one line, centred */
 .edu-n{display:flex!important;align-items:baseline;justify-content:center;font-family:var(--font-r);font-weight:700;letter-spacing:-.02em;line-height:1}
 .edu-n small{font-size:.55em!important;font-weight:600;color:var(--fg2);margin-left:1px}
