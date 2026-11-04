@@ -1618,9 +1618,9 @@ function viewRoutineBody(){
   medItems.sort((a,b) => toMin(a.t)-toMin(b.t));
   const byDay = ORDER.map(x => routine().filter(r => (r.days||[]).includes(x)).sort(sortT));
   const next = isToday ? items.find(r => toMin(r.time) >= nm) : null;
-  // days: one coloured dot per activity, in the order of the day
+  // days: weekday and number of activities
   const picker = `<div class="pl-days" role="tablist">${ORDER.map((x, i) => { const its = byDay[i];
-    return `<button class="pl-day ${x === wd ? "on" : ""} ${x === now.getDay() ? "today" : ""}" data-act="rday" data-d="${x}" role="tab" aria-selected="${x === wd}"><span class="l">${WD()[x]}</span><span class="n num">${its.length}</span><span class="dots">${its.slice(0, 8).map(r => `<i style="background:${(CATS[r.cat]||CATS.autre).color}"></i>`).join("")}</span></button>`; }).join("")}</div>`;
+    return `<button class="pl-day ${x === wd ? "on" : ""} ${x === now.getDay() ? "today" : ""}" data-act="rday" data-d="${x}" role="tab" aria-selected="${x === wd}"><span class="l">${WD()[x]}</span><span class="n num">${its.length}</span></button>`; }).join("")}</div>`;
   // the day on a 24 h ribbon
   const cats = {}; items.forEach(r => { cats[r.cat] = (cats[r.cat] || 0) + 1; });
   const ribbon = `<div class="pl-ribbon" aria-hidden="true"><div class="pl-night" style="left:0;width:${6/24*100}%"></div><div class="pl-night" style="left:${21/24*100}%;right:0"></div>
