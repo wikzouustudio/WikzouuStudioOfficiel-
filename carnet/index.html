@@ -1183,6 +1183,7 @@ const TRAITS_HR = {
 };
 Object.keys(TRAITS_HR).forEach(k => { if (TRAITS[k]) TRAITS[k].hr = TRAITS_HR[k]; });
 EN["Moyen (appétit)"] = "Fair"; EN["Moyen"] = "Medium";
+Object.assign(EN,{"Demander à Claude pour {n}":"Ask Claude about {n}","Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.":"Opens Claude with today's summary. Free with a Claude account."}); Object.assign(HR,{"Demander à Claude pour {n}":"Pitajte Claude o {n}","Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.":"Otvara Claude sa sažetkom dana. Besplatno uz Claude račun."});
 Object.assign(EN, {"Compte": "Account", "Connecté sur cet appareil": "Signed in on this device", "Se déconnecter": "Sign out"});
 Object.assign(HR, {"Compte": "Račun", "Connecté sur cet appareil": "Prijavljeni na ovom uređaju", "Se déconnecter": "Odjava"});
 Object.assign(EN, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Your account can only view this logbook (“Can view”), so it can't join the family yet. The owner needs to add your email address as “Editor”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "You open the logbook again and enter the code they gave you", "Un instant…": "One moment…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Your account can't join yet: ask the owner to add you as “Editor”."});
@@ -1797,7 +1798,7 @@ function tipsFor(ds){
   if (res.length < 2) { res.push(ctx.winter || ctx.m >= 9 ? {niveau:"info", titre:T("Sorties du soir"), texte:T("Les journées sont courtes : un collier ou un harnais lumineux le rend visible dans le noir.")} : {niveau:"info", titre:T("Chaleur"), texte:T("Sortez-le aux heures fraîches et emportez de l'eau lors des longues balades.")}); }
   return res.slice(0, 6);
 }
-function adviceInput(ds){
+function adviceInput(ds, chat){
   const ctx = dayContext(ds), {d, st, day} = ctx, L = [];
   const lang = LANG === "en" ? "English" : LANG === "hr" ? "Croatian (standard Croatian, polite \"vi\" form)" : "French (vouvoiement, Swiss French usage)";
   const bk = breedKey(d.breed), traits = (BREED_TRAITS[bk] || []).map(k => TRAITS[k] && TRAITS[k].en[0]).filter(Boolean);
@@ -1819,6 +1820,7 @@ function adviceInput(ds){
     L.push(`- ${p}: ${ps.n}/${ps.total} tasks, appetite ${pd.appetite ? EN[pd.appetite] : "?"}, energy ${pd.energy ? EN[pd.energy] : "?"}, stools ${pd.stool ? EN[pd.stool] : "?"}${pd.note ? ", note: " + pd.note : ""}`); }
   const ms = meds().filter(m => medActive(m, ds)); if (ms.length) L.push("\nCurrent treatments: " + ms.map(m => `${m.name} (${m.dose ? EN[m.dose] || m.dose : ""}${m.end ? ", until " + m.end : ""})`).join("; "));
   const ap = appts().filter(a => { const n = daysBetween(ds, a.date); return n >= 0 && n <= 14; }); if (ap.length) L.push("Upcoming appointments: " + ap.map(a => `${a.title} on ${a.date}`).join("; "));
+  if (chat) { L.push("\nAnswer as a short, friendly message for the family: 1-2 sentences on how the dog is doing today, then 3 to 5 tips (one concrete action each for tonight or tomorrow), at least 2 of them breed-specific."); return L.join("\n"); }
   L.push(`\nAnswer ONLY with JSON: {"resume": "1-2 sentences on how the dog is doing today", "conseils": [{"titre": "4 to 6 words", "texte": "1-2 sentences, one concrete action for tonight or tomorrow", "niveau": "bravo" | "info" | "race" | "attention" | "veterinaire"}]} with 3 to 5 tips. Use "race" for the breed-specific tips.`);
   return L.join("\n");
 }
@@ -1855,7 +1857,9 @@ function adviceSection(ds){
     body = `<div class="list">${tipsFor(ds).map(row).join("")}</div>`;
     foot = early ? T("Bilan provisoire : il se précise au fil de la journée et du journal.") : T("Repères selon la race, l'âge, la journée et le journal. Ils ne remplacent pas l'avis du vétérinaire.");
   }
-  const btn = sampler && canTick() ? `<button class="btn ${useAdv?"ghost":""} ai-btn" data-act="advice" data-d="${ds}" ${loading?"disabled":""} style="width:100%;margin-top:10px">${loading?`<span class="spin"></span>${T("Analyse de la journée…")}`:useAdv?T("Actualiser les conseils"):T("Conseils personnalisés pour {n}",{n:esc(d.name || T("le chien"))})}</button>` : "";
+  const askUrl = () => "https://claude.ai/new?q=" + encodeURIComponent(adviceInput(ds, true));
+  const btn = !sampler && SITE && canTick() ? `<a class="btn ghost ai-btn" href="${askUrl()}" target="_blank" rel="noopener" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;text-decoration:none">${T("Demander à Claude pour {n}",{n:esc(d.name || T("le chien"))})}</a>` : sampler && canTick() ? `<button class="btn ${useAdv?"ghost":""} ai-btn" data-act="advice" data-d="${ds}" ${loading?"disabled":""} style="width:100%;margin-top:10px">${loading?`<span class="spin"></span>${T("Analyse de la journée…")}`:useAdv?T("Actualiser les conseils"):T("Conseils personnalisés pour {n}",{n:esc(d.name || T("le chien"))})}</button>` : "";
+  if (!sampler && SITE && btn) foot += " " + T("Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.");
   return `<div class="sec"><div class="sec-h"><h2>${early?T("Bilan provisoire"):T("Bilan et conseils")}</h2></div><div class="card ${loading?"thinking":""}">${body}</div>${btn}<div class="foot">${foot}</div></div>`;
 }
 
