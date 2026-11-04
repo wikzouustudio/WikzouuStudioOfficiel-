@@ -1,4 +1,4 @@
-// Firebase bridge for the standalone Carnet du chien.
+// Firebase bridge for the standalone Dogs Life app.
 // The app was written against claude.ai's `window.claude.use(...)` API; this module answers the same calls
 // with Firebase Auth (one account per person) and Firestore (one isolated space per family).
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
@@ -7,12 +7,12 @@ import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signI
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDHk_d3qkOyci4ELyKhFzShOY5XU94oPOo",
-  authDomain: "carnet-91f30.firebaseapp.com",
-  projectId: "carnet-91f30",
-  storageBucket: "carnet-91f30.firebasestorage.app",
-  messagingSenderId: "961233839254",
-  appId: "1:961233839254:web:ea3bff8f9692ee9e33ceb7"
+  apiKey: "AIzaSyBt3VJPpjn2zQLeoV6WwtoTHQwyc2K35qc",
+  authDomain: "dogs-life-801c4.firebaseapp.com",
+  projectId: "dogs-life-801c4",
+  storageBucket: "dogs-life-801c4.firebasestorage.app",
+  messagingSenderId: "413507293821",
+  appId: "1:413507293821:web:241b6921bd8cdf3c6a5714"
 };
 // Claude's evening advice goes through a small relay that keeps the API key secret (empty = built-in advice only)
 const ADVICE_URL = "";

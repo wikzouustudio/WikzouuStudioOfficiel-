@@ -1,5 +1,5 @@
 rules_version = '2';
-// Carnet du chien — each family only sees its own data.
+// Dogs Life — each family only sees its own data.
 // A person enters a family by creating it (owner) or with a valid join code made by a member.
 service cloud.firestore {
   match /databases/{database}/documents {
