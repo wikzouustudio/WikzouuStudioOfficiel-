@@ -3902,7 +3902,7 @@ const B3D = (() => {
   async function buildSTL(THREE, cfg, my){
     const M = await loadModel(); if (my !== buildTok) throw "stale";
     const C = Object.assign({}, COATS._, COATS[cfg.breed] || {});
-    const soft = h => { const c = new THREE.Color(h); c.offsetHSL(0, .1, -.03); return c.convertSRGBToLinear(); }; // punchy, cartoon-bright: tone mapping washes colours out
+    const soft = h => { const c = new THREE.Color(h); c.offsetHSL(0, .08, -.06); return c.convertSRGBToLinear(); }; // punchy, cartoon-bright: tone mapping washes colours out
     const raw = h => new THREE.Color(h).convertSRGBToLinear();
     const baseHex = C.base, dark = new THREE.Color(baseHex).getHSL({}).l < .25;
     const tipC = soft(C.ear && C.ear !== C.base ? C.ear : "#" + new THREE.Color(baseHex).offsetHSL(0, .05, -.18).getHexString());
@@ -3910,6 +3910,7 @@ const B3D = (() => {
     const LAY = [soft(C.belly || C.muzzle), tipC, soft(dark ? "#C9858A" : "#F6A9B0"), soft(dark ? "#B0646C" : "#FF8F9E"), soft("#5B3B35"), soft("#F0607A"), raw("#1A1212"),
       (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.7) : new THREE.Color("#140E0D")).convertSRGBToLinear()];
     const LAYA = [1, .9, 1, .55, .9, 1, 1, 1]; // blush stays a soft wash
+    const EYE0 = raw("#120C0B"), EYE1 = C.eyes ? soft(C.eyes) : raw("#7A4528"); // pupil-dark at the top, warm iris glow at the bottom
     const pal = [soft(C.base), soft(C.belly || C.muzzle), (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.75) : new THREE.Color("#16100e")).convertSRGBToLinear(), new THREE.Color("#1d1513").convertSRGBToLinear(),
       new THREE.Color("#E97E8C").convertSRGBToLinear(), soft("#F2B7A6"), soft(C.ear || C.base)];
     if (C.base && /^#[0-3]/.test(C.base)) pal[5] = soft("#C9858A"); // dark coats: deeper inner ear
@@ -3921,7 +3922,9 @@ const B3D = (() => {
       // coat: a gentle two-tone, darker along the back and the top of the head, warmer on the front
       const back = Math.max(0, Math.min(1, (34 - Z) / 34)), top = Math.max(0, Math.min(1, (Y - 52) / 12)), shade = 1 - back * .2 - top * .08;
       let r = cBase.r*shade, g = cBase.g*shade, b = cBase.b*shade;
-      if (layers) for (let L = 0; L < 8; L++) { const a = layers[i*8 + L] / 255 * LAYA[L]; if (a > 0) { const lc = LAY[L]; r += (lc.r - r)*a; g += (lc.g - g)*a; b += (lc.b - b)*a; } }
+      if (layers) for (let L = 0; L < 8; L++) { const a = layers[i*8 + L] / 255 * LAYA[L]; if (a > 0) { let lc = LAY[L];
+        if (L === 7) { const tt = Math.max(0, Math.min(1, (41.9 - Y) / 4.4)), k = tt * tt * (3 - 2 * tt); lc = {r: EYE0.r + (EYE1.r - EYE0.r)*k, g: EYE0.g + (EYE1.g - EYE0.g)*k, b: EYE0.b + (EYE1.b - EYE0.b)*k}; }
+        r += (lc.r - r)*a; g += (lc.g - g)*a; b += (lc.b - b)*a; } }
       else { const c = pal[cls[i]] || pal[0]; r = c.r*shade; g = c.g*shade; b = c.b*shade; }
       col[i*3] = r; col[i*3+1] = g; col[i*3+2] = b; cf[i] = cls[i];
     }
@@ -3936,7 +3939,7 @@ const B3D = (() => {
     const U = {uHead:{value:new THREE.Vector3()}, uEarL:{value:new THREE.Vector3()}, uEarR:{value:new THREE.Vector3()}, uTail:{value:new THREE.Vector3()},
       uHeadP:{value:v3(LM.head)}, uEarLP:{value:v3(LM.earL)}, uEarRP:{value:v3(LM.earR)}, uTailP:{value:v3(LM.tail)}, uBodyC:{value:v3(LM.body)},
       uBreath:{value:0}, uEye:{value:1}, uEyeY:{value:LM.eyeY}, uTongue:{value:0}, uSquash:{value:1}};
-    const steps = new Uint8Array([150,150,150,255, 205,205,205,255, 255,255,255,255]);
+    const steps = new Uint8Array([118,118,118,255, 168,168,168,255, 212,212,212,255]);
     const grad = new THREE.DataTexture(steps, 3, 1, THREE.RGBAFormat); grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.generateMipmaps = false; grad.needsUpdate = true;
     const mat = new THREE.MeshToonMaterial({vertexColors:true, gradientMap:grad});
     mat.onBeforeCompile = sh => {
@@ -3945,13 +3948,13 @@ const B3D = (() => {
       sh.fragmentShader = "varying float vGloss;\n" + sh.fragmentShader.replace("#include <dithering_fragment>", `#include <dithering_fragment>
         vec3 Vd = normalize(vViewPosition);
         float rim = smoothstep(.55, .95, 1.0 - max(dot(normal, Vd), 0.0));
-        gl_FragColor.rgb += rim * vec3(1.0, .93, .82) * .28 * (1.0 - vGloss * .6);
+        gl_FragColor.rgb += rim * vec3(1.0, .93, .82) * .12 * (1.0 - vGloss);
         float spec = pow(max(dot(normal, normalize(vec3(-.35, .55, .76))), 0.0), 40.0);
-        gl_FragColor.rgb += vGloss * step(.5, spec) * .55;`);
+        gl_FragColor.rgb += vGloss * step(.5, spec) * .25;`);
     };
     const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = false; mesh.frustumCulled = false;
     const ink = new THREE.MeshBasicMaterial({color:new THREE.Color(dark ? "#000000" : "#3A2316").convertSRGBToLinear(), side:THREE.BackSide});
-    const OUTLINE = {value:.0052};
+    const OUTLINE = {value:.0042};
     ink.onBeforeCompile = sh => {
       Object.assign(sh.uniforms, U, {uOutline:OUTLINE});
       sh.vertexShader = VS_HEAD + "uniform float uOutline;\n" + sh.vertexShader.replace("#include <begin_vertex>",
@@ -3965,8 +3968,9 @@ const B3D = (() => {
     const headG = new THREE.Group(); headG.position.copy(v3(LM.head)); body.add(headG);
     const inHead = (o, p) => { o.position.set(p[0] - LM.head[0], p[1] - LM.head[1], p[2] - LM.head[2]); headG.add(o); return o; };
     const glint = new THREE.MeshBasicMaterial({color:0xffffff}), glints = [];
-    [LM.eyeL, LM.eyeR].forEach(e => { const g1 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0115, 18, 12), glint), [e[0] - .013, e[1] + .015, e[2] + .002]);
-      const g2 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0055, 12, 8), glint), [e[0] + .013, e[1] - .012, e[2] + .001]); glints.push(g1, g2); });
+    [LM.eyeL, LM.eyeR].forEach(e => { const g1 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0165, 20, 14), glint), [e[0] - .017, e[1] + .018, e[2] - .004]); g1.scale.set(1, 1.1, .45);
+      const g2 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0075, 14, 10), glint), [e[0] + .017, e[1] - .012, e[2] - .004]); g2.scale.z = .45;
+      const g3 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.004, 10, 8), glint), [e[0] + .004, e[1] + .026, e[2] - .008]); g3.scale.z = .45; glints.push(g1, g2, g3); });
     const ng = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0055, 12, 8), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.85})), mw(24.2, 39.9, 66.9)); ng.scale.set(1.4, .8, .6);
     const gold = new THREE.MeshStandardMaterial({color:new THREE.Color("#E9B949").convertSRGBToLinear(), roughness:.25, metalness:.85, envMapIntensity:1.4});
     let bell = null;
@@ -4011,7 +4015,7 @@ const B3D = (() => {
     if (t > nextBlink) { nextBlink = t + 2.2 + Math.random() * 3.2; P.blinkT = t; }
     const bl = P.blinkT != null ? (t - P.blinkT) / .16 : 9, blink = bl >= 0 && bl < 1 ? Math.sin(bl * Math.PI) : 0;
     const petAgo = (now - jumpT) / 1000, squint = petAgo >= 0 && petAgo < 1.3 ? Math.sin(Math.min(1, petAgo / 1.3) * Math.PI) * .7 : 0;
-    const open = Math.max(.06, Math.min(cur.eye, 1 - blink * .94, 1 - squint));
+    const open = Math.max(.06, Math.min(sleepy ? cur.eye : Math.max(.9, cur.eye), 1 - blink * .94, 1 - squint));
     U.uEye.value = open; P.glints.forEach(g => g.visible = open > .45);
     U.uTongue.value = Math.sin(t * 8) * .0018 * cur.tongue + (1 - cur.tongue) * .004;
     // squash & stretch: pet jump, happy hops, landing
