@@ -331,6 +331,12 @@ textarea.f{min-height:80px;resize:vertical}
 .buddy3d canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;touch-action:pan-y;cursor:grab;outline:none;animation:fadeUp .5s ease-out both}
 .buddy3d canvas:active{cursor:grabbing}
 .buddy3d.has3d .buddy-btn{display:none}
+.b3-load{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--fg2);font-size:14px}
+.buddy3d.has3d .b3-load{display:none}
+.b3-spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--fill2);border-top-color:var(--accent);animation:spin .8s linear infinite}
+.b3-err{display:none;max-width:24ch;text-align:center}
+.buddy3d.b3-fail .b3-spin,.buddy3d.b3-fail .b3-load>small:first-of-type{display:none}
+.buddy3d.b3-fail .b3-err{display:block}
 .buddy3d .pets{z-index:2}
 .pets i:nth-child(6){--x:-5px;animation-delay:.12s}
 .zz{position:absolute;right:22%;top:12%;pointer-events:none;font-family:var(--font-r);font-weight:800;color:var(--purple);z-index:2}
@@ -1505,8 +1511,8 @@ Object.assign(HR, {"Créer une famille":"Stvori obitelj","Vous créez le carnet 
   "Code reçu":"Primljeni kod","Votre prénom":"Vaše ime","Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.":"Osoba koja vas poziva nalazi kod u Obitelj → Dodaj nekoga.","Entrez le code.":"Unesite kod.","Indiquez votre prénom.":"Upišite svoje ime.","Rejoindre":"Pridruži se",
   "Créons le carnet de votre chien":"Izradimo dnevnik vašeg psa","4 étapes rapides. Tout se modifie ensuite.":"4 brza koraka. Sve se može kasnije promijeniti."});
 
-Object.assign(EN, {"Quelqu'un":"Someone"});
-Object.assign(HR, {"Quelqu'un":"Netko"});
+Object.assign(EN, {"Quelqu'un":"Someone","Chargement…":"Loading…","Le compagnon 3D ne peut pas s'afficher sur cet appareil.":"The 3D companion can't be shown on this device."});
+Object.assign(HR, {"Quelqu'un":"Netko","Chargement…":"Učitavanje…","Le compagnon 3D ne peut pas s'afficher sur cet appareil.":"3D pratitelj ne može se prikazati na ovom uređaju."});
 
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
@@ -2400,7 +2406,7 @@ function viewBuddy(){
     <div class="buddy-stage">
       <button class="bubble" data-act="go" data-tab="aujourdhui">${esc(buddySay(b))}</button>
       <div id="buddy3d" class="buddy3d mood-${b.mood}" data-cfg="${esc(JSON.stringify(cfg))}">
-        <button class="buddy-btn ${jump?"jump":""}" data-act="petBuddy" aria-label="${T("Caresser")}">${buddySVG(b)}${jump?`<span class="pets" aria-hidden="true">${"<i></i>".repeat(5)}</span>`:""}</button>
+        <div class="b3-load" role="status"><span class="b3-spin"></span><small>${T("Chargement…")}</small><small class="b3-err">${T("Le compagnon 3D ne peut pas s'afficher sur cet appareil.")}</small></div>
         ${b.mood === "dort" ? `<div class="zz" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div>` : ""}
       </div>
       <div class="b3-hint">${T("Glissez pour le faire tourner, touchez-le pour le caresser.")}</div>
@@ -3910,7 +3916,7 @@ const B3D = (() => {
     const LAY = [soft(C.belly || C.muzzle), tipC, soft(dark ? "#C9858A" : "#F6A9B0"), soft(dark ? "#B0646C" : "#FF8F9E"), soft("#5B3B35"), soft("#F0607A"), raw("#1A1212"),
       (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.7) : new THREE.Color("#140E0D")).convertSRGBToLinear()];
     const LAYA = [1, .9, 1, .55, .9, 1, 1, 1]; // blush stays a soft wash
-    const EYE0 = raw("#120C0B"), EYE1 = C.eyes ? soft(C.eyes) : raw("#7A4528"); // pupil-dark at the top, warm iris glow at the bottom
+    const EYE0 = C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.6).convertSRGBToLinear() : raw("#120C0B"), EYE1 = EYE0; // solid, glossy eyes // pupil-dark at the top, warm iris glow at the bottom
     const pal = [soft(C.base), soft(C.belly || C.muzzle), (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.75) : new THREE.Color("#16100e")).convertSRGBToLinear(), new THREE.Color("#1d1513").convertSRGBToLinear(),
       new THREE.Color("#E97E8C").convertSRGBToLinear(), soft("#F2B7A6"), soft(C.ear || C.base)];
     if (C.base && /^#[0-3]/.test(C.base)) pal[5] = soft("#C9858A"); // dark coats: deeper inner ear
@@ -4278,7 +4284,8 @@ const B3D = (() => {
     malade:{lying:1, headX:.22, ear:1, tailUp:-.45, tailSpeed:1, tailAmp:.05, eye:.45, tongue:0, hop:0, thermo:1},
     dort:{lying:1, headX:.42, ear:1, tailUp:-.5, tailSpeed:1, tailAmp:0, eye:.04, tongue:0, hop:0, thermo:0}
   };
-  function bail(){ failed = true; if (raf) cancelAnimationFrame(raf); raf = 0; try { const el = R && R.domElement; if (el && el.parentNode) { el.parentNode.classList.remove("has3d"); el.remove(); } } catch(_){} }
+  function bail(){ failed = true; if (raf) cancelAnimationFrame(raf); raf = 0; try { const el = R && R.domElement; if (el && el.parentNode) { el.parentNode.classList.remove("has3d"); el.remove(); } } catch(_){}
+    const h = document.getElementById("buddy3d"); if (h) h.classList.add("b3-fail"); }
   function tick(){ try { tick_(); } catch(e) { console.warn("buddy 3D", e); bail(); } }
   function tick_(){
     raf = 0;
@@ -4336,7 +4343,7 @@ const B3D = (() => {
   }
   function pet(){ jumpT = performance.now(); lastInteract = jumpT; hearts(); try { if (navigator.vibrate) navigator.vibrate(10); } catch(_){} }
   function mount(el, cfg){
-    if (failed || !el) return;
+    if (!el) return; if (failed) { el.classList.add("b3-fail"); return; }
     load().then(THREE => {
       el = document.getElementById("buddy3d"); if (!el) return;
       if (!R && !init(THREE)) return;
