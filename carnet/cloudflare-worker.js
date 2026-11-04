@@ -1,7 +1,7 @@
-// Carnet du chien : relais vers Claude pour les conseils du jour.
+// Dogs Life : relais vers Claude pour les conseils du jour.
 // La clé Anthropic reste ici, en secret Cloudflare (ANTHROPIC_API_KEY), jamais dans le site.
 
-const PROJECT = "carnet-91f30";
+const PROJECT = "dogs-life-801c4";
 const ORIGINS = ["https://wikzouustudio.github.io", "https://wikzouustudio.com", "https://www.wikzouustudio.com"];
 const MODEL = "claude-sonnet-5-5";
 const PER_DAY = 30;            // demandes max par personne et par jour
