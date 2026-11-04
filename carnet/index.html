@@ -681,6 +681,9 @@ body.locked .tabbar{display:none}
 .jo-list div{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:12px 14px;font-size:15px}
 .jo-list span{width:30px;height:30px;border-radius:9px;color:#fff;display:grid;place-items:center;flex:none}.jo-list span svg{width:16px;height:16px}
 
+/* Buddy: its legend is a vertical list (a later .legend rule for charts made it a row) */
+.vitals .legend{display:grid;gap:10px;flex:1;min-width:0;margin:0;font-size:14px;color:var(--fg)}
+.vitals{min-width:0;overflow:hidden}
 /* Dogs Life brand */
 h1.brand{font-family:var(--font-r);letter-spacing:-.01em}
 .brand-tag{display:inline-flex;align-items:center;gap:6px;margin:0 4px 4px;font-family:var(--font-r);font-weight:700;font-size:15px;color:var(--accent)}
@@ -1628,7 +1631,6 @@ function viewRoutineBody(){
       : items.length ? `<div class="pl-next done">${esc(T("Plus rien de prévu aujourd'hui. Bonne nuit {n} !",{n:name}))} 🌙</div>` : "") : "";
   const hero = `<div class="card pad pl-hero">
       <div class="pl-hero-h"><div><div class="eyebrow" style="margin:0">${isToday ? T("Aujourd'hui") : esc(cap(WDL()[wd]))}</div><div class="pl-title">${esc(isToday ? T("Le programme de {n}",{n:name}) : T("Le {d} de {n}",{d:WDL()[wd], n:name}))}</div></div><div class="pl-count"><b class="num">${items.length}</b><small>${T("activités")}</small></div></div>
-      ${items.length ? ribbon : ""}
       ${items.length ? `<div class="catstats">${Object.entries(cats).map(([k, n]) => { const c = CATS[k] || CATS.autre; return `<span class="pill num"><i style="background:${c.color}"></i>${esc(T(c.label))} × ${n}</span>`; }).join("")}</div>` : ""}
       ${nextLine}</div>`;
   // list, grouped by moment of the day, as a timeline
