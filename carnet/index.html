@@ -798,6 +798,10 @@ html.tuto-lock,html.tuto-lock body{overflow:hidden;overscroll-behavior:none}
 .lang-ok{color:var(--accent);display:grid;place-items:center}
 .lang-ok svg{width:20px;height:20px}
 body.wiz-open .scrim{z-index:85}
+/* Companion card: activity rings around the dog, no cartoon */
+.cc-rings{position:relative;width:72px;height:72px}
+.cc-rings .rings{width:72px;height:72px;display:block}
+.cc-rings .avatar.cc-av{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);font-size:12px;box-shadow:0 0 0 1.5px var(--card)}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -3492,7 +3496,7 @@ function viewChien(){
 function chienCards(){
   const b = buddyStats(), es = eduStats(), now = eduNow();
   return `<div class="ccards">
-    <button class="ccard" data-act="goSub" data-tab="chien" data-sub="buddy"><div class="cc-art">${buddySVG(b)}</div><div class="cc-t">${T("Compagnon")}</div><div class="cc-s">${esc(T(STAGES[b.stage][1]))}</div></button>
+    <button class="ccard" data-act="goSub" data-tab="chien" data-sub="buddy"><div class="cc-art"><div class="cc-rings">${activityRings([b.health, b.happy, b.fed])}${avatarHTML(dog() || {}, "cc-av")}</div></div><div class="cc-t">${T("Compagnon")}</div><div class="cc-s">${esc(T(STAGES[b.stage][1]))}</div></button>
     <button class="ccard" data-act="goSub" data-tab="chien" data-sub="education"><div class="cc-art"><div style="position:relative;width:64px;height:64px">${ring(es.n / es.t, 64, 8, "var(--purple)")}<b class="num edu-n" style="font-size:18px">${es.n}<small>/${es.t}</small></b></div></div><div class="cc-t">${T("Éducation")}</div><div class="cc-s">${cmds().length ? esc(T("{n} commande(s) · {f} fiable(s)",{n:cmds().length, f:cmds().filter(c => cmdStats(c).level === "fiable").length})) : now[0] ? esc(T("Ensuite : {s}",{s:T(now[0][1])})) : T("Tout est acquis")}</div></button>
   </div>`;
 }
