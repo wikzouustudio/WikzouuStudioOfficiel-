@@ -756,6 +756,30 @@ html.tuto-lock,html.tuto-lock body{overflow:hidden;overscroll-behavior:none}
 .cmd-grid small{font-size:12px;color:var(--fg2)}
 .cmd-undo{display:block;margin:12px auto 0;color:var(--accent);font-size:14px;font-weight:500;padding:6px 10px}
 .cmd-sugg{gap:6px}
+/* Fresh account: in the app, family comes later */
+.fresh-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:44px 8px 6px}
+.fresh-hero h1{font-size:30px;margin:8px 0 0}
+.fresh-hero p{margin:0;color:var(--fg2);font-size:16px;line-height:1.45;max-width:34ch}
+.fresh-choices{display:grid;gap:10px;margin-top:22px}
+.sec .fresh-choices{margin-top:0}
+.fresh-card{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border-radius:16px;transition:transform .15s}
+.fresh-card:active{transform:scale(.98)}
+.fresh-card .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fresh-card b{font-size:17px}
+.fresh-card span:not(.fresh-ic){color:var(--fg2);font-size:14px;line-height:1.35}
+.fresh-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:none}
+.fresh-ic svg{width:24px;height:24px}
+.fresh-ic.sm{width:34px;height:34px;border-radius:10px}.fresh-ic.sm svg{width:19px;height:19px}
+.fresh-what{display:grid;gap:14px;margin-top:28px;padding:0 6px}
+.fresh-row{display:flex;gap:12px;align-items:center}
+.fresh-row b{display:block;font-size:15px}.fresh-row span:not(.fresh-ic){font-size:14px;color:var(--fg2)}
+.fresh-acc{display:flex;align-items:center;gap:14px;padding:16px}
+.fresh-acc .main{min-width:0}.fresh-acc .t{font-size:19px;font-weight:700}.fresh-acc .s{color:var(--fg2);font-size:14px;overflow-wrap:anywhere}
+.fresh-empty{text-align:center;padding:28px 20px}
+.fresh-empty-i{display:flex;justify-content:center;margin-bottom:10px}
+.fresh-empty .t{font-size:18px;font-weight:700}.fresh-empty .s{color:var(--fg2);font-size:15px;margin-top:4px}
+.jc-code{text-align:center;letter-spacing:.18em;font-weight:700;text-transform:uppercase;font-size:22px!important}
+.wz-hero .brand-logo{margin:0 auto}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -1429,6 +1453,21 @@ Object.assign(HR, {"Programme":"Program","Commandes":"Naredbe","commandes":"nare
 Object.assign(EN, {"Adulte selon la race (estimation)":"Adult for the breed (estimate)"});
 Object.assign(HR, {"Adulte selon la race (estimation)":"Odrasli za pasminu (procjena)"});
 
+Object.assign(EN, {"Créer une famille":"Create a family","Vous créez le carnet de votre chien et invitez vos proches.":"Set up your dog's logbook and invite your people.","Rejoindre une famille":"Join a family","Quelqu'un vous a donné un code.":"Someone gave you a code.",
+  "Profil":"Profile","Votre compte":"Your account","Votre famille":"Your family","Une famille regroupe un chien et les personnes qui s'en occupent. Vous pourrez inviter d'autres personnes ensuite.":"A family brings together a dog and the people who look after it. You can invite others later.",
+  "Bienvenue, {n}":"Welcome, {n}","Bienvenue sur Dogs Life":"Welcome to Dogs Life","Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.":"Your account is ready. To start, create your dog's family or join your people's.",
+  "Repas, balades et soins, cochés par toute la famille.":"Meals, walks and care, ticked off by the whole family.","Vaccins, traitements, poids et rendez-vous.":"Vaccines, treatments, weight and appointments.","Messages et tâches partagées.":"Messages and shared tasks.",
+  "Pas encore de famille":"No family yet","Créez ou rejoignez une famille depuis votre profil pour voir cette page.":"Create or join a family from your profile to see this page.","Aller au profil":"Go to profile",
+  "Code reçu":"Code received","Votre prénom":"Your first name","Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.":"The person inviting you finds the code in Family → Add someone.","Entrez le code.":"Enter the code.","Indiquez votre prénom.":"Enter your first name.","Rejoindre":"Join",
+  "Créons le carnet de votre chien":"Let's set up your dog's logbook","4 étapes rapides. Tout se modifie ensuite.":"4 quick steps. You can change everything later."});
+Object.assign(HR, {"Créer une famille":"Stvori obitelj","Vous créez le carnet de votre chien et invitez vos proches.":"Izradite dnevnik svog psa i pozovite bližnje.","Rejoindre une famille":"Pridruži se obitelji","Quelqu'un vous a donné un code.":"Netko vam je dao kod.",
+  "Profil":"Profil","Votre compte":"Vaš račun","Votre famille":"Vaša obitelj","Une famille regroupe un chien et les personnes qui s'en occupent. Vous pourrez inviter d'autres personnes ensuite.":"Obitelj okuplja psa i ljude koji se brinu o njemu. Kasnije možete pozvati druge.",
+  "Bienvenue, {n}":"Dobro došli, {n}","Bienvenue sur Dogs Life":"Dobro došli u Dogs Life","Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.":"Vaš račun je spreman. Za početak stvorite obitelj svog psa ili se pridružite obitelji bližnjih.",
+  "Repas, balades et soins, cochés par toute la famille.":"Obroci, šetnje i njega, koje označava cijela obitelj.","Vaccins, traitements, poids et rendez-vous.":"Cjepiva, terapije, težina i termini.","Messages et tâches partagées.":"Poruke i zajednički zadaci.",
+  "Pas encore de famille":"Još nema obitelji","Créez ou rejoignez une famille depuis votre profil pour voir cette page.":"Stvorite obitelj ili joj se pridružite u profilu da biste vidjeli ovu stranicu.","Aller au profil":"Idi na profil",
+  "Code reçu":"Primljeni kod","Votre prénom":"Vaše ime","Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.":"Osoba koja vas poziva nalazi kod u Obitelj → Dodaj nekoga.","Entrez le code.":"Unesite kod.","Indiquez votre prénom.":"Upišite svoje ime.","Rejoindre":"Pridruži se",
+  "Créons le carnet de votre chien":"Izradimo dnevnik vašeg psa","4 étapes rapides. Tout se modifie ensuite.":"4 brza koraka. Sve se može kasnije promijeniti."});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -1950,7 +1989,38 @@ function viewNotMember(){
     <button class="btn" style="min-width:220px" data-act="openJoin">${T("Entrer le code de la famille")}</button>
     <div style="margin-top:22px;display:flex;justify-content:center">${langSeg()}</div></div>`;
 }
+function viewFresh(){
+  const acc = window.carnetAccount || {}, first = (acc.name || "").split(" ")[0];
+  const choose = `<div class="fresh-choices">
+      <button class="card fresh-card" data-act="startBlank"><span class="fresh-ic" style="background:var(--accent)">${I.paw}</span><div class="main"><b>${T("Créer une famille")}</b><span>${T("Vous créez le carnet de votre chien et invitez vos proches.")}</span></div><span class="chev">${I.chevR}</span></button>
+      <button class="card fresh-card" data-act="joinCode"><span class="fresh-ic" style="background:var(--purple)">${I_FAM}</span><div class="main"><b>${T("Rejoindre une famille")}</b><span>${T("Quelqu'un vous a donné un code.")}</span></div><span class="chev">${I.chevR}</span></button></div>`;
+  if (S.tab === "chien") return `${pageHead(T("Profil"), "")}
+    <div class="card fresh-acc">${mav({name: first || "?", color: MCOL[1]}, 56)}<div class="main"><div class="t">${esc(acc.name || T("Votre compte"))}</div><div class="s">${esc(acc.email || "")}</div></div></div>
+    <div class="sec"><div class="sec-h"><h2>${T("Votre famille")}</h2></div>${choose}<div class="foot">${T("Une famille regroupe un chien et les personnes qui s'en occupent. Vous pourrez inviter d'autres personnes ensuite.")}</div></div>
+    <div class="sec"><div class="card list"><div class="row">${langSeg()}</div>${acc.signOut ? `<button class="row" data-act="signOut"><span class="main t" style="color:var(--red)">${T("Se déconnecter")}</span></button>` : ""}</div></div>`;
+  if (S.tab === "aujourdhui") return `<div class="fresh-hero">${logoImg(88)}
+      <h1>${esc(first ? T("Bienvenue, {n}", {n: first}) : T("Bienvenue sur Dogs Life"))}</h1>
+      <p>${T("Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.")}</p></div>
+    ${choose}
+    <div class="fresh-what">${[["var(--green)", I.tRoutine, "Planning", "Repas, balades et soins, cochés par toute la famille."], ["var(--pink)", I.tHealth, "Santé", "Vaccins, traitements, poids et rendez-vous."], ["var(--purple)", I_FAM, "Famille", "Messages et tâches partagées."]].map(([c, ic, t, x]) => `<div class="fresh-row"><span class="fresh-ic sm" style="background:${c}">${ic}</span><div><b>${T(t)}</b><span>${T(x)}</span></div></div>`).join("")}</div>`;
+  const tl = (tabList().find(x => x[0] === S.tab) || [, ""])[1];
+  return `${pageHead(T(tl), "")}<div class="card fresh-empty"><div class="fresh-empty-i">${logoImg(56)}</div><div class="t">${T("Pas encore de famille")}</div><div class="s">${T("Créez ou rejoignez une famille depuis votre profil pour voir cette page.")}</div><button class="btn" data-act="go" data-tab="chien" style="margin-top:14px">${T("Aller au profil")}</button></div>`;
+}
+function joinCodeSheet(){
+  const acc = window.carnetAccount || {};
+  openSheet(T("Rejoindre une famille"), `<div class="fg"><label for="jc-code">${T("Code reçu")}</label><input class="f jc-code" id="jc-code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABC 234" maxlength="9"></div>
+    <div class="fg"><label for="jc-name">${T("Votre prénom")}</label><input class="f" id="jc-name" autocomplete="given-name" maxlength="24" value="${esc((acc.name || "").split(" ")[0])}"></div>
+    <div class="hint">${T("Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.")}</div>`,
+    () => { const code = ($("#jc-code").value || "").trim(), name = ($("#jc-name").value || "").trim();
+      if (!code) { toast(T("Entrez le code.")); return false; } if (!name) { toast(T("Indiquez votre prénom.")); return false; }
+      if (!window.carnetJoinCode) { toast(T("Les données ne sont pas encore accessibles. Vérifiez la connexion.")); return false; }
+      const ok = $("#sheet-root .save"); if (ok) { ok.disabled = true; ok.textContent = "…"; }
+      window.carnetJoinCode(code, name).then(err => { if (err) { toast(err); if (ok) { ok.disabled = false; ok.textContent = T("OK"); } } });
+      return false; });
+  const ok = $("#sheet-root .save"); if (ok) ok.textContent = T("Rejoindre");
+}
 function viewOnboarding(){
+  if (SITE && canEdit()) return viewFresh();
   return `<div class="hero" style="padding-top:60px">${logoImg(104)}<div class="eyebrow" style="color:var(--accent)">${T("Le carnet de votre chien")}</div><h1 class="brand">Dogs Life</h1>
   <div class="s" style="max-width:34ch">${T("Routine du jour, médicaments, rendez-vous et poids, partagés avec toute la famille.")}</div>
   ${meMember() ? `<div class="wz-note" style="max-width:36ch">${T("Vous avez rejoint la famille. Le carnet du chien n'est pas encore créé : la personne qui vous a invité(e) va le remplir, ou créez-le vous-même.")}</div>` : ""}
@@ -2508,11 +2578,11 @@ function wizBody(k, d){
   const seg = (f, opts, lab) => `<div class="wz-field"><div class="wz-lab">${lab}</div><div class="seg wz-seg" data-group="${f}">${opts.map(o => `<button type="button" class="${d[f]===o?"on":""}" data-act="wzPick" data-f="${f}" data-v="${esc(o)}" aria-pressed="${d[f]===o}">${esc(T(o))}</button>`).join("")}</div></div>`;
   const chips = (f, opts, lab, multi) => `<div class="wz-field"><div class="wz-lab">${lab}${multi ? ` <span class="wz-lab-s">${T("plusieurs choix possibles")}</span>` : ""}</div><div class="wz-chips" data-group="${f}">${opts.map(o => { const on = multi ? (d[f] || []).includes(o) : d[f] === o;
     return `<button type="button" class="wz-chip ${on ? "on" : ""}" data-act="${multi ? "wzMulti" : "wzPick"}" data-f="${f}" data-v="${esc(o)}" aria-pressed="${on}">${multi ? `<i>${I.tick}</i>` : ""}${esc(T(o))}</button>`; }).join("")}</div></div>`;
-  if (k === "welcome") return `<div class="wz-hero">${WZ_DOG}</div>
-    <h1 class="wz-t" style="text-align:center">${T("Bienvenue dans le carnet de votre chien")}</h1>
-    <p class="wz-s" style="text-align:center">${T("En quelques étapes : son profil, sa journée type, son vétérinaire et la famille. Tout pourra être modifié ensuite.")}</p>
+  if (k === "welcome") return `<div class="wz-hero">${logoImg(96)}</div>
+    <h1 class="wz-t" style="text-align:center">${T("Créons le carnet de votre chien")}</h1>
+    <p class="wz-s" style="text-align:center">${T("4 étapes rapides. Tout se modifie ensuite.")}</p>
     <div class="wz-steps">${[["Profil", I.paw, "var(--accent)"], ["Journée", I.tRoutine, "var(--green)"], ["Vétérinaire", I.steth, "var(--blue)"], ["Famille", I_FAM, "var(--purple)"]].map(([l, ic, c]) => `<div><span style="background:${c}">${ic}</span>${T(l)}</div>`).join("")}</div>
-    <button class="card wz-joincard" data-act="wzJoin"><span class="ico" style="background:var(--purple)">${I_FAM}</span><div class="main"><b>${T("Vous avez été invité(e) ?")}</b><span>${T("Rejoignez la famille au lieu de créer un carnet")}</span></div><span class="chev">${I.chevR}</span></button>
+    ${SITE ? "" : `<button class="card wz-joincard" data-act="wzJoin"><span class="ico" style="background:var(--purple)">${I_FAM}</span><div class="main"><b>${T("Vous avez été invité(e) ?")}</b><span>${T("Rejoignez la famille au lieu de créer un carnet")}</span></div><span class="chev">${I.chevR}</span></button>`}
     <div class="wz-field" style="margin-top:18px;display:flex;justify-content:center">${langSeg()}</div>
     <div style="text-align:center"><button class="wz-later" data-act="wzSample">${T("Voir d'abord un exemple")}</button></div>`;
   if (k === "name") return `<h1 class="wz-t">${T("Comment s'appelle votre chien ?")}</h1>
@@ -4038,7 +4108,7 @@ function mountBuddy(){
 /* ---------- render ---------- */
 const I_BUDDY = '<svg viewBox="0 0 28 28" fill="currentColor"><path d="M9.3 6.6C7.1 5.5 4.3 6.4 3.3 9 2.4 11.4 2.6 15 4.2 17.1c1 1.3 2.6 1.2 3.4-.2L9.6 13Zm9.4 0c2.2-1.1 5-.2 6 2.4.9 2.4.7 6-.9 8.1-1 1.3-2.6 1.2-3.4-.2L18.4 13Z"/><path fill-rule="evenodd" d="M14 4.6c-3.6 0-6 2.5-6 6v5.2c0 1 .2 1.9.6 2.7.9 2.9 2.9 5.1 5.4 5.1s4.5-2.2 5.4-5.1c.4-.8.6-1.7.6-2.7v-5.2c0-3.5-2.4-6-6-6Zm-2.6 7.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Zm5.2 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6ZM14 16.4c-1.2 0-2.2.5-2.2 1.2 0 .8 1 1.6 2.2 1.6s2.2-.8 2.2-1.6c0-.7-1-1.2-2.2-1.2Z"/></svg>';
 const I_GARDE = '<svg viewBox="0 0 28 28" fill="currentColor"><path d="M14 3 4 7v6c0 6.2 4.3 11 10 12 5.7-1 10-5.8 10-12V7L14 3Zm-1.2 15.6-4-4 1.6-1.6 2.4 2.4 5.6-5.6 1.6 1.6-7.2 7.2Z"/></svg>';
-const chienLabel = () => { const n = (dog() || {}).name || ""; return n && n.length <= 9 ? n : "Chien"; };
+const chienLabel = () => { const n = (dog() || {}).name || ""; return n && n.length <= 9 ? n : SITE && !n ? "Profil" : "Chien"; };
 const LEGACY_TAB = {routine:["planning"], profil:["chien"], compagnon:["chien","buddy"], rdv:["planning"]};
 function parseHash(h){ let [t, sub] = String(h || "").split("/"); if (LEGACY_TAB[t]) { sub = sub || LEGACY_TAB[t][1]; t = LEGACY_TAB[t][0]; } return [t, sub || null]; }
 function tabList(){
@@ -4062,7 +4132,7 @@ function render(skipNames){
   if (S.mode === "loading" || (S.mode === "db" && !S.ready)) { renderTabs(); if (!S.stale) return; }
   syncMe();
   if (S.mode !== "loading" && (!dog() || (!dog().name && !S.editProfile)) && (S.ready || S.mode==="local")) {
-    if (!S.wizAuto && !S.wiz && canEdit()) { S.wizAuto = true; setTimeout(() => { if (!S.wiz && (!dog() || !dog().name)) wizStart(); }, 250); } const h = viewOnboarding(); if (h !== S.lastHTML) { S.lastHTML = h; v.innerHTML = h; } renderTabs(); return; }
+    if (!SITE && !S.wizAuto && !S.wiz && canEdit()) { S.wizAuto = true; setTimeout(() => { if (!S.wiz && (!dog() || !dog().name)) wizStart(); }, 250); } const h = viewOnboarding(); if (h !== S.lastHTML) { S.lastHTML = h; v.innerHTML = h; } renderTabs(); return; }
   if (S.editProfile && S.tab === "chien" && v.querySelector("#p-name")) { renderTabs(); return; }
   const pa = live("pageAnim");
   if (!tabList().some(x => x[0] === S.tab)) { S.tab = "aujourdhui"; S.sub = null; }
@@ -4369,6 +4439,7 @@ document.addEventListener("click", async e => {
     case "clearAll": await clearAll(); break;
     case "keepExample": { const d = JSON.parse(JSON.stringify(dog()||{})); delete d.example; await saveDog(d); break; }
     case "startBlank": wizStart(); break;
+    case "joinCode": joinCodeSheet(); break;
     case "wzPick": { const w = S.wiz; if (!w) break; const f = el.dataset.f, v = el.dataset.v; w.d[f] = v; if (f === "meals") w.routine = null;
       wizGroup(f, x => x === v); try { if (navigator.vibrate) navigator.vibrate(8); } catch(_){} wizFoot(); break; }
     case "wzMulti": { const w = S.wiz; if (!w) break; const f = el.dataset.f, v = el.dataset.v; let a = (w.d[f] || []).slice();

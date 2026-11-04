@@ -116,7 +116,7 @@ async function createFamily(){
   enter(fid, true);
 }
 let tries = 0, lockUntil = 0;
-async function joinWithCode(){
+async function joinWithCode(fromApp){
   const code = F.code, name = F.name.trim() || ((auth.currentUser || {}).displayName || "").split(" ")[0];
   if (!normCode(code)) { msg = TXT.needCode; return; } if (!name) { msg = TXT.needName; return; }
   if (Date.now() < lockUntil) { msg = TXT.tooMany; return; }
@@ -127,10 +127,11 @@ async function joinWithCode(){
   await setDoc(doc(fs, "families", fid, "access", UID), {at: Date.now(), code: h, role: c.role || "famille"});
   await setDoc(doc(fs, "users", UID), {family: fid});
   // the person's place in the family, with the role chosen by whoever made the code
-  const colors = ["#E07A5F","#3D8BD9","#5FA86B","#B57EDC","#E6A23C","#2BB0A5","#D9668F"];
+  const colors = ["#E07A5F","#3D8BD9","#5FA86B","#B57EDC","#E6A23C","#2BB0A5","#D9668F","#5E6AD2","#C9A227","#E5484D","#3FA7D6","#8B5E3C","#7B9E2F","#A35BB5"];
   await setDoc(doc(fs, "families", fid, "members", newId()), {name, uid: UID, role: c.role || "famille", since: Date.now(), color: colors[Math.floor(Math.random() * colors.length)], invitedBy: c.byName || ""});
   await setDoc(doc(fs, "families", fid, "notes", newId()), {kind: "join", name, text: name + " a rejoint la famille", uid: UID, at: new Date().toISOString()});
   try { if (c.invite) await deleteDoc(doc(fs, "families", fid, "invites", c.invite)); await deleteDoc(doc(fs, "codes", h)); } catch(_) {}
+  if (fromApp) { location.reload(); return; }
   enter(fid, false);
 }
 async function enter(fid, owner){
@@ -160,7 +161,7 @@ function api(){
     })
   });
   const u = auth.currentUser;
-  window.carnetAccount = {email: u.email || u.displayName || "", signOut: async () => { await signOut(auth); try { localStorage.removeItem("carnet-me@" + UID); } catch(_) {} location.reload(); }};
+  window.carnetAccount = {name: u.displayName || "", email: u.email || u.displayName || "", signOut: async () => { await signOut(auth); try { localStorage.removeItem("carnet-me@" + UID); } catch(_) {} location.reload(); }};
   return {
     db: {collection: col => coll(col)},
     user: {
@@ -185,5 +186,8 @@ onAuthStateChanged(auth, async user => {
     const us = await getDoc(doc(fs, "users", UID)); const fid = us.exists() && us.data().family;
     if (fid) { let ok = false; try { ok = (await getDoc(doc(fs, "families", fid, "access", UID))).exists(); } catch(_) {} if (ok) return enter(fid, false); }
   } catch(e) { console.warn(e); if (/permission-denied/.test(e.code || "")) msg = TXT.errSetup; }
-  step = "choose"; render();
+  if (msg) { step = "auth"; return render(); }
+  try { await createFamily(); } catch(e) { console.warn(e); msg = errText(e); step = "auth"; render(); }
 });
+// joining another family from inside the app (Profile → Rejoindre une famille)
+window.carnetJoinCode = async (code, name) => { F.code = code; F.name = name; msg = ""; try { await joinWithCode(true); } catch(e) { console.warn(e); msg = errText(e); } return msg; };
