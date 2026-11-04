@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Carnet">
+<meta name="apple-mobile-web-app-title" content="Dogs Life">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -20,11 +20,11 @@ window.CARNET_SITE = true;
   var res, ready = new Promise(function(r){ res = r; });
   window.__carnetBridge = {resolve: function(api){ res(api); }, started: false};
   window.claude = {use: function(name){ return ready.then(function(api){ return api[name] || null; }); }};
-  setTimeout(function(){ if (!window.__carnetBridge.started) { var g = document.getElementById("gate"); if (g) g.innerHTML = '<div class="gate"><div class="g-in"><h1>Carnet du chien</h1><p class="g-sub">Connexion impossible. Vérifiez internet puis rechargez la page.</p><button class="g-btn g-main" onclick="location.reload()">Recharger</button></div></div>'; } }, 15000);
+  setTimeout(function(){ if (!window.__carnetBridge.started) { var g = document.getElementById("gate"); if (g) g.innerHTML = '<div class="gate"><div class="g-in"><h1>Dogs Life</h1><p class="g-sub">Connexion impossible. Vérifiez internet puis rechargez la page.</p><button class="g-btn g-main" onclick="location.reload()">Recharger</button></div></div>'; } }, 15000);
 })();
 </script>
 <script type="module" src="firebase-bridge.js"></script>
-<title>Carnet du chien</title>
+<title>Dogs Life</title>
 <style>
 /* Layout: iOS-style grouped lists in a 680px column, large titles, bottom tab bar with blur */
 :root{
@@ -680,6 +680,87 @@ body.locked .tabbar{display:none}
 .jo-list{display:grid;gap:10px;text-align:left;margin-top:8px}
 .jo-list div{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:12px 14px;font-size:15px}
 .jo-list span{width:30px;height:30px;border-radius:9px;color:#fff;display:grid;place-items:center;flex:none}.jo-list span svg{width:16px;height:16px}
+
+/* Dogs Life brand */
+h1.brand{font-family:var(--font-r);letter-spacing:-.01em}
+.brand-tag{display:inline-flex;align-items:center;gap:6px;margin:0 4px 4px;font-family:var(--font-r);font-weight:700;font-size:15px;color:var(--accent)}
+/* Messages: the panel grows with the messages, then scrolls */
+.msg-list{display:grid;gap:12px;max-height:min(420px,55vh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;margin:0 -6px;padding:2px 6px;scrollbar-width:thin}
+.msg-list.more-below{-webkit-mask-image:linear-gradient(#000 calc(100% - 36px),transparent);mask-image:linear-gradient(#000 calc(100% - 36px),transparent)}
+.msg-list.more-above{-webkit-mask-image:linear-gradient(transparent,#000 28px);mask-image:linear-gradient(transparent,#000 28px)}
+.msg-list.more-above.more-below{-webkit-mask-image:linear-gradient(transparent,#000 28px,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(transparent,#000 28px,#000 calc(100% - 36px),transparent)}
+/* Planning */
+.pl-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.pl-day{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 9px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);transition:transform .15s,background .2s}
+.pl-day:active{transform:scale(.94)}
+.pl-day .l{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--fg2)}
+.pl-day .n{font-family:var(--font-r);font-size:19px;font-weight:700;line-height:1.1}
+.pl-day .dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:30px;min-height:6px}
+.pl-day .dots i{width:5px;height:5px;border-radius:50%}
+.pl-day.today .l{color:var(--accent)}
+.pl-day.on{background:var(--accent);color:#fff}
+.pl-day.on .l{color:rgba(255,255,255,.85)}
+.pl-day.on .dots i{box-shadow:0 0 0 1px rgba(255,255,255,.9)}
+.pl-hero-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.pl-title{font-family:var(--font-d);font-size:22px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+.pl-count{text-align:center;flex:none}
+.pl-count b{display:block;font-family:var(--font-r);font-size:30px;line-height:1;color:var(--accent)}
+.pl-count small{font-size:12px;color:var(--fg2)}
+.pl-ribbon{position:relative;height:46px;margin:18px 4px 6px;border-radius:12px;background:var(--fill)}
+.pl-night{position:absolute;top:0;bottom:0;background:var(--fill2);border-radius:12px}
+.pl-tick{position:absolute;top:0;bottom:0;border-left:1px dashed var(--sep)}
+.pl-tick b{position:absolute;top:100%;transform:translateX(-50%);font-size:10px;font-weight:600;color:var(--fg3);margin-top:2px}
+.pl-now{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;background:var(--red);border-radius:1px}
+.pl-now::before{content:"";position:absolute;top:-3px;left:-3px;width:8px;height:8px;border-radius:50%;background:var(--red)}
+.pl-pin{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 2px var(--card);animation:pop .45s cubic-bezier(.3,1.5,.5,1) both}
+.pl-pin svg{width:14px;height:14px}
+.pl-pin.past{opacity:.4}
+.pl-pin.next{width:32px;height:32px;margin:-16px 0 0 -16px;z-index:1;box-shadow:0 0 0 3px var(--card),0 0 0 6px color-mix(in srgb,var(--c) 35%,transparent)}
+.pl-next{display:flex;align-items:center;gap:12px;margin-top:20px;padding:12px 14px;border-radius:12px;background:var(--accent-soft);font-size:15px}
+.pl-next small{display:block;font-size:13px;color:var(--fg2);margin-top:1px}
+.pl-next.done{color:var(--fg2)}
+.pl-next.late{background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red);font-weight:600;margin-top:10px}
+.pl-pulse{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none;animation:plPulse 1.8s ease-out infinite}
+@keyframes plPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 60%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
+.pl-mom{margin-top:22px}
+.pl-mom-h{display:flex;align-items:center;gap:8px;margin:0 4px 8px;font-family:var(--font-d);font-size:20px;font-weight:700}
+.pl-mom-h small{font-family:var(--font);font-size:13px;font-weight:600;color:var(--fg2);background:var(--fill);border-radius:999px;padding:1px 8px}
+.pl-tl{padding:4px 0}
+.pl-item{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 14px;min-height:62px}
+.pl-item:active{background:var(--fill)}
+.pl-item+.pl-item::before{content:"";position:absolute;left:79px;top:-12px;height:24px;width:2px;background:var(--sep)}
+.pl-time{width:44px;font-weight:600;font-size:15px;flex:none}
+.pl-node{width:34px;height:34px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;flex:none;position:relative;z-index:1}
+.pl-node svg{width:18px;height:18px}
+.pl-item .main{flex:1;min-width:0}
+.pl-item .t{font-weight:600}
+.pl-item .s{font-size:13px;color:var(--fg2);margin-top:1px;overflow-wrap:anywhere}
+.pl-item.past .t,.pl-item.past .pl-time{color:var(--fg2)}
+.pl-item.past .pl-node{opacity:.45}
+.pl-item.next{background:color-mix(in srgb,var(--c) 10%,transparent)}
+.pl-item.next .pl-node{box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 30%,transparent)}
+.pl-badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--c);border-radius:999px;padding:2px 8px;vertical-align:2px;margin-left:4px}
+.pl-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;padding:12px;border-radius:14px;border:1.5px dashed var(--fg3);color:var(--accent);font-weight:600}
+.pl-add span{font-size:20px;line-height:1}
+.pl-empty-i{font-size:40px;margin-bottom:8px}
+.pl-week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;height:120px;align-items:end}
+.pl-wcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%}
+.pl-stack{display:flex;flex-direction:column-reverse;gap:2px;width:100%;max-width:26px;min-height:4px;border-radius:6px;overflow:hidden;transition:height .5s cubic-bezier(.2,.8,.2,1)}
+.pl-stack i{flex:1;min-height:3px}
+.pl-wcol small{font-size:11px;font-weight:600;color:var(--fg2)}
+.pl-wcol.on small{color:var(--accent)}
+.ap-hero{display:flex;align-items:center;gap:16px;width:100%;text-align:left;border-left:5px solid var(--c)}
+.ap-cd{width:74px;height:74px;border-radius:20px;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.ap-cd b{font-family:var(--font-r);font-size:30px;line-height:1}
+.ap-cd small{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-top:2px;text-align:center}
+.ap-hero .main{flex:1;min-width:0}
+.ap-hero .t{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;margin:4px 0 2px}
+.ap-hero .t .ico{width:26px;height:26px;border-radius:7px}
+.ap-hero .t .ico svg{width:15px;height:15px}
+.ap-hero .s{font-size:14px;color:var(--fg2)}
+@media (prefers-reduced-motion: reduce){.pl-pin,.pl-pulse{animation:none}}
+@media (max-width:380px){.pl-days{gap:4px}.pl-item+.pl-item::before{left:75px}}
+
 .msg-sys{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--fg2)}
 .wz-joincard{display:flex!important;flex-direction:row!important;align-items:center;gap:12px;width:100%;text-align:left;border:0;padding:14px;margin-top:18px;font:inherit;color:inherit;cursor:pointer}
 .wz-joincard .main{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.wz-joincard span:not(.ico):not(.chev){color:var(--fg2);font-size:14px}
@@ -1229,6 +1310,17 @@ Object.assign(HR, {"Recevoir des alertes ?":"Primati upozorenja?","Une bannière
 Object.assign(EN, {"Résumé pour le vétérinaire":"Vet summary","30 derniers jours : journal, traitements, poids, notes":"Last 30 days: log, treatments, weight, notes","7 derniers jours":"Last 7 days","Part des tâches cochées chaque jour, sans compter aujourd'hui. Touchez une barre pour ouvrir le jour.":"Share of tasks ticked each day, not counting today. Tap a bar to open that day.","Ajoutez les membres de la famille dans Profil pour répartir les tâches.":"Add family members in Profile to share out tasks.","Tout le monde":"Everyone","Qui fait quoi":"Who does what","Ajoutez les membres de la famille pour répartir les tâches et voir qui s'occupe de quoi.":"Add family members to share out tasks and see who takes care of what.","Ajouter la famille":"Add the family","{n} faite(s)":"{n} done","{p} prévue(s)":"{p} planned","Sans nom":"No name","{n} tâche(s) cochée(s) cette semaine. {u} tâche(s) à venir n'ont personne d'attitré.":"{n} task(s) ticked this week. {u} upcoming task(s) have no one assigned.","Famille":"Family","C'est vous sur cet appareil":"That's you on this device","Moi":"Me","C'est moi":"That's me","Retirer":"Remove","Prénom":"First name","Les tâches que vous cochez sont signées « {n} ».":"Tasks you tick are signed “{n}”.","Choisissez « C'est moi » pour signer vos tâches et filtrer les vôtres.":"Choose “That's me” to sign your tasks and filter yours.","Dose":"Dose","Période":"Period","Prises":"Doses given","en cours":"ongoing","Journal rempli {n} jour(s) sur 30.":"Log filled in on {n} of 30 days.","Aucune note.":"No notes.","fait":"done","prévu":"planned","Traitements":"Treatments","Prises oubliées":"Missed doses","Journal (30 jours)":"Log (30 days)","Soins réalisés":"Care completed","Observations":"Observations","Rendez-vous":"Appointments","Télécharger le résumé":"Download the summary","Copier le texte":"Copy the text","À montrer en consultation ou à envoyer au cabinet. Rien n'est partagé sans votre action.":"Show it at the appointment or send it to the practice. Nothing is shared unless you do it.","C'est l'heure":"It's time","+{n} autre(s)":"+{n} more","Fermer":"Close","Notifications":"Notifications","Alertes à l'heure des tâches":"Alerts at task time","Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.":"Banner and vibration when a task is due, while the log is open.","Son":"Sound","Tester une alerte":"Test an alert","Pour être prévenu même carnet fermé, demandez à Claude d'ajouter la routine et les médicaments à l'app Rappels de votre téléphone.":"To be alerted even when the log is closed, ask Claude to add the routine and medication to your phone's Reminders app.","Remplissez le journal du jour (appétit, énergie, selles).":"Fill in today's log (appetite, energy, stools).","Donnez {m} prévu à {t}.":"Give {m}, due at {t}.","Tout est à jour. Continuez à noter le journal chaque jour.":"All up to date. Keep filling in the log every day.","Faites « {m} » ({t}) et cochez-la.":"Do “{m}” ({t}) and tick it.","Ajoutez un moment de jeu ou d'éducation à la routine.":"Add some play or training time to the routine.","Les balades sont à jour. Bravo !":"Walks are up to date. Well done!","Servez « {m} » ({t}) et cochez-le.":"Serve “{m}” ({t}) and tick it.","Ajoutez les repas à la routine.":"Add the meals to the routine.","Les repas sont à jour.":"Meals are up to date.","La santé vient du journal des 3 derniers jours et des médicaments donnés à l'heure.":"Health comes from the last 3 days of the log and medication given on time.","Le bonheur vient des balades et des jeux cochés sur 7 jours.":"Happiness comes from walks and play ticked over 7 days.","Le ventre plein vient des repas cochés sur 7 jours.":"Full tummy comes from meals ticked over 7 days.","Badge obtenu":"Badge earned","Pas encore obtenu":"Not earned yet","Qui s'en occupe ?":"Who takes care of it?","Qui le donne ?":"Who gives it?","Résumé copié":"Summary copied","Copie impossible sur cet appareil.":"Copying isn't possible on this device.","resume-veterinaire":"vet-summary","Résumé téléchargé":"Summary downloaded","Téléchargement impossible ici. Utilisez « Copier le texte ».":"Download isn't available here. Use “Copy the text”.","Enregistré sur cet appareil":"Saved on this device","Confirmer":"Confirm","Exemple d'alerte":"Example alert","Ce prénom est déjà dans la famille.":"That name is already in the family.","Cochez toutes les tâches 3 jours de suite.":"Tick every task 3 days in a row.","Cochez toutes les tâches 7 jours de suite.":"Tick every task 7 days in a row.","Ne manquez aucune balade pendant 7 jours.":"Don't miss a walk for 7 days.","Donnez tous les médicaments à l'heure pendant 7 jours.":"Give every medication on time for 7 days.","Remplissez appétit, énergie et selles 5 jours.":"Fill in appetite, energy and stools on 5 days.","Enregistrez 3 pesées dans Santé.":"Record 3 weigh-ins in Health.","Toutes les tâches":"All tasks","Les miennes":"Mine"});
 Object.assign(HR, {"Résumé pour le vétérinaire":"Sažetak za veterinara","30 derniers jours : journal, traitements, poids, notes":"Zadnjih 30 dana: dnevnik, terapije, težina, bilješke","7 derniers jours":"Zadnjih 7 dana","Part des tâches cochées chaque jour, sans compter aujourd'hui. Touchez une barre pour ouvrir le jour.":"Udio označenih zadataka po danu, bez današnjeg. Dodirnite stupac za otvaranje dana.","Ajoutez les membres de la famille dans Profil pour répartir les tâches.":"Dodajte članove obitelji u Profilu za raspodjelu zadataka.","Tout le monde":"Svi","Qui fait quoi":"Tko što radi","Ajoutez les membres de la famille pour répartir les tâches et voir qui s'occupe de quoi.":"Dodajte članove obitelji za raspodjelu zadataka i pregled tko se o čemu brine.","Ajouter la famille":"Dodaj obitelj","{n} faite(s)":"obavljeno: {n}","{p} prévue(s)":"planirano: {p}","Sans nom":"Bez imena","{n} tâche(s) cochée(s) cette semaine. {u} tâche(s) à venir n'ont personne d'attitré.":"Ovaj tjedan označeno zadataka: {n}. Nadolazećih zadataka bez zaduženog: {u}.","Famille":"Obitelj","C'est vous sur cet appareil":"To ste vi na ovom uređaju","Moi":"Ja","C'est moi":"To sam ja","Retirer":"Ukloni","Prénom":"Ime","Les tâches que vous cochez sont signées « {n} ».":"Zadaci koje označite potpisani su kao „{n}”.","Choisissez « C'est moi » pour signer vos tâches et filtrer les vôtres.":"Odaberite „To sam ja” da potpisujete zadatke i filtrirate svoje.","Dose":"Doza","Période":"Razdoblje","Prises":"Dane doze","en cours":"u tijeku","Journal rempli {n} jour(s) sur 30.":"Dnevnik ispunjen {n} od 30 dana.","Aucune note.":"Nema bilješki.","fait":"obavljeno","prévu":"planirano","Traitements":"Terapije","Prises oubliées":"Propuštene doze","Journal (30 jours)":"Dnevnik (30 dana)","Soins réalisés":"Obavljena njega","Observations":"Zapažanja","Rendez-vous":"Termini","Télécharger le résumé":"Preuzmi sažetak","Copier le texte":"Kopiraj tekst","À montrer en consultation ou à envoyer au cabinet. Rien n'est partagé sans votre action.":"Pokažite ga na pregledu ili pošaljite ambulanti. Ništa se ne dijeli bez vaše radnje.","C'est l'heure":"Vrijeme je","+{n} autre(s)":"+{n} još","Fermer":"Zatvori","Notifications":"Obavijesti","Alertes à l'heure des tâches":"Upozorenja u vrijeme zadatka","Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.":"Obavijest i vibracija kad dođe vrijeme zadatka, dok je dnevnik otvoren.","Son":"Zvuk","Tester une alerte":"Isprobaj upozorenje","Pour être prévenu même carnet fermé, demandez à Claude d'ajouter la routine et les médicaments à l'app Rappels de votre téléphone.":"Za obavijesti i kad je dnevnik zatvoren, zamolite Claudea da doda raspored i lijekove u aplikaciju Podsjetnici na telefonu.","Remplissez le journal du jour (appétit, énergie, selles).":"Ispunite današnji dnevnik (apetit, energija, stolica).","Donnez {m} prévu à {t}.":"Dajte {m} predviđen u {t}.","Tout est à jour. Continuez à noter le journal chaque jour.":"Sve je ažurno. Nastavite svaki dan ispunjavati dnevnik.","Faites « {m} » ({t}) et cochez-la.":"Obavite „{m}” ({t}) i označite.","Ajoutez un moment de jeu ou d'éducation à la routine.":"Dodajte vrijeme za igru ili dresuru u raspored.","Les balades sont à jour. Bravo !":"Šetnje su ažurne. Bravo!","Servez « {m} » ({t}) et cochez-le.":"Poslužite „{m}” ({t}) i označite.","Ajoutez les repas à la routine.":"Dodajte obroke u raspored.","Les repas sont à jour.":"Obroci su ažurni.","La santé vient du journal des 3 derniers jours et des médicaments donnés à l'heure.":"Zdravlje dolazi iz dnevnika zadnja 3 dana i lijekova danih na vrijeme.","Le bonheur vient des balades et des jeux cochés sur 7 jours.":"Sreća dolazi iz šetnji i igre označenih u 7 dana.","Le ventre plein vient des repas cochés sur 7 jours.":"Pun trbuh dolazi iz obroka označenih u 7 dana.","Badge obtenu":"Značka osvojena","Pas encore obtenu":"Još nije osvojena","Qui s'en occupe ?":"Tko je zadužen?","Qui le donne ?":"Tko ga daje?","Résumé copié":"Sažetak kopiran","Copie impossible sur cet appareil.":"Kopiranje nije moguće na ovom uređaju.","resume-veterinaire":"sazetak-veterinar","Résumé téléchargé":"Sažetak preuzet","Téléchargement impossible ici. Utilisez « Copier le texte ».":"Preuzimanje ovdje nije moguće. Koristite „Kopiraj tekst”.","Enregistré sur cet appareil":"Spremljeno na ovom uređaju","Confirmer":"Potvrdi","Exemple d'alerte":"Primjer upozorenja","Ce prénom est déjà dans la famille.":"To ime već postoji u obitelji.","Cochez toutes les tâches 3 jours de suite.":"Označite sve zadatke 3 dana zaredom.","Cochez toutes les tâches 7 jours de suite.":"Označite sve zadatke 7 dana zaredom.","Ne manquez aucune balade pendant 7 jours.":"Ne propustite nijednu šetnju 7 dana.","Donnez tous les médicaments à l'heure pendant 7 jours.":"Dajte sve lijekove na vrijeme 7 dana.","Remplissez appétit, énergie et selles 5 jours.":"Ispunite apetit, energiju i stolicu 5 dana.","Enregistrez 3 pesées dans Santé.":"Unesite 3 vaganja u Zdravlju.","Toutes les tâches":"Svi zadaci","Les miennes":"Moji"});
 
+Object.assign(EN, {"Rejoins le carnet de {n} sur Dogs Life : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.": "Join {n}'s logbook on Dogs Life: open this link, pick your name and tick off walks and meals when you take care of them.",
+  "Le programme de {n}": "{n}'s schedule", "Le {d} de {n}": "{n}'s {d}", "activités": "activities", "À suivre : {t} à {h}": "Up next: {t} at {h}", "À suivre": "Up next", "Maintenant": "Now", "dans {t}": "in {t}",
+  "Plus rien de prévu aujourd'hui. Bonne nuit {n} !": "Nothing else planned today. Good night, {n}!", "Ajouter une activité le {d}": "Add an activity on {d}", "Journée tranquille : aucune activité le {d}.": "A quiet day: no activity on {d}.",
+  "La semaine en un coup d'œil": "The week at a glance", "{n} activités par semaine": "{n} activities a week", "Jour le plus chargé : {d}": "Busiest day: {d}",
+  "Prochain rendez-vous": "Next appointment", "jours": "days", "{n} rendez-vous en retard": "{n} overdue appointment(s)", "le chien": "the dog"});
+Object.assign(HR, {"Rejoins le carnet de {n} sur Dogs Life : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.": "Pridruži se dnevniku za {n} na Dogs Life: otvori ovu poveznicu, odaberi svoje ime i označi šetnje i obroke kad se pobrineš za njih.",
+  "Le programme de {n}": "Raspored za {n}", "Le {d} de {n}": "{n} – {d}", "activités": "aktivnosti", "À suivre : {t} à {h}": "Sljedeće: {t} u {h}", "À suivre": "Sljedeće", "Maintenant": "Sada", "dans {t}": "za {t}",
+  "Plus rien de prévu aujourd'hui. Bonne nuit {n} !": "Danas više ništa nije planirano. Laku noć, {n}!", "Ajouter une activité le {d}": "Dodaj aktivnost ({d})", "Journée tranquille : aucune activité le {d}.": "Miran dan: nema aktivnosti ({d}).",
+  "La semaine en un coup d'œil": "Tjedan na prvi pogled", "{n} activités par semaine": "{n} aktivnosti tjedno", "Jour le plus chargé : {d}": "Najužurbaniji dan: {d}",
+  "Prochain rendez-vous": "Sljedeći termin", "jours": "dana", "{n} rendez-vous en retard": "Zakašnjelih termina: {n}", "le chien": "pas"});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -1512,19 +1604,62 @@ function daysLabel(days){
   if (s.length===2 && days.includes(6) && days.includes(0)) return T("Le week-end");
   return s.map(d => WD()[d]).join(", ");
 }
+const PLAN_MOM = [{k:"m", l:"Matin", e:"🌅", from:0, to:12*60}, {k:"a", l:"Après-midi", e:"☀️", from:12*60, to:18*60}, {k:"s", l:"Soir", e:"🌙", from:18*60, to:24*60}];
+const durTxt = m => m < 60 ? m + " min" : Math.floor(m / 60) + " h" + (m % 60 ? " " + String(m % 60).padStart(2, "0") : "");
 function viewRoutineBody(){
-  const wd = S.rday, items = routine().filter(r => (r.days||[]).includes(wd)).sort((a,b) => toMin(a.time)-toMin(b.time));
+  const wd = S.rday, d = dog() || {}, name = d.name || T("le chien"), now = new Date(), isToday = wd === now.getDay(), nm = now.getHours() * 60 + now.getMinutes();
+  const sortT = (a, b) => toMin(a.time) - toMin(b.time);
+  const items = routine().filter(r => (r.days||[]).includes(wd)).sort(sortT);
   const medItems = [];
   meds().filter(m => medActive(m, ymd(new Date()))).forEach(m => (m.times||[]).filter(Boolean).forEach(t => medItems.push({m,t})));
   medItems.sort((a,b) => toMin(a.t)-toMin(b.t));
-  const counts = ORDER.map(d => routine().filter(r => (r.days||[]).includes(d)).length);
-  const totalWalk = items.filter(r => r.cat==="balade").length;
-  return `<div class="seg" role="tablist" style="margin-bottom:6px">${ORDER.map((d,i) => `<button class="${d===wd?"on":""}" data-act="rday" data-d="${d}" role="tab" aria-selected="${d===wd}">${WD()[d]}<br><small class="num" style="color:var(--fg2);font-weight:500">${counts[i]}</small></button>`).join("")}</div>
-  <div class="foot" style="margin:6px 4px 0">${esc(cap(T("{d} : {n} activité(s), dont {w} sortie(s).",{d:WDL()[wd], n:items.length, w:totalWalk})))}</div>
-  <div class="sec" style="margin-top:14px"><div class="card list">${items.length ? items.map(r => { const c = CATS[r.cat]||CATS.autre;
-    return `<button class="row" data-act="editRoutine" data-id="${esc(r.id)}" ${canEdit()?"":"disabled"}><span class="num" style="width:46px;font-weight:600">${esc(r.time)}</span>${ico(c.color,c.icon)}<div class="main"><div class="t">${esc(r.title)}</div><div class="s">${esc(daysLabel(r.days))}${r.notes?" · "+esc(r.notes):""}</div></div>${mav(memberOf(r.who), 24)}<span class="chev">${I.chevR}</span></button>`; }).join("")
-    : `<div class="empty">${T("Aucune activité ce jour-là.")}${canEdit()?`<br><button class="btn ghost" style="margin-top:12px" data-act="addRoutine">${T("Ajouter la première activité")}</button>`:""}</div>`}</div></div>
-  ${medItems.length ? `<div class="sec"><div class="sec-h"><h2>${T("Médicaments en cours")}</h2><button class="link" data-act="goSub" data-tab="sante" data-sub="traitements">${T("Gérer")}</button></div><div class="card list">${medItems.map(({m,t}) => `<div class="row"><span class="num" style="width:46px;font-weight:600">${esc(t)}</span>${ico(CATS.med.color,CATS.med.icon)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${esc([m.dose && T(m.dose),m.notes].filter(Boolean).join(" · "))}</div></div></div>`).join("")}</div><div class="foot">${T("Les prises s'ajoutent automatiquement chaque jour du traitement.")}</div></div>` : ""}`;
+  const byDay = ORDER.map(x => routine().filter(r => (r.days||[]).includes(x)).sort(sortT));
+  const next = isToday ? items.find(r => toMin(r.time) >= nm) : null;
+  // days: one coloured dot per activity, in the order of the day
+  const picker = `<div class="pl-days" role="tablist">${ORDER.map((x, i) => { const its = byDay[i];
+    return `<button class="pl-day ${x === wd ? "on" : ""} ${x === now.getDay() ? "today" : ""}" data-act="rday" data-d="${x}" role="tab" aria-selected="${x === wd}"><span class="l">${WD()[x]}</span><span class="n num">${its.length}</span><span class="dots">${its.slice(0, 8).map(r => `<i style="background:${(CATS[r.cat]||CATS.autre).color}"></i>`).join("")}</span></button>`; }).join("")}</div>`;
+  // the day on a 24 h ribbon
+  const cats = {}; items.forEach(r => { cats[r.cat] = (cats[r.cat] || 0) + 1; });
+  const ribbon = `<div class="pl-ribbon" aria-hidden="true"><div class="pl-night" style="left:0;width:${6/24*100}%"></div><div class="pl-night" style="left:${21/24*100}%;right:0"></div>
+      ${[6, 12, 18].map(h => `<span class="pl-tick" style="left:${h/24*100}%"><b>${h}h</b></span>`).join("")}
+      ${isToday ? `<span class="pl-now" style="left:${nm/1440*100}%"></span>` : ""}
+      ${items.map(r => { const c = CATS[r.cat] || CATS.autre, past = isToday && toMin(r.time) < nm; return `<span class="pl-pin ${past ? "past" : ""} ${next && r.id === next.id ? "next" : ""}" style="left:${toMin(r.time)/1440*100}%;--c:${c.color}">${c.icon}</span>`; }).join("")}</div>`;
+  const nextLine = isToday ? (next ? `<div class="pl-next"><span class="pl-pulse" style="--c:${(CATS[next.cat]||CATS.autre).color}"></span><div><b>${esc(T("À suivre : {t} à {h}",{t:next.title, h:next.time}))}</b><small>${toMin(next.time) - nm < 1 ? T("Maintenant") : esc(T("dans {t}",{t:durTxt(toMin(next.time) - nm)}))}</small></div></div>`
+      : items.length ? `<div class="pl-next done">${esc(T("Plus rien de prévu aujourd'hui. Bonne nuit {n} !",{n:name}))} 🌙</div>` : "") : "";
+  const hero = `<div class="card pad pl-hero">
+      <div class="pl-hero-h"><div><div class="eyebrow" style="margin:0">${isToday ? T("Aujourd'hui") : esc(cap(WDL()[wd]))}</div><div class="pl-title">${esc(isToday ? T("Le programme de {n}",{n:name}) : T("Le {d} de {n}",{d:WDL()[wd], n:name}))}</div></div><div class="pl-count"><b class="num">${items.length}</b><small>${T("activités")}</small></div></div>
+      ${items.length ? ribbon : ""}
+      ${items.length ? `<div class="catstats">${Object.entries(cats).map(([k, n]) => { const c = CATS[k] || CATS.autre; return `<span class="pill num"><i style="background:${c.color}"></i>${esc(T(c.label))} × ${n}</span>`; }).join("")}</div>` : ""}
+      ${nextLine}</div>`;
+  // list, grouped by moment of the day, as a timeline
+  const row = r => { const c = CATS[r.cat]||CATS.autre, past = isToday && toMin(r.time) < nm, nx = next && r.id === next.id;
+    return `<button class="pl-item ${past ? "past" : ""} ${nx ? "next" : ""}" data-act="editRoutine" data-id="${esc(r.id)}" ${canEdit()?"":"disabled"} style="--c:${c.color}"><span class="pl-time num">${esc(r.time)}</span><span class="pl-node">${c.icon}</span><div class="main"><div class="t">${esc(r.title)}${nx ? ` <span class="pl-badge">${T("À suivre")}</span>` : ""}</div><div class="s">${esc(T(c.label))} · ${esc(daysLabel(r.days))}${r.notes?" · "+esc(r.notes):""}</div></div>${mav(memberOf(r.who), 26)}${canEdit() ? `<span class="chev">${I.chevR}</span>` : ""}</button>`; };
+  const groups = PLAN_MOM.map(g => ({g, its: items.filter(r => { const m = toMin(r.time); return m >= g.from && m < g.to; })})).filter(x => x.its.length);
+  const list = items.length ? groups.map(({g, its}) => `<div class="pl-mom"><div class="pl-mom-h"><span>${g.e}</span>${T(g.l)}<small class="num">${its.length}</small></div><div class="card pl-tl">${its.map(row).join("")}</div></div>`).join("")
+      + (canEdit() ? `<button class="pl-add" data-act="addRoutine"><span>+</span>${esc(T("Ajouter une activité le {d}",{d:WDL()[wd]}))}</button>` : "")
+    : `<div class="card"><div class="empty pl-empty"><div class="pl-empty-i">🐶💤</div>${esc(T("Journée tranquille : aucune activité le {d}.",{d:WDL()[wd]}))}${canEdit()?`<br><button class="btn ghost" style="margin-top:12px" data-act="addRoutine">${T("Ajouter la première activité")}</button>`:""}</div></div>`;
+  // the whole week
+  const wk = {}; let wkN = 0; byDay.forEach(its => its.forEach(r => { wk[r.cat] = (wk[r.cat] || 0) + 1; wkN++; }));
+  const busiest = ORDER.reduce((b, x, i) => byDay[i].length > byDay[b].length ? i : b, 0);
+  const week = wkN ? `<div class="sec"><div class="sec-h"><h2>${T("La semaine en un coup d'œil")}</h2></div><div class="card pad">
+      <div class="pl-week">${ORDER.map((x, i) => { const its = byDay[i], mx = Math.max(1, ...byDay.map(b => b.length));
+        return `<button class="pl-wcol ${x === wd ? "on" : ""}" data-act="rday" data-d="${x}" aria-label="${esc(WDL()[x])}"><span class="pl-stack" style="height:${Math.round(its.length / mx * 100)}%">${its.map(r => `<i style="background:${(CATS[r.cat]||CATS.autre).color}"></i>`).join("")}</span><small>${WD()[x]}</small></button>`; }).join("")}</div>
+      <div class="foot" style="margin:10px 0 0">${esc(T("{n} activités par semaine",{n:wkN}))} · ${esc(T("Jour le plus chargé : {d}",{d:WDL()[ORDER[busiest]]}))}</div>
+      <div class="catstats">${Object.entries(wk).map(([k, n]) => { const c = CATS[k] || CATS.autre; return `<span class="pill num"><i style="background:${c.color}"></i>${esc(T(c.label))} × ${n}</span>`; }).join("")}</div></div></div>` : "";
+  return `${picker}<div class="sec" style="margin-top:12px">${hero}</div>${list}
+  ${medItems.length ? `<div class="sec"><div class="sec-h"><h2>${T("Médicaments en cours")}</h2><button class="link" data-act="goSub" data-tab="sante" data-sub="traitements">${T("Gérer")}</button></div><div class="card list">${medItems.map(({m,t}) => `<div class="row"><span class="num" style="width:46px;font-weight:600">${esc(t)}</span>${ico(CATS.med.color,CATS.med.icon)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${esc([m.dose && T(m.dose),m.notes].filter(Boolean).join(" · "))}</div></div></div>`).join("")}</div><div class="foot">${T("Les prises s'ajoutent automatiquement chaque jour du traitement.")}</div></div>` : ""}
+  ${week}`;
+}
+// next appointment as a big countdown
+function apptHero(){
+  const today = ymd(new Date()), ap = appts(), late = ap.filter(a => daysBetween(today, a.date) < 0).length;
+  const nx = ap.find(a => daysBetween(today, a.date) >= 0);
+  const lateTxt = late ? `<div class="pl-next late">${esc(T("{n} rendez-vous en retard",{n:late}))}</div>` : "";
+  if (!nx) return lateTxt ? `<div class="sec" style="margin-top:0"><div class="card pad">${lateTxt}</div></div>` : "";
+  const t = ATYPES[nx.type] || ATYPES.autre, n = daysBetween(today, nx.date);
+  return `<div class="sec" style="margin-top:0"><button class="card pad ap-hero" data-act="editAppt" data-id="${esc(nx.id)}" ${canEdit()?"":"disabled"} style="--c:${t.color}">
+    <div class="ap-cd"><b class="num">${n === 0 ? "!" : n}</b><small>${n === 0 ? T("Aujourd'hui") : n === 1 ? T("Demain") : T("jours")}</small></div>
+    <div class="main"><div class="eyebrow" style="margin:0">${T("Prochain rendez-vous")}</div><div class="t">${ico(t.color, t.icon)}<span>${esc(nx.title)}</span></div><div class="s">${esc(cap(fmt(parseYmd(nx.date),{weekday:"long",day:"numeric",month:"long"})))}${nx.time ? " · " + esc(nx.time) : ""}</div></div></button>${lateTxt}</div>`;
 }
 
 function healthParts(){
@@ -1657,6 +1792,7 @@ const I_GEAR = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentCol
 function viewSettings(){
   return `${subBar((dog() || {}).name || T("Chien"))}
   <div class="top" style="padding-top:4px"><div><h1>${T("Réglages")}</h1></div></div>
+  <div class="brand-tag"><span>🐾</span> Dogs Life</div>
   ${notifSection()}
   ${SITE && window.carnetAccount ? `<div class="sec"><div class="sec-h"><h2>${T("Compte")}</h2></div><div class="card list">
     <div class="row"><span class="ico" style="background:var(--blue)">${I_FAM}</span><div class="main"><div class="t">${esc(window.carnetAccount.email || "")}</div><div class="s">${T("Connecté sur cet appareil")}</div></div></div>
@@ -1708,7 +1844,7 @@ function viewNotMember(){
     <div style="margin-top:22px;display:flex;justify-content:center">${langSeg()}</div></div>`;
 }
 function viewOnboarding(){
-  return `<div class="hero" style="padding-top:60px"><div class="wz-hero" style="margin:0">${WZ_DOG}</div><h1>${T("Le carnet de votre chien")}</h1>
+  return `<div class="hero" style="padding-top:60px"><div class="wz-hero" style="margin:0">${WZ_DOG}</div><div class="eyebrow" style="color:var(--accent)">${T("Le carnet de votre chien")}</div><h1 class="brand">Dogs Life</h1>
   <div class="s" style="max-width:34ch">${T("Routine du jour, médicaments, rendez-vous et poids, partagés avec toute la famille.")}</div>
   ${meMember() ? `<div class="wz-note" style="max-width:36ch">${T("Vous avez rejoint la famille. Le carnet du chien n'est pas encore créé : la personne qui vous a invité(e) va le remplir, ou créez-le vous-même.")}</div>` : ""}
   ${canEdit()?`<button class="btn" data-act="startBlank" style="margin-top:8px">${T("Créer le carnet de mon chien")}</button>${meMember() ? "" : `<button class="btn ghost" data-act="openJoin">${T("Rejoindre une famille")}</button>`}<button class="wz-later" data-act="loadSample">${T("Partir d'un exemple")}</button>`:`<div class="s">${T("Le carnet n'a pas encore été rempli.")}</div>`}
@@ -2171,7 +2307,7 @@ function familySection(){
   </div><div class="foot">${me ? T("Les tâches que vous cochez sont signées « {n} ».",{n:esc(me.name)}) : T("Choisissez « C'est moi » pour signer vos tâches et filtrer les vôtres.")}</div></div>`;
 }
 const ART_URL = SITE ? location.origin + location.pathname : "https://claude.ai/artifact/5WVU6oZS2Gzi53rfMeXpHR";
-const inviteText = () => { const d = dog() || {}; return T("Rejoins le carnet de {n} : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.",{n:d.name || T("notre chien")}); };
+const inviteText = () => { const d = dog() || {}; return T("Rejoins le carnet de {n} sur Dogs Life : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.",{n:d.name || T("notre chien")}); };
 function inviteForm(){
   S.invRole = "famille";
   openSheet(T("Ajouter quelqu'un"), `<div class="hint" style="margin:0 0 12px">${T("Choisissez son rôle : le carnet crée un code à lui donner. Avec ce code, elle rejoint la famille depuis son propre compte.")}</div>
@@ -2625,9 +2761,9 @@ function viewFamily(){
   // messages
   const board = `<div class="sec"><div class="sec-h"><h2>${T("Messages")}</h2></div><div class="card pad board">
       ${me || S.mode !== "db" ? `<form class="board-in" data-form="note"><label class="btn ghost round" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : QL.photo.i}</label><input type="file" id="n-photo" accept="image/*" hidden><input class="f" id="n-text" maxlength="240" placeholder="${T("Un mot pour la famille…")}" autocomplete="off"><button class="btn round" type="submit" aria-label="${T("Envoyer")}">${I_SEND}</button></form>` : `<div class="s" style="color:var(--fg2);font-size:14px">${T("Rejoignez la famille pour écrire un message.")}</div>`}
-      ${ns.length ? ns.slice(0, 15).map(n => { if (n.kind === "join") return `<div class="msg-sys">${mav(memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, 22)}<span>${esc(T("{n} a rejoint la famille",{n:n.name || "?"}))} · ${esc(relTime(n.at))}</span></div>`;
+      ${ns.length ? `<div class="msg-list" data-first="${esc(ns[0].id || "")}">` + ns.slice(0, 60).map(n => { if (n.kind === "join") return `<div class="msg-sys">${mav(memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, 22)}<span>${esc(T("{n} a rejoint la famille",{n:n.name || "?"}))} · ${esc(relTime(n.at))}</span></div>`;
         const m = memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}; const mine = (n.mid && n.mid === ME) || (S.me && n.uid === S.me);
-        return `<div class="msg ${mine ? "mine" : ""}">${mav(m, 28)}<div class="bub"><div class="msg-h"><b>${esc(m.name)}</b><span>${esc(relTime(n.at))}</span></div>${n.text ? `<div class="msg-t ${n.kind === "report" ? "rep" : ""}">${esc(n.text)}</div>` : ""}${n.photo ? `<img class="msg-ph" src="${esc(n.photo)}" alt="" data-act="photoView" data-src="${esc(n.photo)}">` : ""}</div>${mine || canEdit() ? `<button class="msg-x" data-act="delNote" data-id="${esc(n.id)}" aria-label="${T("Supprimer")}">×</button>` : ""}</div>`; }).join("")
+        return `<div class="msg ${mine ? "mine" : ""}">${mav(m, 28)}<div class="bub"><div class="msg-h"><b>${esc(m.name)}</b><span>${esc(relTime(n.at))}</span></div>${n.text ? `<div class="msg-t ${n.kind === "report" ? "rep" : ""}">${esc(n.text)}</div>` : ""}${n.photo ? `<img class="msg-ph" src="${esc(n.photo)}" alt="" data-act="photoView" data-src="${esc(n.photo)}">` : ""}</div>${mine || canEdit() ? `<button class="msg-x" data-act="delNote" data-id="${esc(n.id)}" aria-label="${T("Supprimer")}">×</button>` : ""}</div>`; }).join("") + `</div>`
         : `<div class="empty-s">${T("Pas encore de message. Laissez une consigne, un rappel ou une nouvelle de {n}.",{n:esc(d.name || T("votre chien"))})}</div>`}
     </div></div>`;
   // activity
@@ -2978,10 +3114,10 @@ function reportSheet(){
 function viewPlanning(){
   const seg = S.plan || "routine";
   const head = `<div class="top"><div><div class="eyebrow">${esc((dog() || {}).name || "")}</div><h1>${T("Planning")}</h1></div>${canEdit() ? `<button class="btn" data-act="${seg === "rdv" ? "addAppt" : "addRoutine"}">${T("Ajouter")}</button>` : ""}</div>
-    <div class="seg" role="tablist" style="margin-bottom:12px">${[["routine","Routine de la semaine"],["rdv","Rendez-vous"]].map(([k, l]) => `<button class="${seg === k ? "on" : ""}" role="tab" aria-selected="${seg === k}" data-act="planSeg" data-v="${k}">${T(l)}</button>`).join("")}</div>`;
+    <div class="seg" role="tablist" style="margin-bottom:12px">${[["routine","Routine de la semaine","🐾"],["rdv","Rendez-vous","📅"]].map(([k, l, e]) => `<button class="${seg === k ? "on" : ""}" role="tab" aria-selected="${seg === k}" data-act="planSeg" data-v="${k}">${e} ${T(l)}</button>`).join("")}</div>`;
   if (seg === "rdv") {
     const due = vaxItems().filter(v => v.status === "late" || v.status === "soon");
-    return head + viewApptList() + (due.length ? `<div class="sec"><div class="sec-h"><h2>${T("Soins à prévoir")}</h2><button class="link" data-act="goSub" data-tab="sante" data-sub="vaccins">${T("Tout voir")}</button></div><div class="card list">${due.map(v => { const t = ATYPES[v.ty] || ATYPES.autre; return `<button class="row" data-act="vaxSheet" data-c="${v.code}">${ico(t.color, t.icon)}<div class="main"><div class="t">${esc(T(v.t))}</div><div class="s">${vaxStatus(v)}</div></div><span class="chev">${I.chevR}</span></button>`; }).join("")}</div></div>` : "");
+    return head + apptHero() + viewApptList() + (due.length ? `<div class="sec"><div class="sec-h"><h2>${T("Soins à prévoir")}</h2><button class="link" data-act="goSub" data-tab="sante" data-sub="vaccins">${T("Tout voir")}</button></div><div class="card list">${due.map(v => { const t = ATYPES[v.ty] || ATYPES.autre; return `<button class="row" data-act="vaxSheet" data-c="${v.code}">${ico(t.color, t.icon)}<div class="main"><div class="t">${esc(T(v.t))}</div><div class="s">${vaxStatus(v)}</div></div><span class="chev">${I.chevR}</span></button>`; }).join("")}</div></div>` : "");
   }
   return head + viewRoutineBody();
 }
@@ -3695,7 +3831,10 @@ function render(skipNames){
   const view = {planning:viewPlanning, sante:viewHealth, famille:viewFamilyTab, chien:viewChien, garde:viewGarde}[S.tab] || viewToday;
   const html = `<div class="page ${pa ? pa.cls : ""}">` + view() + `</div>`;
   if (html === S.lastHTML && v.firstElementChild) { renderTabs(); renderJoin(); return; }
+  const ml0 = v.querySelector(".msg-list"), mlKeep = ml0 ? {top: ml0.scrollTop, first: ml0.dataset.first} : null;
   S.lastHTML = html; v.innerHTML = html;
+  const ml1 = v.querySelector(".msg-list");
+  if (ml1) { if (mlKeep && mlKeep.first === ml1.dataset.first) ml1.scrollTop = mlKeep.top; msgFade(ml1); ml1.addEventListener("scroll", () => msgFade(ml1), {passive:true}); }
   mountBuddy();
   if (keepNote) { const n = document.getElementById(keepNote.id); if (n && n !== active) { n.value = keepNote.v; n.focus(); try { n.setSelectionRange(keepNote.s, keepNote.s); } catch(e){} } }
   renderTabs();
@@ -3704,6 +3843,7 @@ function render(skipNames){
   renderJoin();
 }
 // keep the orbit turning smoothly across re-renders: phase comes from the clock
+function msgFade(el){ el.classList.toggle("more-below", el.scrollHeight - el.scrollTop - el.clientHeight > 8); el.classList.toggle("more-above", el.scrollTop > 8); }
 function syncOrbit(){ const o = document.querySelector(".orbit-ring"); if (!o) return; const ph = -((Date.now() / 1000) % 24);
   o.style.animationDelay = ph + "s"; o.querySelectorAll(".orb > .mav").forEach(x => x.style.animationDelay = ph + "s, " + ph + "s");
   const c = document.querySelector(".orbit-center .avatar"); if (c) c.style.animationDelay = ph + "s"; }

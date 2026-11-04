@@ -1,6 +1,6 @@
 {
-  "name": "Carnet du chien",
-  "short_name": "Carnet",
+  "name": "Dogs Life",
+  "short_name": "Dogs Life",
   "description": "Routine, santé, vaccins, croissance et famille pour votre chien.",
   "start_url": "./",
   "scope": "./",

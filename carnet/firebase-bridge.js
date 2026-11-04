@@ -23,19 +23,19 @@ const fb = initializeApp(firebaseConfig), auth = getAuth(fb), fs = getFirestore(
 /* ---------- texts (the app's language setting) ---------- */
 const LANG = (() => { try { const l = localStorage.getItem("carnet-lang"); if (["fr","en","hr"].includes(l)) return l; } catch(_) {} const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; })();
 const TXT = {
-  fr: {title:"Carnet du chien", sub:"La routine, la santé et la famille de votre chien, sur tous vos appareils.", google:"Continuer avec Google", or:"ou", email:"Adresse e-mail", pass:"Mot de passe", signin:"Se connecter", signup:"Créer un compte", forgot:"Mot de passe oublié ?",
+  fr: {title:"Dogs Life", sub:"La routine, la santé et la famille de votre chien, sur tous vos appareils.", google:"Continuer avec Google", or:"ou", email:"Adresse e-mail", pass:"Mot de passe", signin:"Se connecter", signup:"Créer un compte", forgot:"Mot de passe oublié ?",
     resetSent:"Un e-mail pour changer le mot de passe a été envoyé.", hello:"Bonjour", choose:"Que voulez-vous faire ?", create:"Créer le carnet de mon chien", createS:"Vous serez le propriétaire et pourrez inviter la famille.",
     join:"Rejoindre une famille", joinS:"Avec le code qu'un membre de la famille vous a donné.", code:"Code reçu", name:"Votre prénom", joinBtn:"Rejoindre", back:"Retour", other:"Changer de compte",
     badCode:"Code incorrect ou expiré.", needName:"Indiquez votre prénom.", needCode:"Entrez le code.", wait:"Un instant…", errNet:"Connexion impossible. Vérifiez internet et réessayez.",
     errAuth:"Adresse ou mot de passe incorrect.", errWeak:"Le mot de passe doit faire au moins 6 caractères.", errUsed:"Un compte existe déjà avec cette adresse : connectez-vous.", errSetup:"Le carnet n'est pas encore prêt (règles de sécurité Firebase). Réessayez plus tard.",
     tooMany:"Trop d'essais. Réessayez dans une minute.", privacy:"Chaque famille ne voit que ses propres données."},
-  en: {title:"Dog logbook", sub:"Your dog's routine, health and family, on all your devices.", google:"Continue with Google", or:"or", email:"Email address", pass:"Password", signin:"Sign in", signup:"Create an account", forgot:"Forgot password?",
+  en: {title:"Dogs Life", sub:"Your dog's routine, health and family, on all your devices.", google:"Continue with Google", or:"or", email:"Email address", pass:"Password", signin:"Sign in", signup:"Create an account", forgot:"Forgot password?",
     resetSent:"An email to reset your password has been sent.", hello:"Hello", choose:"What would you like to do?", create:"Create my dog's logbook", createS:"You'll be the owner and can invite the family.",
     join:"Join a family", joinS:"With the code a family member gave you.", code:"Code received", name:"Your first name", joinBtn:"Join", back:"Back", other:"Switch account",
     badCode:"Wrong or expired code.", needName:"Enter your first name.", needCode:"Enter the code.", wait:"One moment…", errNet:"Can't connect. Check the internet and try again.",
     errAuth:"Wrong email or password.", errWeak:"The password must be at least 6 characters.", errUsed:"An account already exists with this email: sign in.", errSetup:"The logbook isn't ready yet (Firebase security rules). Try again later.",
     tooMany:"Too many tries. Try again in a minute.", privacy:"Each family only sees its own data."},
-  hr: {title:"Dnevnik psa", sub:"Rutina, zdravlje i obitelj vašeg psa, na svim vašim uređajima.", google:"Nastavi s Googleom", or:"ili", email:"E-adresa", pass:"Lozinka", signin:"Prijava", signup:"Izradi račun", forgot:"Zaboravljena lozinka?",
+  hr: {title:"Dogs Life", sub:"Rutina, zdravlje i obitelj vašeg psa, na svim vašim uređajima.", google:"Nastavi s Googleom", or:"ili", email:"E-adresa", pass:"Lozinka", signin:"Prijava", signup:"Izradi račun", forgot:"Zaboravljena lozinka?",
     resetSent:"Poslana je e-poruka za promjenu lozinke.", hello:"Bok", choose:"Što želite učiniti?", create:"Izradi dnevnik mog psa", createS:"Bit ćete vlasnik i moći ćete pozvati obitelj.",
     join:"Pridruži se obitelji", joinS:"S kodom koji vam je dao član obitelji.", code:"Primljeni kod", name:"Vaše ime", joinBtn:"Pridruži se", back:"Natrag", other:"Promijeni račun",
     badCode:"Kod je pogrešan ili istekao.", needName:"Upišite svoje ime.", needCode:"Unesite kod.", wait:"Trenutak…", errNet:"Povezivanje nije uspjelo. Provjerite internet i pokušajte ponovno.",
