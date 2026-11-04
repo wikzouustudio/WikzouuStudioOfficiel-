@@ -806,6 +806,11 @@ body.wiz-open .scrim{z-index:85}
 .notif.live .s{display:flex;align-items:center;gap:6px}
 .live-k{width:18px;height:18px;border-radius:50%;background:var(--c);color:#fff;display:inline-grid;place-items:center;flex:none}
 .live-k svg{width:11px;height:11px}
+/* Companion card: a light jelly "blub" when tapped */
+@keyframes blub{0%{transform:scale(1)}28%{transform:scale(.95,.96)}55%{transform:scale(1.025,1.015)}78%{transform:scale(.995)}100%{transform:scale(1)}}
+@keyframes blubRings{0%{transform:scale(1)}35%{transform:scale(.9)}65%{transform:scale(1.06)}100%{transform:scale(1)}}
+.ccard.blub{animation:blub .42s cubic-bezier(.3,1.2,.5,1)}
+.ccard.blub .cc-rings{animation:blubRings .42s cubic-bezier(.3,1.4,.5,1)}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -4337,7 +4342,8 @@ document.addEventListener("click", async e => {
   if (act === "sheetBg") { if (e.target === el) closeSheet(); return; }
   switch (act) {
     case "go": { const [t, sub] = parseHash(el.dataset.tab); go(t, sub); break; }
-    case "goSub": go(el.dataset.tab, el.dataset.sub); break;
+    case "goSub": if (el.classList.contains("ccard") && el.dataset.sub === "buddy" && !matchMedia("(prefers-reduced-motion: reduce)").matches) { el.classList.remove("blub"); void el.offsetWidth; el.classList.add("blub"); await new Promise(r => setTimeout(r, 260)); }
+      go(el.dataset.tab, el.dataset.sub); break;
     case "subBack": go(S.tab, null); break;
     case "planSeg": S.plan = el.dataset.v; S.pageAnim = {cls:"enter-u", until: Date.now() + 400}; render(); break;
     case "dogMenu": if (allDogs().length > 1 || canEdit()) dogMenu(); else go("chien"); break;
