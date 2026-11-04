@@ -3911,7 +3911,6 @@ const B3D = (() => {
     float bodyW = (1.0 - aW.x) * (1.0 - aW.w);
     transformed.xz = mix(transformed.xz, uBodyC.xz + (transformed.xz - uBodyC.xz) * (1.0 + uBreath * 0.014), bodyW);
     transformed.y = mix(transformed.y, uBodyC.y + (transformed.y - uBodyC.y) * (1.0 + uBreath * 0.006), bodyW);
-    if (aCls > 1.5 && aCls < 2.5) transformed.y = uEyeY + (transformed.y - uEyeY) * uEye;
     if (aCls > 3.5 && aCls < 4.5) transformed.y += uTongue;
     transformed = rEL * (transformed - uEarLP) + uEarLP;
     transformed = rER * (transformed - uEarRP) + uEarRP;
@@ -3922,7 +3921,7 @@ const B3D = (() => {
   async function buildSTL(THREE, cfg, my){
     const M = await loadModel(); if (my !== buildTok) throw "stale";
     const C = Object.assign({}, COATS._, COATS[cfg.breed] || {});
-    const soft = h => { const c = new THREE.Color(h); c.offsetHSL(0, .08, -.06); return c.convertSRGBToLinear(); }; // punchy, cartoon-bright: tone mapping washes colours out
+    const soft = h => { const c = new THREE.Color(h); c.offsetHSL(0, .1, -.1); return c.convertSRGBToLinear(); }; // punchy, cartoon-bright: tone mapping washes colours out
     const raw = h => new THREE.Color(h).convertSRGBToLinear();
     const baseHex = C.base, dark = new THREE.Color(baseHex).getHSL({}).l < .25;
     const tipC = soft(C.ear && C.ear !== C.base ? C.ear : "#" + new THREE.Color(baseHex).offsetHSL(0, .05, -.18).getHexString());
@@ -3958,11 +3957,11 @@ const B3D = (() => {
     const v3 = a => new THREE.Vector3(a[0], a[1], a[2]);
     const U = {uHead:{value:new THREE.Vector3()}, uEarL:{value:new THREE.Vector3()}, uEarR:{value:new THREE.Vector3()}, uTail:{value:new THREE.Vector3()},
       uHeadP:{value:v3(LM.head)}, uEarLP:{value:v3(LM.earL)}, uEarRP:{value:v3(LM.earR)}, uTailP:{value:v3(LM.tail)}, uBodyC:{value:v3(LM.body)},
-      uBreath:{value:0}, uEye:{value:1}, uEyeY:{value:LM.eyeY}, uTongue:{value:0}, uSquash:{value:1}};
+      uBreath:{value:0}, uEye:{value:1}, uArc:{value:1}, uEyeY:{value:LM.eyeY}, uTongue:{value:0}, uSquash:{value:1}};
     const v4 = (x, y, r, z) => new THREE.Vector4((x - MC[0]) * MS, y * MS, r * MS, (z - MC[2]) * MS);
     const EYEU = {uEyeL:{value:v4(14.6, 41.6, 4.25, 52)}, uEyeR:{value:v4(36.3, 41.6, 4.25, 52)}, uNose:{value:v4(25.4, 38.2, 3.05, 60)},
       uEyeCol:{value:EYE0.clone()}, uNoseCol:{value:raw("#1A1212")}, uLineCol:{value:raw(dark ? "#000000" : "#3A2316")}};
-    const steps = new Uint8Array([118,118,118,255, 168,168,168,255, 212,212,212,255]);
+    const steps = new Uint8Array([88,88,88,255, 128,128,128,255, 166,166,166,255]);
     const grad = new THREE.DataTexture(steps, 3, 1, THREE.RGBAFormat); grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.generateMipmaps = false; grad.needsUpdate = true;
     const mat = new THREE.MeshToonMaterial({vertexColors:true, gradientMap:grad});
     mat.onBeforeCompile = sh => {
@@ -3970,18 +3969,24 @@ const B3D = (() => {
       sh.vertexShader = VS_HEAD + sh.vertexShader.replace("#include <beginnormal_vertex>", VS_NORMAL).replace("#include <begin_vertex>", VS_POS);
       Object.assign(sh.uniforms, EYEU);
       sh.fragmentShader = `varying float vGloss; varying vec3 vRest;
-        uniform vec4 uEyeL, uEyeR, uNose; uniform vec3 uEyeCol, uNoseCol, uLineCol;
+        uniform vec4 uEyeL, uEyeR, uNose; uniform vec3 uEyeCol, uNoseCol, uLineCol; uniform float uEye, uArc;
         float discF(vec4 c){ float d = length(vRest.xy - c.xy) - c.z; return (1.0 - smoothstep(-.0011, .0011, d)) * step(c.w, vRest.z); }
-        float ringF(vec4 c, float w){ float d = length(vRest.xy - c.xy) - c.z; return (smoothstep(-.0011, .0011, d) - smoothstep(w - .0011, w + .0011, d)) * step(c.w - .004, vRest.z); }
+        // open eye: a round disc that becomes a flatter ellipse as the lids close
+        float eyeD(vec4 c){ vec2 q = vRest.xy - c.xy; float ry = max(c.z * uEye, .0004); return length(vec2(q.x, q.y * c.z / ry)) * (ry / c.z) - ry; }
+        float eyeF(vec4 c){ return (1.0 - smoothstep(-.0011, .0011, eyeD(c))) * step(c.w, vRest.z) * step(.22, uEye); }
+        float lidLine(vec4 c, float w){ float d = eyeD(c); return (smoothstep(-.0011, .0011, d) - smoothstep(w - .0011, w + .0011, d)) * step(c.w - .004, vRest.z) * step(.22, uEye); }
+        // closed eye: a soft curved line, "‿" asleep or blinking, "∩" when squinting with joy
+        float arcF(vec4 c){ vec2 q = vRest.xy - c.xy; vec2 o = vec2(0., uArc * c.z * .5); float d = abs(length(q - o) - c.z * .8) - c.z * .11;
+          return (1.0 - smoothstep(-.0011, .0011, d)) * step(c.w, vRest.z) * step(abs(q.x), c.z * .9) * step(0., -uArc * (q.y - o.y)) * (1.0 - step(.22, uEye)); }
       ` + sh.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
-        float eyeM = max(discF(uEyeL), discF(uEyeR)), noseM = discF(uNose), lineM = max(ringF(uEyeL, .0055), ringF(uEyeR, .0055));
-        diffuseColor.rgb = mix(diffuseColor.rgb, uLineCol, lineM * .9);
+        float eyeM = max(eyeF(uEyeL), eyeF(uEyeR)), noseM = discF(uNose), lineM = max(max(lidLine(uEyeL, .005), lidLine(uEyeR, .005)), max(arcF(uEyeL), arcF(uEyeR)));
+        diffuseColor.rgb = mix(diffuseColor.rgb, uLineCol, lineM);
         diffuseColor.rgb = mix(diffuseColor.rgb, uEyeCol, eyeM);
         diffuseColor.rgb = mix(diffuseColor.rgb, uNoseCol, noseM);
         float glossM = max(vGloss, max(eyeM, noseM));`).replace("#include <dithering_fragment>", `#include <dithering_fragment>
         vec3 Vd = normalize(vViewPosition);
         float rim = smoothstep(.55, .95, 1.0 - max(dot(normal, Vd), 0.0));
-        gl_FragColor.rgb += rim * vec3(1.0, .93, .82) * .12 * (1.0 - glossM);
+        gl_FragColor.rgb += rim * vec3(1.0, .93, .82) * .07 * (1.0 - glossM);
         float spec = pow(max(dot(normal, normalize(vec3(-.35, .55, .76))), 0.0), 40.0);
         gl_FragColor.rgb += glossM * step(.5, spec) * .25;`);
     };
@@ -4049,7 +4054,7 @@ const B3D = (() => {
     const bl = P.blinkT != null ? (t - P.blinkT) / .16 : 9, blink = bl >= 0 && bl < 1 ? Math.sin(bl * Math.PI) : 0;
     const petAgo = (now - jumpT) / 1000, squint = petAgo >= 0 && petAgo < 1.3 ? Math.sin(Math.min(1, petAgo / 1.3) * Math.PI) * .7 : 0;
     const open = Math.max(.06, Math.min(sleepy ? cur.eye : Math.max(.9, cur.eye), 1 - blink * .94, 1 - squint));
-    U.uEye.value = open; P.glints.forEach(g => g.visible = open > .45);
+    U.uEye.value = open; U.uArc.value = squint > .3 && !sleepy ? -1 : 1; P.glints.forEach(g => g.visible = open > .45);
     U.uTongue.value = Math.sin(t * 8) * .0018 * cur.tongue + (1 - cur.tongue) * .004;
     // squash & stretch: pet jump, happy hops, landing
     const jp = (now - jumpT) / 900; let sq = 1;
