@@ -3853,14 +3853,15 @@ const B3D = (() => {
       const sc = document.createElement("script"); sc.src = "dog-model.js"; sc.onload = () => window.__DOG_B64 ? res() : rej("model"); sc.onerror = () => rej("model"); document.head.appendChild(sc); })
       .then(() => { const s = atob(window.__DOG_B64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; });
     modelP = fetch(MODEL_URL).then(r => { if (!r.ok) throw "model"; return r.arrayBuffer(); }).catch(viaScript).then(buf => {
-      const dv = new DataView(buf); if (dv.getUint32(0, true) !== 0x31474F44) throw "model"; // "DOG1"
+      const dv = new DataView(buf), magic = dv.getUint32(0, true); if (magic !== 0x31474F44 && magic !== 0x32474F44) throw "model"; // "DOG1" / "DOG2"
       const nV = dv.getUint32(4, true), nF = dv.getUint32(8, true), mn = [], mx = [];
       for (let i = 0; i < 3; i++) { mn.push(dv.getFloat32(12 + i*4, true)); mx.push(dv.getFloat32(24 + i*4, true)); }
       let o = 36; const q = new Uint16Array(buf.slice(o, o + nV*6)); o += nV*6;
       const idx = new Uint16Array(buf.slice(o, o + nF*6)); o += nF*6;
       const cls = new Uint8Array(buf.slice(o, o + nV)); o += nV;
-      const w = new Uint8Array(buf.slice(o, o + nV*4));
-      return {nV, nF, mn, mx, q, idx, cls, w};
+      const w = new Uint8Array(buf.slice(o, o + nV*4)); o += nV*4;
+      const layers = magic === 0x32474F44 ? new Uint8Array(buf.slice(o, o + nV*8)) : null; // cream, ear tip, inner ear, blush, pads, tongue, nose, eye
+      return {nV, nF, mn, mx, q, idx, cls, w, layers};
     }).catch(e => { modelP = null; throw e; });
     return modelP;
   }
@@ -3901,19 +3902,28 @@ const B3D = (() => {
   async function buildSTL(THREE, cfg, my){
     const M = await loadModel(); if (my !== buildTok) throw "stale";
     const C = Object.assign({}, COATS._, COATS[cfg.breed] || {});
-    const soft = h => { const c = new THREE.Color(h); c.offsetHSL(0, .07, -.035); return c.convertSRGBToLinear(); }; // a touch richer: tone mapping washes colours out
+    const soft = h => { const c = new THREE.Color(h); c.offsetHSL(0, .1, -.03); return c.convertSRGBToLinear(); }; // punchy, cartoon-bright: tone mapping washes colours out
+    const raw = h => new THREE.Color(h).convertSRGBToLinear();
+    const baseHex = C.base, dark = new THREE.Color(baseHex).getHSL({}).l < .25;
+    const tipC = soft(C.ear && C.ear !== C.base ? C.ear : "#" + new THREE.Color(baseHex).offsetHSL(0, .05, -.18).getHexString());
+    // layer colours, in the order the model stores them
+    const LAY = [soft(C.belly || C.muzzle), tipC, soft(dark ? "#C9858A" : "#F6A9B0"), soft(dark ? "#B0646C" : "#FF8F9E"), soft("#5B3B35"), soft("#F0607A"), raw("#1A1212"),
+      (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.7) : new THREE.Color("#140E0D")).convertSRGBToLinear()];
+    const LAYA = [1, .9, 1, .55, .9, 1, 1, 1]; // blush stays a soft wash
     const pal = [soft(C.base), soft(C.belly || C.muzzle), (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.75) : new THREE.Color("#16100e")).convertSRGBToLinear(), new THREE.Color("#1d1513").convertSRGBToLinear(),
       new THREE.Color("#E97E8C").convertSRGBToLinear(), soft("#F2B7A6"), soft(C.ear || C.base)];
     if (C.base && /^#[0-3]/.test(C.base)) pal[5] = soft("#C9858A"); // dark coats: deeper inner ear
-    const {nV, nF, mn, mx, q, idx, cls, w} = M;
+    const {nV, nF, mn, mx, q, idx, cls, w, layers} = M, cBase = soft(baseHex);
     const pos = new Float32Array(nV*3), col = new Float32Array(nV*3), cf = new Float32Array(nV);
     for (let i = 0; i < nV; i++) {
       const X = mn[0] + q[i*3]/65535*(mx[0]-mn[0]), Y = mn[1] + q[i*3+1]/65535*(mx[1]-mn[1]), Z = mn[2] + q[i*3+2]/65535*(mx[2]-mn[2]);
       pos[i*3] = (X - MC[0]) * MS; pos[i*3+1] = (Y - MC[1]) * MS; pos[i*3+2] = (Z - MC[2]) * MS;
-      const c = pal[cls[i]] || pal[0], s = Math.sin(X*12.9898 + Y*78.233 + Z*37.719) * 43758.5453, g = 1 + ((s - Math.floor(s)) - .5) * .05;
-      // coat a touch darker on the back and top of the head, like real fur
-      const shade = cls[i] === 0 ? 1 - Math.max(0, (33.7 - Z) / 40) * .12 : 1;
-      col[i*3] = c.r*g*shade; col[i*3+1] = c.g*g*shade; col[i*3+2] = c.b*g*shade; cf[i] = cls[i];
+      // coat: a gentle two-tone, darker along the back and the top of the head, warmer on the front
+      const back = Math.max(0, Math.min(1, (34 - Z) / 34)), top = Math.max(0, Math.min(1, (Y - 52) / 12)), shade = 1 - back * .2 - top * .08;
+      let r = cBase.r*shade, g = cBase.g*shade, b = cBase.b*shade;
+      if (layers) for (let L = 0; L < 8; L++) { const a = layers[i*8 + L] / 255 * LAYA[L]; if (a > 0) { const lc = LAY[L]; r += (lc.r - r)*a; g += (lc.g - g)*a; b += (lc.b - b)*a; } }
+      else { const c = pal[cls[i]] || pal[0]; r = c.r*shade; g = c.g*shade; b = c.b*shade; }
+      col[i*3] = r; col[i*3+1] = g; col[i*3+2] = b; cf[i] = cls[i];
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
@@ -3926,21 +3936,38 @@ const B3D = (() => {
     const U = {uHead:{value:new THREE.Vector3()}, uEarL:{value:new THREE.Vector3()}, uEarR:{value:new THREE.Vector3()}, uTail:{value:new THREE.Vector3()},
       uHeadP:{value:v3(LM.head)}, uEarLP:{value:v3(LM.earL)}, uEarRP:{value:v3(LM.earR)}, uTailP:{value:v3(LM.tail)}, uBodyC:{value:v3(LM.body)},
       uBreath:{value:0}, uEye:{value:1}, uEyeY:{value:LM.eyeY}, uTongue:{value:0}, uSquash:{value:1}};
-    const mat = new THREE.MeshStandardMaterial({vertexColors:true, roughness:.78, metalness:0, envMapIntensity:.7});
+    const steps = new Uint8Array([150,150,150,255, 205,205,205,255, 255,255,255,255]);
+    const grad = new THREE.DataTexture(steps, 3, 1, THREE.RGBAFormat); grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.generateMipmaps = false; grad.needsUpdate = true;
+    const mat = new THREE.MeshToonMaterial({vertexColors:true, gradientMap:grad});
     mat.onBeforeCompile = sh => {
       Object.assign(sh.uniforms, U);
       sh.vertexShader = VS_HEAD + sh.vertexShader.replace("#include <beginnormal_vertex>", VS_NORMAL).replace("#include <begin_vertex>", VS_POS);
-      sh.fragmentShader = "varying float vGloss;\n" + sh.fragmentShader.replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.12, vGloss);")
-        .replace("#include <clearcoat_normal_fragment_begin>", "#include <clearcoat_normal_fragment_begin>");
+      sh.fragmentShader = "varying float vGloss;\n" + sh.fragmentShader.replace("#include <dithering_fragment>", `#include <dithering_fragment>
+        vec3 Vd = normalize(vViewPosition);
+        float rim = smoothstep(.55, .95, 1.0 - max(dot(normal, Vd), 0.0));
+        gl_FragColor.rgb += rim * vec3(1.0, .93, .82) * .28 * (1.0 - vGloss * .6);
+        float spec = pow(max(dot(normal, normalize(vec3(-.35, .55, .76))), 0.0), 40.0);
+        gl_FragColor.rgb += vGloss * step(.5, spec) * .55;`);
     };
     const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = false; mesh.frustumCulled = false;
-    const root = new THREE.Group(), body = new THREE.Group(); root.add(body); body.add(mesh);
+    const ink = new THREE.MeshBasicMaterial({color:new THREE.Color(dark ? "#000000" : "#3A2316").convertSRGBToLinear(), side:THREE.BackSide});
+    const OUTLINE = {value:.0052};
+    ink.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, U, {uOutline:OUTLINE});
+      sh.vertexShader = VS_HEAD + "uniform float uOutline;\n" + sh.vertexShader.replace("#include <begin_vertex>",
+        "mat3 rEL = rotE(uEarL * aW.y), rER = rotE(uEarR * aW.z), rH = rotE(uHead * aW.x), rT = rotE(uTail * aW.w);\n vec3 nO = rT * (rH * (rER * (rEL * normal)));\n"
+        + VS_POS + "\n transformed += normalize(nO) * uOutline;");
+      sh.fragmentShader = "varying float vGloss;\n" + sh.fragmentShader;
+    };
+    const shell = new THREE.Mesh(geo, ink); shell.frustumCulled = false;
+    const root = new THREE.Group(), body = new THREE.Group(); root.add(body); body.add(shell); body.add(mesh);
     // head-attached extras follow the shader's head rotation exactly
     const headG = new THREE.Group(); headG.position.copy(v3(LM.head)); body.add(headG);
     const inHead = (o, p) => { o.position.set(p[0] - LM.head[0], p[1] - LM.head[1], p[2] - LM.head[2]); headG.add(o); return o; };
     const glint = new THREE.MeshBasicMaterial({color:0xffffff}), glints = [];
-    [LM.eyeL, LM.eyeR].forEach(e => { const g1 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0085, 16, 12), glint), [e[0] - .012, e[1] + .014, e[2] + .004]);
-      const g2 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0045, 12, 8), glint), [e[0] + .011, e[1] - .011, e[2] + .003]); glints.push(g1, g2); });
+    [LM.eyeL, LM.eyeR].forEach(e => { const g1 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0115, 18, 12), glint), [e[0] - .013, e[1] + .015, e[2] + .002]);
+      const g2 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0055, 12, 8), glint), [e[0] + .013, e[1] - .012, e[2] + .001]); glints.push(g1, g2); });
+    const ng = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0055, 12, 8), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.85})), mw(24.2, 39.9, 66.9)); ng.scale.set(1.4, .8, .6);
     const gold = new THREE.MeshStandardMaterial({color:new THREE.Color("#E9B949").convertSRGBToLinear(), roughness:.25, metalness:.85, envMapIntensity:1.4});
     let bell = null;
     if (cfg.stage >= 1) { // collar, then a golden bell from stage 2
@@ -4006,6 +4033,8 @@ const B3D = (() => {
     if (my !== buildTok) { disposeTree(res.root); throw "stale"; }
     if (dog) { scene.remove(dog); disposeTree(dog); }
     dog = res.root; scene.add(dog);
+    // if this phone's GPU refuses the custom shaders, fall back to the sculpted dog instead of showing nothing
+    try { R.compile(scene, cam); if ((R.info.programs || []).some(pg => pg.diagnostics && pg.diagnostics.runnable === false)) { scene.remove(dog); disposeTree(dog); dog = null; console.warn("dog model shaders"); return buildProc(THREE, cfg); } } catch(_){}
     for (const k of Object.keys(P)) if (k !== "blob") delete P[k];
     Object.assign(P, res.Q);
     P.blob.scale.set(res.Q.size.x * 1.9 + .3, res.Q.size.z * 1.25, 1);
