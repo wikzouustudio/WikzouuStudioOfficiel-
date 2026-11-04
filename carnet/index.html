@@ -2310,9 +2310,21 @@ function buddyStats(){
     ["appetite","energy","stool"].forEach(f => { if (dd[f]) js.push(jv[dd[f]] ?? .8); });
     if (/vomi|boit(e|ille)|boîte|boiter|limp|povra|šep/.test(String(dd.note||"").toLowerCase())) bad++; }
   const journal = js.length ? js.reduce((a,b)=>a+b,0) / js.length : .85;
-  const health = Math.max(0, Math.min(1, journal * .75 + rate("med") * .25 - bad * .15));
-  const happy = Math.max(0, Math.min(1, rate("balade") * .8 + (getDay(today).energy === "Haute" ? .2 : .12)));
-  const fed = rate("repas");
+  // how he is *now*: today's ticks and quick logs weigh most, the past week only a little
+  const stT = dayStats(today), logT = dayLog(today), nowMin = toMin(hhmm(new Date()));
+  const dueT = c => stT.tasks.filter(k => (k.cat === c || (c === "balade" && k.cat === "jeu")) && toMin(k.time) + 30 <= nowMin);
+  const rateT = c => { const d = dueT(c); return d.length ? d.filter(k => stT.done[k.key]).length / d.length : null; };
+  const blend = (todayR, weekR) => todayR == null ? weekR : todayR * .75 + weekR * .25;
+  const ago = k => { const l = logT.filter(x => x.k === k).pop(); return l ? nowMin - toMin(l.at) : 1e9; };
+  const lastDone = c => { let m = -1e9; stT.tasks.forEach(k => { if ((k.cat === c || (c === "balade" && k.cat === "jeu")) && stT.done[k.key]) m = Math.max(m, toMin((stT.done[k.key].at || k.time))); }); return nowMin - m; };
+  const dT = getDay(today), jT = ["appetite","energy","stool"].filter(f => dT[f]).map(f => jv[dT[f]] ?? .8);
+  const journalNow = jT.length ? (jT.reduce((a,b)=>a+b,0) / jT.length) * .7 + journal * .3 : journal;
+  const sick = logT.filter(x => x.k === "vomi").length * .3 + logT.filter(x => x.k === "accident").length * .08;
+  const health = Math.max(0, Math.min(1, journalNow * .75 + blend(rateT("med"), rate("med")) * .25 - bad * .15 - sick));
+  const walkedRecently = Math.min(ago("balade"), lastDone("balade")) < 60, playedRecently = ago("jeu") < 45;
+  const happy = Math.max(0, Math.min(1, blend(rateT("balade"), rate("balade")) * .8 + (dT.energy === "Haute" ? .2 : dT.energy === "Basse" ? 0 : .12) + (walkedRecently || playedRecently ? .25 : 0)));
+  const fed = Math.max(0, Math.min(1, blend(rateT("repas"), rate("repas")) + (lastDone("repas") < 90 ? .15 : 0)));
+  const napping = ago("sieste") < 40;
   // xp across loaded history
   let xp = 0, streak = 0, perfect = 0, journalDays = 0, medMiss = 0, walkAll = true;
   const keys = knownDates();
@@ -2324,7 +2336,8 @@ function buddyStats(){
   const next = STAGES[stage+1], prog = next ? (xp - STAGES[stage][0]) / (next[0] - STAGES[stage][0]) : 1;
   const hr = new Date().getHours();
   let mood = "content";
-  if (health < .5) mood = "malade"; else if (happy < .45 || fed < .5) mood = "triste"; else if (hr >= 22 || hr < 6) mood = "dort"; else if (health > .85 && happy > .85) mood = "ravi";
+  if (health < .5) mood = "malade"; else if (hr >= 22 || hr < 6 || napping) mood = "dort"; else if (happy < .45 || fed < .5) mood = "triste";
+  else if ((health > .85 && happy > .85) || walkedRecently || playedRecently) mood = "ravi";
   const badges = [
     {k:"streak3", ok: streak >= 3, l:"3 jours parfaits"}, {k:"streak7", ok: streak >= 7, l:"7 jours parfaits"},
     {k:"walks", ok: walkAll && keys.length > 0, l:"Toutes les balades de la semaine"}, {k:"meds", ok: medMiss === 0 && meds().length > 0, l:"Aucun médicament oublié"},
