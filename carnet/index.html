@@ -3880,7 +3880,7 @@ const B3D = (() => {
     attribute vec4 aW; attribute float aCls;
     uniform vec3 uHead, uEarL, uEarR, uTail, uHeadP, uEarLP, uEarRP, uTailP, uBodyC;
     uniform float uBreath, uEye, uEyeY, uTongue, uSquash;
-    varying float vGloss;
+    varying float vGloss; varying vec3 vRest;
     mat3 rotE(vec3 e){ // = Rx * Ry * Rz (three.js Euler "XYZ")
       float cx = cos(e.x), sx = sin(e.x), cy = cos(e.y), sy = sin(e.y), cz = cos(e.z), sz = sin(e.z);
       mat3 X = mat3(1.,0.,0., 0.,cx,sx, 0.,-sx,cx), Y = mat3(cy,0.,-sy, 0.,1.,0., sy,0.,cy), Z = mat3(cz,sz,0., -sz,cz,0., 0.,0.,1.);
@@ -3893,7 +3893,8 @@ const B3D = (() => {
   `;
   const VS_POS = `
     #include <begin_vertex>
-    vGloss = (aCls > 1.5 && aCls < 4.5) ? 1.0 : 0.0;
+    vRest = position;
+    vGloss = (aCls > 3.5 && aCls < 4.5) ? 1.0 : 0.0;
     float bodyW = (1.0 - aW.x) * (1.0 - aW.w);
     transformed.xz = mix(transformed.xz, uBodyC.xz + (transformed.xz - uBodyC.xz) * (1.0 + uBreath * 0.014), bodyW);
     transformed.y = mix(transformed.y, uBodyC.y + (transformed.y - uBodyC.y) * (1.0 + uBreath * 0.006), bodyW);
@@ -3928,7 +3929,7 @@ const B3D = (() => {
       // coat: a gentle two-tone, darker along the back and the top of the head, warmer on the front
       const back = Math.max(0, Math.min(1, (34 - Z) / 34)), top = Math.max(0, Math.min(1, (Y - 52) / 12)), shade = 1 - back * .2 - top * .08;
       let r = cBase.r*shade, g = cBase.g*shade, b = cBase.b*shade;
-      if (layers) for (let L = 0; L < 8; L++) { const a = layers[i*8 + L] / 255 * LAYA[L]; if (a > 0) { let lc = LAY[L];
+      if (layers) for (let L = 0; L < 6; L++) { const a = layers[i*8 + L] / 255 * LAYA[L]; if (a > 0) { let lc = LAY[L];
         if (L === 7) { const tt = Math.max(0, Math.min(1, (41.9 - Y) / 4.4)), k = tt * tt * (3 - 2 * tt); lc = {r: EYE0.r + (EYE1.r - EYE0.r)*k, g: EYE0.g + (EYE1.g - EYE0.g)*k, b: EYE0.b + (EYE1.b - EYE0.b)*k}; }
         r += (lc.r - r)*a; g += (lc.g - g)*a; b += (lc.b - b)*a; } }
       else { const c = pal[cls[i]] || pal[0]; r = c.r*shade; g = c.g*shade; b = c.b*shade; }
@@ -3945,18 +3946,31 @@ const B3D = (() => {
     const U = {uHead:{value:new THREE.Vector3()}, uEarL:{value:new THREE.Vector3()}, uEarR:{value:new THREE.Vector3()}, uTail:{value:new THREE.Vector3()},
       uHeadP:{value:v3(LM.head)}, uEarLP:{value:v3(LM.earL)}, uEarRP:{value:v3(LM.earR)}, uTailP:{value:v3(LM.tail)}, uBodyC:{value:v3(LM.body)},
       uBreath:{value:0}, uEye:{value:1}, uEyeY:{value:LM.eyeY}, uTongue:{value:0}, uSquash:{value:1}};
+    const v4 = (x, y, r, z) => new THREE.Vector4((x - MC[0]) * MS, y * MS, r * MS, (z - MC[2]) * MS);
+    const EYEU = {uEyeL:{value:v4(14.6, 41.6, 4.25, 52)}, uEyeR:{value:v4(36.3, 41.6, 4.25, 52)}, uNose:{value:v4(25.4, 38.2, 3.05, 60)},
+      uEyeCol:{value:EYE0.clone()}, uNoseCol:{value:raw("#1A1212")}, uLineCol:{value:raw(dark ? "#000000" : "#3A2316")}};
     const steps = new Uint8Array([118,118,118,255, 168,168,168,255, 212,212,212,255]);
     const grad = new THREE.DataTexture(steps, 3, 1, THREE.RGBAFormat); grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.generateMipmaps = false; grad.needsUpdate = true;
     const mat = new THREE.MeshToonMaterial({vertexColors:true, gradientMap:grad});
     mat.onBeforeCompile = sh => {
       Object.assign(sh.uniforms, U);
       sh.vertexShader = VS_HEAD + sh.vertexShader.replace("#include <beginnormal_vertex>", VS_NORMAL).replace("#include <begin_vertex>", VS_POS);
-      sh.fragmentShader = "varying float vGloss;\n" + sh.fragmentShader.replace("#include <dithering_fragment>", `#include <dithering_fragment>
+      Object.assign(sh.uniforms, EYEU);
+      sh.fragmentShader = `varying float vGloss; varying vec3 vRest;
+        uniform vec4 uEyeL, uEyeR, uNose; uniform vec3 uEyeCol, uNoseCol, uLineCol;
+        float discF(vec4 c){ float d = length(vRest.xy - c.xy) - c.z; return (1.0 - smoothstep(-.0011, .0011, d)) * step(c.w, vRest.z); }
+        float ringF(vec4 c, float w){ float d = length(vRest.xy - c.xy) - c.z; return (smoothstep(-.0011, .0011, d) - smoothstep(w - .0011, w + .0011, d)) * step(c.w - .004, vRest.z); }
+      ` + sh.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
+        float eyeM = max(discF(uEyeL), discF(uEyeR)), noseM = discF(uNose), lineM = max(ringF(uEyeL, .0055), ringF(uEyeR, .0055));
+        diffuseColor.rgb = mix(diffuseColor.rgb, uLineCol, lineM * .9);
+        diffuseColor.rgb = mix(diffuseColor.rgb, uEyeCol, eyeM);
+        diffuseColor.rgb = mix(diffuseColor.rgb, uNoseCol, noseM);
+        float glossM = max(vGloss, max(eyeM, noseM));`).replace("#include <dithering_fragment>", `#include <dithering_fragment>
         vec3 Vd = normalize(vViewPosition);
         float rim = smoothstep(.55, .95, 1.0 - max(dot(normal, Vd), 0.0));
-        gl_FragColor.rgb += rim * vec3(1.0, .93, .82) * .12 * (1.0 - vGloss);
+        gl_FragColor.rgb += rim * vec3(1.0, .93, .82) * .12 * (1.0 - glossM);
         float spec = pow(max(dot(normal, normalize(vec3(-.35, .55, .76))), 0.0), 40.0);
-        gl_FragColor.rgb += vGloss * step(.5, spec) * .25;`);
+        gl_FragColor.rgb += glossM * step(.5, spec) * .25;`);
     };
     const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = false; mesh.frustumCulled = false;
     const ink = new THREE.MeshBasicMaterial({color:new THREE.Color(dark ? "#000000" : "#3A2316").convertSRGBToLinear(), side:THREE.BackSide});
