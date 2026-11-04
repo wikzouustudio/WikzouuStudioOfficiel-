@@ -7,12 +7,12 @@ import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signI
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBt3VJPpjn2zQLeoV6WwtoTHQwyc2K35qc",
-  authDomain: "dogs-life-801c4.firebaseapp.com",
-  projectId: "dogs-life-801c4",
-  storageBucket: "dogs-life-801c4.firebasestorage.app",
-  messagingSenderId: "413507293821",
-  appId: "1:413507293821:web:241b6921bd8cdf3c6a5714"
+  apiKey: "AIzaSyBEbaKEk02EAmpHRd73DWgwvXCS7UtRj6c",
+  authDomain: "dogs-life-official.firebaseapp.com",
+  projectId: "dogs-life-official",
+  storageBucket: "dogs-life-official.firebasestorage.app",
+  messagingSenderId: "976246181883",
+  appId: "1:976246181883:web:f7204b15a1ad902f0d455e"
 };
 // Claude's evening advice goes through a small relay that keeps the API key secret (empty = built-in advice only)
 const ADVICE_URL = "";
