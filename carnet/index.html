@@ -1542,6 +1542,9 @@ Object.assign(HR, {"Chaque sortie et chaque repas, notés en un geste.":"Svaki i
 Object.assign(EN, {"Voir plus":"See more","Voir moins":"See less","Un résumé de 30 jours, prêt à partager.":"A 30-day summary, ready to share.","Un accès dédié pour la personne qui le garde.":"Dedicated access for the dog-sitter."});
 Object.assign(HR, {"Voir plus":"Prikaži više","Voir moins":"Prikaži manje","Un résumé de 30 jours, prêt à partager.":"Sažetak od 30 dana, spreman za dijeljenje.","Un accès dédié pour la personne qui le garde.":"Poseban pristup za osobu koja ga čuva."});
 
+Object.assign(EN, {"Confirmer la déconnexion":"Confirm sign out"});
+Object.assign(HR, {"Confirmer la déconnexion":"Potvrdi odjavu"});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -2016,8 +2019,12 @@ function viewProfile(){
   <div class="sec"><div class="sec-h"><h2>${T("À savoir")}</h2></div><div class="card">${ed?`<textarea class="f" id="p-notes" data-pf="notes" style="border-radius:0;background:transparent;min-height:110px" placeholder="${T("Peurs, habitudes, consignes pour la garde…")}">${esc(d.notes||"")}</textarea>`:`<div class="pad" style="white-space:pre-wrap;font-size:15px;${d.notes?"":"color:var(--fg3)"}">${esc(d.notes||T("Peurs, habitudes, consignes pour la personne qui le garde…"))}</div>`}</div></div>
   ${ed?`<div style="margin-top:24px">${btns}</div>`:`${dogsSection()}<div class="sec"><div class="card list">
     <button class="row" data-act="lostOpen"><span class="ico" style="background:var(--red)">${I.warn}</span><div class="main"><div class="t">${T("Chien perdu")}</div><div class="s">${T("Affiche et annonce prêtes en une minute")}</div></div><span class="chev">${I.chevR}</span></button>
-    <button class="row" data-act="goSub" data-tab="chien" data-sub="reglages"><span class="ico" style="background:var(--gray)">${I_GEAR}</span><div class="main"><div class="t">${T("Réglages")}</div><div class="s">${T("Alertes, langue, aide")}</div></div><span class="chev">${I.chevR}</span></button></div></div>`}`;
+    <button class="row" data-act="goSub" data-tab="chien" data-sub="reglages"><span class="ico" style="background:var(--gray)">${I_GEAR}</span><div class="main"><div class="t">${T("Réglages")}</div><div class="s">${T("Alertes, langue, aide")}</div></div><span class="chev">${I.chevR}</span></button></div></div>
+    ${SITE && window.carnetAccount ? `<div class="sec"><div class="sec-h"><h2>${T("Compte")}</h2></div><div class="card list">
+      <div class="row">${mav(meMember() || {name: (window.carnetAccount.name || "?"), color: MCOL[1]}, 34)}<div class="main"><div class="t">${esc(window.carnetAccount.name || T("Votre compte"))}</div><div class="s">${esc(window.carnetAccount.email || "")}</div></div></div>
+      <button class="row" data-act="signOut"><span class="ico" style="background:var(--red)">${I_OUT}</span><span class="main t" style="color:var(--red)">${T("Se déconnecter")}</span></button></div></div>` : ""}`}`;
 }
+const I_OUT = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H4"/></svg>';
 const I_PLUS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
 const I_GEAR = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4L19.4 13ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/></svg>';
 function viewSettings(){
@@ -4793,7 +4800,8 @@ document.addEventListener("click", async e => {
       if (!el.dataset.skip && !wizCanNext(k, w.d)) break;
       w.i++; w.dir = 1; renderWiz(); break; }
     case "joinCode": await checkCode(); break;
-    case "signOut": if (window.carnetAccount) await window.carnetAccount.signOut(); break;
+    case "signOut": { if (!el.dataset.confirm) { el.dataset.confirm = "1"; const t = el.querySelector(".main") || el; t.textContent = T("Confirmer la déconnexion"); setTimeout(() => { if (el.isConnected) { delete el.dataset.confirm; t.textContent = T("Se déconnecter"); } }, 4000); break; }
+      if (window.carnetAccount) await window.carnetAccount.signOut(); break; }
     case "codeCopy": { if (await copyText(el.dataset.v)) { el.textContent = T("Copié ✓"); toast(T("Code copié")); } else toast(fmtCode(el.dataset.v)); break; }
     case "joinNew": { const i = $("#j-name"), n = i && i.value.trim(); if (!n) { i && i.focus(); toast(T("Indiquez votre prénom.")); break; }
       if (family().some(m => m.name.toLowerCase() === n.toLowerCase())) { toast(T("Ce prénom est déjà dans la famille.")); break; }
