@@ -17,7 +17,7 @@ const firebaseConfig = {
 // Claude's evening advice goes through a small relay that keeps the API key secret (empty = built-in advice only)
 const ADVICE_URL = "";
 // Notifications even when the app is closed (both must be filled in; see cloudflare-worker.js):
-const VAPID_KEY = "";   // Firebase → Paramètres du projet → Cloud Messaging → Certificats push Web → « Paire de clés »
+const VAPID_KEY = "BBlZEGcnrvBl4_EZyceCBOo4OYrUFjMpXx_MrcoBGUpjdT3O-Bpn1W236jMSuSNOTdaWydmd65OuuHKTXc3kJFo";   // Firebase → Paramètres du projet → Cloud Messaging → Certificats push Web → « Paire de clés »
 const WORKER_URL = "";  // l'adresse du Worker Cloudflare, ex. https://dogs-life.votre-nom.workers.dev
 
 const B = window.__carnetBridge; B.started = true;
