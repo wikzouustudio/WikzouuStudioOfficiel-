@@ -4,7 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCgpdewI-Nfnq8V3HKrBwvFz0FDXX-9HJw",
@@ -134,8 +134,14 @@ async function joinWithCode(fromApp){
   if (fromApp) { location.reload(); return; }
   enter(fid, false);
 }
+// a signed-out person keeps their place in the family; their picture just shows a small warning until they come back
+async function setPresence(out){
+  if (!FID || !UID) return;
+  try { const qs = await getDocs(query(collection(fs, "families", FID, "members"), where("uid", "==", UID)));
+    await Promise.all(qs.docs.map(d => setDoc(d.ref, out ? {signedOut: true, outAt: Date.now()} : {signedOut: false}, {merge: true}))); } catch(e) { console.warn(e); }
+}
 async function enter(fid, owner){
-  FID = fid; OWNER = owner; step = "done";
+  FID = fid; OWNER = owner; step = "done"; setPresence(false);
   if (!owner) { try { const f = await getDoc(doc(fs, "families", fid)); OWNER = f.exists() && f.data().owner === UID; } catch(_) {} }
   hide();
   B.resolve(api());
@@ -161,7 +167,7 @@ function api(){
     })
   });
   const u = auth.currentUser;
-  window.carnetAccount = {name: u.displayName || "", email: u.email || u.displayName || "", signOut: async () => { await signOut(auth); try { localStorage.removeItem("carnet-me@" + UID); } catch(_) {} location.reload(); }};
+  window.carnetAccount = {name: u.displayName || "", email: u.email || u.displayName || "", signOut: async () => { await setPresence(true); await signOut(auth); try { localStorage.removeItem("carnet-me@" + UID); } catch(_) {} location.reload(); }};
   return {
     db: {collection: col => coll(col)},
     user: {

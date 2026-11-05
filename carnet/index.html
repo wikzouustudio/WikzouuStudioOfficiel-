@@ -831,6 +831,12 @@ body.wiz-open .scrim{z-index:85}
 @media (prefers-reduced-motion: reduce){.ccard[data-sub="buddy"],.ccard[data-sub="buddy"] .cc-rings{animation:none}}
 .ccard.blub{animation:blub .42s cubic-bezier(.3,1.2,.5,1)}
 .ccard.blub .cc-rings{animation:blubRings .42s cubic-bezier(.3,1.4,.5,1)}
+/* Signed-out member: a small warning badge on their picture */
+.mav-w{position:relative;display:inline-flex;flex:none}
+.mav-warn{position:absolute;right:-2px;bottom:-2px;width:var(--s);height:var(--s);border-radius:50%;background:var(--orange);color:#fff;font-style:normal;font-weight:800;font-size:calc(var(--s) * .72);line-height:1;display:grid;place-items:center;box-shadow:0 0 0 2px var(--card)}
+.warn-t{color:var(--orange);font-weight:600}
+.ms-warn{display:flex;gap:10px;align-items:flex-start;background:color-mix(in srgb,var(--orange) 14%,var(--card));border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:14px;line-height:1.4}
+.ms-warn b{flex:none;width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:13px}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -1544,6 +1550,9 @@ Object.assign(HR, {"Voir plus":"Prikaži više","Voir moins":"Prikaži manje","U
 
 Object.assign(EN, {"Confirmer la déconnexion":"Confirm sign out"});
 Object.assign(HR, {"Confirmer la déconnexion":"Potvrdi odjavu"});
+
+Object.assign(EN, {"Déconnecté(e) de l'app":"Signed out of the app","{n} s'est déconnecté(e) de l'app. Ses tâches et sa place dans la famille sont gardées ; tout revient dès qu'il ou elle se reconnecte.":"{n} signed out of the app. Their tasks and place in the family are kept; everything comes back as soon as they sign in again."});
+Object.assign(HR, {"Déconnecté(e) de l'app":"Odjavljen(a) iz aplikacije","{n} s'est déconnecté(e) de l'app. Ses tâches et sa place dans la famille sont gardées ; tout revient dès qu'il ou elle se reconnecte.":"{n} se odjavio/la iz aplikacije. Zadaci i mjesto u obitelji su sačuvani; sve se vraća čim se ponovno prijavi."});
 
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
@@ -2553,7 +2562,8 @@ const myMember = () => S.me ? family().find(m => m.uid === S.me) || null : meMem
 S.avatars = S.avatars || {};
 const memberPhoto = m => (m && (m.photo || (m.uid && S.avatars[m.uid]))) || "";
 const mav = (m, sz = 22) => { if (!m) return ""; const ph = memberPhoto(m);
-  return `<span class="mav ${ph ? "ph" : ""}" style="--c:${esc((m.id && memberColors()[m.id]) || m.color)};width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.48)}px" title="${esc(m.name)}">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy" draggable="false">` : `<i class="mk" aria-hidden="true"></i>`}</span>`; };
+  const warn = m.signedOut && sz >= 22 && sz < 60 ? `<i class="mav-warn" style="--s:${Math.max(10, Math.round(sz * .38))}px" aria-label="${T("Déconnecté(e) de l'app")}">!</i>` : "";
+  return (warn ? `<span class="mav-w" title="${esc(m.name)} · ${T("Déconnecté(e) de l'app")}">` : "") + `<span class="mav ${ph ? "ph" : ""}" style="--c:${esc((m.id && memberColors()[m.id]) || m.color)};width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.48)}px" title="${esc(m.name)}">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy" draggable="false">` : `<i class="mk" aria-hidden="true"></i>`}</span>` + (warn ? warn + "</span>" : ""); };
 // account photos of linked members (kept in memory only, resolved again on every render)
 async function resolveAvatars(){
   if (!user || !user.profiles) return; const ids = family().map(m => m.uid).filter(Boolean); if (!ids.length) return;
@@ -3103,7 +3113,7 @@ function viewFamily(){
       : `<div class="empty-s pad">${T("Les tâches cochées apparaîtront ici, avec le prénom de qui les a faites.")}</div>`}</div></div>`;
   // members
   const members = `<div class="sec"><div class="sec-h"><h2>${T("Membres")}</h2></div><div class="card list">
-      ${fam.map(m => `<div class="row"><button class="rowbtn" data-act="memberSheet" data-id="${esc(m.id)}">${mav(m, 34)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${esc(roleLabel(m))} · ${m.id === ME ? T("C'est vous") : m.uid ? (m.since > 1e12 ? T("A rejoint le {d}",{d:fmt(new Date(m.since),{day:"numeric",month:"short"})}) : T("A rejoint")) : T("Pas encore rejoint")}</div></div></button>
+      ${fam.map(m => `<div class="row"><button class="rowbtn" data-act="memberSheet" data-id="${esc(m.id)}">${mav(m, 34)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${m.signedOut ? `<span class="warn-t">${T("Déconnecté(e) de l'app")}</span> · ` : ""}${esc(roleLabel(m))} · ${m.id === ME ? T("C'est vous") : m.uid ? (m.since > 1e12 ? T("A rejoint le {d}",{d:fmt(new Date(m.since),{day:"numeric",month:"short"})}) : T("A rejoint")) : T("Pas encore rejoint")}</div></div></button>
         ${m.phone ? `<a class="callbtn" href="tel:${esc(m.phone.replace(/[^+0-9]/g, ""))}" aria-label="${T("Appeler {n}",{n:esc(m.name)})}">${I_PHONE}</a>` : ""}<span class="chev">${I.chevR}</span></div>`).join("")}
       ${invites().map(v => `<button class="row inv-row" data-act="${canEdit() ? "inviteMenu" : ""}" data-id="${esc(v.id)}"><span class="mav" style="--c:var(--fill2);color:var(--fg2);width:34px;height:34px;font-size:15px">#</span><div class="main"><div class="t">${esc(T("Code {r} en attente",{r:T(v.role === "garde" ? "Garde" : "Famille")}))}</div><div class="s">${esc(T("Expire dans {n} j",{n:daysLeft(v)}))}${v.byName ? " · " + esc(T("par {n}",{n:v.byName})) : ""}</div></div>
         ${canEdit() ? `<span class="chev">${I.chevR}</span>` : ""}</button>`).join("")}
@@ -3119,6 +3129,7 @@ function memberSheet(id){
   S.msPhoto = null;
   const body = `<div class="msheet"><div class="ms-photo">${can ? `<label for="ms-photo" aria-label="${T("Changer la photo")}"><span id="ms-av">${mav(m, 84)}</span><span class="cam"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 4 7.5 6H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.5L15 4H9Zm3 4.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/></svg></span></label><input type="file" id="ms-photo" accept="image/*" hidden>
       ${m.photo ? `<button type="button" class="link" data-act="msPhotoDel" data-id="${esc(m.id)}">${T("Retirer la photo")}</button>` : `<span class="s" style="font-size:13px;color:var(--fg2)">${T(m.uid && S.avatars[m.uid] ? "Photo du compte · touchez pour en choisir une autre" : "Touchez pour ajouter une photo")}</span>`}` : `<span id="ms-av">${mav(m, 84)}</span>`}</div>
+    ${m.signedOut ? `<div class="ms-warn"><b>!</b><span>${esc(T("{n} s'est déconnecté(e) de l'app. Ses tâches et sa place dans la famille sont gardées ; tout revient dès qu'il ou elle se reconnecte.",{n:m.name}))}</span></div>` : ""}
     ${can ? `<div class="fg"><label for="ms-name">${T("Prénom")}</label><input class="f" id="ms-name" value="${esc(m.name)}" maxlength="24"></div>
     <div class="fg"><div class="lab">${T("Couleur")}</div><div class="swatches">${MCOL.map(c => `<label><input type="radio" name="ms-col" value="${c}" ${m.color === c ? "checked" : ""}><span style="background:${c}"></span></label>`).join("")}</div></div>
     <div class="fg" ${canEdit() ? "" : "hidden"}><div class="lab">${T("Rôle")}</div><div class="seg" id="ms-role">${[["famille","Famille"],["garde","Garde"]].map(([k, l]) => `<button type="button" class="${(m.role || "famille") === k ? "on" : ""}" data-act="msRole" data-v="${k}">${T(l)}</button>`).join("")}</div></div>
