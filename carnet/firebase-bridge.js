@@ -205,7 +205,7 @@ function api(){
   const wrapSnap = s => ({docs: s.docs.map(d => ({id: d.id, data: () => d.data()})), metadata: {fromCache: !navigator.onLine ? false : s.metadata.fromCache && !s.docs.length ? false : s.metadata.fromCache}});
   const coll = (col, filters) => ({
     where: (f, op, v) => coll(col, (filters || []).concat([[f, op, v]])),
-    onSnapshot(cb, err){ const q = filters ? query(path(col), ...filters.map(([f, op, v]) => where(f, op, v))) : path(col); return onSnapshot(q, s => cb(wrapSnap(s)), e => err && err({code: e.code === "permission-denied" ? "revoked" : "unavailable", message: e.message})); },
+    onSnapshot(cb, err){ const q = filters ? query(path(col), ...filters.map(([f, op, v]) => where(f, op, v))) : path(col); return onSnapshot(q, {includeMetadataChanges: true}, s => cb(wrapSnap(s)), e => err && err({code: e.code === "permission-denied" ? "revoked" : "unavailable", message: e.message})); },
     doc: id => ({
       async set(data){
         await setDoc(doc(fs, "families", FID, col, id), clean(data));
