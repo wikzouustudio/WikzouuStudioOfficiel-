@@ -875,6 +875,39 @@ body.is-offline #offline-pill{display:block}
 .wx-ws{font-size:13px;color:var(--fg2);margin-top:3px}
 .wx-alt{font-size:13.5px;font-weight:600;margin-top:6px;color:var(--fg)}
 .wx.bad .wx-tip{background:color-mix(in srgb,var(--red) 13%,var(--card))}.wx.meh .wx-tip{background:color-mix(in srgb,var(--orange) 13%,var(--card))}
+/* Weather v3: clean, Apple-like */
+.wx{padding:16px 16px 6px}
+.wx .wx-h{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
+.wx .wx-h .main{flex:1;min-width:0}
+.wx-place{display:flex;align-items:center;gap:5px;font-size:15px;font-weight:600;color:var(--fg)}
+.wx-place svg{color:var(--accent);flex:none}.wx-place span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wx-place em{display:grid;color:var(--fg3)}.wx-place em svg{width:12px;height:12px;color:var(--fg3)}
+.wx .wx-t{font-family:var(--font-r);font-size:54px;font-weight:300;line-height:1;letter-spacing:-.03em;margin-top:6px}
+.wx-c{font-size:15px;font-weight:600;margin-top:4px}
+.wx-hl{font-size:13px;color:var(--fg2);margin-top:2px}
+.wx .wx-big{font-size:56px;line-height:1;margin-top:6px}
+.wx-win{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;color:var(--green)}
+.wx-win i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 25%,transparent)}
+.wx .wx-strip{display:flex;gap:0;overflow-x:auto;margin:10px -16px 0;padding:10px 10px 8px;border-top:.5px solid var(--sep);border-bottom:.5px solid var(--sep);scrollbar-width:none}
+.wx .wx-hr{flex:none;width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0 6px;border-radius:0;background:none!important;position:relative}
+.wx .wx-hr small{font-size:12px;font-weight:600;color:var(--fg2)}
+.wx .wx-hr span{font-size:20px;line-height:1.15}
+.wx .wx-hr i{font-style:normal;font-size:11px;font-weight:700;color:var(--blue);min-height:13px;line-height:13px}
+.wx .wx-hr b{font-size:16px;font-weight:600}
+.wx .wx-hr u{display:grid;place-items:center;height:12px;color:var(--accent)}.wx .wx-hr u svg{width:11px;height:11px}
+.wx .wx-hr::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:3px;border-radius:2px;background:transparent}
+.wx .wx-hr.best::after{background:var(--green)}.wx .wx-hr.bad::after{background:var(--red);opacity:.7}
+.wx .wx-hr em{display:none}
+.wx-sec{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--fg2);margin:14px 0 4px}
+.wx .wx-walks{display:block;margin:0}
+.wx .wx-walk{display:flex;align-items:center;gap:12px;padding:10px 0;border-radius:0;background:none!important}
+.wx .wx-walk+.wx-walk{border-top:.5px solid var(--sep)}
+.wx-wtime{font-size:15px;font-weight:600;width:46px;flex:none}
+.wx .wx-walk .main{flex:1;min-width:0}.wx .wx-walk .t{font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wx .wx-walk .s{font-size:13px;color:var(--fg2);margin-top:1px}
+.wx .wx-alt{font-size:13px;font-weight:600;color:var(--accent);margin-top:3px}
+.wx .wx-v{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;flex:none}
+.wx-foot{font-size:13px;color:var(--fg2);padding:8px 0 10px}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -1634,6 +1667,11 @@ Object.assign(HR, {"orage":"oluja","pluie {p} %":"kiša {p} %","{t}° ressentis"
   "Mieux vers {h} : {i} {t}°, {p} % de pluie":"Bolje oko {h}: {i} {t}°, {p} % kiše","avancez la balade":"izađite ranije","décalez la balade":"izađite kasnije","Pas de meilleur créneau proche : balade courte, et une serviette au retour.":"Nema boljeg termina blizu: kratka šetnja i ručnik za povratak.",
   "La météo se gâte à l'heure d'une balade : regardez le créneau proposé.":"Vrijeme se kvari u vrijeme šetnje: pogledajte predloženi termin.","Météo moyenne pour les balades, rien de grave.":"Osrednje vrijeme za šetnje, ništa strašno.","Temps idéal pour les balades d'aujourd'hui.":"Idealno vrijeme za današnje šetnje.",
   "Meilleur moment pour sortir : {a} – {b}.":"Najbolje vrijeme za izlazak: {a} – {b}.","Pas de bon créneau aujourd'hui : préférez des sorties courtes.":"Danas nema dobrog termina: kratki izlasci.","au mieux {a} – {b}":"najbolje {a} – {b}"});
+
+Object.assign(EN, {"Ensoleillé":"Sunny","Plutôt ensoleillé":"Mostly sunny","Partiellement nuageux":"Partly cloudy","Couvert":"Cloudy","Brouillard":"Fog","Brouillard givrant":"Freezing fog","Bruine":"Drizzle","Bruine verglaçante":"Freezing drizzle","Pluie faible":"Light rain","Pluie":"Rain","Forte pluie":"Heavy rain","Pluie verglaçante":"Freezing rain","Neige faible":"Light snow","Neige":"Snow","Forte neige":"Heavy snow","Grésil":"Sleet","Averses":"Showers","Fortes averses":"Heavy showers","Averses de neige":"Snow showers","Orage":"Thunderstorm","Orage et grêle":"Thunderstorm with hail",
+  "Idéal jusqu'à {h}":"Ideal until {h}","Idéal de {a} à {b}":"Ideal from {a} to {b}","Max.":"H","Min.":"L","Balades d'aujourd'hui":"Today's walks","Plutôt à {h}":"Better at {h}","Gardez-la courte, serviette au retour":"Keep it short, towel ready","Ma position":"My location"});
+Object.assign(HR, {"Ensoleillé":"Sunčano","Plutôt ensoleillé":"Pretežno sunčano","Partiellement nuageux":"Djelomično oblačno","Couvert":"Oblačno","Brouillard":"Magla","Brouillard givrant":"Ledena magla","Bruine":"Rosulja","Bruine verglaçante":"Ledena rosulja","Pluie faible":"Slaba kiša","Pluie":"Kiša","Forte pluie":"Jaka kiša","Pluie verglaçante":"Ledena kiša","Neige faible":"Slab snijeg","Neige":"Snijeg","Forte neige":"Jak snijeg","Grésil":"Susnježica","Averses":"Pljuskovi","Fortes averses":"Jaki pljuskovi","Averses de neige":"Snježni pljuskovi","Orage":"Grmljavina","Orage et grêle":"Grmljavina s tučom",
+  "Idéal jusqu'à {h}":"Idealno do {h}","Idéal de {a} à {b}":"Idealno od {a} do {b}","Max.":"Maks.","Min.":"Min.","Balades d'aujourd'hui":"Današnje šetnje","Plutôt à {h}":"Bolje u {h}","Gardez-la courte, serviette au retour":"Kratko, ručnik za povratak","Ma position":"Moja lokacija"});
 
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
@@ -3003,7 +3041,8 @@ const LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5Fl
 const logoImg = (sz, cls) => `<img class="brand-logo ${cls || ""}" src="${LOGO}" width="${sz}" height="${sz}" alt="Dogs Life">`;
 
 /* ---------- weather for walks (Open-Meteo: free, no key) ---------- */
-const wxIcon = (c, day) => c === 0 ? (day === 0 ? "🌙" : "☀️") : c <= 2 ? "🌤️" : c === 3 ? "☁️" : c === 45 || c === 48 ? "🌫️" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "❄️" : c >= 95 ? "⛈️" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "🌧️" : "🌤️";
+const I_PIN = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>';
+const wxIcon = (c, day) => c === 0 ? (day === 0 ? "🌙" : "☀️") : c === 1 && day === 0 ? "🌙" : c <= 2 ? (day === 0 ? "☁️" : "🌤️") : c === 3 ? "☁️" : c === 45 || c === 48 ? "🌫️" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "❄️" : c >= 95 ? "⛈️" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "🌧️" : "🌤️";
 let WX = null, wxBusy = false;
 const wxCfg = () => (C.config && C.config.weather && C.config.weather.lat != null) ? C.config.weather : null;
 const wxKey = w => "dl-wx:" + (+w.lat).toFixed(2) + "," + (+w.lon).toFixed(2);
@@ -3024,7 +3063,7 @@ function wxLimits(){ const d = dog() || {}, co = (typeof COATS !== "undefined" &
 // how good an hour is for a walk: 0 = perfect, the higher the worse (breed-aware heat and cold)
 function wxScore(x, lim){ if (!x) return 99; let s = 0;
   if (x.p >= 30) s += (x.p - 30) * .9;
-  if (x.c >= 95) s += 90; else if ([63, 65, 66, 67, 81, 82].includes(x.c)) s += 35; else if ((x.c >= 71 && x.c <= 77) || x.c === 85 || x.c === 86) s += 30;
+  if (x.c >= 95) s += 90; else if ([63, 65, 66, 67, 81, 82].includes(x.c)) s += 35; else if ((x.c >= 71 && x.c <= 77) || x.c === 85 || x.c === 86) s += 30; else if ((x.c >= 51 && x.c <= 61) || x.c === 80) s += 16;
   if (x.f > lim.heat) s += (x.f - lim.heat) * 12; if (x.t < lim.cold) s += (lim.cold - x.t) * 7;
   if (x.w > 35) s += (x.w - 35) * 1.5; return s; }
 function wxWhy(x, lim){ return !x ? "" : x.c >= 95 ? T("orage") : x.p >= 50 ? T("pluie {p} %", {p: x.p}) : x.f > lim.heat ? T("{t}° ressentis", {t: Math.round(x.f)}) : x.t < lim.cold ? T("{t}°, froid", {t: Math.round(x.t)}) : (x.c >= 71 && x.c <= 77) ? T("neige") : x.w > 35 ? T("vent {w} km/h", {w: Math.round(x.w)}) : ""; }
@@ -3034,38 +3073,59 @@ function wxBetter(ds, T, lim, nm){ const H0 = Math.floor(T / 60), cur = wxScore(
   for (let H = Math.max(7, Math.ceil((nm + 10) / 60)); H <= 21; H++) { if (H === H0 || Math.abs(H - H0) > 3) continue;
     const x = wxAt(ds, hh(H)), sc = wxScore(x, lim); if (sc < cur - 20 && sc < 25 && (!best || sc < best.sc || (sc === best.sc && Math.abs(H - H0) < Math.abs(best.H - H0)))) best = {H, sc, x}; }
   return best; }
+const WX_TXT = {0:"Ensoleillé",1:"Plutôt ensoleillé",2:"Partiellement nuageux",3:"Couvert",45:"Brouillard",48:"Brouillard givrant",51:"Bruine",53:"Bruine",55:"Bruine",56:"Bruine verglaçante",57:"Bruine verglaçante",61:"Pluie faible",63:"Pluie",65:"Forte pluie",66:"Pluie verglaçante",67:"Pluie verglaçante",71:"Neige faible",73:"Neige",75:"Forte neige",77:"Grésil",80:"Averses",81:"Averses",82:"Fortes averses",85:"Averses de neige",86:"Averses de neige",95:"Orage",96:"Orage et grêle",99:"Orage et grêle"};
+const wxRainy = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95;
+const NO_PLACE = ["Votre position", "Your location", "Vaša lokacija", "Ma position"];
+let wxNaming = false;
+// gives the saved spot a real town name (free reverse geocoding, no key)
+function wxNamePlace(w){ if (wxNaming || !canEdit() || !navigator.onLine) return; wxNaming = true;
+  fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${+w.lat}&longitude=${+w.lon}&localityLanguage=${LANG}`).then(r => r.ok ? r.json() : null)
+    .then(j => { const n = j && (j.city || j.locality || j.principalSubdivision); if (n) put("config", "weather", Object.assign({}, w, {name: n, region: j.principalSubdivision || "", auto: true})); }).catch(() => {}); }
 function weatherCard(){
   const today = ymd(new Date()); if (S.sel !== today) return "";
   const w = wxCfg();
   if (!w) return canEdit() ? `<button class="card wx-cta" data-act="wxSheet"><span class="wx-ic">🌤️</span><div class="main"><div class="t">${T("Météo des balades")}</div><div class="s">${T("Le bon moment pour sortir, selon la météo et sa race.")}</div></div><span class="chev">${I.chevR}</span></button>` : "";
+  if (!w.name || NO_PLACE.includes(w.name)) wxNamePlace(w);
   wxLoad();
   if (!WX || (!WX.j && !WX.err)) return `<div class="card pad wx"><div class="skel" style="width:60%"></div><div class="skel" style="width:85%"></div></div>`;
   if (!WX.j) return "";
-  const cur = WX.j.current || {}, nm = toMin(hhmm(new Date())), lim = wxLimits(), st = dayStats(today), Hn = Math.floor(nm / 60);
+  const cur = WX.j.current || {}, now = new Date(), nm = toMin(hhmm(now)), lim = wxLimits(), st = dayStats(today), Hn = now.getHours(), tmr = ymd(addDays(now, 1));
   const walks = st.tasks.filter(t => t.cat === "balade" && !st.done[t.key] && toMin(t.time) >= nm - 30);
   const walkH = new Set(walks.map(t => Math.floor(toMin(t.time) / 60)));
-  // hour by hour for the rest of the day, with the best stretch highlighted
-  const hours = []; for (let H = Hn; H <= Math.max(Hn + 6, 21) && H <= 23; H++) { const x = wxAt(today, hh(H)); if (x) hours.push({H, x, sc: wxScore(x, lim)}); }
-  let win = null; for (let a = 0; a < hours.length; a++) { if (hours[a].H < 7 || hours[a].H > 21 || hours[a].sc >= 15) continue; let b = a; while (b + 1 < hours.length && hours[b + 1].sc < 15 && hours[b + 1].H <= 21) b++;
-    const len = b - a + 1, avg = hours.slice(a, b + 1).reduce((s, h) => s + h.sc, 0) / len; if (!win || len > win.len || (len === win.len && avg < win.avg)) win = {a: hours[a].H, b: hours[b].H, len, avg}; a = b; }
-  const strip = hours.map(h => `<div class="wx-hr ${win && h.H >= win.a && h.H <= win.b ? "best" : ""} ${h.sc >= 45 ? "bad" : ""}"><small class="num">${h.H === Hn ? T("Maint.") : h.H + " h"}</small><span>${wxIcon(h.x.c, h.H >= 7 && h.H < 19 ? 1 : 0)}</span><b class="num">${Math.round(h.x.t)}°</b><i class="num">${h.x.p >= 20 ? h.x.p + "%" : ""}</i>${walkH.has(h.H) ? `<em title="${T("Balade")}">${I.paw}</em>` : ""}</div>`).join("");
-  // each upcoming walk: good, or a better time to go
+  // the next 12 hours, across midnight
+  const hours = []; for (let k = 0; k < 12; k++) { const H = (Hn + k) % 24, ds = Hn + k >= 24 ? tmr : today, x = wxAt(ds, hh(H)); if (x) hours.push({H, k, ds, x, sc: wxScore(x, lim)}); }
+  // best stretch to go out today (from now, 7:00–22:00)
+  let win = null; const day = hours.filter(h => h.ds === today && h.H >= 7 && h.H <= 21);
+  for (let a = 0; a < day.length; a++) { if (day[a].sc >= 12) continue; let b = a; while (b + 1 < day.length && day[b + 1].sc < 12) b++;
+    const len = b - a + 1, avg = day.slice(a, b + 1).reduce((t, h) => t + h.sc, 0) / len; if (!win || len > win.len || (len === win.len && avg < win.avg)) win = {a: day[a].H, b: day[b].H, len, avg}; a = b; }
+  const todayH = WX.j.hourly.time.map((t, i) => t.startsWith(today) ? WX.j.hourly.temperature_2m[i] : null).filter(v => v != null);
+  const hi = todayH.length ? Math.round(Math.max(...todayH)) : null, lo = todayH.length ? Math.round(Math.min(...todayH)) : null;
+  const place = w.name && !NO_PLACE.includes(w.name) ? w.name : T("Votre position");
+  const winTxt = !win ? "" : win.a <= Hn ? T("Idéal jusqu'à {h}", {h: hh(win.b + 1)}) : T("Idéal de {a} à {b}", {a: hh(win.a), b: hh(win.b + 1)});
+  const strip = hours.map(h => { const best = win && h.ds === today && h.H >= win.a && h.H <= win.b, rp = h.x.p >= 10 || wxRainy(h.x.c);
+    return `<div class="wx-hr ${best ? "best" : ""} ${h.sc >= 45 ? "bad" : ""}"><small class="num">${h.k === 0 ? T("Maint.") : String(h.H).padStart(2, "0")}</small><span>${wxIcon(h.x.c, h.H >= 7 && h.H < 19 ? 1 : 0)}</span><i class="num">${rp ? h.x.p + " %" : ""}</i><b class="num">${Math.round(h.x.t)}°</b><u>${walkH.has(h.H) && h.ds === today ? I.paw : ""}</u></div>`; }).join("");
   let worst = 0;
   const rows = walks.slice(0, 4).map(t => { const T0 = toMin(t.time), x = wxAt(today, hh(Math.floor(T0 / 60))); if (!x) return "";
-    const sc = wxScore(x, lim), bad = sc >= 45, meh = !bad && sc >= 20, alt = bad || meh ? wxBetter(today, T0, lim, nm) : null; worst = Math.max(worst, sc);
-    const verdict = bad ? `<span class="wx-v bad">${T("À éviter")}</span>` : meh ? `<span class="wx-v meh">${T("Mitigé")}</span>` : `<span class="wx-v ok">${T("Idéal")}</span>`;
-    return `<div class="wx-walk ${bad ? "bad" : meh ? "meh" : ""}"><div class="wx-wh"><b class="num">${esc(t.time)}</b><span>${esc(t.title)}</span>${verdict}</div>
-      <div class="wx-ws">${wxIcon(x.c, 1)} <span class="num">${Math.round(x.t)}°</span>${wxWhy(x, lim) && (bad || meh) ? ` · ${esc(wxWhy(x, lim))}` : x.p >= 20 ? ` · <span class="num">${x.p} %</span>` : ""}</div>
-      ${alt ? `<div class="wx-alt">→ ${esc(T("Mieux vers {h} : {i} {t}°, {p} % de pluie", {h: hh(alt.H), i: wxIcon(alt.x.c, 1), t: Math.round(alt.x.t), p: alt.x.p}))}${toMin(hh(alt.H)) < T0 ? " · " + T("avancez la balade") : " · " + T("décalez la balade")}</div>` : bad ? `<div class="wx-alt">${T("Pas de meilleur créneau proche : balade courte, et une serviette au retour.")}</div>` : ""}</div>`; }).join("");
-  // one sentence that sums it up
-  let tip, tone = "ok";
-  if (walks.length && worst >= 45) { tone = "bad"; tip = T("La météo se gâte à l'heure d'une balade : regardez le créneau proposé."); }
-  else if (walks.length && worst >= 20) { tone = "meh"; tip = T("Météo moyenne pour les balades, rien de grave."); }
-  else if (walks.length) tip = T("Temps idéal pour les balades d'aujourd'hui.");
-  else tip = win ? T("Meilleur moment pour sortir : {a} – {b}.", {a: hh(win.a), b: hh(win.b + 1)}) : T("Pas de bon créneau aujourd'hui : préférez des sorties courtes.");
-  if (lim.flat && hours.some(h => h.x.f > lim.heat)) tip += " " + T("Museau court : il supporte mal la chaleur.");
-  return `<div class="card pad wx ${tone}"><div class="wx-h" data-act="${canEdit() ? "wxSheet" : ""}"><span class="wx-big">${wxIcon(cur.weather_code, cur.is_day)}</span><div class="main"><div class="wx-t num">${Math.round(cur.temperature_2m)}°<small>${T("ressenti {t}°", {t: Math.round(cur.apparent_temperature)})}</small></div><div class="s">${esc(w.name || T("Votre position"))}${win ? " · " + T("au mieux {a} – {b}", {a: hh(win.a), b: hh(win.b + 1)}) : ""}</div></div></div>
-    ${strip ? `<div class="wx-strip">${strip}</div>` : ""}${rows ? `<div class="wx-walks">${rows}</div>` : ""}<div class="wx-tip">${esc(tip)}</div></div>`;
+    const sc = wxScore(x, lim), bad = sc >= 45, meh = !bad && sc >= 20, alt = bad || meh ? wxBetter(today, T0, lim, nm) : null, why = wxWhy(x, lim); worst = Math.max(worst, sc);
+    const tone = bad ? "bad" : meh ? "meh" : "ok";
+    return `<div class="wx-walk"><span class="wx-wtime num">${esc(t.time)}</span><div class="main"><div class="t">${esc(t.title)}</div>
+      <div class="s">${wxIcon(x.c, T0 >= 420 && T0 < 1140 ? 1 : 0)} ${Math.round(x.t)}°${(bad || meh) && why ? " · " + esc(why) : x.p >= 20 ? ` · ${x.p} %` : ""}</div>
+      ${alt ? `<div class="wx-alt">${esc(T("Plutôt à {h}", {h: hh(alt.H)}))} · ${wxIcon(alt.x.c, alt.H >= 7 && alt.H < 19 ? 1 : 0)} ${Math.round(alt.x.t)}°${alt.x.p >= 10 ? `, ${alt.x.p} %` : ""}</div>` : bad ? `<div class="wx-alt">${T("Gardez-la courte, serviette au retour")}</div>` : ""}</div>
+      <span class="wx-v ${tone}">${T(bad ? "À éviter" : meh ? "Mitigé" : "Idéal")}</span></div>`; }).join("");
+  let tip = "";
+  if (lim.flat && hours.some(h => h.x.f > lim.heat)) tip = T("Museau court : il supporte mal la chaleur.");
+  else if (!walks.length) tip = win ? "" : T("Pas de bon créneau aujourd'hui : préférez des sorties courtes.");
+  return `<div class="card wx">
+    <div class="wx-h" ${canEdit() ? `data-act="wxSheet" role="button"` : ""}>
+      <div class="main"><div class="wx-place">${I_PIN}<span>${esc(place)}</span>${canEdit() ? `<em>${I.chevR}</em>` : ""}</div>
+        <div class="wx-t num">${Math.round(cur.temperature_2m)}°</div>
+        <div class="wx-c">${esc(T(WX_TXT[cur.weather_code] || ""))}</div>
+        <div class="wx-hl num">${hi != null ? `${T("Max.")} ${hi}° · ${T("Min.")} ${lo}° · ` : ""}${T("ressenti {t}°", {t: Math.round(cur.apparent_temperature)})}</div></div>
+      <span class="wx-big">${wxIcon(cur.weather_code, cur.is_day)}</span></div>
+    ${winTxt ? `<div class="wx-win"><i></i>${esc(winTxt)}</div>` : ""}
+    ${strip ? `<div class="wx-strip">${strip}</div>` : ""}
+    ${rows ? `<div class="wx-sec">${T("Balades d'aujourd'hui")}</div><div class="wx-walks">${rows}</div>` : ""}
+    ${tip ? `<div class="wx-foot">${esc(tip)}</div>` : ""}</div>`;
 }
 function wxSheet(){
   const w = wxCfg();
@@ -3075,7 +3135,7 @@ function wxSheet(){
     <div class="hint" style="margin-top:12px">${T("Prévisions Open-Meteo, mises à jour toutes les 30 minutes. Toute la famille voit la même ville.")}</div>`, null, w ? () => { put("config", "weather", {}); WX = null; } : null);
   const ok = $("#sheet-root .save"); if (ok) ok.style.visibility = "hidden";
 }
-function wxSave(lat, lon, name){ put("config", "weather", {lat: Math.round(lat * 1000) / 1000, lon: Math.round(lon * 1000) / 1000, name}); WX = null; closeSheet(); toast(T("Météo activée")); }
+function wxSave(lat, lon, name){ const w = {lat: Math.round(lat * 1000) / 1000, lon: Math.round(lon * 1000) / 1000, name}; put("config", "weather", w); WX = null; closeSheet(); toast(T("Météo activée")); if (NO_PLACE.includes(name)) { wxNaming = false; wxNamePlace(w); } }
 // offline: a small pill so everyone knows changes will be sent later
 function netState(){ document.body.classList.toggle("is-offline", !navigator.onLine); if (navigator.onLine) wxLoad(true); }
 window.addEventListener("online", netState); window.addEventListener("offline", netState);
