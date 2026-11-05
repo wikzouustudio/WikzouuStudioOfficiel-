@@ -857,6 +857,7 @@ body.wiz-open .scrim{z-index:85}
 #offline-pill{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--fg);color:var(--bg);font-size:13px;font-weight:500;padding:7px 14px;white-space:nowrap;border-radius:999px;max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 body.is-offline #offline-pill{display:block}
 .push-diag .s{font-size:12px!important;color:var(--fg3)!important;overflow-wrap:anywhere}
+.push-sub{padding-left:28px}.push-sub .t{font-size:15px}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -1600,6 +1601,13 @@ Object.assign(HR, {"Notifications sur ce téléphone":"Obavijesti na ovom telefo
 
 Object.assign(EN, {"Tester une notification":"Test a notification","Autorisation":"Permission","app de l'écran d'accueil":"Home Screen app","ouvert dans Safari":"opened in Safari","téléphone enregistré ✓":"phone registered ✓","téléphone pas enregistré":"phone not registered","erreur":"error","Impossible d'afficher la notification : {e}":"Can't show the notification: {e}","Erreur : {e}":"Error: {e}"});
 Object.assign(HR, {"Tester une notification":"Testiraj obavijest","Autorisation":"Dopuštenje","app de l'écran d'accueil":"aplikacija s početnog zaslona","ouvert dans Safari":"otvoreno u Safariju","téléphone enregistré ✓":"telefon registriran ✓","téléphone pas enregistré":"telefon nije registriran","erreur":"greška","Impossible d'afficher la notification : {e}":"Obavijest se ne može prikazati: {e}","Erreur : {e}":"Greška: {e}"});
+
+Object.assign(EN, {"Rappels des tâches":"Task reminders","5 min avant, puis 30 min après si ce n'est pas fait.":"5 min before, then 30 min after if it isn't done.","Activité de la famille":"Family activity","Quand quelqu'un coche, note un pipi ou écrit un message.":"When someone ticks a task, logs a pee or writes a message.",
+  "Beau temps pour sortir":"Good weather to go out","Une fois par jour, si une ville est choisie dans la météo.":"Once a day, if a town is set in the weather card.","Rendez-vous":"Appointments","La veille à 18 h et 1 h avant.":"The evening before at 6 pm and 1 hour before.",
+  "Bilan du soir et croquettes":"Evening recap and food","À 20 h 30 s'il reste des tâches, et quand le sac est presque vide.":"At 8:30 pm if tasks are left, and when the food bag is almost empty."});
+Object.assign(HR, {"Rappels des tâches":"Podsjetnici za zadatke","5 min avant, puis 30 min après si ce n'est pas fait.":"5 min prije, zatim 30 min poslije ako nije obavljeno.","Activité de la famille":"Aktivnost obitelji","Quand quelqu'un coche, note un pipi ou écrit un message.":"Kad netko označi zadatak, zabilježi piškenje ili napiše poruku.",
+  "Beau temps pour sortir":"Lijepo vrijeme za izlazak","Une fois par jour, si une ville est choisie dans la météo.":"Jednom dnevno, ako je grad odabran u vremenu.","La veille à 18 h et 1 h avant.":"Večer prije u 18 h i 1 sat prije.",
+  "Bilan du soir et croquettes":"Večernji sažetak i hrana","À 20 h 30 s'il reste des tâches, et quand le sac est presque vide.":"U 20:30 ako su ostali zadaci i kad je vreća hrane gotovo prazna."});
 
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
@@ -3824,6 +3832,11 @@ function notifSection(){
     <div class="row"><div class="main"><div class="t">${T("Son")}</div></div><button class="switch ${SOUND?"on":""}" data-act="toggleSound" role="switch" aria-checked="${SOUND}" aria-label="${T("Son")}"><i></i></button></div>
     <button class="row" data-act="testNotif"><span class="main t" style="color:var(--accent)">${T("Tester une alerte")}</span></button>
     ${window.carnetPush && window.carnetPush.available() ? `<div class="row"><div class="main"><div class="t">${T("Notifications sur ce téléphone")}</div><div class="s">${T("Même app fermée : les tâches à l'heure et ce que fait la famille.")}</div></div><button class="switch ${window.carnetPush.state() ? "on" : ""}" data-act="togglePush" role="switch" aria-checked="${window.carnetPush.state()}" aria-label="${T("Notifications sur ce téléphone")}"><i></i></button></div>
+      ${window.carnetPush.state() && window.carnetPush.prefs ? (() => { const pr = window.carnetPush.prefs();
+        return [["tasks", "Rappels des tâches", "5 min avant, puis 30 min après si ce n'est pas fait."], ["family", "Activité de la famille", "Quand quelqu'un coche, note un pipi ou écrit un message."],
+          ["weather", "Beau temps pour sortir", "Une fois par jour, si une ville est choisie dans la météo."], ["appts", "Rendez-vous", "La veille à 18 h et 1 h avant."],
+          ["daily", "Bilan du soir et croquettes", "À 20 h 30 s'il reste des tâches, et quand le sac est presque vide."]]
+          .map(([k, t, x]) => `<div class="row push-sub"><div class="main"><div class="t">${T(t)}</div><div class="s">${T(x)}</div></div><button class="switch ${pr[k] !== false ? "on" : ""}" data-act="pushPref" data-k="${k}" role="switch" aria-checked="${pr[k] !== false}" aria-label="${T(t)}"><i></i></button></div>`).join(""); })() : ""}
       ${window.carnetPush.state() ? `<button class="row" data-act="testPush"><span class="main t" style="color:var(--accent)">${T("Tester une notification")}</span></button>` : ""}` : ""}
     ${window.carnetPush && window.carnetPush.info ? (() => { const i = window.carnetPush.info();
       return `<div class="row push-diag"><div class="main"><div class="s">${esc([T("Autorisation") + " : " + i.perm, (i.ios ? (i.standalone ? T("app de l'écran d'accueil") : T("ouvert dans Safari")) : ""), i.on ? T("téléphone enregistré ✓") : T("téléphone pas enregistré"), i.err ? T("erreur") + " : " + i.err : ""].filter(Boolean).join(" · "))}</div></div></div>`; })() : ""}
@@ -4837,6 +4850,8 @@ document.addEventListener("click", async e => {
       const lg = C.config.family && Array.isArray(C.config.family.members) ? C.config.family.members : [];
       if (lg.some(m => m.id === el.dataset.id)) await put("config", "family", {members: lg.filter(m => m.id !== el.dataset.id)});
       if ((C.members || {})[el.dataset.id]) await del("members", el.dataset.id); if (ME === el.dataset.id) { ME = null; try { LS.del("carnet-me"); } catch(_){} } break; }
+    case "pushPref": { const cp = window.carnetPush, k = el.dataset.k, on = !(cp.prefs()[k] !== false); el.classList.toggle("on", on); el.setAttribute("aria-checked", on);
+      try { await cp.setPref(k, on); } catch(_) { toast(T("Impossible pour l'instant. Réessayez.")); } break; }
     case "testPush": { try { await window.carnetPush.test(); } catch(e) { toast(T("Impossible d'afficher la notification : {e}", {e: String(e && e.message || e).slice(0, 80)})); } break; }
     case "togglePush": { const cp = window.carnetPush; if (!cp) break; el.disabled = true;
       try { if (cp.state()) { await cp.disable(); toast(T("Notifications coupées sur ce téléphone")); } else { const ok = await cp.enable(); const er = cp.info ? cp.info().err : ""; toast(ok ? T("Notifications activées") : er && er !== "permission refusée" ? T("Erreur : {e}", {e: er}) : T("Notifications refusées. Autorisez-les dans les réglages du téléphone.")); } } catch(_) { toast(T("Impossible pour l'instant. Réessayez.")); }

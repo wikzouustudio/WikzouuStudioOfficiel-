@@ -157,7 +157,7 @@ async function pushToken(ask){
   const tok = await msgMod.getToken(msgMod.getMessaging(fb), {vapidKey: VAPID_KEY, serviceWorkerRegistration: reg}); if (!tok) return null;
   const id = (await sha(tok)).slice(0, 40), old = LSg("dl-push@" + UID);
   if (old && old !== id) { try { await deleteDoc(doc(fs, "families", FID, "pushTokens", old)); } catch(_) {} }
-  await setDoc(doc(fs, "families", FID, "pushTokens", id), {uid: UID, token: tok, on: true, lang: LANG, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Zurich", at: Date.now()});
+  await setDoc(doc(fs, "families", FID, "pushTokens", id), {uid: UID, token: tok, on: true, prefs: (() => { try { return JSON.parse(LSg("dl-push-prefs@" + UID) || "{}"); } catch(_) { return {}; } })(), lang: LANG, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Zurich", at: Date.now()});
   LSs("dl-push@" + UID, id); return tok;
 }
 async function pushOff(){
@@ -171,6 +171,10 @@ window.carnetPush = {available: () => pushReady() && (!isIOS || standalone), ios
     try { const t = await pushToken(true); if (!t) LSs("dl-push-err", "Notification" in window && Notification.permission === "denied" ? "permission refusée" : "pas de jeton"); return !!t; }
     catch(e) { LSs("dl-push-err", String((e && (e.code || e.message)) || e).slice(0, 160)); console.warn(e); return false; } },
   disable: pushOff,
+  // what this phone wants to hear about
+  prefs: () => { try { return JSON.parse(LSg("dl-push-prefs@" + UID) || "{}"); } catch(_) { return {}; } },
+  setPref: async (k, v) => { const p = window.carnetPush.prefs(); p[k] = !!v; LSs("dl-push-prefs@" + UID, JSON.stringify(p));
+    const id = LSg("dl-push@" + UID); if (id && FID) await setDoc(doc(fs, "families", FID, "pushTokens", id), {prefs: p}, {merge: true}); },
   // what is going on on this phone, for the settings screen
   info: () => ({perm: "Notification" in window ? Notification.permission : "absent", sw: "serviceWorker" in navigator, pm: "PushManager" in window, standalone, ios: isIOS,
     on: !!LSg("dl-push@" + UID), err: LSg("dl-push-err") || ""}),

@@ -1,6 +1,7 @@
 // Dogs Life : petit serveur gratuit (Cloudflare Workers).
 //  - POST /notify : quand quelqu'un note un pipi, coche une tâche ou écrit un message, prévient le reste de la famille.
-//  - toutes les 5 minutes (Cron) : rappelle les tâches à l'heure, et une fois si elles ne sont toujours pas faites 30 min après.
+//  - toutes les 5 minutes (Cron) : rappel 5 min avant chaque tâche (avec la météo pour les balades), relance 30 min après si pas faite,
+//    beau temps pour sortir (1 fois par jour), rendez-vous (la veille à 18 h et 1 h avant), bilan du soir à 20 h 30, croquettes bientôt finies (9 h).
 //  - POST /      : (facultatif) conseils de Claude, seulement si un secret ANTHROPIC_API_KEY est ajouté.
 // Secrets à ajouter dans Cloudflare (Settings → Variables and secrets) :
 //  - FIREBASE_SA        : le contenu complet du fichier JSON « compte de service » de Firebase (obligatoire pour les notifications)
@@ -12,6 +13,7 @@ const APP_URL = "https://wikzouustudio.github.io/WikzouuStudioOfficiel-/carnet/"
 const MODEL = "claude-sonnet-5-5";
 const MAX_INPUT = 12000;
 const LATE_MIN = 30;           // second rappel si la tâche n'est pas cochée 30 min après
+const EARLY_MIN = 5;           // premier rappel 5 min avant l'heure
 const DEFAULT_TZ = "Europe/Zurich";
 
 const JWK_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
@@ -92,6 +94,11 @@ async function getDocAdmin(env, path) {
   const tok = await adminToken(env), r = await fetch(`${FS}/${path}`, {headers: {Authorization: "Bearer " + tok}});
   return r.ok ? fields((await r.json()).fields) : null;
 }
+async function patchDocAdmin(env, path, obj) {
+  const tok = await adminToken(env), f = {}, mask = Object.keys(obj).map(k => "updateMask.fieldPaths=" + encodeURIComponent(k)).join("&");
+  for (const k in obj) f[k] = {stringValue: String(obj[k])};
+  await fetch(`${FS}/${path}?${mask}`, {method: "PATCH", headers: {Authorization: "Bearer " + tok, "Content-Type": "application/json"}, body: JSON.stringify({fields: f})});
+}
 async function delDocAdmin(env, path) { const tok = await adminToken(env); await fetch(`${FS}/${path}`, {method: "DELETE", headers: {Authorization: "Bearer " + tok}}); }
 
 // one push to one phone; forgotten phones are removed
@@ -105,14 +112,22 @@ async function push(env, family, t, msg) {
 
 /* ---------- texts ---------- */
 const L = {
-  fr: {now: "C'est l'heure", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
+  fr: {soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
+    ideal: "Temps idéal pour une balade", goOut: "Parfait pour sortir {n}", dryUntil: "sec jusqu'à", rain: "pluie probable", hot: "chaud, gardez-la courte", cold: "froid", nice: "temps idéal",
+    tomorrow: "Demain", in1h: "Dans 1 heure", at: "à", recap: "Pas encore fait aujourd'hui", more: "et {n} autre(s)", food: "Croquettes bientôt finies", foodDays: "Il en reste pour environ {n} jour(s).",
     k: {pipi: "Pipi", caca: "Caca", balade: "Balade", accident: "Accident", eau: "Eau", friandise: "Friandise", sieste: "Sieste", jeu: "Jeu", vomi: "Vomissement", photo: "Photo"}},
-  en: {now: "It's time", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
+  en: {soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
+    ideal: "Perfect weather for a walk", goOut: "A great time to take {n} out", dryUntil: "dry until", rain: "rain likely", hot: "hot, keep it short", cold: "cold", nice: "ideal weather",
+    tomorrow: "Tomorrow", in1h: "In 1 hour", at: "at", recap: "Not done yet today", more: "and {n} more", food: "Food running low", foodDays: "About {n} day(s) left.",
     k: {pipi: "Pee", caca: "Poo", balade: "Walk", accident: "Accident", eau: "Water", friandise: "Treat", sieste: "Nap", jeu: "Play", vomi: "Vomiting", photo: "Photo"}},
-  hr: {now: "Vrijeme je", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
+  hr: {soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
+    ideal: "Idealno vrijeme za šetnju", goOut: "Savršeno za izlazak ({n})", dryUntil: "suho do", rain: "moguća kiša", hot: "vruće, neka bude kratko", cold: "hladno", nice: "idealno vrijeme",
+    tomorrow: "Sutra", in1h: "Za 1 sat", at: "u", recap: "Danas još nije napravljeno", more: "i još {n}", food: "Hrana pri kraju", foodDays: "Ostalo je za otprilike {n} dan(a).",
     k: {pipi: "Piškenje", caca: "Kakanje", balade: "Šetnja", accident: "Nezgoda", eau: "Voda", friandise: "Poslastica", sieste: "Drijemež", jeu: "Igra", vomi: "Povraćanje", photo: "Fotografija"}}
 };
 const tx = t => L[t && t.lang] || L.fr;
+// each phone chooses what it wants: tasks, family, weather, appts, daily (all on by default)
+const wants = (t, k) => !(t.prefs && t.prefs[k] === false);
 
 /* ---------- family events: someone did something, tell the others ---------- */
 async function onNotify(request, env, origin) {
@@ -123,7 +138,7 @@ async function onNotify(request, env, origin) {
   if (!validId(b.family)) return reply(400, {error: "famille"}, origin);
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
   const who = String(b.who || "").slice(0, 30), text = String(b.text || "").slice(0, 140), at = String(b.at || "").slice(0, 5);
-  const tokens = (await list(env, `families/${b.family}/pushTokens`)).filter(t => t.token && t.uid !== uid && t.on !== false);
+  const tokens = (await list(env, `families/${b.family}/pushTokens`)).filter(t => t.token && t.uid !== uid && t.on !== false && wants(t, "family"));
   await Promise.all(tokens.map(t => { const l = tx(t); let msg;
     if (b.kind === "msg") msg = {title: `${l.wrote} ${who}`, body: text, tag: "msg"};
     else if (b.kind === "log") msg = {title: `${who} · ${l.k[b.k] || text}`, body: at ? at : "", tag: "log"};
@@ -139,26 +154,72 @@ function localNow(tz, when) {
   return {ds: `${p.year}-${p.month}-${p.day}`, min: +p.hour * 60 + +p.minute, wd: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(p.weekday)};
 }
 const toMin = t => { const [h, m] = String(t || "0:0").split(":").map(Number); return h * 60 + (m || 0); };
+const hm = m => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+const wxIcon = c => c <= 1 ? "☀️" : c === 2 ? "🌤️" : c === 3 ? "☁️" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "❄️" : c >= 95 ? "⛈️" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "🌧️" : "🌤️";
+async function weather(cfg) {
+  if (!cfg || cfg.lat == null) return null;
+  try { const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${+cfg.lat}&longitude=${+cfg.lon}&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code&timezone=auto&forecast_days=1`);
+    if (!r.ok) return null; const j = await r.json(), h = j.hourly;
+    return hour => { const i = hour; if (!h || i < 0 || i >= h.time.length) return null; return {t: h.temperature_2m[i], f: h.apparent_temperature[i], p: h.precipitation_probability[i] || 0, c: h.weather_code[i]}; };
+  } catch { return null; }
+}
+const wxNote = (x, l) => !x ? "" : x.p >= 60 ? ` · 🌧️ ${l.rain} (${x.p} %)` : x.f >= 28 ? ` · 🥵 ${Math.round(x.f)}°, ${l.hot}` : x.t <= 0 ? ` · 🥶 ${Math.round(x.t)}°, ${l.cold}` : x.c <= 2 && x.p < 20 ? ` · ${wxIcon(x.c)} ${Math.round(x.t)}°, ${l.nice}` : ` · ${wxIcon(x.c)} ${Math.round(x.t)}°`;
+
 async function remindFamily(env, fid, when) {
   const tokens = (await list(env, `families/${fid}/pushTokens`)).filter(t => t.token && t.on !== false);
   if (!tokens.length) return;
-  const tz = tokens.find(t => t.tz) ? tokens.find(t => t.tz).tz : DEFAULT_TZ, n = localNow(tz, when);
-  const inWindow = (tm, offset) => { const d = n.min - (toMin(tm) + offset); return d >= 0 && d < 5; };
-  const [routine, meds, members, ticks, days, dogCfg] = await Promise.all([list(env, `families/${fid}/routine`), list(env, `families/${fid}/meds`), list(env, `families/${fid}/members`),
-    whereEq(env, `families/${fid}`, "ticks", "date", n.ds), whereEq(env, `families/${fid}`, "days", "date", n.ds), getDocAdmin(env, `families/${fid}/config/dog`)]);
+  const tz = tokens.find(t => t.tz) ? tokens.find(t => t.tz).tz : DEFAULT_TZ, n = localNow(tz, when), tmr = localNow(tz, new Date(when.getTime() + 86400000));
+  const at = m => { const d = n.min - m; return d >= 0 && d < 5; }; // this 5-minute run covers minute m
+  const [routine, meds, members, ticks, days, dogCfg, appts, wxCfg, food, state] = await Promise.all([list(env, `families/${fid}/routine`), list(env, `families/${fid}/meds`), list(env, `families/${fid}/members`),
+    whereEq(env, `families/${fid}`, "ticks", "date", n.ds), whereEq(env, `families/${fid}`, "days", "date", n.ds), getDocAdmin(env, `families/${fid}/config/dog`),
+    list(env, `families/${fid}/appts`), getDocAdmin(env, `families/${fid}/config/weather`), getDocAdmin(env, `families/${fid}/config/food`), getDocAdmin(env, `families/${fid}/config/notify`)]);
   const done = new Set(ticks.map(t => (t.dog || "main") + "|" + t.key));
   days.forEach(d => Object.keys(d.done || {}).forEach(k => done.add((d.dog || "main") + "|" + k)));
   const dogName = (dogCfg && dogCfg.name) || "";
+  const send = (k, targets, make) => Promise.all(targets.filter(t => wants(t, k)).map(t => push(env, fid, t, make(tx(t)))));
+  const forWho = who => { const m = members.find(x => x._id === who); return m && m.uid ? tokens.filter(t => t.uid === m.uid) : tokens; };
+  let wx; const getWx = async () => wx === undefined ? (wx = await weather(wxCfg)) : wx;
+
+  // tasks: 5 min before, then once more 30 min after if still not ticked
   const tasks = [];
-  routine.forEach(r => { if ((r.days || []).includes(n.wd)) tasks.push({key: "r-" + r._id, dog: r.dog || "main", time: r.time || "00:00", title: r.title || "", who: r.who || ""}); });
+  routine.forEach(r => { if ((r.days || []).includes(n.wd)) tasks.push({key: "r-" + r._id, dog: r.dog || "main", time: r.time || "00:00", title: r.title || "", who: r.who || "", cat: r.cat || ""}); });
   meds.forEach(m => { if ((m.start && n.ds < m.start) || (m.end && n.ds > m.end)) return;
-    (m.times || []).filter(Boolean).forEach(t => tasks.push({key: "m-" + m._id + "-" + t.replace(":", ""), dog: m.dog || "main", time: t, title: m.name || "", who: m.who || ""})); });
+    (m.times || []).filter(Boolean).forEach(t => tasks.push({key: "m-" + m._id + "-" + t.replace(":", ""), dog: m.dog || "main", time: t, title: m.name || "", who: m.who || "", cat: "med"})); });
   for (const task of tasks) {
     if (done.has(task.dog + "|" + task.key)) continue;
-    const now = inWindow(task.time, 0), late = inWindow(task.time, LATE_MIN); if (!now && !late) continue;
-    const m = members.find(x => x._id === task.who), targets = m && m.uid ? tokens.filter(t => t.uid === m.uid) : tokens;
-    await Promise.all(targets.map(t => { const l = tx(t), dn = task.dog === "main" && dogName ? ` ${l.for} ${dogName}` : "";
-      return push(env, fid, t, now ? {title: `${l.now} · ${task.time}`, body: task.title + dn, tag: task.key} : {title: `${l.late} · ${task.time}`, body: `${task.title} ${l.notYet}`, tag: task.key}); }));
+    const T = toMin(task.time), soon = at(T - EARLY_MIN), late = at(T + LATE_MIN); if (!soon && !late) continue;
+    const w = soon && task.cat === "balade" ? await getWx() : null, x = w ? w(Math.floor(T / 60)) : null;
+    await send("tasks", forWho(task.who), l => { const dn = task.dog === "main" && dogName ? ` ${l.for} ${dogName}` : "";
+      return soon ? {title: `${l.soon} · ${task.time}`, body: task.title + dn + wxNote(x, l), tag: task.key} : {title: `${l.late} · ${task.time}`, body: `${task.title} ${l.notYet}`, tag: task.key}; });
+  }
+
+  // appointments: the evening before at 18:00, and 1 hour before
+  for (const a of appts) {
+    const T = a.time ? toMin(a.time) : null, title = a.title || "";
+    if (a.date === tmr.ds && at(18 * 60)) await send("appts", forWho(a.who), l => ({title: `${l.tomorrow}${a.time ? " " + l.at + " " + a.time : ""}`, body: title + (dogName ? ` · ${dogName}` : ""), tag: "appt-" + a._id}));
+    if (a.date === n.ds && T != null && at(T - 60)) await send("appts", forWho(a.who), l => ({title: `${l.in1h} · ${a.time}`, body: title + (dogName ? ` · ${dogName}` : ""), tag: "appt-" + a._id}));
+  }
+
+  // perfect weather to go out: once a day, between 10:00 and 18:00, dry for the next 2 hours
+  if (wxCfg && wxCfg.lat != null && n.min >= 600 && n.min <= 1080 && (!state || state.wxDay !== n.ds)) {
+    const w = await getWx(), H = Math.floor(n.min / 60), x = w && w(H);
+    const ok = x && x.c <= 2 && x.p < 15 && x.f >= 10 && x.f <= 24 && [1, 2].every(k => { const y = w(H + k); return y && y.p < 25; });
+    if (ok) { let dry = H + 2; while (dry < 21 && w(dry + 1) && w(dry + 1).p < 25) dry++;
+      await patchDocAdmin(env, `families/${fid}/config/notify`, {wxDay: n.ds});
+      await send("weather", tokens, l => ({title: `${wxIcon(x.c)} ${l.ideal}`, body: `${dogName ? l.goOut.replace("{n}", dogName) + " · " : ""}${Math.round(x.t)}° · ${l.dryUntil} ${hm((dry + 1) * 60)}`, tag: "wx"})); }
+  }
+
+  // evening recap at 20:30: what's still not ticked today
+  if (at(20 * 60 + 30)) {
+    const left = tasks.filter(t => !done.has(t.dog + "|" + t.key) && toMin(t.time) <= n.min);
+    if (left.length) await send("daily", tokens, l => ({title: l.recap, body: left.slice(0, 3).map(t => `${t.time} ${t.title}`).join(", ") + (left.length > 3 ? " " + l.more.replace("{n}", left.length - 3) : ""), tag: "recap"}));
+  }
+
+  // food running low: 9:00, when about 3 days or less are left
+  if (food && +food.bagKg && food.opened && at(9 * 60)) {
+    let daily = +food.daily; if (!daily) { const m = String((dogCfg && dogCfg.ration) || "").match(/(\d+(?:[.,]\d+)?)\s*g/i); daily = m ? +m[1].replace(",", ".") : 0; }
+    if (daily) { const since = Math.max(0, Math.round((Date.parse(n.ds) - Date.parse(food.opened)) / 86400000)), left = (food.bagKg * 1000 - since * daily) / daily;
+      if (left > 0 && left <= 3) await send("daily", tokens, l => ({title: `🦴 ${l.food}`, body: l.foodDays.replace("{n}", Math.max(1, Math.floor(left))), tag: "food"})); }
   }
 }
 
