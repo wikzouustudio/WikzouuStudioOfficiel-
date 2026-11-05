@@ -167,7 +167,15 @@ async function pushOff(){
 }
 window.carnetPush = {available: () => pushReady() && (!isIOS || standalone), ios: isIOS && !standalone && !!(VAPID_KEY && WORKER_URL),
   state: () => !!LSg("dl-push@" + UID) && "Notification" in window && Notification.permission === "granted",
-  enable: async () => !!(await pushToken(true)), disable: pushOff};
+  enable: async () => { LSs("dl-push-err", null);
+    try { const t = await pushToken(true); if (!t) LSs("dl-push-err", "Notification" in window && Notification.permission === "denied" ? "permission refusée" : "pas de jeton"); return !!t; }
+    catch(e) { LSs("dl-push-err", String((e && (e.code || e.message)) || e).slice(0, 160)); console.warn(e); return false; } },
+  disable: pushOff,
+  // what is going on on this phone, for the settings screen
+  info: () => ({perm: "Notification" in window ? Notification.permission : "absent", sw: "serviceWorker" in navigator, pm: "PushManager" in window, standalone, ios: isIOS,
+    on: !!LSg("dl-push@" + UID), err: LSg("dl-push-err") || ""}),
+  // shows a notification straight from this phone (checks that notifications can be displayed)
+  test: async () => { const reg = await navigator.serviceWorker.ready; await reg.showNotification("Dogs Life", {body: ({fr: "Les notifications s'affichent bien ✓", en: "Notifications show fine ✓", hr: "Obavijesti se prikazuju ✓"})[LANG] || "✓", icon: "icon-192.png", tag: "test"}); }};
 // tell the rest of the family (the server skips the sender)
 window.carnetNotify = (kind, data) => { if (!WORKER_URL || !FID || !auth.currentUser) return;
   auth.currentUser.getIdToken().then(t => fetch(WORKER_URL.replace(/\/$/, "") + "/notify", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + t},

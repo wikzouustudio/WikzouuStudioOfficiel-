@@ -856,6 +856,7 @@ body.wiz-open .scrim{z-index:85}
 /* Offline pill */
 #offline-pill{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--fg);color:var(--bg);font-size:13px;font-weight:500;padding:7px 14px;white-space:nowrap;border-radius:999px;max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 body.is-offline #offline-pill{display:block}
+.push-diag .s{font-size:12px!important;color:var(--fg3)!important;overflow-wrap:anywhere}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -1596,6 +1597,9 @@ Object.assign(HR, {"Notifications sur ce téléphone":"Obavijesti na ovom telefo
   "Sur iPhone : ajoutez d'abord Dogs Life à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis activez les notifications depuis l'app.":"Na iPhoneu: najprije dodajte Dogs Life na početni zaslon (Dijeli → Dodaj na početni zaslon), zatim uključite obavijesti u aplikaciji.",
   "Chaque personne choisit sur son téléphone. Vous pouvez les couper à tout moment.":"Svatko bira na svom telefonu. Možete ih isključiti u bilo kojem trenutku.","Les alertes s'affichent tant que l'app est ouverte.":"Upozorenja se prikazuju dok je aplikacija otvorena.",
   "Notifications coupées sur ce téléphone":"Obavijesti isključene na ovom telefonu","Notifications activées":"Obavijesti uključene","Notifications refusées. Autorisez-les dans les réglages du téléphone.":"Obavijesti odbijene. Dopustite ih u postavkama telefona.","Impossible pour l'instant. Réessayez.":"Trenutno nije moguće. Pokušajte ponovno."});
+
+Object.assign(EN, {"Tester une notification":"Test a notification","Autorisation":"Permission","app de l'écran d'accueil":"Home Screen app","ouvert dans Safari":"opened in Safari","téléphone enregistré ✓":"phone registered ✓","téléphone pas enregistré":"phone not registered","erreur":"error","Impossible d'afficher la notification : {e}":"Can't show the notification: {e}","Erreur : {e}":"Error: {e}"});
+Object.assign(HR, {"Tester une notification":"Testiraj obavijest","Autorisation":"Dopuštenje","app de l'écran d'accueil":"aplikacija s početnog zaslona","ouvert dans Safari":"otvoreno u Safariju","téléphone enregistré ✓":"telefon registriran ✓","téléphone pas enregistré":"telefon nije registriran","erreur":"greška","Impossible d'afficher la notification : {e}":"Obavijest se ne može prikazati: {e}","Erreur : {e}":"Greška: {e}"});
 
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
@@ -3819,7 +3823,10 @@ function notifSection(){
     <div class="row"><div class="main"><div class="t">${T("Alertes à l'heure des tâches")}</div><div class="s">${T("Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.")}</div></div><button class="switch ${NOTIF?"on":""}" data-act="toggleNotif" role="switch" aria-checked="${NOTIF}" aria-label="${T("Alertes à l'heure des tâches")}"><i></i></button></div>
     <div class="row"><div class="main"><div class="t">${T("Son")}</div></div><button class="switch ${SOUND?"on":""}" data-act="toggleSound" role="switch" aria-checked="${SOUND}" aria-label="${T("Son")}"><i></i></button></div>
     <button class="row" data-act="testNotif"><span class="main t" style="color:var(--accent)">${T("Tester une alerte")}</span></button>
-    ${window.carnetPush && window.carnetPush.available() ? `<div class="row"><div class="main"><div class="t">${T("Notifications sur ce téléphone")}</div><div class="s">${T("Même app fermée : les tâches à l'heure et ce que fait la famille.")}</div></div><button class="switch ${window.carnetPush.state() ? "on" : ""}" data-act="togglePush" role="switch" aria-checked="${window.carnetPush.state()}" aria-label="${T("Notifications sur ce téléphone")}"><i></i></button></div>` : ""}
+    ${window.carnetPush && window.carnetPush.available() ? `<div class="row"><div class="main"><div class="t">${T("Notifications sur ce téléphone")}</div><div class="s">${T("Même app fermée : les tâches à l'heure et ce que fait la famille.")}</div></div><button class="switch ${window.carnetPush.state() ? "on" : ""}" data-act="togglePush" role="switch" aria-checked="${window.carnetPush.state()}" aria-label="${T("Notifications sur ce téléphone")}"><i></i></button></div>
+      ${window.carnetPush.state() ? `<button class="row" data-act="testPush"><span class="main t" style="color:var(--accent)">${T("Tester une notification")}</span></button>` : ""}` : ""}
+    ${window.carnetPush && window.carnetPush.info ? (() => { const i = window.carnetPush.info();
+      return `<div class="row push-diag"><div class="main"><div class="s">${esc([T("Autorisation") + " : " + i.perm, (i.ios ? (i.standalone ? T("app de l'écran d'accueil") : T("ouvert dans Safari")) : ""), i.on ? T("téléphone enregistré ✓") : T("téléphone pas enregistré"), i.err ? T("erreur") + " : " + i.err : ""].filter(Boolean).join(" · "))}</div></div></div>`; })() : ""}
   </div><div class="foot">${window.carnetPush && window.carnetPush.ios ? T("Sur iPhone : ajoutez d'abord Dogs Life à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis activez les notifications depuis l'app.") : window.carnetPush && window.carnetPush.available() ? T("Chaque personne choisit sur son téléphone. Vous pouvez les couper à tout moment.") : T("Les alertes s'affichent tant que l'app est ouverte.")}</div></div>`;
 }
 
@@ -4830,8 +4837,9 @@ document.addEventListener("click", async e => {
       const lg = C.config.family && Array.isArray(C.config.family.members) ? C.config.family.members : [];
       if (lg.some(m => m.id === el.dataset.id)) await put("config", "family", {members: lg.filter(m => m.id !== el.dataset.id)});
       if ((C.members || {})[el.dataset.id]) await del("members", el.dataset.id); if (ME === el.dataset.id) { ME = null; try { LS.del("carnet-me"); } catch(_){} } break; }
+    case "testPush": { try { await window.carnetPush.test(); } catch(e) { toast(T("Impossible d'afficher la notification : {e}", {e: String(e && e.message || e).slice(0, 80)})); } break; }
     case "togglePush": { const cp = window.carnetPush; if (!cp) break; el.disabled = true;
-      try { if (cp.state()) { await cp.disable(); toast(T("Notifications coupées sur ce téléphone")); } else { const ok = await cp.enable(); toast(ok ? T("Notifications activées") : T("Notifications refusées. Autorisez-les dans les réglages du téléphone.")); } } catch(_) { toast(T("Impossible pour l'instant. Réessayez.")); }
+      try { if (cp.state()) { await cp.disable(); toast(T("Notifications coupées sur ce téléphone")); } else { const ok = await cp.enable(); const er = cp.info ? cp.info().err : ""; toast(ok ? T("Notifications activées") : er && er !== "permission refusée" ? T("Erreur : {e}", {e: er}) : T("Notifications refusées. Autorisez-les dans les réglages du téléphone.")); } } catch(_) { toast(T("Impossible pour l'instant. Réessayez.")); }
       S.lastHTML = ""; render(); break; }
     case "notifAsk": { NOTIF = el.dataset.v === "1"; NOTIF_ASKED = true; if (NOTIF && window.carnetPush && window.carnetPush.available()) window.carnetPush.enable().catch(() => {}); try { LS.set("carnet-notif", NOTIF ? "1" : "0"); } catch(_){}
       if (NOTIF) { if (!actx && SOUND) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){} } try { if (navigator.vibrate) navigator.vibrate(20); } catch(_){} chime(); toast(T("Alertes activées")); }
