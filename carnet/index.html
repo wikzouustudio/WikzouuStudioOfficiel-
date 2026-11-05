@@ -763,6 +763,11 @@ html.tuto-lock,html.tuto-lock body{overflow:hidden;overscroll-behavior:none}
 .cmd-undo{display:block;margin:12px auto 0;color:var(--accent);font-size:14px;font-weight:500;padding:6px 10px}
 .cmd-sugg{gap:6px}
 /* Fresh account: in the app, family comes later */
+.fresh-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fresh-tile{display:flex;flex-direction:column;gap:6px;background:var(--card);border-radius:16px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.fresh-tile b{font-size:15px;margin-top:4px}
+.fresh-tile>span:last-child{font-size:13px;color:var(--fg2);line-height:1.35}
+@media (min-width:560px){.fresh-grid{grid-template-columns:repeat(4,1fr)}}
 .fresh-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:44px 8px 6px}
 .fresh-hero h1{font-size:30px;margin:8px 0 0}
 .fresh-hero p{margin:0;color:var(--fg2);font-size:16px;line-height:1.45;max-width:34ch}
@@ -1514,6 +1519,17 @@ Object.assign(HR, {"Créer une famille":"Stvori obitelj","Vous créez le carnet 
 Object.assign(EN, {"Quelqu'un":"Someone","Chargement…":"Loading…","Le compagnon 3D ne peut pas s'afficher sur cet appareil.":"The 3D companion can't be shown on this device."});
 Object.assign(HR, {"Quelqu'un":"Netko","Chargement…":"Učitavanje…","Le compagnon 3D ne peut pas s'afficher sur cet appareil.":"3D pratitelj ne može se prikazati na ovom uređaju."});
 
+Object.assign(EN, {"Tout ce que fait Dogs Life":"Everything Dogs Life does","Journal rapide":"Quick log","Pipi, balade, repas : un geste, l'heure et votre prénom sont notés.":"Pee, walk, meal: one tap, the time and your name are saved.",
+  "La routine de la semaine, les rappels à l'heure et qui s'en occupe.":"The weekly routine, on-time reminders and who's on duty.","Vaccins, traitements, poids, croissance et rendez-vous.":"Vaccines, treatments, weight, growth and appointments.",
+  "Pour le vétérinaire":"For the vet","Un résumé des 30 derniers jours, prêt à montrer.":"A 30-day summary, ready to show.","Messages, tâches partagées et activités en direct.":"Messages, shared tasks and live activity.",
+  "Éducation":"Training","Le programme du chiot et vos commandes à entraîner.":"The puppy program and your own commands to train.","Compagnon 3D":"3D companion","Son double en 3D, qui change d'humeur selon sa journée.":"A 3D twin whose mood follows the dog's day.",
+  "Une fiche et un accès dédiés pour la personne qui le garde.":"A dedicated sheet and access for the sitter.","Conseils adaptés à sa race, mode sombre, en français, anglais et croate.":"Breed-specific tips, dark mode, in French, English and Croatian."});
+Object.assign(HR, {"Tout ce que fait Dogs Life":"Sve što Dogs Life radi","Journal rapide":"Brzi dnevnik","Pipi, balade, repas : un geste, l'heure et votre prénom sont notés.":"Piškenje, šetnja, obrok: jedan dodir, bilježi se vrijeme i vaše ime.",
+  "La routine de la semaine, les rappels à l'heure et qui s'en occupe.":"Tjedna rutina, podsjetnici na vrijeme i tko je zadužen.","Vaccins, traitements, poids, croissance et rendez-vous.":"Cjepiva, terapije, težina, rast i termini.",
+  "Pour le vétérinaire":"Za veterinara","Un résumé des 30 derniers jours, prêt à montrer.":"Sažetak zadnjih 30 dana, spreman za pokazati.","Messages, tâches partagées et activités en direct.":"Poruke, zajednički zadaci i aktivnosti uživo.",
+  "Éducation":"Odgoj","Le programme du chiot et vos commandes à entraîner.":"Program za štene i vaše naredbe za vježbu.","Compagnon 3D":"3D pratitelj","Son double en 3D, qui change d'humeur selon sa journée.":"3D dvojnik čije raspoloženje prati dan psa.",
+  "Une fiche et un accès dédiés pour la personne qui le garde.":"Poseban list i pristup za osobu koja ga čuva.","Conseils adaptés à sa race, mode sombre, en français, anglais et croate.":"Savjeti za pasminu, tamni način, na francuskom, engleskom i hrvatskom."});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -2059,7 +2075,18 @@ function viewFresh(){
       <h1>${esc(first ? T("Bienvenue, {n}", {n: first}) : T("Bienvenue sur Dogs Life"))}</h1>
       <p>${T("Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.")}</p></div>
     ${choose}
-    <div class="fresh-what">${[["var(--green)", I.tRoutine, "Planning", "Repas, balades et soins, cochés par toute la famille."], ["var(--pink)", I.tHealth, "Santé", "Vaccins, traitements, poids et rendez-vous."], ["var(--purple)", I_FAM, "Famille", "Messages et tâches partagées."]].map(([c, ic, t, x]) => `<div class="fresh-row"><span class="fresh-ic sm" style="background:${c}">${ic}</span><div><b>${T(t)}</b><span>${T(x)}</span></div></div>`).join("")}</div>`;
+    <div class="sec-h" style="margin:30px 4px 10px"><h2>${T("Tout ce que fait Dogs Life")}</h2></div>
+    <div class="fresh-grid">${[
+      ["var(--accent)", I.paw, "Journal rapide", "Pipi, balade, repas : un geste, l'heure et votre prénom sont notés."],
+      ["var(--green)", I.tRoutine, "Planning", "La routine de la semaine, les rappels à l'heure et qui s'en occupe."],
+      ["var(--pink)", I.tHealth, "Santé", "Vaccins, traitements, poids, croissance et rendez-vous."],
+      ["var(--blue)", I.steth, "Pour le vétérinaire", "Un résumé des 30 derniers jours, prêt à montrer."],
+      ["var(--purple)", I_FAM, "Famille", "Messages, tâches partagées et activités en direct."],
+      ["var(--teal)", I.ball, "Éducation", "Le programme du chiot et vos commandes à entraîner."],
+      ["var(--orange)", I_BUDDY, "Compagnon 3D", "Son double en 3D, qui change d'humeur selon sa journée."],
+      ["var(--gray)", I_GARDE, "Garde", "Une fiche et un accès dédiés pour la personne qui le garde."]
+    ].map(([c, ic, t, x]) => `<div class="fresh-tile"><span class="fresh-ic sm" style="background:${c}">${ic}</span><b>${T(t)}</b><span>${T(x)}</span></div>`).join("")}</div>
+    <div class="foot" style="text-align:center;margin:14px 8px 0">${T("Conseils adaptés à sa race, mode sombre, en français, anglais et croate.")}</div>`;
   const tl = (tabList().find(x => x[0] === S.tab) || [, ""])[1];
   return `${pageHead(T(tl), "")}<div class="card fresh-empty"><div class="fresh-empty-i">${logoImg(56)}</div><div class="t">${T("Pas encore de famille")}</div><div class="s">${T("Créez ou rejoignez une famille depuis votre profil pour voir cette page.")}</div><button class="btn" data-act="go" data-tab="chien" style="margin-top:14px">${T("Aller au profil")}</button></div>`;
 }
