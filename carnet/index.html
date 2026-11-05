@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://www.gstatic.com https://cdnjs.cloudflare.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://dogs-life.radanovicvik.workers.dev; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src https://dogs-life-official-web.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="Le carnet de votre chien : routine du jour, santé, vaccins, croissance, éducation et famille.">
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -2233,7 +2235,7 @@ function viewFresh(){
 }
 function joinCodeSheet(){
   const acc = window.carnetAccount || {};
-  openSheet(T("Rejoindre une famille"), `<div class="fg"><label for="jc-code">${T("Code reçu")}</label><input class="f jc-code" id="jc-code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABC 234" maxlength="9"></div>
+  openSheet(T("Rejoindre une famille"), `<div class="fg"><label for="jc-code">${T("Code reçu")}</label><input class="f jc-code" id="jc-code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABCD 2345" maxlength="11"></div>
     <div class="fg"><label for="jc-name">${T("Votre prénom")}</label><input class="f" id="jc-name" autocomplete="given-name" maxlength="24" value="${esc((acc.name || "").split(" ")[0])}"></div>
     <div class="hint">${T("Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.")}</div>`,
     () => { const code = ($("#jc-code").value || "").trim(), name = ($("#jc-name").value || "").trim();
@@ -2663,8 +2665,8 @@ const family = () => {
 };
 const invites = () => Object.entries(C.invites || {}).map(([id, v]) => ({id, ...v})).filter(v => v.hash && (!v.exp || v.exp > Date.now())).sort((a, b) => (a.at || "").localeCompare(b.at || ""));
 const CODE_ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function genCode(){ const a = new Uint32Array(6); try { crypto.getRandomValues(a); } catch(_) { for (let i = 0; i < 6; i++) a[i] = Math.floor(Math.random() * 1e9); } return [...a].map(x => CODE_ABC[x % CODE_ABC.length]).join(""); }
-const fmtCode = c => c.slice(0, 3) + " " + c.slice(3);
+function genCode(){ const a = new Uint32Array(8); try { crypto.getRandomValues(a); } catch(_) { for (let i = 0; i < 8; i++) a[i] = Math.floor(Math.random() * 1e9); } return [...a].map(x => CODE_ABC[x % CODE_ABC.length]).join(""); }
+const fmtCode = c => c.length > 6 ? c.slice(0, 4) + " " + c.slice(4) : c.slice(0, 3) + " " + c.slice(3);
 const daysLeft = v => Math.max(0, Math.ceil(((v.exp || 0) - Date.now()) / 864e5));
 const ROLES = [["famille","Famille","Voit tout, coche les tâches, modifie la routine, la santé et la fiche."],["garde","Garde","Voit les consignes et coche les tâches, sans rien modifier."]];
 const memberDoc = (m, extra) => { const {id, ...rest} = m; return Object.assign(rest, extra || {}); };
@@ -2932,7 +2934,7 @@ function renderJoin(){
   if (!unlocked) {
     const wait = Math.max(0, Math.ceil(((+LS.get("carnet-codelock") || 0) - Date.now()) / 1000));
     body = `<div class="wz-field" style="margin-top:8px"><div class="wz-lab" style="text-align:center">${T("Votre code")}</div>
-      <input class="f wz-big code-in" id="j-code" maxlength="9" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" enterkeyhint="go" placeholder="ABC 234" ${wait ? "disabled" : ""}>
+      <input class="f wz-big code-in" id="j-code" maxlength="11" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" enterkeyhint="go" placeholder="ABCD 2345" ${wait ? "disabled" : ""}>
       <div class="wz-hint" id="j-code-msg" style="text-align:center">${wait ? T("Trop d'essais. Réessayez dans {n} s.",{n:wait}) : T("Le code vous est donné par un membre de la famille.")}</div></div>`;
     foot = `<button class="btn wz-next" data-act="joinCode" ${wait ? "disabled" : ""}>${T("Valider le code")}</button>`;
     if (wait) setTimeout(() => { S.joinDirty = true; renderJoin(); }, wait * 1000 + 50);

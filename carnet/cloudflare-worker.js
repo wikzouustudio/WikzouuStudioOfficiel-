@@ -25,7 +25,16 @@ function cors(origin) {
   return {"Access-Control-Allow-Origin": ORIGINS.includes(origin) ? origin : ORIGINS[0], "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization", "Access-Control-Max-Age": "86400", "Vary": "Origin"};
 }
-const reply = (status, body, origin) => new Response(JSON.stringify(body), {status, headers: {"Content-Type": "application/json", ...cors(origin)}});
+const reply = (status, body, origin) => new Response(JSON.stringify(body), {status, headers: {"Content-Type": "application/json", "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", ...cors(origin)}});
+// simple anti-spam: at most n requests per window for each account (per server instance)
+const hits = new Map();
+function tooMany(key, n, ms) {
+  const now = Date.now(), h = (hits.get(key) || []).filter(t => now - t < ms); h.push(now); hits.set(key, h);
+  if (hits.size > 5000) for (const [k, v] of hits) if (!v.length || now - v[v.length - 1] > ms) hits.delete(k);
+  return h.length > n;
+}
+const clean = (v, n) => String(v || "").replace(/[\u0000-\u001F\u007F\u200B-\u200F\u202A-\u202E]/g, " ").trim().slice(0, n);
 function b64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
 const b64uEnc = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const b64uStr = s => b64uEnc(new TextEncoder().encode(s));
@@ -137,14 +146,15 @@ async function onNotify(request, env, origin) {
   if (!env.FIREBASE_SA) return reply(500, {error: "cle_manquante"}, origin);
   const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const uid = await verifyToken(token).catch(() => null); if (!uid) return reply(401, {error: "connexion"}, origin);
+  if (tooMany("n:" + uid, 30, 60000)) return reply(429, {error: "limite"}, origin);
   let b; try { b = await request.json(); } catch { return reply(400, {error: "json"}, origin); }
-  if (!validId(b.family)) return reply(400, {error: "famille"}, origin);
+  if (!validId(b.family) || !["msg", "log", "tick"].includes(b.kind)) return reply(400, {error: "famille"}, origin);
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
-  const who = String(b.who || "").slice(0, 30), text = String(b.text || "").slice(0, 140), at = String(b.at || "").slice(0, 5);
+  const who = clean(b.who, 30), text = clean(b.text, 140), at = /^\d{1,2}:\d{2}$/.test(b.at || "") ? b.at : "";
   const tokens = (await list(env, `families/${b.family}/pushTokens`)).filter(t => t.token && t.on !== false && wants(t, "family") && (t.uid !== uid || wants(t, "self")));
   await Promise.all(tokens.map(t => { const l = tx(t); let msg;
     if (b.kind === "msg") msg = {title: `${l.wrote} ${who}`, body: text, tag: "msg"};
-    else if (b.kind === "log") msg = {title: `${who} · ${l.k[b.k] || text}`, body: at ? at : "", tag: "log"};
+    else if (b.kind === "log") msg = {title: `${who} · ${(Object.hasOwn(l.k, b.k) && l.k[b.k]) || text}`, body: at ? at : "", tag: "log"};
     else msg = {title: `${who} ${l.did}`, body: text + (at ? " · " + at : ""), tag: "tick"};
     return push(env, b.family, t, msg); }));
   return reply(200, {sent: tokens.length}, origin);
@@ -245,13 +255,16 @@ export default {
     const origin = request.headers.get("Origin") || "", path = new URL(request.url).pathname;
     if (request.method === "OPTIONS") return new Response(null, {status: 204, headers: cors(origin)});
     if (request.method !== "POST") return reply(405, {error: "method"}, origin);
-    if (origin && !ORIGINS.includes(origin)) return reply(403, {error: "origin"}, origin);
+    // only the Dogs Life site may call this server
+    if (!ORIGINS.includes(origin)) return reply(403, {error: "origin"}, origin);
+    if (+(request.headers.get("Content-Length") || 0) > 65536) return reply(413, {error: "taille"}, origin);
     if (path === "/notify") return onNotify(request, env, origin);
 
     // advice from Claude (only if a key was added)
     if (!env.ANTHROPIC_API_KEY) return reply(500, {error: "cle_manquante"}, origin);
     const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     const uid = await verifyToken(token).catch(() => null); if (!uid) return reply(401, {error: "connexion"}, origin);
+    if (tooMany("a:" + uid, 20, 3600000)) return reply(429, {error: "limite"}, origin);
     let body; try { body = await request.json(); } catch { return reply(400, {error: "json"}, origin); }
     const input = typeof body.input === "string" ? body.input.slice(0, MAX_INPUT) : ""; if (!input) return reply(400, {error: "vide"}, origin);
     if (!validId(body.family)) return reply(403, {error: "famille"}, origin);

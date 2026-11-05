@@ -82,7 +82,7 @@ function render(){
     <button class="g-card" data-g="tojoin" ${busy ? "disabled" : ""}><span class="g-ic" style="background:#9B6BE0">${FAM}</span><span><b>${TXT.join}</b><small>${TXT.joinS}</small></span></button>
     <div class="g-links"><button data-g="logout">${TXT.other}</button></div>`);
   if (step === "join") return show(`${head}<p class="g-sub">${TXT.joinS}</p>
-    <label class="g-lab">${TXT.code}</label><input class="g-f g-code" id="g-code" data-f="code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABC 234" maxlength="9" value="${esc(F.code)}">
+    <label class="g-lab">${TXT.code}</label><input class="g-f g-code" id="g-code" data-f="code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABCD 2345" maxlength="11" value="${esc(F.code)}">
     <label class="g-lab">${TXT.name}</label><input class="g-f" id="g-name" data-f="name" autocomplete="given-name" maxlength="24" placeholder="${TXT.name}" value="${esc(F.name || (u && u.displayName ? u.displayName.split(" ")[0] : ""))}">
     ${m}<button class="g-btn g-main" data-g="join" ${busy ? "disabled" : ""}>${busy ? TXT.wait : TXT.joinBtn}</button>
     <div class="g-links"><button data-g="back">${TXT.back}</button></div>`);
