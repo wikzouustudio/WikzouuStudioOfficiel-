@@ -1530,6 +1530,9 @@ Object.assign(HR, {"Tout ce que fait Dogs Life":"Sve što Dogs Life radi","Journ
   "Éducation":"Odgoj","Le programme du chiot et vos commandes à entraîner.":"Program za štene i vaše naredbe za vježbu.","Compagnon 3D":"3D pratitelj","Son double en 3D, qui change d'humeur selon sa journée.":"3D dvojnik čije raspoloženje prati dan psa.",
   "Une fiche et un accès dédiés pour la personne qui le garde.":"Poseban list i pristup za osobu koja ga čuva.","Conseils adaptés à sa race, mode sombre, en français, anglais et croate.":"Savjeti za pasminu, tamni način, na francuskom, engleskom i hrvatskom."});
 
+Object.assign(EN, {"Pipi, balade, repas : un geste et c'est noté.":"Pee, walk, meal: one tap and it's logged.","Ses commandes, entraînées pas à pas.":"Their commands, trained step by step.","Son double, qui vit au rythme de sa journée.":"A twin that lives to the rhythm of their day."});
+Object.assign(HR, {"Pipi, balade, repas : un geste et c'est noté.":"Piškenje, šetnja, obrok: jedan dodir i zabilježeno je.","Ses commandes, entraînées pas à pas.":"Njegove naredbe, uvježbane korak po korak.","Son double, qui vit au rythme de sa journée.":"Dvojnik koji živi u ritmu njegova dana."});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -2075,18 +2078,7 @@ function viewFresh(){
       <h1>${esc(first ? T("Bienvenue, {n}", {n: first}) : T("Bienvenue sur Dogs Life"))}</h1>
       <p>${T("Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.")}</p></div>
     ${choose}
-    <div class="sec-h" style="margin:30px 4px 10px"><h2>${T("Tout ce que fait Dogs Life")}</h2></div>
-    <div class="fresh-grid">${[
-      ["var(--accent)", I.paw, "Journal rapide", "Pipi, balade, repas : un geste, l'heure et votre prénom sont notés."],
-      ["var(--green)", I.tRoutine, "Planning", "La routine de la semaine, les rappels à l'heure et qui s'en occupe."],
-      ["var(--pink)", I.tHealth, "Santé", "Vaccins, traitements, poids, croissance et rendez-vous."],
-      ["var(--blue)", I.steth, "Pour le vétérinaire", "Un résumé des 30 derniers jours, prêt à montrer."],
-      ["var(--purple)", I_FAM, "Famille", "Messages, tâches partagées et activités en direct."],
-      ["var(--teal)", I.ball, "Éducation", "Le programme du chiot et vos commandes à entraîner."],
-      ["var(--orange)", I_BUDDY, "Compagnon 3D", "Son double en 3D, qui change d'humeur selon sa journée."],
-      ["var(--gray)", I_GARDE, "Garde", "Une fiche et un accès dédiés pour la personne qui le garde."]
-    ].map(([c, ic, t, x]) => `<div class="fresh-tile"><span class="fresh-ic sm" style="background:${c}">${ic}</span><b>${T(t)}</b><span>${T(x)}</span></div>`).join("")}</div>
-    <div class="foot" style="text-align:center;margin:14px 8px 0">${T("Conseils adaptés à sa race, mode sombre, en français, anglais et croate.")}</div>`;
+    <div class="fresh-what">${[["var(--accent)", I.paw, "Journal rapide", "Pipi, balade, repas : un geste et c'est noté."], ["var(--green)", I.tRoutine, "Planning", "Repas, balades et soins, cochés par toute la famille."], ["var(--pink)", I.tHealth, "Santé", "Vaccins, traitements, poids et rendez-vous."], ["var(--purple)", I_FAM, "Famille", "Messages et tâches partagées."], ["var(--teal)", I.ball, "Éducation", "Ses commandes, entraînées pas à pas."], ["var(--orange)", I_BUDDY, "Compagnon 3D", "Son double, qui vit au rythme de sa journée."]].map(([c, ic, t, x]) => `<div class="fresh-row"><span class="fresh-ic sm" style="background:${c}">${ic}</span><div><b>${T(t)}</b><span>${T(x)}</span></div></div>`).join("")}</div>`;
   const tl = (tabList().find(x => x[0] === S.tab) || [, ""])[1];
   return `${pageHead(T(tl), "")}<div class="card fresh-empty"><div class="fresh-empty-i">${logoImg(56)}</div><div class="t">${T("Pas encore de famille")}</div><div class="s">${T("Créez ou rejoignez une famille depuis votre profil pour voir cette page.")}</div><button class="btn" data-act="go" data-tab="chien" style="margin-top:14px">${T("Aller au profil")}</button></div>`;
 }
