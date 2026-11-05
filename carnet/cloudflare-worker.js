@@ -8,7 +8,7 @@
 
 const PROJECT = "dogs-life-official-web";
 const ORIGINS = ["https://wikzouustudio.github.io", "https://wikzouustudio.com", "https://www.wikzouustudio.com"];
-const APP_URL = "https://wikzouustudio.com/carnet/";
+const APP_URL = "https://wikzouustudio.github.io/WikzouuStudioOfficiel-/carnet/";
 const MODEL = "claude-sonnet-5-5";
 const MAX_INPUT = 12000;
 const LATE_MIN = 30;           // second rappel si la tâche n'est pas cochée 30 min après
