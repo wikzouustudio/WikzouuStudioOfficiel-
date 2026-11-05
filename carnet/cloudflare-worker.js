@@ -129,7 +129,7 @@ const L = {
     k: {pipi: "Piškenje", caca: "Kakanje", balade: "Šetnja", accident: "Nezgoda", eau: "Voda", friandise: "Poslastica", sieste: "Drijemež", jeu: "Igra", vomi: "Povraćanje", photo: "Fotografija"}}
 };
 const tx = t => L[t && t.lang] || L.fr;
-// each phone chooses what it wants: tasks, family, weather, appts, daily (all on by default)
+// each phone chooses what it wants: tasks, family, self (my own actions), weather, appts, daily (all on by default)
 const wants = (t, k) => !(t.prefs && t.prefs[k] === false);
 
 /* ---------- family events: someone did something, tell the others ---------- */
@@ -141,7 +141,7 @@ async function onNotify(request, env, origin) {
   if (!validId(b.family)) return reply(400, {error: "famille"}, origin);
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
   const who = String(b.who || "").slice(0, 30), text = String(b.text || "").slice(0, 140), at = String(b.at || "").slice(0, 5);
-  const tokens = (await list(env, `families/${b.family}/pushTokens`)).filter(t => t.token && t.uid !== uid && t.on !== false && wants(t, "family"));
+  const tokens = (await list(env, `families/${b.family}/pushTokens`)).filter(t => t.token && t.on !== false && wants(t, "family") && (t.uid !== uid || wants(t, "self")));
   await Promise.all(tokens.map(t => { const l = tx(t); let msg;
     if (b.kind === "msg") msg = {title: `${l.wrote} ${who}`, body: text, tag: "msg"};
     else if (b.kind === "log") msg = {title: `${who} · ${l.k[b.k] || text}`, body: at ? at : "", tag: "log"};
