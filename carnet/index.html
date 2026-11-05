@@ -768,12 +768,12 @@ html.tuto-lock,html.tuto-lock body{overflow:hidden;overscroll-behavior:none}
 .fresh-tile b{font-size:15px;margin-top:4px}
 .fresh-tile>span:last-child{font-size:13px;color:var(--fg2);line-height:1.35}
 @media (min-width:560px){.fresh-grid{grid-template-columns:repeat(4,1fr)}}
-.fresh-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:44px 8px 6px}
-.fresh-hero h1{font-size:30px;margin:8px 0 0}
+.fresh-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:24px 8px 4px}
+.fresh-hero h1{font-size:28px;margin:6px 0 0}
 .fresh-hero p{margin:0;color:var(--fg2);font-size:16px;line-height:1.45;max-width:34ch}
-.fresh-choices{display:grid;gap:10px;margin-top:22px}
+.fresh-choices{display:grid;gap:10px;margin-top:18px}
 .sec .fresh-choices{margin-top:0}
-.fresh-card{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border-radius:16px;transition:transform .15s}
+.fresh-card{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:13px 16px;border-radius:16px;transition:transform .15s}
 .fresh-card:active{transform:scale(.98)}
 .fresh-card .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .fresh-card b{font-size:17px}
@@ -781,7 +781,10 @@ html.tuto-lock,html.tuto-lock body{overflow:hidden;overscroll-behavior:none}
 .fresh-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:none}
 .fresh-ic svg{width:24px;height:24px}
 .fresh-ic.sm{width:34px;height:34px;border-radius:10px}.fresh-ic.sm svg{width:19px;height:19px}
-.fresh-what{display:grid;gap:14px;margin-top:28px;padding:0 6px}
+.fresh-what{display:grid;gap:12px;margin-top:20px;padding:0 6px}
+.fresh-more{display:flex;align-items:center;justify-content:center;gap:4px;margin:12px auto 0;padding:8px 14px;color:var(--accent);font-size:15px;font-weight:600}
+.fresh-more span{display:grid;transform:rotate(90deg);transition:transform .2s}.fresh-more span.up{transform:rotate(-90deg)}
+.fresh-more svg{width:14px;height:14px}
 .fresh-row{display:flex;gap:12px;align-items:center}
 .fresh-row b{display:block;font-size:15px}.fresh-row span:not(.fresh-ic){font-size:14px;color:var(--fg2)}
 .fresh-acc{display:flex;align-items:center;gap:14px;padding:16px}
@@ -1536,6 +1539,9 @@ Object.assign(HR, {"Pipi, balade, repas : un geste et c'est noté.":"Piškenje, 
 Object.assign(EN, {"Chaque sortie et chaque repas, notés en un geste.":"Every outing and meal, logged in one tap.","Une routine partagée, suivie par toute la famille.":"A shared routine the whole family follows.","Vaccins, traitements, poids et suivi vétérinaire.":"Vaccines, treatments, weight and vet follow-up.","Messagerie et répartition des tâches.":"Messaging and task sharing.","Suivi des apprentissages et des commandes.":"Training and command progress.","Un double 3D qui reflète son bien-être.":"A 3D twin that reflects their wellbeing."});
 Object.assign(HR, {"Chaque sortie et chaque repas, notés en un geste.":"Svaki izlazak i obrok, zabilježen jednim dodirom.","Une routine partagée, suivie par toute la famille.":"Zajednička rutina koju prati cijela obitelj.","Vaccins, traitements, poids et suivi vétérinaire.":"Cjepiva, terapije, težina i veterinarsko praćenje.","Messagerie et répartition des tâches.":"Poruke i raspodjela zadataka.","Suivi des apprentissages et des commandes.":"Praćenje učenja i naredbi.","Un double 3D qui reflète son bien-être.":"3D dvojnik koji odražava njegovu dobrobit."});
 
+Object.assign(EN, {"Voir plus":"See more","Voir moins":"See less","Un résumé de 30 jours, prêt à partager.":"A 30-day summary, ready to share.","Un accès dédié pour la personne qui le garde.":"Dedicated access for the dog-sitter."});
+Object.assign(HR, {"Voir plus":"Prikaži više","Voir moins":"Prikaži manje","Un résumé de 30 jours, prêt à partager.":"Sažetak od 30 dana, spreman za dijeljenje.","Un accès dédié pour la personne qui le garde.":"Poseban pristup za osobu koja ga čuva."});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -2077,11 +2083,16 @@ function viewFresh(){
     <div class="card fresh-acc">${mav({name: first || "?", color: MCOL[1]}, 56)}<div class="main"><div class="t">${esc(acc.name || T("Votre compte"))}</div><div class="s">${esc(acc.email || "")}</div></div></div>
     <div class="sec"><div class="sec-h"><h2>${T("Votre famille")}</h2></div>${choose}<div class="foot">${T("Une famille regroupe un chien et les personnes qui s'en occupent. Vous pourrez inviter d'autres personnes ensuite.")}</div></div>
     <div class="sec"><div class="card list"><div class="row">${langSeg()}</div>${acc.signOut ? `<button class="row" data-act="signOut"><span class="main t" style="color:var(--red)">${T("Se déconnecter")}</span></button>` : ""}</div></div>`;
-  if (S.tab === "aujourdhui") return `<div class="fresh-hero">${logoImg(88)}
+  if (S.tab === "aujourdhui") return `<div class="fresh-hero">${logoImg(72)}
       <h1>${esc(first ? T("Bienvenue, {n}", {n: first}) : T("Bienvenue sur Dogs Life"))}</h1>
       <p>${T("Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.")}</p></div>
     ${choose}
-    <div class="fresh-what">${[["var(--accent)", I.paw, "Journal rapide", "Chaque sortie et chaque repas, notés en un geste."], ["var(--green)", I.tRoutine, "Planning", "Une routine partagée, suivie par toute la famille."], ["var(--pink)", I.tHealth, "Santé", "Vaccins, traitements, poids et suivi vétérinaire."], ["var(--purple)", I_FAM, "Famille", "Messagerie et répartition des tâches."], ["var(--teal)", I.ball, "Éducation", "Suivi des apprentissages et des commandes."], ["var(--orange)", I_BUDDY, "Compagnon 3D", "Un double 3D qui reflète son bien-être."]].map(([c, ic, t, x]) => `<div class="fresh-row"><span class="fresh-ic sm" style="background:${c}">${ic}</span><div><b>${T(t)}</b><span>${T(x)}</span></div></div>`).join("")}</div>`;
+    ${(() => { const all = [["var(--accent)", I.paw, "Journal rapide", "Chaque sortie et chaque repas, notés en un geste."], ["var(--green)", I.tRoutine, "Planning", "Une routine partagée, suivie par toute la famille."], ["var(--pink)", I.tHealth, "Santé", "Vaccins, traitements, poids et suivi vétérinaire."],
+        ["var(--purple)", I_FAM, "Famille", "Messagerie et répartition des tâches."], ["var(--teal)", I.ball, "Éducation", "Suivi des apprentissages et des commandes."], ["var(--orange)", I_BUDDY, "Compagnon 3D", "Un double 3D qui reflète son bien-être."],
+        ["var(--blue)", I.steth, "Pour le vétérinaire", "Un résumé de 30 jours, prêt à partager."], ["var(--gray)", I_GARDE, "Garde", "Un accès dédié pour la personne qui le garde."]];
+      const list = S.freshMore ? all : all.slice(0, 3);
+      return `<div class="fresh-what">${list.map(([c, ic, t, x]) => `<div class="fresh-row"><span class="fresh-ic sm" style="background:${c}">${ic}</span><div><b>${T(t)}</b><span>${T(x)}</span></div></div>`).join("")}</div>
+        <button class="fresh-more" data-act="freshMore">${S.freshMore ? T("Voir moins") : T("Voir plus")}<span class="${S.freshMore ? "up" : ""}">${I.chevR}</span></button>`; })()}`;
   const tl = (tabList().find(x => x[0] === S.tab) || [, ""])[1];
   return `${pageHead(T(tl), "")}<div class="card fresh-empty"><div class="fresh-empty-i">${logoImg(56)}</div><div class="t">${T("Pas encore de famille")}</div><div class="s">${T("Créez ou rejoignez une famille depuis votre profil pour voir cette page.")}</div><button class="btn" data-act="go" data-tab="chien" style="margin-top:14px">${T("Aller au profil")}</button></div>`;
 }
@@ -4764,6 +4775,7 @@ document.addEventListener("click", async e => {
     case "keepExample": { const d = JSON.parse(JSON.stringify(dog()||{})); delete d.example; await saveDog(d); break; }
     case "startBlank": wizStart(); break;
     case "joinCode": joinCodeSheet(); break;
+    case "freshMore": S.freshMore = !S.freshMore; render(); break;
     case "wzPick": { const w = S.wiz; if (!w) break; const f = el.dataset.f, v = el.dataset.v; w.d[f] = v; if (f === "meals") w.routine = null;
       wizGroup(f, x => x === v); try { if (navigator.vibrate) navigator.vibrate(8); } catch(_){} wizFoot(); break; }
     case "wzMulti": { const w = S.wiz; if (!w) break; const f = el.dataset.f, v = el.dataset.v; let a = (w.d[f] || []).slice();
