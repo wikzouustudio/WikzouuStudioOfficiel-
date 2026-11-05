@@ -837,6 +837,25 @@ body.wiz-open .scrim{z-index:85}
 .warn-t{color:var(--orange);font-weight:600}
 .ms-warn{display:flex;gap:10px;align-items:flex-start;background:color-mix(in srgb,var(--orange) 14%,var(--card));border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:14px;line-height:1.4}
 .ms-warn b{flex:none;width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:13px}
+/* Weather for walks */
+.wx-cta{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;margin-top:12px}
+.wx-cta .main{flex:1;min-width:0}.wx-cta .t{font-weight:600}.wx-cta .s{font-size:13px;color:var(--fg2)}
+.wx-ic{font-size:26px;line-height:1}
+.wx{margin-top:12px}
+.wx-h{display:flex;align-items:center;gap:12px;cursor:pointer}
+.wx-big{font-size:38px;line-height:1}
+.wx-t{font-family:var(--font-r);font-size:28px;font-weight:700;line-height:1}
+.wx-t small{font-family:var(--font);font-size:13px;font-weight:500;color:var(--fg2);margin-left:8px}
+.wx-h .s{font-size:13px;color:var(--fg2);margin-top:3px}
+.wx-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.wx-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:var(--fill);font-size:14px}
+.wx-chip b{font-weight:600}.wx-chip small{color:var(--blue);font-weight:600}
+.wx-chip.hot{background:color-mix(in srgb,var(--red) 16%,var(--card))}.wx-chip.cold{background:color-mix(in srgb,var(--blue) 16%,var(--card))}.wx-chip.rain{background:color-mix(in srgb,var(--teal) 18%,var(--card))}
+.wx-tip{margin-top:12px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--green) 12%,var(--card));font-size:14px;line-height:1.4}
+.wx.hot .wx-tip{background:color-mix(in srgb,var(--red) 13%,var(--card))}.wx.cold .wx-tip{background:color-mix(in srgb,var(--blue) 13%,var(--card))}.wx.rain .wx-tip{background:color-mix(in srgb,var(--teal) 15%,var(--card))}
+/* Offline pill */
+#offline-pill{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--fg);color:var(--bg);font-size:13px;font-weight:500;padding:7px 14px;white-space:nowrap;border-radius:999px;max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+body.is-offline #offline-pill{display:block}
 /* Default pictures: the logo in each person's colour, the dog drawing for the dog */
 .mav .mk{display:block;width:76%;height:76%;background:#fff;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 .avatar.dflt{background:#FAFAFA}
@@ -1554,6 +1573,30 @@ Object.assign(HR, {"Confirmer la déconnexion":"Potvrdi odjavu"});
 Object.assign(EN, {"Déconnecté(e) de l'app":"Signed out of the app","{n} s'est déconnecté(e) de l'app. Ses tâches et sa place dans la famille sont gardées ; tout revient dès qu'il ou elle se reconnecte.":"{n} signed out of the app. Their tasks and place in the family are kept; everything comes back as soon as they sign in again."});
 Object.assign(HR, {"Déconnecté(e) de l'app":"Odjavljen(a) iz aplikacije","{n} s'est déconnecté(e) de l'app. Ses tâches et sa place dans la famille sont gardées ; tout revient dès qu'il ou elle se reconnecte.":"{n} se odjavio/la iz aplikacije. Zadaci i mjesto u obitelji su sačuvani; sve se vraća čim se ponovno prijavi."});
 
+Object.assign(EN, {"Météo des balades":"Walk weather","Le bon moment pour sortir, selon la météo et sa race.":"The right time to go out, based on the weather and the breed.","ressenti {t}°":"feels like {t}°","Votre position":"Your location",
+  "Chaud à {h} ({t}°) : sortez-le plutôt tôt le matin ou le soir, et vérifiez le bitume du dos de la main.":"Hot at {h} ({t}°): go out early in the morning or in the evening, and check the tarmac with the back of your hand.",
+  "Museau court : il supporte mal la chaleur.":"Short snout: they cope badly with heat.","Pluie probable à {h} ({p} %).":"Rain likely at {h} ({p}%).","Plus sec vers {h2}.":"Drier around {h2}.","Prévoyez une serviette au retour.":"Keep a towel ready for the way back.",
+  "Froid à {h} ({t}°) : balade plus courte.":"Cold at {h} ({t}°): keep the walk shorter.","Un manteau l'aidera, il a peu de poil.":"A coat will help, they have little fur.","Temps idéal pour la balade de {h}.":"Ideal weather for the {h} walk.","Plus de balade prévue aujourd'hui.":"No more walks planned today.",
+  "Ville":"Town","Ex. : Lausanne":"E.g. Lausanne","Chercher":"Search","Utiliser ma position":"Use my location","Prévisions Open-Meteo, mises à jour toutes les 30 minutes. Toute la famille voit la même ville.":"Open-Meteo forecasts, updated every 30 minutes. The whole family sees the same town.",
+  "Météo activée":"Weather on","Aucune ville trouvée.":"No town found.","Recherche impossible pour l'instant.":"Search unavailable right now.","Position indisponible sur cet appareil.":"Location unavailable on this device.","Position refusée. Cherchez plutôt votre ville.":"Location refused. Search for your town instead.",
+  "Hors ligne · envoi au retour du réseau":"Offline · syncs when back online"});
+Object.assign(HR, {"Météo des balades":"Vrijeme za šetnje","Le bon moment pour sortir, selon la météo et sa race.":"Pravo vrijeme za izlazak, prema vremenu i pasmini.","ressenti {t}°":"osjećaj {t}°","Votre position":"Vaša lokacija",
+  "Chaud à {h} ({t}°) : sortez-le plutôt tôt le matin ou le soir, et vérifiez le bitume du dos de la main.":"Vruće u {h} ({t}°): izvedite ga rano ujutro ili navečer i provjerite asfalt nadlanicom.",
+  "Museau court : il supporte mal la chaleur.":"Kratka njuška: loše podnosi vrućinu.","Pluie probable à {h} ({p} %).":"Moguća kiša u {h} ({p} %).","Plus sec vers {h2}.":"Suše oko {h2}.","Prévoyez une serviette au retour.":"Pripremite ručnik za povratak.",
+  "Froid à {h} ({t}°) : balade plus courte.":"Hladno u {h} ({t}°): kraća šetnja.","Un manteau l'aidera, il a peu de poil.":"Kaputić će mu pomoći, ima malo dlake.","Temps idéal pour la balade de {h}.":"Idealno vrijeme za šetnju u {h}.","Plus de balade prévue aujourd'hui.":"Danas više nema planiranih šetnji.",
+  "Ville":"Grad","Ex. : Lausanne":"Npr. Zagreb","Chercher":"Traži","Utiliser ma position":"Koristi moju lokaciju","Prévisions Open-Meteo, mises à jour toutes les 30 minutes. Toute la famille voit la même ville.":"Prognoza Open-Meteo, osvježava se svakih 30 minuta. Cijela obitelj vidi isti grad.",
+  "Météo activée":"Vrijeme uključeno","Aucune ville trouvée.":"Grad nije pronađen.","Recherche impossible pour l'instant.":"Pretraga trenutno nije moguća.","Position indisponible sur cet appareil.":"Lokacija nije dostupna na ovom uređaju.","Position refusée. Cherchez plutôt votre ville.":"Lokacija odbijena. Potražite svoj grad.",
+  "Hors ligne · envoi au retour du réseau":"Izvan mreže · šalje se kad se veza vrati"});
+
+Object.assign(EN, {"Notifications sur ce téléphone":"Notifications on this phone","Même app fermée : les tâches à l'heure et ce que fait la famille.":"Even with the app closed: tasks on time and what the family does.",
+  "Sur iPhone : ajoutez d'abord Dogs Life à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis activez les notifications depuis l'app.":"On iPhone: first add Dogs Life to the Home Screen (Share → Add to Home Screen), then turn notifications on from the app.",
+  "Chaque personne choisit sur son téléphone. Vous pouvez les couper à tout moment.":"Each person chooses on their own phone. You can turn them off at any time.","Les alertes s'affichent tant que l'app est ouverte.":"Alerts show while the app is open.",
+  "Notifications coupées sur ce téléphone":"Notifications off on this phone","Notifications activées":"Notifications on","Notifications refusées. Autorisez-les dans les réglages du téléphone.":"Notifications blocked. Allow them in the phone's settings.","Impossible pour l'instant. Réessayez.":"Not possible right now. Try again."});
+Object.assign(HR, {"Notifications sur ce téléphone":"Obavijesti na ovom telefonu","Même app fermée : les tâches à l'heure et ce que fait la famille.":"I kad je aplikacija zatvorena: zadaci na vrijeme i što radi obitelj.",
+  "Sur iPhone : ajoutez d'abord Dogs Life à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis activez les notifications depuis l'app.":"Na iPhoneu: najprije dodajte Dogs Life na početni zaslon (Dijeli → Dodaj na početni zaslon), zatim uključite obavijesti u aplikaciji.",
+  "Chaque personne choisit sur son téléphone. Vous pouvez les couper à tout moment.":"Svatko bira na svom telefonu. Možete ih isključiti u bilo kojem trenutku.","Les alertes s'affichent tant que l'app est ouverte.":"Upozorenja se prikazuju dok je aplikacija otvorena.",
+  "Notifications coupées sur ce téléphone":"Obavijesti isključene na ovom telefonu","Notifications activées":"Obavijesti uključene","Notifications refusées. Autorisez-les dans les réglages du téléphone.":"Obavijesti odbijene. Dopustite ih u postavkama telefona.","Impossible pour l'instant. Réessayez.":"Trenutno nije moguće. Pokušajte ponovno."});
+
 /* ---------- options (stored in French, shown translated) ---------- */
 const OPT = {
   sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
@@ -1833,7 +1876,7 @@ function viewToday(){
     <div style="position:relative;width:96px;height:96px">${ring(st.pct,96,11,"var(--green)", ra && ra.day === sel ? ra.from : null)}${live("celebrate") && S.celebrate.day === sel ? burstHTML() : ""}</div>
     <div><div class="ring-txt num"><span class="${ra && ra.day === sel ? "bump" : ""}">${st.n}</span><span style="color:var(--fg3)">/${st.total}</span></div><div class="ring-sub">${d&&d.name?T("tâches faites pour {n}",{n:esc(d.name)}):T("tâches faites")}</div>${nextHTML}</div>
   </div>${catPills?`<div class="catstats">${catPills}</div>`:""}</div>
-  ${quickLog()}
+  ${weatherCard()}${quickLog()}
   ${alerts}
   ${isToday ? notifPrompt() : ""}
   ${(ME && meMember()) || S.catF ? `<div class="filters">${ME && meMember() ? `<div class="seg" role="group" style="flex:1">${[[0,"Toutes les tâches"],[1,"Les miennes"]].map(([v,l]) => `<button class="${!!S.mine===!!v?"on":""}" data-act="mineFilter" data-v="${v}">${T(l)}</button>`).join("")}</div>` : ""}${S.catF ? `<button class="pill pill-on" data-act="catFilter" data-c="${S.catF}">${T(CATS[S.catF].label)} ×</button>` : ""}</div>` : ""}
@@ -2921,6 +2964,66 @@ function renderTuto(){
 const LOGO = "data:image/png;base64,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";
 const logoImg = (sz, cls) => `<img class="brand-logo ${cls || ""}" src="${LOGO}" width="${sz}" height="${sz}" alt="Dogs Life">`;
 
+/* ---------- weather for walks (Open-Meteo: free, no key) ---------- */
+const wxIcon = (c, day) => c === 0 ? (day === 0 ? "🌙" : "☀️") : c <= 2 ? "🌤️" : c === 3 ? "☁️" : c === 45 || c === 48 ? "🌫️" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "❄️" : c >= 95 ? "⛈️" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "🌧️" : "🌤️";
+let WX = null, wxBusy = false;
+const wxCfg = () => (C.config && C.config.weather && C.config.weather.lat != null) ? C.config.weather : null;
+const wxKey = w => "dl-wx:" + (+w.lat).toFixed(2) + "," + (+w.lon).toFixed(2);
+function wxLoad(force){
+  const w = wxCfg(); if (!w) return; const key = wxKey(w);
+  if (!WX || WX.key !== key) { WX = null; try { const c = JSON.parse(localStorage.getItem(key) || "null"); if (c && c.j) WX = c; } catch(_){} }
+  if (wxBusy || !navigator.onLine || (!force && WX && WX.j && Date.now() - WX.at < 30 * 60000)) return;
+  wxBusy = true;
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${+w.lat}&longitude=${+w.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code&timezone=auto&forecast_days=2`)
+    .then(r => r.ok ? r.json() : Promise.reject()).then(j => { WX = {key, at: Date.now(), j}; try { localStorage.setItem(key, JSON.stringify(WX)); } catch(_){} wxBusy = false; render(true); })
+    .catch(() => { wxBusy = false; if (!WX) { WX = {key, at: Date.now(), err: true}; render(true); } });
+}
+function wxAt(ds, hm){ const j = WX && WX.j; if (!j || !j.hourly) return null; const i = j.hourly.time.indexOf(ds + "T" + String(hm).slice(0, 2) + ":00"); if (i < 0) return null;
+  return {t: j.hourly.temperature_2m[i], f: j.hourly.apparent_temperature[i], p: j.hourly.precipitation_probability[i] || 0, c: j.hourly.weather_code[i]}; }
+function wxLimits(){ const d = dog() || {}, co = (typeof COATS !== "undefined" && COATS[breedKey(d.breed)]) || {};
+  const small = d.size === "Petit" || (co.size && co.size < .7) || co.slim;
+  return {heat: co.flat ? 24 : co.fluffy ? 26 : 28, cold: co.fluffy || co.curly ? -8 : small ? 4 : 0, flat: !!co.flat, thin: small && !co.fluffy}; }
+function weatherCard(){
+  const today = ymd(new Date()); if (S.sel !== today) return "";
+  const w = wxCfg();
+  if (!w) return canEdit() ? `<button class="card wx-cta" data-act="wxSheet"><span class="wx-ic">🌤️</span><div class="main"><div class="t">${T("Météo des balades")}</div><div class="s">${T("Le bon moment pour sortir, selon la météo et sa race.")}</div></div><span class="chev">${I.chevR}</span></button>` : "";
+  wxLoad();
+  if (!WX || (!WX.j && !WX.err)) return `<div class="card pad wx"><div class="skel" style="width:60%"></div><div class="skel" style="width:85%"></div></div>`;
+  if (!WX.j) return "";
+  const cur = WX.j.current || {}, nm = toMin(hhmm(new Date())), lim = wxLimits();
+  const walks = dayStats(today).tasks.filter(t => t.cat === "balade" && !dayStats(today).done[t.key] && toMin(t.time) >= nm - 30);
+  const rows = walks.slice(0, 4).map(t => { const x = wxAt(today, t.time); if (!x) return "";
+    const warn = x.f >= lim.heat ? "hot" : x.t <= lim.cold ? "cold" : x.p >= 60 ? "rain" : "";
+    return `<span class="wx-chip ${warn}"><b class="num">${esc(t.time)}</b>${wxIcon(x.c, 1)}<span class="num">${Math.round(x.t)}°</span>${x.p >= 30 ? `<small class="num">${x.p} %</small>` : ""}</span>`; }).join("");
+  // one clear piece of advice, the most important first
+  let tip = "", tone = "ok";
+  const first = walks.map(t => ({t, x: wxAt(today, t.time)})).filter(o => o.x);
+  const hot = first.find(o => o.x.f >= lim.heat), cold = first.find(o => o.x.t <= lim.cold), wet = first.find(o => o.x.p >= 60);
+  if (hot) { tone = "hot"; tip = T("Chaud à {h} ({t}°) : sortez-le plutôt tôt le matin ou le soir, et vérifiez le bitume du dos de la main.", {h: hot.t.time, t: Math.round(hot.x.f)}) + (lim.flat ? " " + T("Museau court : il supporte mal la chaleur.") : ""); }
+  else if (wet) { tone = "rain"; let best = null;
+    for (let H = Math.ceil(nm / 60); H <= 21; H++) { if (Math.abs(H * 60 - toMin(wet.t.time)) > 120) continue; const hm = String(H).padStart(2, "0") + ":00", x = wxAt(today, hm); if (x && x.p < wet.x.p - 20 && (!best || x.p < best.p)) best = {hm, p: x.p}; }
+    tip = T("Pluie probable à {h} ({p} %).", {h: wet.t.time, p: wet.x.p}) + " " + (best ? T("Plus sec vers {h2}.", {h2: best.hm}) : T("Prévoyez une serviette au retour.")); }
+  else if (cold) { tone = "cold"; tip = T("Froid à {h} ({t}°) : balade plus courte.", {h: cold.t.time, t: Math.round(cold.x.t)}) + (lim.thin ? " " + T("Un manteau l'aidera, il a peu de poil.") : ""); }
+  else if (first.length) tip = T("Temps idéal pour la balade de {h}.", {h: first[0].t.time});
+  else tip = T("Plus de balade prévue aujourd'hui.");
+  return `<div class="card pad wx ${tone}"><div class="wx-h" data-act="${canEdit() ? "wxSheet" : ""}"><span class="wx-big">${wxIcon(cur.weather_code, cur.is_day)}</span><div class="main"><div class="wx-t num">${Math.round(cur.temperature_2m)}°<small>${T("ressenti {t}°", {t: Math.round(cur.apparent_temperature)})}</small></div><div class="s">${esc(w.name || T("Votre position"))}</div></div></div>
+    ${rows ? `<div class="wx-row">${rows}</div>` : ""}<div class="wx-tip">${esc(tip)}</div></div>`;
+}
+function wxSheet(){
+  const w = wxCfg();
+  openSheet(T("Météo des balades"), `<div class="fg"><label for="wx-q">${T("Ville")}</label><div style="display:flex;gap:8px"><input class="f" id="wx-q" placeholder="${T("Ex. : Lausanne")}" value="${esc(w && w.name && w.name !== T("Votre position") ? w.name : "")}" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn" data-act="wxFind">${T("Chercher")}</button></div></div>
+    <div id="wx-res" class="card list" style="display:none"></div>
+    <button type="button" class="btn ghost" data-act="wxHere" style="width:100%;margin-top:12px">📍 ${T("Utiliser ma position")}</button>
+    <div class="hint" style="margin-top:12px">${T("Prévisions Open-Meteo, mises à jour toutes les 30 minutes. Toute la famille voit la même ville.")}</div>`, null, w ? () => { put("config", "weather", {}); WX = null; } : null);
+  const ok = $("#sheet-root .save"); if (ok) ok.style.visibility = "hidden";
+}
+function wxSave(lat, lon, name){ put("config", "weather", {lat: Math.round(lat * 1000) / 1000, lon: Math.round(lon * 1000) / 1000, name}); WX = null; closeSheet(); toast(T("Météo activée")); }
+// offline: a small pill so everyone knows changes will be sent later
+function netState(){ document.body.classList.toggle("is-offline", !navigator.onLine); if (navigator.onLine) wxLoad(true); }
+window.addEventListener("online", netState); window.addEventListener("offline", netState);
+function addPill(){ if (!document.getElementById("offline-pill")) document.body.insertAdjacentHTML("beforeend", `<div id="offline-pill" role="status">${T("Hors ligne · envoi au retour du réseau")}</div>`); netState(); }
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addPill); else setTimeout(addPill, 0);
+
 /* ---------- quick log: one tap for what isn't on the schedule ---------- */
 const QL = {
   pipi:{l:"Pipi", c:"#E6B422", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5s7 7.6 7 12.5a7 7 0 0 1-14 0c0-4.9 7-12.5 7-12.5Z"/></svg>'},
@@ -2982,6 +3085,7 @@ async function addLog(k, extra){
   try { if (navigator.vibrate) navigator.vibrate(15); } catch(_) {}
   S.qlPop = {id, until: Date.now() + 800};
   await put("logs", id, doc);
+  if (window.carnetNotify) window.carnetNotify("log", {k, at: doc.at, who: doc.byName});
   toast(T("{k} noté à {h}",{k:T((QL[k] || QL.pipi).l), h:doc.at}));
   return id;
 }
@@ -3715,7 +3819,8 @@ function notifSection(){
     <div class="row"><div class="main"><div class="t">${T("Alertes à l'heure des tâches")}</div><div class="s">${T("Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.")}</div></div><button class="switch ${NOTIF?"on":""}" data-act="toggleNotif" role="switch" aria-checked="${NOTIF}" aria-label="${T("Alertes à l'heure des tâches")}"><i></i></button></div>
     <div class="row"><div class="main"><div class="t">${T("Son")}</div></div><button class="switch ${SOUND?"on":""}" data-act="toggleSound" role="switch" aria-checked="${SOUND}" aria-label="${T("Son")}"><i></i></button></div>
     <button class="row" data-act="testNotif"><span class="main t" style="color:var(--accent)">${T("Tester une alerte")}</span></button>
-  </div><div class="foot">${T("Pour être prévenu même carnet fermé, demandez à Claude d'ajouter la routine et les médicaments à l'app Rappels de votre téléphone.")}</div></div>`;
+    ${window.carnetPush && window.carnetPush.available() ? `<div class="row"><div class="main"><div class="t">${T("Notifications sur ce téléphone")}</div><div class="s">${T("Même app fermée : les tâches à l'heure et ce que fait la famille.")}</div></div><button class="switch ${window.carnetPush.state() ? "on" : ""}" data-act="togglePush" role="switch" aria-checked="${window.carnetPush.state()}" aria-label="${T("Notifications sur ce téléphone")}"><i></i></button></div>` : ""}
+  </div><div class="foot">${window.carnetPush && window.carnetPush.ios ? T("Sur iPhone : ajoutez d'abord Dogs Life à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis activez les notifications depuis l'app.") : window.carnetPush && window.carnetPush.available() ? T("Chaque personne choisit sur son téléphone. Vous pouvez les couper à tout moment.") : T("Les alertes s'affichent tant que l'app est ouverte.")}</div></div>`;
 }
 
 /* ---------- explanations: every number leads somewhere ---------- */
@@ -4616,6 +4721,7 @@ function apptSheet(a){
 const tickId = (ds, key) => dayKey(ds) + "__" + key;
 const tickDoc = (ds, key, at, extra) => { const m = meMember(); return Object.assign({date: ds, dog: dogId(), key, at: at || hhmm(new Date()), by: S.me || null, byName: m ? m.name : "", mid: ME || ""}, extra || {}); };
 async function setTick(ds, key, on, at){
+  if (on && window.carnetNotify && ds === ymd(new Date())) { const t = tasksFor(ds).find(x => x.key === key), m = meMember(); if (t) window.carnetNotify("tick", {text: t.title, at: at || hhmm(new Date()), who: m ? m.name : ""}); }
   if (on) return put("ticks", tickId(ds, key), tickDoc(ds, key, at));
   if (C.ticks[tickId(ds, key)]) await del("ticks", tickId(ds, key));
   const raw = C.days[dayKey(ds)]; if (raw && raw.done && raw.done[key]) { const done = Object.assign({}, raw.done); delete done[key]; await setDay(ds, {done}); }
@@ -4724,7 +4830,10 @@ document.addEventListener("click", async e => {
       const lg = C.config.family && Array.isArray(C.config.family.members) ? C.config.family.members : [];
       if (lg.some(m => m.id === el.dataset.id)) await put("config", "family", {members: lg.filter(m => m.id !== el.dataset.id)});
       if ((C.members || {})[el.dataset.id]) await del("members", el.dataset.id); if (ME === el.dataset.id) { ME = null; try { LS.del("carnet-me"); } catch(_){} } break; }
-    case "notifAsk": { NOTIF = el.dataset.v === "1"; NOTIF_ASKED = true; try { LS.set("carnet-notif", NOTIF ? "1" : "0"); } catch(_){}
+    case "togglePush": { const cp = window.carnetPush; if (!cp) break; el.disabled = true;
+      try { if (cp.state()) { await cp.disable(); toast(T("Notifications coupées sur ce téléphone")); } else { const ok = await cp.enable(); toast(ok ? T("Notifications activées") : T("Notifications refusées. Autorisez-les dans les réglages du téléphone.")); } } catch(_) { toast(T("Impossible pour l'instant. Réessayez.")); }
+      S.lastHTML = ""; render(); break; }
+    case "notifAsk": { NOTIF = el.dataset.v === "1"; NOTIF_ASKED = true; if (NOTIF && window.carnetPush && window.carnetPush.available()) window.carnetPush.enable().catch(() => {}); try { LS.set("carnet-notif", NOTIF ? "1" : "0"); } catch(_){}
       if (NOTIF) { if (!actx && SOUND) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){} } try { if (navigator.vibrate) navigator.vibrate(20); } catch(_){} chime(); toast(T("Alertes activées")); }
       else toast(T("Vous pourrez les activer dans Profil."));
       render(); break; }
@@ -4792,6 +4901,14 @@ document.addEventListener("click", async e => {
     case "clearAll": await clearAll(); break;
     case "keepExample": { const d = JSON.parse(JSON.stringify(dog()||{})); delete d.example; await saveDog(d); break; }
     case "startBlank": wizStart(); break;
+    case "wxSheet": wxSheet(); break;
+    case "wxFind": { const q = ($("#wx-q").value || "").trim(); if (!q) break; const box = $("#wx-res");
+      try { const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=${LANG}`); const j = await r.json(); const res = j.results || [];
+        box.style.display = ""; box.innerHTML = res.length ? res.map(x => `<button type="button" class="row" data-act="wxPick" data-lat="${x.latitude}" data-lon="${x.longitude}" data-n="${esc(x.name)}"><div class="main"><div class="t">${esc(x.name)}</div><div class="s">${esc([x.admin1, x.country].filter(Boolean).join(", "))}</div></div><span class="chev">${I.chevR}</span></button>`).join("") : `<div class="empty">${T("Aucune ville trouvée.")}</div>`;
+      } catch(_) { toast(T("Recherche impossible pour l'instant.")); } break; }
+    case "wxPick": wxSave(+el.dataset.lat, +el.dataset.lon, el.dataset.n); break;
+    case "wxHere": { if (!navigator.geolocation) { toast(T("Position indisponible sur cet appareil.")); break; }
+      navigator.geolocation.getCurrentPosition(pos => wxSave(pos.coords.latitude, pos.coords.longitude, T("Votre position")), () => toast(T("Position refusée. Cherchez plutôt votre ville.")), {timeout: 10000, maximumAge: 600000}); break; }
     case "joinCode": joinCodeSheet(); break;
     case "freshMore": S.freshMore = !S.freshMore; render(); break;
     case "wzPick": { const w = S.wiz; if (!w) break; const f = el.dataset.f, v = el.dataset.v; w.d[f] = v; if (f === "meals") w.routine = null;
@@ -4858,6 +4975,7 @@ document.addEventListener("submit", async e => {
   if (f.dataset.form === "note") {
     const text = val("n-text"), photo = S.notePhoto; if (!text && !photo) return; const m = meMember(); S.notePhoto = null;
     await put("notes", newId(), Object.assign({text, mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString()}, photo ? {photo} : {}));
+    if (window.carnetNotify) window.carnetNotify("msg", {text: text || "📷", who: m ? m.name : ""});
     setTimeout(() => { const i = $("#n-text"); if (i) { i.value = ""; i.focus(); } }, 30); return;
   }
   if (f.dataset.form === "member") {

@@ -4,7 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCgpdewI-Nfnq8V3HKrBwvFz0FDXX-9HJw",
@@ -16,9 +16,16 @@ const firebaseConfig = {
 };
 // Claude's evening advice goes through a small relay that keeps the API key secret (empty = built-in advice only)
 const ADVICE_URL = "";
+// Notifications even when the app is closed (both must be filled in; see cloudflare-worker.js):
+const VAPID_KEY = "";   // Firebase → Paramètres du projet → Cloud Messaging → Certificats push Web → « Paire de clés »
+const WORKER_URL = "";  // l'adresse du Worker Cloudflare, ex. https://dogs-life.votre-nom.workers.dev
 
 const B = window.__carnetBridge; B.started = true;
-const fb = initializeApp(firebaseConfig), auth = getAuth(fb), fs = getFirestore(fb);
+const fb = initializeApp(firebaseConfig), auth = getAuth(fb);
+// offline: everything is kept on the phone and sent when the network comes back
+let fs; try { fs = initializeFirestore(fb, {localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})}); } catch(_) { fs = getFirestore(fb); }
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+const LSg = k => { try { return localStorage.getItem(k); } catch(_) { return null; } }, LSs = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch(_) {} };
 
 /* ---------- texts (the app's language setting) ---------- */
 const LANG = (() => { try { const l = localStorage.getItem("carnet-lang"); if (["fr","en","hr"].includes(l)) return l; } catch(_) {} const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; })();
@@ -80,6 +87,7 @@ function render(){
     ${m}<button class="g-btn g-main" data-g="join" ${busy ? "disabled" : ""}>${busy ? TXT.wait : TXT.joinBtn}</button>
     <div class="g-links"><button data-g="back">${TXT.back}</button></div>`);
   if (step === "loading") return show(`${head}<div class="g-spin"></div>`);
+  if (step === "offline") return show(`${head}<p class="g-sub">${TXT.errNet}</p><button class="g-btn g-main" onclick="location.reload()">${({fr:"Réessayer", en:"Try again", hr:"Pokušaj ponovno"})[LANG] || "Réessayer"}</button>`);
 }
 const PAW = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><ellipse cx="6" cy="10" rx="2" ry="2.6"/><ellipse cx="10" cy="6" rx="2" ry="2.7"/><ellipse cx="14" cy="6" rx="2" ry="2.7"/><ellipse cx="18" cy="10" rx="2" ry="2.6"/><path d="M12 11c3 0 6 4.4 6 7 0 2-1.6 3-3.2 2.6-1-.3-1.8-.8-2.8-.8s-1.8.5-2.8.8C7.6 21 6 20 6 18c0-2.6 3-7 6-7Z"/></svg>';
 const FAM = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><circle cx="8" cy="7.5" r="3.2"/><circle cx="16.5" cy="8.5" r="2.6"/><path d="M2 19.2c0-3.4 2.7-6 6-6s6 2.6 6 6c0 .5-.4.8-.8.8H2.8c-.4 0-.8-.3-.8-.8Z"/><path d="M15.3 20c.2-.3.3-.5.3-.8 0-2-.8-3.8-2-5.1.9-.6 1.9-.9 3-.9 2.9 0 5.4 2.2 5.4 5.4 0 .8-.6 1.4-1.4 1.4h-5.3Z"/></svg>';
@@ -134,6 +142,37 @@ async function joinWithCode(fromApp){
   if (fromApp) { location.reload(); return; }
   enter(fid, false);
 }
+/* ---------- notifications, even when the app is closed ---------- */
+let msgMod = null;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const pushReady = () => !!(VAPID_KEY && WORKER_URL && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window);
+async function sha(s){ const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join(""); }
+async function pushToken(ask){
+  if (!pushReady() || !FID) return null;
+  if (ask) { if ((await Notification.requestPermission()) !== "granted") return null; } else if (Notification.permission !== "granted") return null;
+  msgMod = msgMod || await import("https://www.gstatic.com/firebasejs/13.2.0/firebase-messaging.js");
+  if (!(await msgMod.isSupported())) return null;
+  const reg = await navigator.serviceWorker.register("sw.js"); await navigator.serviceWorker.ready;
+  const tok = await msgMod.getToken(msgMod.getMessaging(fb), {vapidKey: VAPID_KEY, serviceWorkerRegistration: reg}); if (!tok) return null;
+  const id = (await sha(tok)).slice(0, 40), old = LSg("dl-push@" + UID);
+  if (old && old !== id) { try { await deleteDoc(doc(fs, "families", FID, "pushTokens", old)); } catch(_) {} }
+  await setDoc(doc(fs, "families", FID, "pushTokens", id), {uid: UID, token: tok, on: true, lang: LANG, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Zurich", at: Date.now()});
+  LSs("dl-push@" + UID, id); return tok;
+}
+async function pushOff(){
+  const id = LSg("dl-push@" + UID); LSs("dl-push@" + UID, null);
+  if (id && FID) { try { await deleteDoc(doc(fs, "families", FID, "pushTokens", id)); } catch(_) {} }
+  try { if (msgMod) await msgMod.deleteToken(msgMod.getMessaging(fb)); } catch(_) {}
+}
+window.carnetPush = {available: () => pushReady() && (!isIOS || standalone), ios: isIOS && !standalone && !!(VAPID_KEY && WORKER_URL),
+  state: () => !!LSg("dl-push@" + UID) && "Notification" in window && Notification.permission === "granted",
+  enable: async () => !!(await pushToken(true)), disable: pushOff};
+// tell the rest of the family (the server skips the sender)
+window.carnetNotify = (kind, data) => { if (!WORKER_URL || !FID || !auth.currentUser) return;
+  auth.currentUser.getIdToken().then(t => fetch(WORKER_URL.replace(/\/$/, "") + "/notify", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + t},
+    body: JSON.stringify(Object.assign({family: FID, kind}, data || {}))})).catch(() => {}); };
+
 // a signed-out person keeps their place in the family; their picture just shows a small warning until they come back
 async function setPresence(out){
   if (!FID || !UID) return;
@@ -141,7 +180,8 @@ async function setPresence(out){
     await Promise.all(qs.docs.map(d => setDoc(d.ref, out ? {signedOut: true, outAt: Date.now()} : {signedOut: false}, {merge: true}))); } catch(e) { console.warn(e); }
 }
 async function enter(fid, owner){
-  FID = fid; OWNER = owner; step = "done"; setPresence(false);
+  FID = fid; OWNER = owner; step = "done"; setPresence(false); LSs("dl-fid@" + UID, fid);
+  if (LSg("dl-push@" + UID)) setTimeout(() => pushToken(false).catch(() => {}), 1500); // keep this phone's notification address fresh
   if (!owner) { try { const f = await getDoc(doc(fs, "families", fid)); OWNER = f.exists() && f.data().owner === UID; } catch(_) {} }
   hide();
   B.resolve(api());
@@ -150,7 +190,7 @@ async function enter(fid, owner){
 /* ---------- what the app asks for ---------- */
 function api(){
   const path = col => collection(fs, "families", FID, col);
-  const wrapSnap = s => ({docs: s.docs.map(d => ({id: d.id, data: () => d.data()})), metadata: {fromCache: s.metadata.fromCache && !s.docs.length ? false : s.metadata.fromCache}});
+  const wrapSnap = s => ({docs: s.docs.map(d => ({id: d.id, data: () => d.data()})), metadata: {fromCache: !navigator.onLine ? false : s.metadata.fromCache && !s.docs.length ? false : s.metadata.fromCache}});
   const coll = (col, filters) => ({
     where: (f, op, v) => coll(col, (filters || []).concat([[f, op, v]])),
     onSnapshot(cb, err){ const q = filters ? query(path(col), ...filters.map(([f, op, v]) => where(f, op, v))) : path(col); return onSnapshot(q, s => cb(wrapSnap(s)), e => err && err({code: e.code === "permission-denied" ? "revoked" : "unavailable", message: e.message})); },
@@ -167,7 +207,7 @@ function api(){
     })
   });
   const u = auth.currentUser;
-  window.carnetAccount = {name: u.displayName || "", email: u.email || u.displayName || "", signOut: async () => { await setPresence(true); await signOut(auth); try { localStorage.removeItem("carnet-me@" + UID); } catch(_) {} location.reload(); }};
+  window.carnetAccount = {name: u.displayName || "", email: u.email || u.displayName || "", signOut: async () => { await setPresence(true); await pushOff().catch(() => {}); await signOut(auth); try { localStorage.removeItem("carnet-me@" + UID); } catch(_) {} location.reload(); }};
   return {
     db: {collection: col => coll(col)},
     user: {
@@ -188,11 +228,12 @@ onAuthStateChanged(auth, async user => {
   if (step === "done") { if (!user) location.reload(); return; }
   if (!user) { step = "auth"; return render(); }
   UID = user.uid; step = "loading"; render();
-  try {
-    const us = await getDoc(doc(fs, "users", UID)); const fid = us.exists() && us.data().family;
-    if (fid) { let ok = false; try { ok = (await getDoc(doc(fs, "families", fid, "access", UID))).exists(); } catch(_) {} if (ok) return enter(fid, false); }
-  } catch(e) { console.warn(e); if (/permission-denied/.test(e.code || "")) msg = TXT.errSetup; }
-  if (msg) { step = "auth"; return render(); }
+  let fid = null, known = false;
+  try { const us = await getDoc(doc(fs, "users", UID)); known = true; fid = us.exists() && us.data().family; }
+  catch(e) { console.warn(e); if (/permission-denied/.test(e.code || "")) { msg = TXT.errSetup; step = "auth"; return render(); } }
+  const saved = LSg("dl-fid@" + UID);
+  if (!known) { if (saved) return enter(saved, false); step = "offline"; return render(); }
+  if (fid) { let ok = null; try { ok = (await getDoc(doc(fs, "families", fid, "access", UID))).exists(); } catch(_) {} if (ok !== false) return enter(fid, false); }
   try { await createFamily(); } catch(e) { console.warn(e); msg = errText(e); step = "auth"; render(); }
 });
 // joining another family from inside the app (Profile → Rejoindre une famille)
