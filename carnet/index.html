@@ -4307,37 +4307,38 @@ const B3D = (() => {
   let buildTok = 0;
   const idle = () => new Promise(r => setTimeout(r, 0));
   const disposeTree = t => t.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); });
-  /* ---- the real dog model (HappyDog), coloured per breed and animated in the vertex shader ---- */
-  let modelP = null;
-  const MODEL_URL = "dog.bin";
-  function loadModel(){
-    if (modelP) return modelP;
-    const viaScript = () => new Promise((res, rej) => { if (window.__DOG_B64) return res();
-      const sc = document.createElement("script"); sc.src = "dog-model.js"; sc.onload = () => window.__DOG_B64 ? res() : rej("model"); sc.onerror = () => rej("model"); document.head.appendChild(sc); })
-      .then(() => { const s = atob(window.__DOG_B64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; });
-    modelP = fetch(MODEL_URL).then(r => { if (!r.ok) throw "model"; return r.arrayBuffer(); }).catch(viaScript).then(buf => {
-      const dv = new DataView(buf), magic = dv.getUint32(0, true); if (magic !== 0x31474F44 && magic !== 0x32474F44) throw "model"; // "DOG1" / "DOG2"
+  /* ---- Jiji: the hand-built 3D puppy (DOG3), coloured per breed with crisp per-pixel markings, animated in the vertex shader ---- */
+  const models = {};
+  const earKind = breed => { const e = (COATS[breed] || {}).ears; return e === "up" || e === "big" || e === "bat" ? "up" : "flop"; };
+  function loadModel(kind){
+    if (models[kind]) return models[kind];
+    const url = kind === "up" ? "dog-up.bin" : "dog.bin", js = kind === "up" ? "dog-up-model.js" : "dog-model.js", key = kind === "up" ? "__DOGUP_B64" : "__DOG_B64";
+    const viaScript = () => new Promise((res, rej) => { if (window[key]) return res();
+      const sc = document.createElement("script"); sc.src = js; sc.onload = () => window[key] ? res() : rej("model"); sc.onerror = () => rej("model"); document.head.appendChild(sc); })
+      .then(() => { const s = atob(window[key]), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; });
+    models[kind] = fetch(url).then(r => { if (!r.ok) throw "model"; return r.arrayBuffer(); }).then(b => { if (new DataView(b).getUint32(0, true) !== 0x33474F44) throw "model"; return b; }).catch(viaScript).then(buf => {
+      const dv = new DataView(buf); if (dv.getUint32(0, true) !== 0x33474F44) throw "model"; // "DOG3"
       const nV = dv.getUint32(4, true), nF = dv.getUint32(8, true), mn = [], mx = [];
       for (let i = 0; i < 3; i++) { mn.push(dv.getFloat32(12 + i*4, true)); mx.push(dv.getFloat32(24 + i*4, true)); }
       let o = 36; const q = new Uint16Array(buf.slice(o, o + nV*6)); o += nV*6;
+      const nr = new Int16Array(buf.slice(o, o + nV*6)); o += nV*6;
       const idx = new Uint16Array(buf.slice(o, o + nF*6)); o += nF*6;
-      const cls = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const part = new Uint8Array(buf.slice(o, o + nV)); o += nV;
       const w = new Uint8Array(buf.slice(o, o + nV*4)); o += nV*4;
-      const layers = magic === 0x32474F44 ? new Uint8Array(buf.slice(o, o + nV*8)) : null; // cream, ear tip, inner ear, blush, pads, tongue, nose, eye
-      return {nV, nF, mn, mx, q, idx, cls, w, layers};
-    }).catch(e => { modelP = null; throw e; });
-    return modelP;
+      const em = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const ao = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const inn = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const jl = dv.getUint32(o, true); o += 4;
+      const L = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, o, jl)));
+      return {nV, nF, mn, mx, q, nr, idx, part, w, em, ao, inn, L};
+    }).catch(e => { delete models[kind]; throw e; });
+    return models[kind];
   }
-  // model-space landmarks (the STL is Y-up, facing +Z, ~65 units tall)
-  const MC = [25.5, 0, 33.7], MS = .9 / 64.8;
-  const mw = (x, y, z) => [(x - MC[0]) * MS, (y - MC[1]) * MS, (z - MC[2]) * MS];
-  const LM = {head: mw(25.5, 31, 40), earL: mw(9.5, 51, 45.5), earR: mw(41.5, 51, 45), tail: mw(26, 9, 20), body: mw(25.5, 15, 35),
-    eyeL: mw(14.5, 41.4, 60.4), eyeR: mw(36.5, 41.4, 60.3), eyeY: 41.45 * MS, chin: mw(25.5, 27, 52)};
   const VS_HEAD = `
-    attribute vec4 aW; attribute float aCls;
+    attribute vec4 aW; attribute float aCls, aEarM, aAO, aIn;
     uniform vec3 uHead, uEarL, uEarR, uTail, uHeadP, uEarLP, uEarRP, uTailP, uBodyC;
-    uniform float uBreath, uEye, uEyeY, uTongue, uSquash;
-    varying float vGloss; varying vec3 vRest;
+    uniform float uBreath, uTongue, uSquash;
+    varying float vGloss, vEar, vAO, vIn; varying vec3 vRest, vRestN;
     mat3 rotE(vec3 e){ // = Rx * Ry * Rz (three.js Euler "XYZ")
       float cx = cos(e.x), sx = sin(e.x), cy = cos(e.y), sy = sin(e.y), cz = cos(e.z), sz = sin(e.z);
       mat3 X = mat3(1.,0.,0., 0.,cx,sx, 0.,-sx,cx), Y = mat3(cy,0.,-sy, 0.,1.,0., sy,0.,cy), Z = mat3(cz,sz,0., -sz,cz,0., 0.,0.,1.);
@@ -4345,12 +4346,13 @@ const B3D = (() => {
   `;
   const VS_NORMAL = `
     #include <beginnormal_vertex>
+    vRestN = objectNormal;
     mat3 rEL = rotE(uEarL * aW.y), rER = rotE(uEarR * aW.z), rH = rotE(uHead * aW.x), rT = rotE(uTail * aW.w);
     objectNormal = rH * (rER * (rEL * objectNormal)); objectNormal = rT * objectNormal;
   `;
   const VS_POS = `
     #include <begin_vertex>
-    vRest = position;
+    vRest = position; vEar = aEarM; vAO = aAO; vIn = aIn;
     vGloss = (aCls > 3.5 && aCls < 4.5) ? 1.0 : 0.0;
     float bodyW = (1.0 - aW.x) * (1.0 - aW.w);
     transformed.xz = mix(transformed.xz, uBodyC.xz + (transformed.xz - uBodyC.xz) * (1.0 + uBreath * 0.014), bodyW);
@@ -4362,111 +4364,159 @@ const B3D = (() => {
     transformed = rT * (transformed - uTailP) + uTailP;
     transformed.y *= uSquash; transformed.xz *= 1.0 + (1.0 - uSquash) * 0.5;
   `;
+  // markings, eyes, nose and mouth are drawn per pixel from the rest pose: sharp at any zoom, no texture
+  const FS_HEAD = `varying float vGloss, vEar, vAO, vIn; varying vec3 vRest, vRestN; uniform vec3 uKey, cPts; uniform float uPts, uBlaze, uS;
+    uniform vec3 uEyeC0, uEyeC1, uEyeD0, uEyeD1, uNoseC, uNoseR, uMouthC, uMuzC, uMuzR, uBibC, uBibR, uBlushC, uBlushR, uEarF;
+    uniform vec2 uEyeR; uniform vec4 uMouth; uniform float uEye, uArc, uPawY, uHasPaw, uUp;
+    uniform vec3 cMuz, cBib, cEar, cPaw, cInner, cBlush, cNose, cEyeI, cEyeO, cLine, cTongue;
+    float aa(float d){ float w = max(fwidth(d), 1e-5) * .8; return 1.0 - smoothstep(-w, w, d); }
+    float ell(vec3 p, vec3 c, vec3 r){ vec3 q = (p - c) / r; return (length(q) - 1.0) * min(r.x, min(r.y, r.z)); }
+    vec3 eyeQ(vec3 c, vec3 d){ vec3 t = normalize(cross(vec3(0., 1., 0.), d)), b = cross(d, t); vec3 v = vRest - c; return vec3(dot(v, t), dot(v, b), dot(v, d)); }
+  `;
+  const FS_EYE = `
+    float eyeOpen = step(.42, uEye), lineA = 0.0, eyeA = 0.0, glintA = 0.0, irisA = 0.0;
+    for (int k = 0; k < 2; k++) {
+      vec3 q = k == 0 ? eyeQ(uEyeC0, uEyeD0) : eyeQ(uEyeC1, uEyeD1);
+      float front = step(-uEyeR.y * .7, q.z) * step(q.z, uEyeR.y * .7);
+      float ry = max(uEyeR.y * uEye, 1e-4), dE = (length(vec2(q.x / uEyeR.x, (q.y + uEyeR.y * (1.0 - uEye) * .35) / ry)) - 1.0) * min(uEyeR.x, ry);
+      float inE = aa(dE) * front * eyeOpen;
+      eyeA = max(eyeA, inE);
+      lineA = max(lineA, aa(dE - uEyeR.x * .13) * (1.0 - aa(dE)) * front * eyeOpen);
+      irisA = max(irisA, inE * (1.0 - aa(length(vec2(q.x, q.y - uEyeR.y * .42)) - uEyeR.y * 1.02)));
+      float g = max(aa(length(vec2(q.x + uEyeR.x * .34, q.y - uEyeR.y * .36)) - uEyeR.x * .3), aa(length(vec2(q.x - uEyeR.x * .36, q.y + uEyeR.y * .4)) - uEyeR.x * .13));
+      glintA = max(glintA, g * inE * step(.6, uEye));
+      // closed: a soft curve, "‿" asleep or blinking, "∩" when squinting with joy
+      vec2 o = vec2(0., uArc * uEyeR.y * .45); float dA = abs(length(q.xy - o) - uEyeR.x * .85) - uEyeR.x * .12;
+      lineA = max(lineA, aa(dA) * front * step(abs(q.x), uEyeR.x * .95) * step(0., -uArc * (q.y - o.y)) * (1.0 - eyeOpen));
+    }
+    // mouth: a small "ω" under the nose
+    vec2 m = vec2(vRest.x - uMouthC.x, vRest.y - uMouthC.y); float mf = step(uMouthC.z - uMouth.y * 3.0, vRest.z);
+    float dm = min(abs(length(m - vec2(uMouth.y, 0.)) - uMouth.y), abs(length(m + vec2(uMouth.y, 0.)) - uMouth.y)) - uMouth.z;
+    float mouthA = aa(dm) * step(m.y, 0.0) * step(abs(m.x), uMouth.y * 2.05);
+    mouthA = max(mouthA, aa(abs(m.x) - uMouth.z) * step(0.0, m.y) * step(vRest.y, uMouth.x)) * mf;
+    float noseA = aa(ell(vRest, uNoseC, uNoseR)) * step(uNoseC.z, vRest.z + uNoseR.z);
+  `;
+  const FS_COLOR = `
+    #include <color_fragment>
+    ${""}
+    vec3 col = diffuseColor.rgb;
+    // chest: wide at the throat, three soft scallops at the bottom over the fluff
+    vec2 bq = (vRest.xy - uBibC.xy) / uBibR.xy; float bd = (length(vec2(bq.x * (1.0 - .18 * clamp(bq.y, 0., 1.)), bq.y)) - 1.0) * uBibR.x;
+    float sc0 = uBibC.z, by = uBibC.y - uBibR.y * .78;
+    for (int k = -1; k <= 1; k++) bd = min(bd, length(vec2(vRest.x - float(k) * 4.7 * sc0, vRest.y - by)) - 3.4 * sc0); // fluffy scallops
+    col = mix(col, cBib, aa(bd) * step(.15, vRestN.z) * step(0.0, vRest.z) * (1.0 - vEar));
+    col = mix(col, cPaw, aa(vRest.y - uPawY) * uHasPaw);
+    col = mix(col, cMuz, aa(ell(vRest, uMuzC, uMuzR)) * step(.0, vRest.z - uMuzC.z + uMuzR.z * .3));
+    col = mix(col, cEar, aa(.5 - vEar));
+    col = mix(col, cInner, aa(.5 - vIn) * uUp);
+    // tan points (Bernese, Rottweiler…): eyebrow dots, cheeks, lower legs; white blaze up the forehead
+    float pts = 0.0;
+    for (int k = 0; k < 2; k++) { vec3 q = k == 0 ? eyeQ(uEyeC0, uEyeD0) : eyeQ(uEyeC1, uEyeD1); float sx = k == 0 ? 1.0 : -1.0;
+      pts = max(pts, aa(length(vec2((q.x - sx * uEyeR.x * .2) / (uEyeR.x * .62), (q.y - uEyeR.y * 1.75) / (uEyeR.y * .42))) - 1.0) * step(-uEyeR.y, q.z)); }
+    pts = max(pts, aa(length(vec2((abs(vRest.x) - 10.5 * uS) / (3.4 * uS), (vRest.y - 52.0 * uS) / (2.8 * uS))) - 1.0) * step(.1, vRestN.z) * step(uMuzC.z, vRest.z));
+    pts = max(pts, aa(vRest.y - uPawY - 6.5 * uS) * aa((uHasPaw > .5 ? uPawY - .5 * uS : -1.0) - vRest.y) * step(-.4, vRestN.z) * step(3.0 * uS, abs(vRest.x)) * (1.0 - vEar));
+    col = mix(col, cPts, pts * uPts * (1.0 - eyeA));
+    float bw = (1.4 + max(0., 80.0 * uS - vRest.y) / uS * .16) * uS;
+    col = mix(col, cMuz, aa(abs(vRest.x) - bw) * step(58.0 * uS, vRest.y) * aa(vRest.y - 84.0 * uS) * step(.25, vRestN.z) * uBlaze * (1.0 - vEar));
+    float bl = 1.0 - smoothstep(.55, 1.0, length((vec3(abs(vRest.x), vRest.yz) - uBlushC) / uBlushR));
+    col = mix(col, cBlush, bl * .55 * (1.0 - eyeA));
+    col = mix(col, cLine, max(lineA, mouthA));
+    col = mix(col, cEyeO, eyeA); col = mix(col, cEyeI, irisA);
+    col = mix(col, vec3(1.0), glintA);
+    col = mix(col, cNose, noseA);
+    col = mix(col, cTongue, vGloss);
+    diffuseColor.rgb = col;
+    float glossM = max(vGloss, max(eyeA * (1.0 - glintA), noseA));
+  `;
+  const CEL = `
+    vec3 Ld = normalize((viewMatrix * vec4(uKey, 0.)).xyz), Vd = normalize(vViewPosition);
+    float ndl = dot(normal, Ld), tw = max(fwidth(ndl), 1e-4) * 1.2;
+    float lit = smoothstep(-.06 - tw, -.06 + tw, ndl);
+    vec3 base = diffuseColor.rgb, shade = base * vec3(.80, .66, .62);
+    vec3 outgoingLight = mix(shade, base, lit);
+    outgoingLight *= mix(.62, 1.0, smoothstep(.15, .95, vAO));                  // contact shadows in the creases
+    outgoingLight *= .94 + .06 * normal.y;                                       // a touch lighter on top
+    float rim = smoothstep(.62, .9, 1.0 - max(dot(normal, Vd), 0.0)) * smoothstep(-.2, .5, normal.y);
+    outgoingLight += rim * vec3(1.0, .9, .78) * .1 * (1.0 - glossM);
+    float spec = pow(max(dot(normal, normalize(Ld + Vd)), 0.0), 60.0);
+    outgoingLight += glossM * smoothstep(.45, .55, spec) * .55;`;
   async function buildSTL(THREE, cfg, my){
-    const M = await loadModel(); if (my !== buildTok) throw "stale";
-    const C = Object.assign({}, COATS._, COATS[cfg.breed] || {});
-    const soft = h => { const c = new THREE.Color(h); c.offsetHSL(0, .1, -.1); return c.convertSRGBToLinear(); }; // punchy, cartoon-bright: tone mapping washes colours out
+    const M = await loadModel(earKind(cfg.breed)); if (my !== buildTok) throw "stale";
+    const C = Object.assign({}, COATS._, COATS[cfg.breed] || {}), L = M.L;
+    const soft = h => { const c = new THREE.Color(h), l = c.getHSL({}).l; c.offsetHSL(-.008, .17, l < .3 ? .02 : .04); return c.convertSRGBToLinear(); };
     const raw = h => new THREE.Color(h).convertSRGBToLinear();
-    const baseHex = C.base, dark = new THREE.Color(baseHex).getHSL({}).l < .25;
-    const tipC = soft(C.ear && C.ear !== C.base ? C.ear : "#" + new THREE.Color(baseHex).offsetHSL(0, .05, -.18).getHexString());
-    // layer colours, in the order the model stores them
-    const LAY = [soft(C.belly || C.muzzle), tipC, soft(dark ? "#C9858A" : "#F6A9B0"), soft(dark ? "#B0646C" : "#FF8F9E"), soft("#5B3B35"), soft("#F0607A"), raw("#1A1212"),
-      (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.7) : new THREE.Color("#140E0D")).convertSRGBToLinear()];
-    const LAYA = [1, .9, 1, .55, .9, 1, 1, 1]; // blush stays a soft wash
-    const EYE0 = C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.6).convertSRGBToLinear() : raw("#120C0B"), EYE1 = EYE0; // solid, glossy eyes // pupil-dark at the top, warm iris glow at the bottom
-    const pal = [soft(C.base), soft(C.belly || C.muzzle), (C.eyes ? new THREE.Color(C.eyes).multiplyScalar(.75) : new THREE.Color("#16100e")).convertSRGBToLinear(), new THREE.Color("#1d1513").convertSRGBToLinear(),
-      new THREE.Color("#E97E8C").convertSRGBToLinear(), soft("#F2B7A6"), soft(C.ear || C.base)];
-    if (C.base && /^#[0-3]/.test(C.base)) pal[5] = soft("#C9858A"); // dark coats: deeper inner ear
-    const {nV, nF, mn, mx, q, idx, cls, w, layers} = M, cBase = soft(baseHex);
-    const pos = new Float32Array(nV*3), col = new Float32Array(nV*3), cf = new Float32Array(nV);
+    const dark = new THREE.Color(C.base).getHSL({}).l < .25;
+    const {nV, mn, mx, q, nr, idx, part, w} = M;
+    const pos = new Float32Array(nV*3), nor = new Float32Array(nV*3), cf = new Float32Array(nV), col = new Float32Array(nV*3);
+    const cBase = soft(C.base), cHead = C.head ? soft(C.head) : null, cSad = C.saddle ? soft(C.saddle) : null;
     for (let i = 0; i < nV; i++) {
-      const X = mn[0] + q[i*3]/65535*(mx[0]-mn[0]), Y = mn[1] + q[i*3+1]/65535*(mx[1]-mn[1]), Z = mn[2] + q[i*3+2]/65535*(mx[2]-mn[2]);
-      pos[i*3] = (X - MC[0]) * MS; pos[i*3+1] = (Y - MC[1]) * MS; pos[i*3+2] = (Z - MC[2]) * MS;
-      // coat: a gentle two-tone, darker along the back and the top of the head, warmer on the front
-      const back = Math.max(0, Math.min(1, (34 - Z) / 34)), top = Math.max(0, Math.min(1, (Y - 52) / 12)), shade = 1 - back * .2 - top * .08;
-      let r = cBase.r*shade, g = cBase.g*shade, b = cBase.b*shade;
-      if (layers) for (let L = 0; L < 6; L++) { const a = layers[i*8 + L] / 255 * LAYA[L]; if (a > 0) { let lc = LAY[L];
-        if (L === 7) { const tt = Math.max(0, Math.min(1, (41.9 - Y) / 4.4)), k = tt * tt * (3 - 2 * tt); lc = {r: EYE0.r + (EYE1.r - EYE0.r)*k, g: EYE0.g + (EYE1.g - EYE0.g)*k, b: EYE0.b + (EYE1.b - EYE0.b)*k}; }
-        r += (lc.r - r)*a; g += (lc.g - g)*a; b += (lc.b - b)*a; } }
-      else { const c = pal[cls[i]] || pal[0]; r = c.r*shade; g = c.g*shade; b = c.b*shade; }
-      col[i*3] = r; col[i*3+1] = g; col[i*3+2] = b; cf[i] = cls[i];
+      for (let k = 0; k < 3; k++) { pos[i*3+k] = mn[k] + q[i*3+k] / 65535 * (mx[k] - mn[k]); nor[i*3+k] = nr[i*3+k] / 32767; }
+      const y = pos[i*3+1], z = pos[i*3+2], s = L.scale;
+      let c = cBase;
+      if (cHead && w[i*4] > 200) c = cHead;
+      if (cSad && z < -2 * s && y > 16 * s && y < 44 * s && nor[i*3+1] > -.2) c = cSad;
+      col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b; cf[i] = part[i];
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
     geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
     geo.setAttribute("aW", new THREE.BufferAttribute(new Uint8Array(w), 4, true));
     geo.setAttribute("aCls", new THREE.BufferAttribute(cf, 1));
+    geo.setAttribute("aEarM", new THREE.BufferAttribute(new Uint8Array(M.em), 1, true));
+    geo.setAttribute("aAO", new THREE.BufferAttribute(new Uint8Array(M.ao), 1, true));
+    geo.setAttribute("aIn", new THREE.BufferAttribute(new Uint8Array(M.inn), 1, true));
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
-    geo.computeVertexNormals(); geo.computeBoundingSphere(); geo.boundingSphere.radius *= 1.6; // animation moves parts outside the rest pose
+    geo.computeBoundingSphere(); geo.boundingSphere.radius *= 1.6; // animation moves parts outside the rest pose
     const v3 = a => new THREE.Vector3(a[0], a[1], a[2]);
     const U = {uHead:{value:new THREE.Vector3()}, uEarL:{value:new THREE.Vector3()}, uEarR:{value:new THREE.Vector3()}, uTail:{value:new THREE.Vector3()},
-      uHeadP:{value:v3(LM.head)}, uEarLP:{value:v3(LM.earL)}, uEarRP:{value:v3(LM.earR)}, uTailP:{value:v3(LM.tail)}, uBodyC:{value:v3(LM.body)},
-      uBreath:{value:0}, uEye:{value:1}, uArc:{value:1}, uEyeY:{value:LM.eyeY}, uTongue:{value:0}, uSquash:{value:1}};
-    const v4 = (x, y, r, z) => new THREE.Vector4((x - MC[0]) * MS, y * MS, r * MS, (z - MC[2]) * MS);
-    const EYEU = {uEyeL:{value:v4(14.6, 41.6, 4.25, 52)}, uEyeR:{value:v4(36.3, 41.6, 4.25, 52)}, uNose:{value:v4(25.4, 38.2, 3.05, 60)},
-      uEyeCol:{value:EYE0.clone()}, uNoseCol:{value:raw("#1A1212")}, uLineCol:{value:raw(dark ? "#000000" : "#3A2316")}};
-    const steps = new Uint8Array([88,88,88,255, 128,128,128,255, 166,166,166,255]);
+      uHeadP:{value:v3(L.head)}, uEarLP:{value:v3(L.earL)}, uEarRP:{value:v3(L.earR)}, uTailP:{value:v3(L.tail)}, uBodyC:{value:v3(L.body)},
+      uBreath:{value:0}, uEye:{value:1}, uArc:{value:1}, uTongue:{value:0}, uSquash:{value:1}};
+    const eyeCol = C.eyes ? new THREE.Color(C.eyes) : new THREE.Color("#5A3420");
+    const FU = {uEyeC0:{value:v3(L.eye[0].c)}, uEyeC1:{value:v3(L.eye[1].c)}, uEyeD0:{value:v3(L.eye[0].d)}, uEyeD1:{value:v3(L.eye[1].d)}, uEyeR:{value:new THREE.Vector2(L.eyeR[0], L.eyeR[1])},
+      uNoseC:{value:v3(L.nose.c)}, uNoseR:{value:v3(L.nose.r)}, uMouthC:{value:v3(L.mouth.c)}, uMouth:{value:new THREE.Vector4(L.mouth.top, L.mouth.r, L.mouth.w, 0)},
+      uMuzC:{value:v3(L.muzzle.c)}, uMuzR:{value:v3(L.muzzle.r)}, uBibC:{value:v3(L.bib.c)}, uBibR:{value:v3(L.bib.r)}, uBlushC:{value:v3(L.blush.c)}, uBlushR:{value:v3(L.blush.r)},
+      uKey:{value:new THREE.Vector3(.5, .78, .62).normalize()}, uEarF:{value:v3(L.earFront)}, uS:{value:L.scale}, uPts:{value:C.points ? 1 : 0}, cPts:{value:soft(C.points || C.base)}, uBlaze:{value:C.blaze ? 1 : 0}, uPawY:{value:L.pawY}, uHasPaw:{value:C.paws ? 1 : 0}, uUp:{value:L.ears === "up" ? 1 : 0},
+      cMuz:{value:soft(C.muzzle)}, cBib:{value:soft(C.belly)}, cEar:{value:soft(C.ear || C.base)}, cPaw:{value:soft(C.paws || C.base)},
+      cInner:{value:soft(dark ? "#B97A80" : "#F2A7AE")}, cBlush:{value:soft(dark ? "#C46A74" : "#FF8C9C")}, cNose:{value:raw("#241816")},
+      cEyeO:{value:raw("#1A100D")}, cEyeI:{value:eyeCol.clone().multiplyScalar(C.eyes ? .8 : 1).convertSRGBToLinear()}, cLine:{value:raw(dark ? "#0E0A0A" : "#3A2316")}, cTongue:{value:soft("#F0607A")}};
+    const steps = new Uint8Array([92,92,92,255, 132,132,132,255, 170,170,170,255]);
     const grad = new THREE.DataTexture(steps, 3, 1, THREE.RGBAFormat); grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.generateMipmaps = false; grad.needsUpdate = true;
     const mat = new THREE.MeshToonMaterial({vertexColors:true, gradientMap:grad});
+    mat.extensions = {derivatives:true}; mat.toneMapped = false;
     mat.onBeforeCompile = sh => {
-      Object.assign(sh.uniforms, U);
+      Object.assign(sh.uniforms, U, FU);
       sh.vertexShader = VS_HEAD + sh.vertexShader.replace("#include <beginnormal_vertex>", VS_NORMAL).replace("#include <begin_vertex>", VS_POS);
-      Object.assign(sh.uniforms, EYEU);
-      sh.fragmentShader = `varying float vGloss; varying vec3 vRest;
-        uniform vec4 uEyeL, uEyeR, uNose; uniform vec3 uEyeCol, uNoseCol, uLineCol; uniform float uEye, uArc;
-        float discF(vec4 c){ float d = length(vRest.xy - c.xy) - c.z; return (1.0 - smoothstep(-.0011, .0011, d)) * step(c.w, vRest.z); }
-        // open eye: a round disc that becomes a flatter ellipse as the lids close
-        float eyeD(vec4 c){ vec2 q = vRest.xy - c.xy; float ry = max(c.z * uEye, .0004); return length(vec2(q.x, q.y * c.z / ry)) * (ry / c.z) - ry; }
-        float eyeF(vec4 c){ return (1.0 - smoothstep(-.0011, .0011, eyeD(c))) * step(c.w, vRest.z) * step(.22, uEye); }
-        float lidLine(vec4 c, float w){ float d = eyeD(c); return (smoothstep(-.0011, .0011, d) - smoothstep(w - .0011, w + .0011, d)) * step(c.w - .004, vRest.z) * step(.22, uEye); }
-        // closed eye: a soft curved line, "‿" asleep or blinking, "∩" when squinting with joy
-        float arcF(vec4 c){ vec2 q = vRest.xy - c.xy; vec2 o = vec2(0., uArc * c.z * .5); float d = abs(length(q - o) - c.z * .8) - c.z * .11;
-          return (1.0 - smoothstep(-.0011, .0011, d)) * step(c.w, vRest.z) * step(abs(q.x), c.z * .9) * step(0., -uArc * (q.y - o.y)) * (1.0 - step(.22, uEye)); }
-      ` + sh.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
-        float eyeM = max(eyeF(uEyeL), eyeF(uEyeR)), noseM = discF(uNose), lineM = max(max(lidLine(uEyeL, .005), lidLine(uEyeR, .005)), max(arcF(uEyeL), arcF(uEyeR)));
-        diffuseColor.rgb = mix(diffuseColor.rgb, uLineCol, lineM);
-        diffuseColor.rgb = mix(diffuseColor.rgb, uEyeCol, eyeM);
-        diffuseColor.rgb = mix(diffuseColor.rgb, uNoseCol, noseM);
-        float glossM = max(vGloss, max(eyeM, noseM));`).replace("#include <dithering_fragment>", `#include <dithering_fragment>
-        vec3 Vd = normalize(vViewPosition);
-        float rim = smoothstep(.55, .95, 1.0 - max(dot(normal, Vd), 0.0));
-        gl_FragColor.rgb += rim * vec3(1.0, .93, .82) * .07 * (1.0 - glossM);
-        float spec = pow(max(dot(normal, normalize(vec3(-.35, .55, .76))), 0.0), 40.0);
-        gl_FragColor.rgb += glossM * step(.5, spec) * .25;`);
+      sh.fragmentShader = FS_HEAD + sh.fragmentShader.replace("#include <color_fragment>", FS_EYE + FS_COLOR).replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;", CEL).replace("#include <dithering_fragment>", `#include <dithering_fragment>`);
     };
     const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = false; mesh.frustumCulled = false;
-    const ink = new THREE.MeshBasicMaterial({color:new THREE.Color(dark ? "#000000" : "#3A2316").convertSRGBToLinear(), side:THREE.BackSide});
-    const OUTLINE = {value:.0042};
+    const ink = new THREE.MeshBasicMaterial({color:raw(dark ? "#000000" : "#3A2316"), side:THREE.BackSide}); ink.toneMapped = false;
+    const OUTLINE = {value:.0036};
     ink.onBeforeCompile = sh => {
       Object.assign(sh.uniforms, U, {uOutline:OUTLINE});
       sh.vertexShader = VS_HEAD + "uniform float uOutline;\n" + sh.vertexShader.replace("#include <begin_vertex>",
         "mat3 rEL = rotE(uEarL * aW.y), rER = rotE(uEarR * aW.z), rH = rotE(uHead * aW.x), rT = rotE(uTail * aW.w);\n vec3 nO = rT * (rH * (rER * (rEL * normal)));\n"
         + VS_POS + "\n transformed += normalize(nO) * uOutline;");
-      sh.fragmentShader = "varying float vGloss;\n" + sh.fragmentShader;
+      sh.fragmentShader = "varying float vGloss, vEar, vAO, vIn; varying vec3 vRest, vRestN;\n" + sh.fragmentShader;
     };
     const shell = new THREE.Mesh(geo, ink); shell.frustumCulled = false;
     const root = new THREE.Group(), body = new THREE.Group(); root.add(body); body.add(shell); body.add(mesh);
     // head-attached extras follow the shader's head rotation exactly
-    const headG = new THREE.Group(); headG.position.copy(v3(LM.head)); body.add(headG);
-    const inHead = (o, p) => { o.position.set(p[0] - LM.head[0], p[1] - LM.head[1], p[2] - LM.head[2]); headG.add(o); return o; };
-    const glint = new THREE.MeshBasicMaterial({color:0xffffff}), glints = [];
-    [LM.eyeL, LM.eyeR].forEach(e => { const g1 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0165, 20, 14), glint), [e[0] - .017, e[1] + .018, e[2] - .004]); g1.scale.set(1, 1.1, .45);
-      const g2 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0075, 14, 10), glint), [e[0] + .017, e[1] - .012, e[2] - .004]); g2.scale.z = .45;
-      const g3 = inHead(new THREE.Mesh(new THREE.SphereGeometry(.004, 10, 8), glint), [e[0] + .004, e[1] + .026, e[2] - .008]); g3.scale.z = .45; glints.push(g1, g2, g3); });
-    const ng = inHead(new THREE.Mesh(new THREE.SphereGeometry(.0055, 12, 8), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.85})), mw(24.2, 39.9, 66.9)); ng.scale.set(1.4, .8, .6);
-    const gold = new THREE.MeshStandardMaterial({color:new THREE.Color("#E9B949").convertSRGBToLinear(), roughness:.25, metalness:.85, envMapIntensity:1.4});
+    const headG = new THREE.Group(); headG.position.copy(v3(L.head)); body.add(headG);
+    const inHead = (o, p) => { o.position.set(p[0] - L.head[0], p[1] - L.head[1], p[2] - L.head[2]); headG.add(o); return o; };
+    const gold = new THREE.MeshStandardMaterial({color:raw("#E9B949"), roughness:.25, metalness:.85, envMapIntensity:1.4});
     let bell = null;
     if (cfg.stage >= 1) { // collar, then a golden bell from stage 2
-      const collar = new THREE.Mesh(new THREE.TorusGeometry(.215, .016, 12, 48), new THREE.MeshStandardMaterial({color:new THREE.Color(cfg.stage >= 3 ? "#7B4BC4" : "#D64550").convertSRGBToLinear(), roughness:.55}));
-      collar.rotation.x = Math.PI/2 - .32; collar.scale.set(1, 1.08, 1); collar.position.copy(v3(mw(25.5, 29.6, 40.5))); body.add(collar);
-      if (cfg.stage >= 2) { bell = new THREE.Mesh(new THREE.SphereGeometry(.03, 24, 16), gold); bell.position.copy(v3(mw(25.5, 26.4, 57.5))); body.add(bell); }
+      const cl = L.collar, collar = new THREE.Mesh(new THREE.TorusGeometry(cl.r, .014, 14, 64), new THREE.MeshStandardMaterial({color:raw(cfg.stage >= 3 ? "#7B4BC4" : "#D64550"), roughness:.55}));
+      collar.rotation.x = Math.PI/2 - cl.tilt; collar.position.copy(v3(cl.c)); body.add(collar);
+      if (cfg.stage >= 2) { bell = new THREE.Mesh(new THREE.SphereGeometry(.026, 24, 16), gold); bell.position.copy(v3(cl.front)); body.add(bell); }
     }
-    if (cfg.stage >= 4) { const cr = new THREE.Group(); const top = mw(25.5, 64.5, 41); cr.rotation.x = -.18;
-      const ring = new THREE.Mesh(new THREE.CylinderGeometry(.1, .11, .06, 32, 1, true), gold); ring.material.side = THREE.DoubleSide; cr.add(ring);
-      for (let i = 0; i < 6; i++) { const a = i/6*Math.PI*2, sp = new THREE.Mesh(new THREE.ConeGeometry(.024, .07, 12), gold); sp.position.set(Math.cos(a)*.1, .06, Math.sin(a)*.1); cr.add(sp); }
-      inHead(cr, [top[0], top[1] + .01, top[2]]); }
+    if (cfg.stage >= 4) { const cr = new THREE.Group(); cr.rotation.x = -.12;
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(.085, .095, .05, 32, 1, true), gold); ring.material.side = THREE.DoubleSide; cr.add(ring);
+      for (let i = 0; i < 6; i++) { const a = i/6*Math.PI*2, sp = new THREE.Mesh(new THREE.ConeGeometry(.02, .06, 12), gold); sp.position.set(Math.cos(a)*.085, .05, Math.sin(a)*.085); cr.add(sp); }
+      inHead(cr, [L.top[0], L.top[1] + .012, L.top[2]]); }
     const box = new THREE.Box3().setFromObject(mesh), sz = new THREE.Vector3(), ctr = new THREE.Vector3(); box.getSize(sz); box.getCenter(ctr);
-    return {root, Q:{stl:true, U, body, headG, glints, bell, frame:{h: sz.y, len: Math.max(sz.z, sz.x), cy: ctr.y}, size: sz}};
+    return {root, Q:{stl:true, flop:L.ears !== "up", U, body, headG, glints:[], bell, frame:{h: sz.y, len: Math.max(sz.z, sz.x), cy: ctr.y}, size: sz}};
   }
   // little director: ear twitches, curious head tilts, look-arounds
   const LIFE = {twitch:0, twitchSide:1, nextTwitch:3, tilt:0, tiltDir:1, nextTilt:6, look:0};
@@ -4489,7 +4539,11 @@ const B3D = (() => {
     const droop = cur.ear, bounce = Math.sin(t * 11) * .05 * cur.hop;
     const earL = .1 + droop * .45 - (mood === "ravi" ? .05 : 0) + (LIFE.twitchSide < 0 ? tw * .35 : 0) + bounce;
     const earR = .1 + droop * .45 - (mood === "ravi" ? .05 : 0) + (LIFE.twitchSide > 0 ? tw * .35 : 0) - bounce;
-    U.uEarL.value.set(-.1 * droop, 0, earL); U.uEarR.value.set(-.1 * droop, 0, -earR);
+    if (P.flop) { // floppy ears: lift outwards when happy, hang when sad, swing with the head and the hops
+      const lift = (mood === "ravi" ? .2 : .06) - droop * .08, sw = Math.sin(t * 1.3) * .035 * awake;
+      U.uEarL.value.set(-.05 * droop + (LIFE.twitchSide < 0 ? tw * .12 : 0), 0, -(lift + sw + (LIFE.twitchSide < 0 ? tw * .25 : 0) + bounce * 2));
+      U.uEarR.value.set(-.05 * droop + (LIFE.twitchSide > 0 ? tw * .12 : 0), 0, lift - sw + (LIFE.twitchSide > 0 ? tw * .25 : 0) - bounce * 2);
+    } else { U.uEarL.value.set(-.1 * droop, 0, earL); U.uEarR.value.set(-.1 * droop, 0, -earR); }
     // tail: wag around its base, faster and wider when happy; higher when happy, low when sad
     const wag = rm ? 0 : Math.sin(t * cur.tailSpeed) * cur.tailAmp * 1.15;
     U.uTail.value.set(-(cur.tailUp - .6) * .35, wag, wag * .25);
@@ -4498,7 +4552,7 @@ const B3D = (() => {
     const bl = P.blinkT != null ? (t - P.blinkT) / .16 : 9, blink = bl >= 0 && bl < 1 ? Math.sin(bl * Math.PI) : 0;
     const petAgo = (now - jumpT) / 1000, squint = petAgo >= 0 && petAgo < 1.3 ? Math.sin(Math.min(1, petAgo / 1.3) * Math.PI) * .7 : 0;
     const open = Math.max(.06, Math.min(sleepy ? cur.eye : Math.max(.9, cur.eye), 1 - blink * .94, 1 - squint));
-    U.uEye.value = open; U.uArc.value = squint > .3 && !sleepy ? -1 : 1; P.glints.forEach(g => g.visible = open > .45);
+    U.uEye.value = open; U.uArc.value = squint > .3 && !sleepy ? -1 : 1;
     U.uTongue.value = Math.sin(t * 8) * .0018 * cur.tongue + (1 - cur.tongue) * .004;
     // squash & stretch: pet jump, happy hops, landing
     const jp = (now - jumpT) / 900; let sq = 1;
