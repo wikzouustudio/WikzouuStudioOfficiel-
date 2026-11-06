@@ -1043,6 +1043,18 @@ h1.brand{font-family:var(--font-r);letter-spacing:-.01em}
 .wv-tags svg{width:14px;height:14px}
 .wv-week{margin-top:12px;font-size:14px;color:var(--fg2);text-align:center}
 .ql-walk .gps{color:var(--fg2)}
+
+/* weather, folded */
+.wx-mini{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;margin-top:12px;border:0;font:inherit;color:inherit;cursor:pointer}
+.wx-mini .wx-mi{font-size:28px;line-height:1;width:34px;text-align:center}
+.wx-mini .main{flex:1;min-width:0}.wx-mini .t{font-size:16px}.wx-mini .t b{font-weight:600}
+.wx-mini .s{font-size:14px;color:var(--green);display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wx-mini.meh .s{color:var(--orange)}.wx-mini.bad .s{color:var(--red)}
+.wx-mini.meh{box-shadow:inset 3px 0 0 var(--orange)}.wx-mini.bad{box-shadow:inset 3px 0 0 var(--red)}
+.wx-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none}
+.wx-dn,.wx-less span{color:var(--fg3);display:inline-flex}.wx-dn svg{transform:rotate(90deg);width:16px;height:16px}
+.wx-less{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;margin-top:8px;padding:8px;border:0;background:none;color:var(--fg2);font:inherit;font-size:14px;cursor:pointer}
+.wx-less span svg{transform:rotate(-90deg);width:14px;height:14px}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1380,7 +1392,7 @@ const TRAITS = {
     en:["Senior dog","A vet check every 6 months, and shorter but more frequent walks."], score:c => 4}
 };
 
-Object.assign(HR, {"GPS refusé : distance non mesurée":"GPS odbijen: udaljenost nije izmjerena","Recherche du GPS…":"Traženje GPS-a…","Signal GPS faible":"Slab GPS signal","GPS actif":"GPS uključen","Balade":"Šetnja","Distance":"Udaljenost","Durée":"Trajanje","Vitesse moy.":"Prosj. brzina","Ces 7 derniers jours : {k} en {n} balades suivies":"Zadnjih 7 dana: {k} u {n} praćenih šetnji","Le trajet n'est visible que par votre famille.":"Rutu vidi samo vaša obitelj.","Carte":"Karta","Balade lancée : gardez l'app ouverte pour mesurer le trajet":"Šetnja pokrenuta: držite aplikaciju otvorenom za praćenje rute","Suivre les balades par GPS":"Prati šetnje GPS-om","Distance et trajet mesurés sur ce téléphone pendant la balade.":"Udaljenost i ruta mjere se na ovom telefonu tijekom šetnje.",
+Object.assign(HR, {"Balade de {t} : plutôt à {h}":"Šetnja u {t}: bolje u {h}","Balade de {t} : météo défavorable":"Šetnja u {t}: loše vrijeme","Réduire":"Prikaži manje","GPS refusé : distance non mesurée":"GPS odbijen: udaljenost nije izmjerena","Recherche du GPS…":"Traženje GPS-a…","Signal GPS faible":"Slab GPS signal","GPS actif":"GPS uključen","Balade":"Šetnja","Distance":"Udaljenost","Durée":"Trajanje","Vitesse moy.":"Prosj. brzina","Ces 7 derniers jours : {k} en {n} balades suivies":"Zadnjih 7 dana: {k} u {n} praćenih šetnji","Le trajet n'est visible que par votre famille.":"Rutu vidi samo vaša obitelj.","Carte":"Karta","Balade lancée : gardez l'app ouverte pour mesurer le trajet":"Šetnja pokrenuta: držite aplikaciju otvorenom za praćenje rute","Suivre les balades par GPS":"Prati šetnje GPS-om","Distance et trajet mesurés sur ce téléphone pendant la balade.":"Udaljenost i ruta mjere se na ovom telefonu tijekom šetnje.",
   "Vous pouvez consulter ce carnet, mais pas le modifier.":"Možete pregledavati ovaj dnevnik, ali ga ne možete mijenjati.",
   "Le carnet est plein. Supprimez d'anciennes entrées.":"Dnevnik je pun. Izbrišite stare unose.",
   "Modification non enregistrée. Réessayez dans un instant.":"Promjena nije spremljena. Pokušajte ponovno za trenutak.",
@@ -1525,7 +1537,7 @@ const TRAITS_HR = {
 Object.keys(TRAITS_HR).forEach(k => { if (TRAITS[k]) TRAITS[k].hr = TRAITS_HR[k]; });
 EN["Moyen (appétit)"] = "Fair"; EN["Moyen"] = "Medium";
 Object.assign(EN,{"Demander à Claude pour {n}":"Ask Claude about {n}","Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.":"Opens Claude with today's summary. Free with a Claude account."}); Object.assign(HR,{"Demander à Claude pour {n}":"Pitajte Claude o {n}","Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.":"Otvara Claude sa sažetkom dana. Besplatno uz Claude račun."});
-Object.assign(EN, {"GPS refusé : distance non mesurée":"GPS denied: distance not measured","Recherche du GPS…":"Finding GPS…","Signal GPS faible":"Weak GPS signal","GPS actif":"GPS on","Balade":"Walk","Distance":"Distance","Durée":"Duration","Vitesse moy.":"Avg speed","Ces 7 derniers jours : {k} en {n} balades suivies":"Last 7 days: {k} over {n} tracked walks","Le trajet n'est visible que par votre famille.":"Only your family can see the route.","Carte":"Map","Balade lancée : gardez l'app ouverte pour mesurer le trajet":"Walk started: keep the app open to track the route","Suivre les balades par GPS":"Track walks with GPS","Distance et trajet mesurés sur ce téléphone pendant la balade.":"Distance and route measured on this phone during the walk.","Compte": "Account", "Connecté sur cet appareil": "Signed in on this device", "Se déconnecter": "Sign out"});
+Object.assign(EN, {"Balade de {t} : plutôt à {h}":"{t} walk: better at {h}","Balade de {t} : météo défavorable":"{t} walk: poor weather","Réduire":"Show less","GPS refusé : distance non mesurée":"GPS denied: distance not measured","Recherche du GPS…":"Finding GPS…","Signal GPS faible":"Weak GPS signal","GPS actif":"GPS on","Balade":"Walk","Distance":"Distance","Durée":"Duration","Vitesse moy.":"Avg speed","Ces 7 derniers jours : {k} en {n} balades suivies":"Last 7 days: {k} over {n} tracked walks","Le trajet n'est visible que par votre famille.":"Only your family can see the route.","Carte":"Map","Balade lancée : gardez l'app ouverte pour mesurer le trajet":"Walk started: keep the app open to track the route","Suivre les balades par GPS":"Track walks with GPS","Distance et trajet mesurés sur ce téléphone pendant la balade.":"Distance and route measured on this phone during the walk.","Compte": "Account", "Connecté sur cet appareil": "Signed in on this device", "Se déconnecter": "Sign out"});
 Object.assign(HR, {"Compte": "Račun", "Connecté sur cet appareil": "Prijavljeni na ovom uređaju", "Se déconnecter": "Odjava"});
 Object.assign(EN, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Your account can only view this logbook (“Can view”), so it can't join the family yet. The owner needs to add your email address as “Editor”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "You open the logbook again and enter the code they gave you", "Un instant…": "One moment…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Your account can't join yet: ask the owner to add you as “Editor”."});
 Object.assign(HR, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Vaš račun može samo gledati ovaj dnevnik („Može gledati”) pa se još ne može pridružiti obitelji. Vlasnik vas mora dodati putem e-adrese kao „Urednik”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "Ponovno otvorite dnevnik i unesite kod koji ste dobili", "Un instant…": "Trenutak…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Vaš se račun još ne može pridružiti: zamolite vlasnika da vas doda kao „Urednik”."});
@@ -1978,9 +1990,9 @@ function viewToday(){
     <div style="position:relative;width:96px;height:96px">${ring(st.pct,96,11,"var(--green)", ra && ra.day === sel ? ra.from : null)}${live("celebrate") && S.celebrate.day === sel ? burstHTML() : ""}</div>
     <div><div class="ring-txt num"><span class="${ra && ra.day === sel ? "bump" : ""}">${st.n}</span><span style="color:var(--fg3)">/${st.total}</span></div><div class="ring-sub">${d&&d.name?T("tâches faites pour {n}",{n:esc(d.name)}):T("tâches faites")}</div>${nextHTML}</div>
   </div>${catPills?`<div class="catstats">${catPills}</div>`:""}</div>
-  ${weatherCard()}${quickLog()}
   ${alerts}
   ${isToday ? notifPrompt() : ""}
+  ${weatherCard()}${quickLog()}
   ${(ME && meMember()) || S.catF ? `<div class="filters">${ME && meMember() ? `<div class="seg" role="group" style="flex:1">${[[0,"Toutes les tâches"],[1,"Les miennes"]].map(([v,l]) => `<button class="${!!S.mine===!!v?"on":""}" data-act="mineFilter" data-v="${v}">${T(l)}</button>`).join("")}</div>` : ""}${S.catF ? `<button class="pill pill-on" data-act="catFilter" data-c="${S.catF}">${T(CATS[S.catF].label)} ×</button>` : ""}</div>` : ""}
   <div id="timeline">${tl}</div>
   ${eod}`;
@@ -3130,9 +3142,9 @@ function weatherCard(){
   const winTxt = !win ? "" : win.a <= Hn ? T("Idéal jusqu'à {h}", {h: hh(win.b + 1)}) : T("Idéal de {a} à {b}", {a: hh(win.a), b: hh(win.b + 1)});
   const strip = hours.map(h => { const best = win && h.ds === today && h.H >= win.a && h.H <= win.b, rp = h.x.p >= 10 || wxRainy(h.x.c);
     return `<div class="wx-hr ${best ? "best" : ""} ${h.sc >= 45 ? "bad" : ""}"><small class="num">${h.k === 0 ? T("Maint.") : String(h.H).padStart(2, "0")}</small><span>${wxIcon(h.x.c, h.H >= 7 && h.H < 19 ? 1 : 0)}</span><i class="num">${rp ? h.x.p + " %" : ""}</i><b class="num">${Math.round(h.x.t)}°</b><u>${walkH.has(h.H) && h.ds === today ? I.paw : ""}</u></div>`; }).join("");
-  let worst = 0;
+  let worst = 0, warn = null;
   const rows = walks.slice(0, 4).map(t => { const T0 = toMin(t.time), x = wxAt(today, hh(Math.floor(T0 / 60))); if (!x) return "";
-    const sc = wxScore(x, lim), bad = sc >= 45, meh = !bad && sc >= 20, alt = bad || meh ? wxBetter(today, T0, lim, nm) : null, why = wxWhy(x, lim); worst = Math.max(worst, sc);
+    const sc = wxScore(x, lim), bad = sc >= 45, meh = !bad && sc >= 20, alt = bad || meh ? wxBetter(today, T0, lim, nm) : null, why = wxWhy(x, lim); worst = Math.max(worst, sc); if ((bad || meh) && !warn) warn = {time: t.time, alt: alt ? hh(alt.H) : "", bad};
     const tone = bad ? "bad" : meh ? "meh" : "ok";
     return `<div class="wx-walk"><span class="wx-wtime num">${esc(t.time)}</span><div class="main"><div class="t">${esc(t.title)}</div>
       <div class="s">${wxIcon(x.c, T0 >= 420 && T0 < 1140 ? 1 : 0)} ${Math.round(x.t)}°${(bad || meh) && why ? " · " + esc(why) : x.p >= 20 ? ` · ${x.p} %` : ""}</div>
@@ -3141,6 +3153,13 @@ function weatherCard(){
   let tip = "";
   if (lim.flat && hours.some(h => h.x.f > lim.heat)) tip = T("Museau court : il supporte mal la chaleur.");
   else if (!walks.length) tip = win ? "" : T("Pas de bon créneau aujourd'hui : préférez des sorties courtes.");
+  // folded by default: one line, which turns orange/red when a walk falls in bad weather
+  const wxOpen = (() => { try { return localStorage.getItem("dl-wx-open") === "1"; } catch(_) { return false; } })();
+  if (!wxOpen) {
+    const sub = warn ? (warn.alt ? T("Balade de {t} : plutôt à {h}", {t: warn.time, h: warn.alt}) : T("Balade de {t} : météo défavorable", {t: warn.time})) : winTxt || T(WX_TXT[cur.weather_code] || "");
+    return `<button class="card wx-mini ${warn ? (warn.bad ? "bad" : "meh") : ""}" data-act="wxToggle" aria-expanded="false"><span class="wx-mi">${wxIcon(cur.weather_code, cur.is_day)}</span>
+      <div class="main"><div class="t"><b class="num">${Math.round(cur.temperature_2m)}°</b> · ${esc(place)}</div><div class="s">${warn ? "" : `<i class="wx-dot"></i>`}${esc(sub)}</div></div><span class="wx-dn">${I.chevR}</span></button>`;
+  }
   return `<div class="card wx">
     <div class="wx-h" ${canEdit() ? `data-act="wxSheet" role="button"` : ""}>
       <div class="main"><div class="wx-place">${I_PIN}<span>${esc(place)}</span>${canEdit() ? `<em>${I.chevR}</em>` : ""}</div>
@@ -3151,7 +3170,8 @@ function weatherCard(){
     ${winTxt ? `<div class="wx-win"><i></i>${esc(winTxt)}</div>` : ""}
     ${strip ? `<div class="wx-strip">${strip}</div>` : ""}
     ${rows ? `<div class="wx-sec">${T("Balades d'aujourd'hui")}</div><div class="wx-walks">${rows}</div>` : ""}
-    ${tip ? `<div class="wx-foot">${esc(tip)}</div>` : ""}</div>`;
+    ${tip ? `<div class="wx-foot">${esc(tip)}</div>` : ""}
+    <button class="wx-less" data-act="wxToggle" aria-expanded="true">${T("Réduire")}<span>${I.chevR}</span></button></div>`;
 }
 function wxSheet(){
   const w = wxCfg();
@@ -5067,6 +5087,7 @@ document.addEventListener("click", async e => {
     case "qlStool": closeSheet(); await addLog("caca", {q: el.dataset.q}); break;
     case "qlItem": case "qlAll": logSheet(); break;
     case "walkView": walkView(el.dataset.id); break;
+    case "wxToggle": { try { localStorage.getItem("dl-wx-open") === "1" ? localStorage.removeItem("dl-wx-open") : localStorage.setItem("dl-wx-open", "1"); } catch(_) {} render(); break; }
     case "gpsPref": { const on = el.getAttribute("aria-checked") !== "true"; gLS.s("dl-gps-off", on ? null : "1"); if (!on) gpsDrop(); render(); break; }
     case "qlDel": { await delLog(el.dataset.ds || ymd(new Date()), el.dataset.id); const r = el.closest(".row"); if (r) r.remove(); break; }
     case "walkEnd": walkSheet(); break;

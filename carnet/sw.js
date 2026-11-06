@@ -1,5 +1,5 @@
 // Dogs Life service worker: opens without network, and shows family notifications even when the app is closed.
-const CACHE = "dogslife-v10";
+const CACHE = "dogslife-v11";
 const SHELL = ["./", "index.html", "firebase-bridge.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.png", "dog.bin"];
 const LIBS = ["www.gstatic.com", "cdnjs.cloudflare.com"]; // Firebase and three.js: versioned files, safe to keep
 
