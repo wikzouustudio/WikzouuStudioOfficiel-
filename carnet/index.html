@@ -1019,6 +1019,30 @@ h1.brand{font-family:var(--font-r);letter-spacing:-.01em}
 .code-card{display:flex;flex-direction:column;align-items:center;gap:6px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 14%,var(--card)),var(--card));border-radius:20px;padding:20px 14px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent) 30%,transparent)}
 .code-card span{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
 .code-card b{font-size:42px;letter-spacing:.14em;font-weight:800}.code-card small{font-size:13px;color:var(--fg2)}
+
+/* GPS walks */
+.walk-live{margin:-4px 0 12px}
+.rmap{position:relative;overflow:hidden;border-radius:14px;height:150px;background:var(--fill);isolation:isolate}
+.rmap.big{height:240px;margin:2px 0 14px}
+.rmap-t img{position:absolute;width:256px;height:256px;max-width:none;user-select:none;-webkit-user-drag:none}
+.rmap-s{position:absolute;inset:0;pointer-events:none}
+.rt-halo{fill:none;stroke:#fff;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.rt-line{fill:none;stroke:var(--green);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.rt-a{fill:#fff;stroke:var(--green);stroke-width:3}
+.rt-b{fill:var(--green);stroke:#fff;stroke-width:3}
+.rt-me{fill:#0A84FF;stroke:#fff;stroke-width:3}
+.rt-pulse{fill:#0A84FF;opacity:.25;transform-box:fill-box;transform-origin:center;animation:rtp 1.8s ease-out infinite}
+@keyframes rtp{0%{transform:scale(.6);opacity:.35}100%{transform:scale(1.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.rt-pulse{animation:none}}
+.rmap-c{position:absolute;right:6px;bottom:4px;font-size:9.5px;color:#555;background:rgba(255,255,255,.7);padding:1px 5px;border-radius:5px}
+.wv-when{font-size:14px;color:var(--fg2);margin:0 2px 10px}
+.wv-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.wv-s{background:var(--fill);border-radius:12px;padding:10px 8px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.wv-s b{font-size:20px;font-weight:600;letter-spacing:-.01em}.wv-s span{font-size:12px;color:var(--fg2)}
+.wv-tags{display:flex;gap:8px;margin-top:10px}.wv-tags span{display:inline-flex;align-items:center;gap:6px;background:var(--fill);border-radius:999px;padding:5px 11px;font-size:13px}
+.wv-tags svg{width:14px;height:14px}
+.wv-week{margin-top:12px;font-size:14px;color:var(--fg2);text-align:center}
+.ql-walk .gps{color:var(--fg2)}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1356,7 +1380,7 @@ const TRAITS = {
     en:["Senior dog","A vet check every 6 months, and shorter but more frequent walks."], score:c => 4}
 };
 
-Object.assign(HR, {
+Object.assign(HR, {"GPS refusé : distance non mesurée":"GPS odbijen: udaljenost nije izmjerena","Recherche du GPS…":"Traženje GPS-a…","Signal GPS faible":"Slab GPS signal","GPS actif":"GPS uključen","Balade":"Šetnja","Distance":"Udaljenost","Durée":"Trajanje","Vitesse moy.":"Prosj. brzina","Ces 7 derniers jours : {k} en {n} balades suivies":"Zadnjih 7 dana: {k} u {n} praćenih šetnji","Le trajet n'est visible que par votre famille.":"Rutu vidi samo vaša obitelj.","Carte":"Karta","Balade lancée : gardez l'app ouverte pour mesurer le trajet":"Šetnja pokrenuta: držite aplikaciju otvorenom za praćenje rute","Suivre les balades par GPS":"Prati šetnje GPS-om","Distance et trajet mesurés sur ce téléphone pendant la balade.":"Udaljenost i ruta mjere se na ovom telefonu tijekom šetnje.",
   "Vous pouvez consulter ce carnet, mais pas le modifier.":"Možete pregledavati ovaj dnevnik, ali ga ne možete mijenjati.",
   "Le carnet est plein. Supprimez d'anciennes entrées.":"Dnevnik je pun. Izbrišite stare unose.",
   "Modification non enregistrée. Réessayez dans un instant.":"Promjena nije spremljena. Pokušajte ponovno za trenutak.",
@@ -1501,7 +1525,7 @@ const TRAITS_HR = {
 Object.keys(TRAITS_HR).forEach(k => { if (TRAITS[k]) TRAITS[k].hr = TRAITS_HR[k]; });
 EN["Moyen (appétit)"] = "Fair"; EN["Moyen"] = "Medium";
 Object.assign(EN,{"Demander à Claude pour {n}":"Ask Claude about {n}","Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.":"Opens Claude with today's summary. Free with a Claude account."}); Object.assign(HR,{"Demander à Claude pour {n}":"Pitajte Claude o {n}","Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.":"Otvara Claude sa sažetkom dana. Besplatno uz Claude račun."});
-Object.assign(EN, {"Compte": "Account", "Connecté sur cet appareil": "Signed in on this device", "Se déconnecter": "Sign out"});
+Object.assign(EN, {"GPS refusé : distance non mesurée":"GPS denied: distance not measured","Recherche du GPS…":"Finding GPS…","Signal GPS faible":"Weak GPS signal","GPS actif":"GPS on","Balade":"Walk","Distance":"Distance","Durée":"Duration","Vitesse moy.":"Avg speed","Ces 7 derniers jours : {k} en {n} balades suivies":"Last 7 days: {k} over {n} tracked walks","Le trajet n'est visible que par votre famille.":"Only your family can see the route.","Carte":"Map","Balade lancée : gardez l'app ouverte pour mesurer le trajet":"Walk started: keep the app open to track the route","Suivre les balades par GPS":"Track walks with GPS","Distance et trajet mesurés sur ce téléphone pendant la balade.":"Distance and route measured on this phone during the walk.","Compte": "Account", "Connecté sur cet appareil": "Signed in on this device", "Se déconnecter": "Sign out"});
 Object.assign(HR, {"Compte": "Račun", "Connecté sur cet appareil": "Prijavljeni na ovom uređaju", "Se déconnecter": "Odjava"});
 Object.assign(EN, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Your account can only view this logbook (“Can view”), so it can't join the family yet. The owner needs to add your email address as “Editor”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "You open the logbook again and enter the code they gave you", "Un instant…": "One moment…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Your account can't join yet: ask the owner to add you as “Editor”."});
 Object.assign(HR, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Vaš račun može samo gledati ovaj dnevnik („Može gledati”) pa se još ne može pridružiti obitelji. Vlasnik vas mora dodati putem e-adrese kao „Urednik”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "Ponovno otvorite dnevnik i unesite kod koji ste dobili", "Un instant…": "Trenutak…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Vaš se račun još ne može pridružiti: zamolite vlasnika da vas doda kao „Urednik”."});
@@ -3176,15 +3200,16 @@ function quickLog(){
   let hint = "";
   if (isPuppy() && lp) { const months = Math.max(2, Math.floor(ageYears(dog().birth) * 12)), hold = Math.min(8, months + 1) * 60 * .75;
     const by = new Date(lp.t.getTime() + hold * 60000); hint = by < new Date() ? `<span class="ql-hint late">${T("Une sortie pipi est conseillée maintenant")}</span>` : `<span class="ql-hint">${T("Prochaine sortie pipi conseillée vers {h}",{h:hhmm(by)})}</span>`; }
-  const walkCard = w ? `<div class="ql-walk"><span class="ql-pulse"></span><div class="main"><div class="t">${T("Balade en cours")}</div><div class="s"><b class="num" id="walk-min">${Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000))} min</b>${memberOf(w.mid) ? " · " + esc(memberOf(w.mid).name) : ""}</div></div>
+  const walkCard = w ? `<div class="ql-walk"><span class="ql-pulse"></span><div class="main"><div class="t">${T("Balade en cours")}</div><div class="s"><b class="num" id="walk-min">${Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000))} min</b>${memberOf(w.mid) ? " · " + esc(memberOf(w.mid).name) : ""}<span class="gps" id="walk-gps">${gpsLine(w) ? " · " + gpsLine(w) : ""}</span></div></div>
       ${can ? `<button class="btn ghost sm" data-act="walkCancel">${T("Annuler")}</button><button class="btn sm" data-act="walkEnd">${T("Terminer")}</button>` : ""}</div>` : "";
   const btn = k => { const q = QL[k], on = k === "balade" && w; return `<button class="ql-b ${on ? "on" : ""}" data-act="ql" data-k="${k}" ${can ? "" : "disabled"} style="--c:${q.c}"><i>${q.i}</i><span>${on ? Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000)) + " min" : T(q.l)}</span></button>`; };
   const items = log.slice(-6).reverse().map(x => { const q = QL[x.k] || QL.pipi, m = memberOf(x.mid);
-    const extra = x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" + (x.pee ? " · " + T("pipi") : "") + (x.poo ? " · " + T("caca") : "") : "";
+    const extra = x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") + (x.pee ? " · " + T("pipi") : "") + (x.poo ? " · " + T("caca") : "") : "";
     if (x.photo) return `<button class="ql-item ph ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="photoView" data-src="${esc(x.photo)}"><img src="${esc(x.photo)}" alt=""><span class="num">${esc(x.at)}</span>${x.note ? esc(x.note.slice(0, 24)) : ""}${m ? mav(m, 18) : ""}</button>`;
-    return `<button class="ql-item ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="qlItem" data-id="${esc(x.id)}" style="--c:${q.c}"><i>${q.i}</i><span class="num">${esc(x.at)}</span>${esc((x.k === "photo" && x.note ? x.note.slice(0, 28) : T(q.l)) + extra)}${m || x.byName ? `<span class="ql-who">${m ? mav(m, 18) : ""}${esc(((m && m.name) || x.byName || "").split(" ")[0])}</span>` : ""}</button>`; }).join("");
+    return `<button class="ql-item ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="${x.route ? "walkView" : "qlItem"}" data-id="${esc(x.id)}" style="--c:${q.c}"><i>${q.i}</i><span class="num">${esc(x.at)}</span>${esc((x.k === "photo" && x.note ? x.note.slice(0, 28) : T(q.l)) + extra)}${m || x.byName ? `<span class="ql-who">${m ? mav(m, 18) : ""}${esc(((m && m.name) || x.byName || "").split(" ")[0])}</span>` : ""}</button>`; }).join("");
+  if (w) setTimeout(() => { GPS.painted = 0; gpsPaint(); }, 0);
   return `<div class="sec ql"><div class="sec-h"><h2>${T("Journal rapide")}</h2>${log.length > 6 ? `<button class="link" data-act="qlAll">${T("Tout voir")}</button>` : ""}</div><div class="card pad">
-    ${walkCard}
+    ${walkCard}${w ? `<div class="rmap walk-live" id="walk-map" hidden></div>` : ""}
     <div class="ql-row">${["pipi","caca","balade","accident","plus"].map(btn).join("")}</div>
     <div class="ql-since">${lp ? `<span>${QL.pipi.i}${T("Pipi")} ${esc(agoTxt(lp.t))}</span>` : ""}${lc ? `<span>${QL.caca.i}${T("Caca")} ${esc(agoTxt(lc.t))}</span>` : ""}${hint}</div>
     ${items ? `<div class="ql-items">${items}</div>` : `<div class="empty-s" style="margin-top:8px">${T("Touchez un bouton dès que c'est fait : l'heure et votre prénom sont notés, toute la famille le voit.")}</div>`}
@@ -3194,7 +3219,7 @@ let liveTok = 0;
 function liveLogNotice(x){
   if ((x.dog || "main") !== dogId()) return;
   const q = QL[x.k] || QL.pipi, m = memberOf(x.mid), who = (m && m.name) || x.byName || T("Quelqu'un"), tok = ++liveTok;
-  const what = x.k === "photo" && x.note ? x.note.slice(0, 40) : T(q.l) + (x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" : "");
+  const what = x.k === "photo" && x.note ? x.note.slice(0, 40) : T(q.l) + (x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") : "");
   $("#notif-root").innerHTML = `<div class="notif live" role="status">${m ? mav(m, 36) : `<span class="ico" style="background:${q.c}">${q.i}</span>`}<div class="main"><div class="t">${esc(who)}</div><div class="s"><span class="live-k" style="--c:${q.c}">${q.i}</span>${esc(what)} · ${esc(x.at || "")}</div></div><button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
   try { if (navigator.vibrate) navigator.vibrate(10); } catch(_){}
   setTimeout(() => { if (tok === liveTok) { const n = $("#notif-root .notif.live"); if (n) n.remove(); } }, 6000);
@@ -3212,17 +3237,130 @@ async function addLog(k, extra){
 function stoolSheet(){
   openSheet(T("Caca"), `<div class="hint" style="margin:0 0 12px">${T("Comment étaient les selles ?")}</div><div class="stool-g">${STOOL_Q.map(([q, c]) => `<button type="button" class="stool-b" data-act="qlStool" data-q="${esc(q)}" style="--c:${c}"><i></i>${T(q)}</button>`).join("")}</div>`);
 }
+/* ---------- GPS walks: distance and route, recorded on the phone of the person walking ---------- */
+const GPS = {watch: null, lock: null, start: null, pts: [], state: "", synced: 0, syncedD: 0, painted: 0};
+const gpsKey = s => "dl-gps@" + s;
+const gLS = {g(k){ try { return localStorage.getItem(k); } catch(_) { return null; } }, s(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch(_) {} }};
+const gpsOff = () => gLS.g("dl-gps-off") === "1";
+function gDist(a, b){ const r = Math.PI / 180, dl = (b[0] - a[0]) * r, dn = (b[1] - a[1]) * r;
+  const x = Math.sin(dl / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dn / 2) ** 2; return 2 * 6371000 * Math.asin(Math.min(1, Math.sqrt(x))); }
+const routeLen = p => { let d = 0; for (let i = 1; i < p.length; i++) d += gDist(p[i - 1], p[i]); return d; };
+const fmtKm = m => m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toLocaleString(LANG === "en" ? "en" : LANG === "hr" ? "hr" : "fr-CH", {maximumFractionDigits: m < 10000 ? 2 : 1}) + " km";
+// Google "encoded polyline" (precision 5): about 6 characters per point
+function polyEnc(p){ let o = "", pl = 0, pn = 0; const e = v => { v = v < 0 ? ~(v << 1) : v << 1; let s = ""; while (v >= 0x20) { s += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; } return s + String.fromCharCode(v + 63); };
+  for (const q of p) { const a = Math.round(q[0] * 1e5), b = Math.round(q[1] * 1e5); o += e(a - pl) + e(b - pn); pl = a; pn = b; } return o; }
+function polyDec(s){ const p = []; let i = 0, a = 0, b = 0; const d = () => { let r = 0, sh = 0, c; do { c = s.charCodeAt(i++) - 63; r |= (c & 0x1f) << sh; sh += 5; } while (c >= 0x20 && i <= s.length); return r & 1 ? ~(r >> 1) : r >> 1; };
+  while (i < s.length) { a += d(); b += d(); p.push([a / 1e5, b / 1e5]); } return p; }
+function gpsSave(){ if (GPS.start) gLS.s(gpsKey(GPS.start), JSON.stringify(GPS.pts)); }
+async function gpsLock(){ try { if (navigator.wakeLock && document.visibilityState === "visible" && GPS.watch != null && !GPS.lock) { GPS.lock = await navigator.wakeLock.request("screen"); GPS.lock.addEventListener("release", () => { GPS.lock = null; }); } } catch(_) { GPS.lock = null; } }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") gpsLock(); });
+function gpsBegin(start){
+  if (gpsOff() || !navigator.geolocation) { GPS.state = navigator.geolocation ? "off" : "none"; return; }
+  if (GPS.watch != null && GPS.start === start) return;
+  gpsStop();
+  GPS.start = start; GPS.synced = Date.now(); GPS.syncedD = 0;
+  try { GPS.pts = JSON.parse(gLS.g(gpsKey(start)) || "[]"); } catch(_) { GPS.pts = []; }
+  gpsSave(); GPS.state = GPS.pts.length ? "ok" : "seek";
+  GPS.watch = navigator.geolocation.watchPosition(gpsPos, e => { GPS.state = e && e.code === 1 ? "denied" : "weak"; if (e && e.code === 1) gpsStop(true); gpsUI(); },
+    {enableHighAccuracy: true, maximumAge: 2000, timeout: 30000});
+  gpsLock(); gpsUI();
+}
+function gpsPos(p){
+  const c = p.coords; if (!c || c.accuracy > 45) { if (!GPS.pts.length) GPS.state = "weak"; gpsUI(); return; }
+  const pt = [+c.latitude.toFixed(6), +c.longitude.toFixed(6), Math.round((p.timestamp || Date.now()) / 1000)], last = GPS.pts[GPS.pts.length - 1];
+  if (last) { const d = gDist(last, pt), dt = Math.max(1, pt[2] - last[2]);
+    if (d < Math.max(7, c.accuracy * .6)) { GPS.state = "ok"; return; }   // standing still: GPS noise
+    if (d / dt > 9) return; }                                              // a jump (bad fix), not a dog walk
+  GPS.pts.push(pt); GPS.state = "ok"; gpsSave(); gpsUI();
+  // let the family follow the distance (at most every 45 s)
+  const w = walkNow(), dist = Math.round(routeLen(GPS.pts));
+  if (w && w.start === GPS.start && Date.now() - GPS.synced > 45000 && dist - GPS.syncedD >= 50) { GPS.synced = Date.now(); GPS.syncedD = dist;
+    setDay(ymd(new Date()), {walk: Object.assign({}, w, {dist})}).catch(() => {}); }
+}
+function gpsStop(keepState){ if (GPS.watch != null) { try { navigator.geolocation.clearWatch(GPS.watch); } catch(_) {} } GPS.watch = null;
+  if (GPS.lock) { try { GPS.lock.release(); } catch(_) {} GPS.lock = null; } if (!keepState) GPS.state = ""; }
+function gpsDrop(){ const s = GPS.start; gpsStop(); if (s) gLS.s(gpsKey(s), null); GPS.start = null; GPS.pts = []; }
+// at the end of the walk: distance + simplified route for the walk's log entry
+function gpsFinish(w){
+  let pts = GPS.start === w.start ? GPS.pts : null;
+  if (!pts) { try { pts = JSON.parse(gLS.g(gpsKey(w.start)) || "null"); } catch(_) { pts = null; } }
+  gpsStop(); gLS.s(gpsKey(w.start), null); GPS.start = null; GPS.pts = [];
+  if (!pts || pts.length < 2) return {};
+  const dist = Math.round(routeLen(pts)); let keep = pts;
+  if (keep.length > 900) { const step = keep.length / 900; keep = Array.from({length: 900}, (_, i) => keep[Math.floor(i * step)]); keep.push(pts[pts.length - 1]); }
+  return dist >= 30 ? {dist, route: polyEnc(keep)} : {};
+}
+const mineWalk = w => w && GPS.start === w.start && (GPS.watch != null || GPS.pts.length);
+function gpsLine(w){
+  if (mineWalk(w) || (w && GPS.start === w.start)) {
+    const d = GPS.pts.length > 1 ? fmtKm(routeLen(GPS.pts)) : "";
+    if (GPS.state === "denied") return T("GPS refusé : distance non mesurée");
+    if (GPS.state === "seek" && !d) return T("Recherche du GPS…");
+    if (GPS.state === "weak" && !d) return T("Signal GPS faible");
+    return d ? `<b class="num">${d}</b>` : T("GPS actif");
+  }
+  return w && w.dist ? `<b class="num">${fmtKm(w.dist)}</b>` : "";
+}
+function gpsUI(){
+  const e = document.getElementById("walk-gps"), w = walkNow(); if (e) { const l = gpsLine(w); e.innerHTML = l ? " · " + l : ""; }
+  if (Date.now() - GPS.painted > 12000) gpsPaint();
+}
+function gpsPaint(){
+  const box = document.getElementById("walk-map"), w = walkNow(); if (!box) return;
+  if (!w || GPS.start !== w.start || GPS.pts.length < 2) { box.hidden = true; return; }
+  GPS.painted = Date.now(); box.hidden = false; drawRoute(box, GPS.pts, {live: true});
+}
+// a clean static map: map tiles + the route drawn on top (no extra library)
+const isDarkUI = () => { const t = document.documentElement.dataset.theme; return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; };
+function drawRoute(box, pts, o){
+  o = o || {}; const W = box.clientWidth || 340, H = box.clientHeight || 200, pad = 26;
+  const X = (lon, z) => (lon + 180) / 360 * 256 * 2 ** z;
+  const Y = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 256 * 2 ** z; };
+  let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const p of pts) { la0 = Math.min(la0, p[0]); la1 = Math.max(la1, p[0]); lo0 = Math.min(lo0, p[1]); lo1 = Math.max(lo1, p[1]); }
+  let z = 18; while (z > 3 && (X(lo1, z) - X(lo0, z) > W - 2 * pad || Y(la0, z) - Y(la1, z) > H - 2 * pad)) z--;
+  const cx = (X(lo0, z) + X(lo1, z)) / 2, cy = (Y(la0, z) + Y(la1, z)) / 2, ox = cx - W / 2, oy = cy - H / 2, n = 2 ** z;
+  const style = isDarkUI() ? "dark_all" : "voyager", tiles = [];
+  for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + W) / 256); tx++) for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + H) / 256); ty++) {
+    if (ty < 0 || ty >= n) continue; const sx = ((tx % n) + n) % n, sub = "abcd"[(sx + ty) % 4];
+    tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://${sub}.basemaps.cartocdn.com/rastertiles/${style}/${z}/${sx}/${ty}@2x.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
+  const xy = pts.map(p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)]), d = "M" + xy.map(q => q.join(" ")).join("L"), a = xy[0], b = xy[xy.length - 1];
+  box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+    <path d="${d}" class="rt-halo"/><path d="${d}" class="rt-line"/>
+    <circle cx="${a[0]}" cy="${a[1]}" r="6" class="rt-a"/>${o.live ? `<circle cx="${b[0]}" cy="${b[1]}" r="11" class="rt-pulse"/><circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-me"/>` : `<circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-b"/>`}</svg>
+    <span class="rmap-c">© OpenStreetMap · © CARTO</span>`;
+}
+function walkView(id){
+  const x = C.logs[id]; if (!x || !x.route) { logSheet(); return; }
+  const pts = polyDec(x.route), m = memberOf(x.mid), who = (m && m.name) || x.byName || "";
+  const kmh = x.dur && x.dist ? (x.dist / 1000) / (x.dur / 60) : 0;
+  const wk = []; for (let i = 0; i < 7; i++) wk.push(ymd(addDays(new Date(), -i)));
+  const week = Object.values(C.logs).filter(l => l.k === "balade" && l.dist && wk.includes(l.date) && (l.dog || "main") === dogId());
+  const wkKm = week.reduce((s, l) => s + l.dist, 0);
+  const day = parseYmd(x.date), when = cap(fmt(day, {weekday: "long", day: "numeric", month: "long"})) + " · " + esc(x.at);
+  const st = (v, l) => `<div class="wv-s"><b class="num">${v}</b><span>${l}</span></div>`;
+  openSheet(T("Balade"), `<div class="wv-when">${when}${who ? " · " + esc(who) : ""}</div>
+    <div class="rmap big" id="wv-map"></div>
+    <div class="wv-g">${st(fmtKm(x.dist), T("Distance"))}${st((x.dur || "–") + " min", T("Durée"))}${st(kmh ? kmh.toLocaleString(LANG === "en" ? "en" : "fr-CH", {maximumFractionDigits: 1}) + " km/h" : "–", T("Vitesse moy."))}</div>
+    ${x.pee || x.poo ? `<div class="wv-tags">${x.pee ? `<span>${QL.pipi.i}${T("Pipi")}</span>` : ""}${x.poo ? `<span>${QL.caca.i}${T("Caca")}</span>` : ""}</div>` : ""}
+    ${week.length > 1 ? `<div class="wv-week">${T("Ces 7 derniers jours : {k} en {n} balades suivies", {k: fmtKm(wkKm), n: week.length})}</div>` : ""}
+    <div class="foot" style="margin:10px 4px 0">${T("Le trajet n'est visible que par votre famille.")}</div>`, null);
+  requestAnimationFrame(() => { const b = document.getElementById("wv-map"); if (b) drawRoute(b, pts); });
+}
+setInterval(() => { const w = walkNow();
+  if (w && GPS.watch == null && GPS.state !== "denied" && gLS.g(gpsKey(w.start)) != null) gpsBegin(w.start);   // app reopened during a walk
+  else if (!w && GPS.start && GPS.watch != null) gpsDrop(); }, 4000);
 async function endWalk(){
   const w = walkNow(); if (!w) return; const ds = ymd(new Date()), m = meMember();
   const start = new Date(w.start), dur = Math.max(1, Math.round((Date.now() - start) / 60000));
-  await put("logs", newId(), {date: ds, dog: dogId(), k:"balade", at: hhmm(start), dur, mid: w.mid || ME || "", by: S.me || null, byName: m ? m.name : "", pee: !!S.walkPee, poo: !!S.walkPoo});
+  const g = gpsFinish(w);
+  await put("logs", newId(), Object.assign({date: ds, dog: dogId(), k:"balade", at: hhmm(start), dur, mid: w.mid || ME || "", by: S.me || null, byName: m ? m.name : "", pee: !!S.walkPee, poo: !!S.walkPoo}, g));
   // tick the scheduled walk closest to when it started
   const st = dayStats(ds), sm = toMin(hhmm(start));
   const tsk = st.tasks.filter(t => t.cat === "balade" && !st.done[t.key] && Math.abs(toMin(t.time) - sm) <= 120).sort((a, b) => Math.abs(toMin(a.time) - sm) - Math.abs(toMin(b.time) - sm))[0];
   if (tsk) await setTick(ds, tsk.key, true, hhmm(start));
   S.walkPee = S.walkPoo = false;
   await setDay(ds, {walk: null});
-  toast(tsk ? T("Balade de {n} min notée · « {t} » cochée",{n:dur, t:tsk.title}) : T("Balade de {n} min notée",{n:dur}));
+  toast((tsk ? T("Balade de {n} min notée · « {t} » cochée",{n:dur, t:tsk.title}) : T("Balade de {n} min notée",{n:dur})) + (g.dist ? " · " + fmtKm(g.dist) : ""));
 }
 function walkSheet(){
   S.walkPee = S.walkPoo = false;
@@ -3233,7 +3371,7 @@ function walkSheet(){
 function logSheet(){
   const log = dayLog(ymd(new Date())).reverse();
   openSheet(T("Journal rapide"), `<div class="card list" style="box-shadow:none;background:var(--fill)">${log.map(x => { const q = QL[x.k] || QL.pipi, m = memberOf(x.mid);
-    return `<div class="row"><span class="ico" style="background:${q.c}">${q.i}</span>${x.photo ? `<img class="ql-th" src="${esc(x.photo)}" alt="" data-act="photoView" data-src="${esc(x.photo)}">` : ""}<div class="main"><div class="t">${esc(T(q.l))}${x.q ? " · " + esc(T(x.q)) : ""}${x.dur ? " · " + x.dur + " min" : ""}</div><div class="s">${esc(x.at)}${m ? " · " + esc(m.name) : x.byName ? " · " + esc(x.byName) : ""}${x.note ? " · " + esc(x.note) : ""}</div></div>${canTick() ? `<button type="button" class="copy" style="color:var(--red)" data-act="qlDel" data-id="${esc(x.id)}">${T("Supprimer")}</button>` : ""}</div>`; }).join("")}</div>`);
+    return `<div class="row"><span class="ico" style="background:${q.c}">${q.i}</span>${x.photo ? `<img class="ql-th" src="${esc(x.photo)}" alt="" data-act="photoView" data-src="${esc(x.photo)}">` : ""}<div class="main"><div class="t">${esc(T(q.l))}${x.q ? " · " + esc(T(x.q)) : ""}${x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") : ""}</div><div class="s">${esc(x.at)}${m ? " · " + esc(m.name) : x.byName ? " · " + esc(x.byName) : ""}${x.note ? " · " + esc(x.note) : ""}</div></div>${x.route ? `<button type="button" class="copy" data-act="walkView" data-id="${esc(x.id)}">${T("Carte")}</button>` : ""}${canTick() ? `<button type="button" class="copy" style="color:var(--red)" data-act="qlDel" data-id="${esc(x.id)}">${T("Supprimer")}</button>` : ""}</div>`; }).join("")}</div>`);
 }
 // 7-day stats for the health tab
 function logStats(){
@@ -3280,7 +3418,7 @@ function famFeed(limit){
   const out = [];
   for (let i = 0; i < 4; i++) { const ds = ymd(addDays(new Date(), -i)), st = dayStats(ds);
     st.tasks.forEach(t => { const x = st.done[t.key]; if (x) out.push({ds, at:x.at || "", t, m:doneBy(x), name:x.byName || (x.by ? whoName(x.by) : "")}); });
-    dayLog(ds).forEach(x => { const qq = QL[x.k] || QL.pipi; out.push({ds, at:x.at || "", t:{title: T(qq.l) + (x.q ? " (" + T(x.q).toLowerCase() + ")" : "") + (x.dur ? " · " + x.dur + " min" : ""), cat:"autre"}, q:qq, m:doneBy(x), name:x.byName || ""}); }); }
+    dayLog(ds).forEach(x => { const qq = QL[x.k] || QL.pipi; out.push({ds, at:x.at || "", t:{title: T(qq.l) + (x.q ? " (" + T(x.q).toLowerCase() + ")" : "") + (x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") : ""), cat:"autre"}, q:qq, m:doneBy(x), name:x.byName || ""}); }); }
   return out.sort((a, b) => (b.ds + b.at).localeCompare(a.ds + a.at)).slice(0, limit || 8);
 }
 function famToday(){
@@ -3938,6 +4076,7 @@ function notifSection(){
   return `<div class="sec"><div class="sec-h"><h2>${T("Notifications")}</h2></div><div class="card list">
     <div class="row"><div class="main"><div class="t">${T("Alertes à l'heure des tâches")}</div><div class="s">${T("Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.")}</div></div><button class="switch ${NOTIF?"on":""}" data-act="toggleNotif" role="switch" aria-checked="${NOTIF}" aria-label="${T("Alertes à l'heure des tâches")}"><i></i></button></div>
     <div class="row"><div class="main"><div class="t">${T("Son")}</div></div><button class="switch ${SOUND?"on":""}" data-act="toggleSound" role="switch" aria-checked="${SOUND}" aria-label="${T("Son")}"><i></i></button></div>
+    ${navigator.geolocation ? `<div class="row"><div class="main"><div class="t">${T("Suivre les balades par GPS")}</div><div class="s">${T("Distance et trajet mesurés sur ce téléphone pendant la balade.")}</div></div><button class="switch ${gpsOff() ? "" : "on"}" data-act="gpsPref" role="switch" aria-checked="${!gpsOff()}" aria-label="${T("Suivre les balades par GPS")}"><i></i></button></div>` : ""}
     <button class="row" data-act="testNotif"><span class="main t" style="color:var(--accent)">${T("Tester une alerte")}</span></button>
     ${window.carnetPush && window.carnetPush.available() ? `<div class="row"><div class="main"><div class="t">${T("Notifications sur ce téléphone")}</div><div class="s">${T("Même app fermée : les tâches à l'heure et ce que fait la famille.")}</div></div><button class="switch ${window.carnetPush.state() ? "on" : ""}" data-act="togglePush" role="switch" aria-checked="${window.carnetPush.state()}" aria-label="${T("Notifications sur ce téléphone")}"><i></i></button></div>
       ${window.carnetPush.state() && window.carnetPush.prefs ? (() => { const pr = window.carnetPush.prefs();
@@ -4922,13 +5061,16 @@ document.addEventListener("click", async e => {
     case "ql": { const k = el.dataset.k;
       if (k === "plus") { moreSheet(); break; }
       if (k === "caca") { stoolSheet(); break; }
-      if (k === "balade") { if (walkNow()) walkSheet(); else { await setDay(ymd(new Date()), {walk: {start: new Date().toISOString(), mid: ME || ""}}); toast(T("Balade lancée : touchez Terminer au retour")); } break; }
+      if (k === "balade") { if (walkNow()) walkSheet(); else { const st0 = new Date().toISOString(); gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}});
+        toast(navigator.geolocation && !gpsOff() ? T("Balade lancée : gardez l'app ouverte pour mesurer le trajet") : T("Balade lancée : touchez Terminer au retour")); } break; }
       await addLog(k); break; }
     case "qlStool": closeSheet(); await addLog("caca", {q: el.dataset.q}); break;
     case "qlItem": case "qlAll": logSheet(); break;
+    case "walkView": walkView(el.dataset.id); break;
+    case "gpsPref": { const on = el.getAttribute("aria-checked") !== "true"; gLS.s("dl-gps-off", on ? null : "1"); if (!on) gpsDrop(); render(); break; }
     case "qlDel": { await delLog(el.dataset.ds || ymd(new Date()), el.dataset.id); const r = el.closest(".row"); if (r) r.remove(); break; }
     case "walkEnd": walkSheet(); break;
-    case "walkCancel": if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer"); break; } await setDay(ymd(new Date()), {walk: null}); break;
+    case "walkCancel": if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer"); break; } gpsDrop(); await setDay(ymd(new Date()), {walk: null}); break;
     case "notifPee": $("#notif-root").innerHTML = ""; await addLog("pipi"); break;
     case "openFamily": go("famille"); break;
     case "closeFamily": go("aujourdhui"); break;
