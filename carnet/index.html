@@ -3271,7 +3271,7 @@ function gpsPos(p){
   if (last) { const d = gDist(last, pt), dt = Math.max(1, pt[2] - last[2]);
     if (d < Math.max(7, c.accuracy * .6)) { GPS.state = "ok"; return; }   // standing still: GPS noise
     if (d / dt > 9) return; }                                              // a jump (bad fix), not a dog walk
-  GPS.pts.push(pt); GPS.state = "ok"; gpsSave(); gpsUI();
+  GPS.pts.push(pt); GPS.state = "ok"; gpsSave(); if (GPS.pts.length === 1) GPS.painted = 0; gpsUI();
   // let the family follow the distance (at most every 45 s)
   const w = walkNow(), dist = Math.round(routeLen(GPS.pts));
   if (w && w.start === GPS.start && Date.now() - GPS.synced > 45000 && dist - GPS.syncedD >= 50) { GPS.synced = Date.now(); GPS.syncedD = dist;
@@ -3307,7 +3307,7 @@ function gpsUI(){
 }
 function gpsPaint(){
   const box = document.getElementById("walk-map"), w = walkNow(); if (!box) return;
-  if (!w || GPS.start !== w.start || GPS.pts.length < 2) { box.hidden = true; return; }
+  if (!w || GPS.start !== w.start || !GPS.pts.length) { box.hidden = true; return; }
   GPS.painted = Date.now(); box.hidden = false; drawRoute(box, GPS.pts, {live: true});
 }
 // a clean static map: map tiles + the route drawn on top (no extra library)
@@ -3317,7 +3317,7 @@ function drawRoute(box, pts, o){
   const X = (lon, z) => (lon + 180) / 360 * 256 * 2 ** z;
   const Y = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 256 * 2 ** z; };
   let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const p of pts) { la0 = Math.min(la0, p[0]); la1 = Math.max(la1, p[0]); lo0 = Math.min(lo0, p[1]); lo1 = Math.max(lo1, p[1]); }
-  let z = 18; while (z > 3 && (X(lo1, z) - X(lo0, z) > W - 2 * pad || Y(la0, z) - Y(la1, z) > H - 2 * pad)) z--;
+  let z = pts.length < 2 ? 16 : 18; while (z > 3 && (X(lo1, z) - X(lo0, z) > W - 2 * pad || Y(la0, z) - Y(la1, z) > H - 2 * pad)) z--;
   const cx = (X(lo0, z) + X(lo1, z)) / 2, cy = (Y(la0, z) + Y(la1, z)) / 2, ox = cx - W / 2, oy = cy - H / 2, n = 2 ** z;
   const style = isDarkUI() ? "dark_all" : "voyager", tiles = [];
   for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + W) / 256); tx++) for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + H) / 256); ty++) {
