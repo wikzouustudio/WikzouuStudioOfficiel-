@@ -211,8 +211,9 @@ window.carnetInbox = {
 window.carnetNotify = (kind, data) => { if (!WORKER_URL || !FID || !auth.currentUser) return;
   auth.currentUser.getIdToken().then(t => fetch(WORKER_URL.replace(/\/$/, "") + "/notify", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + t},
     body: JSON.stringify(Object.assign({family: FID, kind}, data || {}))}))
-    .then(async r => { let j = {}; try { j = await r.json(); } catch(_) {} LSs("dl-push-last", JSON.stringify({k: kind, at: Date.now(), s: r.status, n: j.sent, ok: j.ok, e: j.error || (j.fail || [])[0] || ""})); })
-    .catch(e => LSs("dl-push-last", JSON.stringify({k: kind, at: Date.now(), s: 0, e: String((e && e.message) || e).slice(0, 80)}))); };
+    .then(async r => { let j = {}; try { j = await r.json(); } catch(_) {} const last = {k: kind, at: Date.now(), s: r.status, n: j.sent, ok: j.ok, people: j.people, e: j.error || (j.fail || [])[0] || ""};
+      LSs("dl-push-last", JSON.stringify(last)); if (window.onCarnetNotified) window.onCarnetNotified(last); })
+    .catch(e => { const last = {k: kind, at: Date.now(), s: 0, e: String((e && e.message) || e).slice(0, 80)}; LSs("dl-push-last", JSON.stringify(last)); if (window.onCarnetNotified) window.onCarnetNotified(last); }); };
 
 // a signed-out person keeps their place in the family; their picture just shows a small warning until they come back
 async function setPresence(out){
