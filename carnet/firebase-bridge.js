@@ -160,17 +160,26 @@ async function pushToken(ask){
   await setDoc(doc(fs, "families", FID, "pushTokens", id), {uid: UID, token: tok, on: true, prefs: (() => { try { return JSON.parse(LSg("dl-push-prefs@" + UID) || "{}"); } catch(_) { return {}; } })(), lang: LANG, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Zurich", at: Date.now()});
   LSs("dl-push@" + UID, id); return tok;
 }
-async function pushOff(){
+// re-register this phone whenever notifications are allowed (new family, new address from Apple/Google, rules changed…)
+let pushAt = 0;
+function pushRefresh(){
+  if (!FID || !UID || !pushReady() || Notification.permission !== "granted" || LSg("dl-push-off@" + UID)) return;
+  if (Date.now() - pushAt < 20 * 60000) return; pushAt = Date.now();
+  pushToken(false).then(t => { if (t) LSs("dl-push-err", null); }).catch(e => { pushAt = 0; LSs("dl-push-err", String((e && (e.code || e.message)) || e).slice(0, 160)); });
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pushRefresh(); });
+async function pushOff(byUser){
+  if (byUser) LSs("dl-push-off@" + UID, "1"); // the person switched notifications off on purpose: never turn them back on by ourselves
   const id = LSg("dl-push@" + UID); LSs("dl-push@" + UID, null);
   if (id && FID) { try { await deleteDoc(doc(fs, "families", FID, "pushTokens", id)); } catch(_) {} }
   try { if (msgMod) await msgMod.deleteToken(msgMod.getMessaging(fb)); } catch(_) {}
 }
 window.carnetPush = {available: () => pushReady() && (!isIOS || standalone), ios: isIOS && !standalone && !!(VAPID_KEY && WORKER_URL),
   state: () => !!LSg("dl-push@" + UID) && "Notification" in window && Notification.permission === "granted",
-  enable: async () => { LSs("dl-push-err", null);
+  enable: async () => { LSs("dl-push-err", null); LSs("dl-push-off@" + UID, null);
     try { const t = await pushToken(true); if (!t) LSs("dl-push-err", "Notification" in window && Notification.permission === "denied" ? "permission refusée" : "pas de jeton"); return !!t; }
     catch(e) { LSs("dl-push-err", String((e && (e.code || e.message)) || e).slice(0, 160)); console.warn(e); return false; } },
-  disable: pushOff,
+  disable: () => pushOff(true),
   // what this phone wants to hear about
   prefs: () => { try { return JSON.parse(LSg("dl-push-prefs@" + UID) || "{}"); } catch(_) { return {}; } },
   setPref: async (k, v) => { const p = window.carnetPush.prefs(); p[k] = !!v; LSs("dl-push-prefs@" + UID, JSON.stringify(p));
@@ -203,7 +212,7 @@ async function setPresence(out){
 }
 async function enter(fid, owner){
   FID = fid; OWNER = owner; step = "done"; setPresence(false); LSs("dl-fid@" + UID, fid);
-  if (LSg("dl-push@" + UID)) setTimeout(() => pushToken(false).catch(() => {}), 1500); // keep this phone's notification address fresh
+  setTimeout(pushRefresh, 1500); // keep this phone's notification address fresh, in the family it is in now
   if (!owner) { try { const f = await getDoc(doc(fs, "families", fid)); OWNER = f.exists() && f.data().owner === UID; } catch(_) {} }
   hide();
   B.resolve(api());
