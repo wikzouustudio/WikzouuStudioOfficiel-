@@ -276,6 +276,17 @@ const localAI = typeof WebAssembly !== "undefined" ? {local: true, mode: () => g
   try { return await run(0.3); }
   catch(err) { if (aiLost(err)) { try { await aiEngine.unload(); } catch(_) {} aiEngine = null; }
     try { return await run(0.1); } catch(err2) { console.warn(err2); throw {code: "unavailable", local: true}; } }
+}, // plain text (no JSON grammar): what the small on-device models handle best
+text: async (system, prompt, maxTok) => {
+  const msgs = [{role: "system", content: system}, {role: "user", content: prompt}];
+  if (gpuOk) {
+    try { const e = await aiEngineGet();
+      const r = await e.chat.completions.create({temperature: 0.2, max_tokens: maxTok || 600, messages: msgs});
+      return String(r.choices[0].message.content || ""); }
+    catch(err) { console.warn(err); if (aiLost(err)) { try { await aiEngine.unload(); } catch(_) {} aiEngine = null; } else gpuOk = false; }
+  }
+  const g = await tfGet(); const out = await g(msgs, {max_new_tokens: maxTok || 600, do_sample: false});
+  const last = out[0].generated_text; return Array.isArray(last) ? String(last[last.length - 1].content || "") : String(last);
 }} : null;
 
 /* ---------- what the app asks for ---------- */
