@@ -178,12 +178,22 @@ window.carnetPush = {available: () => pushReady() && (!isIOS || standalone), ios
   // what is going on on this phone, for the settings screen
   info: () => ({perm: "Notification" in window ? Notification.permission : "absent", sw: "serviceWorker" in navigator, pm: "PushManager" in window, standalone, ios: isIOS,
     on: !!LSg("dl-push@" + UID), err: LSg("dl-push-err") || ""}),
-  // shows a notification straight from this phone (checks that notifications can be displayed)
-  test: async () => { const reg = await navigator.serviceWorker.ready; await reg.showNotification("Dogs Life", {body: ({fr: "Les notifications s'affichent bien ✓", en: "Notifications show fine ✓", hr: "Obavijesti se prikazuju ✓"})[LANG] || "✓", icon: "icon-192.png", tag: "test"}); }};
+  // the real test: this phone re-registers, then the server sends it a notification and says what happened
+  test: async () => {
+    try { await pushToken(false); } catch(e) { LSs("dl-push-err", String((e && (e.code || e.message)) || e).slice(0, 160)); }
+    if (!WORKER_URL || !FID || !auth.currentUser) return {error: "connexion"};
+    const t = await auth.currentUser.getIdToken();
+    const r = await fetch(WORKER_URL.replace(/\/$/, "") + "/test", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + t}, body: JSON.stringify({family: FID})});
+    let j = {}; try { j = await r.json(); } catch(_) {}
+    if (j.tokens === undefined) j.old = true; // server not updated yet
+    j.status = r.status; return j; },
+  last: () => { try { return JSON.parse(LSg("dl-push-last") || "null"); } catch(_) { return null; } }};
 // tell the rest of the family (the server skips the sender)
 window.carnetNotify = (kind, data) => { if (!WORKER_URL || !FID || !auth.currentUser) return;
   auth.currentUser.getIdToken().then(t => fetch(WORKER_URL.replace(/\/$/, "") + "/notify", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + t},
-    body: JSON.stringify(Object.assign({family: FID, kind}, data || {}))})).catch(() => {}); };
+    body: JSON.stringify(Object.assign({family: FID, kind}, data || {}))}))
+    .then(async r => { let j = {}; try { j = await r.json(); } catch(_) {} LSs("dl-push-last", JSON.stringify({k: kind, at: Date.now(), s: r.status, n: j.sent, ok: j.ok, e: j.error || (j.fail || [])[0] || ""})); })
+    .catch(e => LSs("dl-push-last", JSON.stringify({k: kind, at: Date.now(), s: 0, e: String((e && e.message) || e).slice(0, 80)}))); };
 
 // a signed-out person keeps their place in the family; their picture just shows a small warning until they come back
 async function setPresence(out){

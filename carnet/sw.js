@@ -1,5 +1,5 @@
 // Dogs Life service worker: opens without network, and shows family notifications even when the app is closed.
-const CACHE = "dogslife-v13";
+const CACHE = "dogslife-v14";
 const SHELL = ["./", "index.html", "firebase-bridge.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.png", "dog.bin"];
 const LIBS = ["www.gstatic.com", "cdnjs.cloudflare.com"]; // Firebase and three.js: versioned files, safe to keep
 
@@ -25,7 +25,9 @@ self.addEventListener("fetch", e => {
 self.addEventListener("push", e => {
   let p = {}; try { p = e.data ? e.data.json() : {}; } catch (_) { p = {data: {title: "Dogs Life", body: e.data ? e.data.text() : ""}}; }
   const d = p.data || p.notification || p, title = d.title || "Dogs Life";
-  e.waitUntil(self.registration.showNotification(title, {body: d.body || "", icon: "icon-192.png", badge: "icon-192.png", tag: d.tag || undefined, renotify: !!d.tag, data: {url: d.url || "./"}}));
+  // a unique tag: on iPhone, a notification with the same tag as an earlier one replaces it without any sound or banner
+  const tag = (d.tag || "dl") + "-" + (d.id || Date.now());
+  e.waitUntil(self.registration.showNotification(title, {body: d.body || "", icon: "icon-192.png", badge: "icon-192.png", tag, timestamp: Date.now(), data: {url: d.url || "./"}}));
 });
 self.addEventListener("notificationclick", e => {
   e.notification.close();

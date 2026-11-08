@@ -2,6 +2,7 @@
 //  - POST /notify : quand quelqu'un note un pipi, coche une tâche ou écrit un message, prévient le reste de la famille.
 //  - toutes les 5 minutes (Cron) : rappel 5 min avant chaque tâche (avec la météo pour les balades), relance 30 min après si pas faite,
 //    beau temps pour sortir (1 fois par jour), rendez-vous (la veille à 18 h et 1 h avant), bilan du soir à 20 h 30, croquettes bientôt finies (9 h).
+//  - POST /test   : envoie une vraie notification à son propre téléphone (bouton « Tester » de l'app) et dit ce qui s'est passé.
 //  - POST /      : (facultatif) conseils de Claude, seulement si un secret ANTHROPIC_API_KEY est ajouté.
 // Secrets à ajouter dans Cloudflare (Settings → Variables and secrets) :
 //  - FIREBASE_SA        : le contenu complet du fichier JSON « compte de service » de Firebase (obligatoire pour les notifications)
@@ -117,28 +118,33 @@ async function patchDocAdmin(env, path, obj) {
 }
 async function delDocAdmin(env, path) { const tok = await adminToken(env); await fetch(`${FS}/${path}`, {method: "DELETE", headers: {Authorization: "Bearer " + tok}}); }
 
-// one push to one phone; forgotten phones are removed
+// one push to one phone; only a phone that no longer exists is forgotten (never because of a problem in the message)
 async function push(env, family, t, msg) {
   const tok = await adminToken(env);
   const r = await fetch(`https://fcm.googleapis.com/v1/projects/${PROJECT}/messages:send`, {method: "POST", headers: {Authorization: "Bearer " + tok, "Content-Type": "application/json"},
-    body: JSON.stringify({message: {token: t.token, data: {title: msg.title, body: msg.body, tag: msg.tag || "", url: APP_URL},
-      webpush: {headers: {Urgency: "high", TTL: "3600"}, fcm_options: {link: APP_URL}}}})});
-  if (r.status === 404 || r.status === 400) { const e = await r.text(); if (/UNREGISTERED|INVALID_ARGUMENT|not a valid FCM/i.test(e)) await delDocAdmin(env, `families/${family}/pushTokens/${t._id}`); }
+    body: JSON.stringify({message: {token: t.token, data: {title: String(msg.title || "Dogs Life"), body: String(msg.body || ""), tag: String(msg.tag || ""), id: String(Date.now()) + Math.random().toString(36).slice(2, 6), url: APP_URL},
+      webpush: {headers: {Urgency: "high", TTL: "86400"}, fcm_options: {link: APP_URL}}}})});
+  if (r.ok) return {ok: true};
+  const e = await r.text().catch(() => "");
+  if (r.status === 404 || /UNREGISTERED|not a valid FCM registration token/i.test(e)) await delDocAdmin(env, `families/${family}/pushTokens/${t._id}`);
+  const m = /"message"\s*:\s*"([^"]+)/.exec(e);
+  console.log("fcm", r.status, e.slice(0, 300));
+  return {ok: false, status: r.status, err: (m ? m[1] : e).slice(0, 140)};
 }
 
 /* ---------- texts ---------- */
 const L = {
-  fr: {soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
+  fr: {test: "Notification envoyée par le serveur ✓", soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
     warn: "Météo à éviter pour la balade de {h}", better: "Mieux vers {h} : {i} {t}°, {p} % de pluie.", earlier: "Avancez-la ?", later: "Décalez-la ?", alsoBetter: "mieux vers {h}",
     ideal: "Temps idéal pour une balade", goOut: "Parfait pour sortir {n}", dryUntil: "sec jusqu'à", rain: "pluie probable", hot: "chaud, gardez-la courte", cold: "froid", nice: "temps idéal",
     tomorrow: "Demain", in1h: "Dans 1 heure", at: "à", recap: "Pas encore fait aujourd'hui", more: "et {n} autre(s)", food: "Croquettes bientôt finies", foodDays: "Il en reste pour environ {n} jour(s).",
     k: {pipi: "Pipi", caca: "Caca", balade: "Balade", accident: "Accident", eau: "Eau", friandise: "Friandise", sieste: "Sieste", jeu: "Jeu", vomi: "Vomissement", photo: "Photo"}},
-  en: {soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
+  en: {test: "Notification sent by the server ✓", soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
     warn: "Bad weather for the {h} walk", better: "Better around {h}: {i} {t}°, {p}% rain.", earlier: "Go earlier?", later: "Go later?", alsoBetter: "better around {h}",
     ideal: "Perfect weather for a walk", goOut: "A great time to take {n} out", dryUntil: "dry until", rain: "rain likely", hot: "hot, keep it short", cold: "cold", nice: "ideal weather",
     tomorrow: "Tomorrow", in1h: "In 1 hour", at: "at", recap: "Not done yet today", more: "and {n} more", food: "Food running low", foodDays: "About {n} day(s) left.",
     k: {pipi: "Pee", caca: "Poo", balade: "Walk", accident: "Accident", eau: "Water", friandise: "Treat", sieste: "Nap", jeu: "Play", vomi: "Vomiting", photo: "Photo"}},
-  hr: {soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
+  hr: {test: "Obavijest poslana s poslužitelja ✓", soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
     warn: "Loše vrijeme za šetnju u {h}", better: "Bolje oko {h}: {i} {t}°, {p} % kiše.", earlier: "Ranije?", later: "Kasnije?", alsoBetter: "bolje oko {h}",
     ideal: "Idealno vrijeme za šetnju", goOut: "Savršeno za izlazak ({n})", dryUntil: "suho do", rain: "moguća kiša", hot: "vruće, neka bude kratko", cold: "hladno", nice: "idealno vrijeme",
     tomorrow: "Sutra", in1h: "Za 1 sat", at: "u", recap: "Danas još nije napravljeno", more: "i još {n}", food: "Hrana pri kraju", foodDays: "Ostalo je za otprilike {n} dan(a).",
@@ -159,12 +165,28 @@ async function onNotify(request, env, origin) {
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
   const who = clean(b.who, 30), text = clean(b.text, 140), at = /^\d{1,2}:\d{2}$/.test(b.at || "") ? b.at : "";
   const tokens = (await familyTokens(env, b.family)).filter(t => t.token && t.on !== false && wants(t, "family") && (t.uid !== uid || wants(t, "self")));
-  await Promise.all(tokens.map(t => { const l = tx(t); let msg;
+  const res = await Promise.all(tokens.map(t => { const l = tx(t); let msg;
     if (b.kind === "msg") msg = {title: `${l.wrote} ${who}`, body: text, tag: "msg"};
     else if (b.kind === "log") msg = {title: `${who} · ${(Object.hasOwn(l.k, b.k) && l.k[b.k]) || text}`, body: at ? at : "", tag: "log"};
     else msg = {title: `${who} ${l.did}`, body: text + (at ? " · " + at : ""), tag: "tick"};
     return push(env, b.family, t, msg); }));
-  return reply(200, {sent: tokens.length}, origin);
+  const bad = res.filter(r => !r.ok);
+  return reply(200, {sent: tokens.length, ok: res.length - bad.length, fail: bad.map(r => `${r.status} ${r.err}`).slice(0, 3)}, origin);
+}
+
+/* ---------- a real test: the server sends to the caller's own phones and reports what happened ---------- */
+async function onTest(request, env, origin) {
+  if (!env.FIREBASE_SA) return reply(500, {error: "cle_manquante"}, origin);
+  const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  const uid = await verifyToken(token).catch(() => null); if (!uid) return reply(401, {error: "connexion"}, origin);
+  if (tooMany("t:" + uid, 10, 60000)) return reply(429, {error: "limite"}, origin);
+  let b; try { b = await request.json(); } catch { return reply(400, {error: "json"}, origin); }
+  if (!validId(b.family)) return reply(400, {error: "famille"}, origin);
+  if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
+  const all = await familyTokens(env, b.family), mine = all.filter(t => t.uid === uid && t.token);
+  const res = await Promise.all(mine.map(t => push(env, b.family, t, {title: "Dogs Life", body: tx(t).test, tag: "test"})));
+  const bad = res.filter(r => !r.ok);
+  return reply(200, {tokens: mine.length, family: all.length, ok: res.length - bad.length, off: mine.filter(t => t.on === false).length, fail: bad.map(r => `${r.status} ${r.err}`).slice(0, 3)}, origin);
 }
 
 /* ---------- every 5 minutes: tasks that are due now, or still not done 30 min later ---------- */
@@ -266,6 +288,7 @@ export default {
     if (!ORIGINS.includes(origin)) return reply(403, {error: "origin"}, origin);
     if (+(request.headers.get("Content-Length") || 0) > 65536) return reply(413, {error: "taille"}, origin);
     if (path === "/notify") return onNotify(request, env, origin);
+    if (path === "/test") return onTest(request, env, origin);
 
     // advice from Claude (only if a key was added)
     if (!env.ANTHROPIC_API_KEY) return reply(500, {error: "cle_manquante"}, origin);
