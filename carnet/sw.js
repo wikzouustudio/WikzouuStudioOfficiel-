@@ -1,5 +1,5 @@
 // Dogs Life service worker: opens without network, and shows family notifications even when the app is closed.
-const CACHE = "dogslife-v22";
+const CACHE = "dogslife-v23";
 const SHELL = ["./", "index.html", "firebase-bridge.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.png", "dog.bin"];
 const LIBS = ["www.gstatic.com", "cdnjs.cloudflare.com", "cdn.jsdelivr.net"]; // Firebase and three.js: versioned files, safe to keep
 
@@ -14,7 +14,7 @@ self.addEventListener("fetch", e => {
   const url = new URL(req.url);
   if (url.origin === location.origin) {
     // the app itself: newest version when online, the saved copy when offline
-    e.respondWith(fetch(req).then(r => { if (r.ok) { const cp = r.clone(); caches.open(CACHE).then(c => c.put(req, cp)); } return r; })
+    e.respondWith(fetch(req, {cache: "no-cache"}).then(r => { if (r.ok) { const cp = r.clone(); caches.open(CACHE).then(c => c.put(req, cp)); } return r; })
       .catch(() => caches.match(req, {ignoreSearch: true}).then(r => r || (req.mode === "navigate" ? caches.match("index.html") : Response.error()))));
   } else if (LIBS.includes(url.hostname)) {
     e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => { if (r.ok || r.type === "opaque") { const cp = r.clone(); caches.open(CACHE).then(c => c.put(req, cp)); } return r; })));

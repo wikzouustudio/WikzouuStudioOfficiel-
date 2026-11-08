@@ -244,8 +244,31 @@ async function aiEngineGet(){
   })().finally(() => { aiLoading = null; });
   return aiLoading;
 }
-const localAI = typeof navigator !== "undefined" && navigator.gpu ? {local: true, ready: () => !!LSg("dl-ai-ready"), json: async input => {
-  let e; try { e = await aiEngineGet(); } catch(err) { console.warn(err); throw {code: "unavailable", local: true}; }
+// without WebGPU (older iPhones): the same kind of model on the processor, smaller so it stays quick
+const TF_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
+const TF_MODEL = "onnx-community/Qwen2.5-0.5B-Instruct";
+let tfGen = null, tfLoading = null;
+async function tfGet(){
+  if (tfGen) return tfGen;
+  if (!tfLoading) tfLoading = (async () => {
+    const tf = await import(TF_URL), files = {};
+    const g = await tf.pipeline("text-generation", TF_MODEL, {dtype: "q4", device: "wasm", progress_callback: p => {
+      if (p && p.file && p.total) { files[p.file] = [p.loaded || 0, p.total]; const v = Object.values(files), l = v.reduce((a, x) => a + x[0], 0), t = v.reduce((a, x) => a + x[1], 0);
+        if (window.onAIProgress) window.onAIProgress(t ? l / t : 0, ""); } }});
+    LSs("dl-ai-ready", "1"); tfGen = g; return g;
+  })().finally(() => { tfLoading = null; });
+  return tfLoading;
+}
+async function tfJson(input){
+  const g = await tfGet();
+  const out = await g([{role: "system", content: "You are a careful dog-care assistant for a family. Use only the facts you are given, never invent any, and answer with valid JSON only."}, {role: "user", content: input}], {max_new_tokens: 600, do_sample: false});
+  const last = out[0].generated_text; const t = Array.isArray(last) ? last[last.length - 1].content : String(last);
+  const a = t.indexOf("{"), b = t.lastIndexOf("}"); return JSON.parse(t.slice(a, b + 1));
+}
+let gpuOk = typeof navigator !== "undefined" && !!navigator.gpu;
+const localAI = typeof WebAssembly !== "undefined" ? {local: true, mode: () => gpuOk ? "gpu" : "cpu", ready: () => !!LSg("dl-ai-ready"), json: async input => {
+  if (!gpuOk) { try { return await tfJson(input); } catch(err) { console.warn(err); throw {code: "unavailable", local: true}; } }
+  let e; try { e = await aiEngineGet(); } catch(err) { console.warn(err); gpuOk = false; try { return await tfJson(input); } catch(err2) { console.warn(err2); throw {code: "unavailable", local: true}; } }
   const run = async temp => {
     const r = await e.chat.completions.create({temperature: temp, max_tokens: 700, response_format: {type: "json_object"},
       messages: [{role: "system", content: "You are a careful dog-care assistant for a family. Use only the facts you are given, never invent any, and answer with valid JSON only."}, {role: "user", content: input}]});
