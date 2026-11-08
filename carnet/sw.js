@@ -1,7 +1,7 @@
 // Dogs Life service worker: opens without network, and shows family notifications even when the app is closed.
-const CACHE = "dogslife-v21";
+const CACHE = "dogslife-v22";
 const SHELL = ["./", "index.html", "firebase-bridge.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.png", "dog.bin"];
-const LIBS = ["www.gstatic.com", "cdnjs.cloudflare.com"]; // Firebase and three.js: versioned files, safe to keep
+const LIBS = ["www.gstatic.com", "cdnjs.cloudflare.com", "cdn.jsdelivr.net"]; // Firebase and three.js: versioned files, safe to keep
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting()));

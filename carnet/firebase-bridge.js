@@ -229,6 +229,32 @@ async function enter(fid, owner){
   B.resolve(api());
 }
 
+/* ---------- on-device AI (same engine as HMI): WebLLM + Qwen2.5 1.5B, runs on this phone, free and private ---------- */
+const AI_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/+esm";
+const AI_MODEL = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";   // ~1 GB once, then cached: good French, fast enough on a phone
+let aiEngine = null, aiLoading = null;
+const aiLost = e => /disposed|device.*lost|lost.*device|GPUDevice|out of memory|\bOOM\b|Aborted|buffer.*destroyed|mapAsync/i.test(String((e && e.message) || e));
+async function aiEngineGet(){
+  if (aiEngine) return aiEngine;
+  if (!aiLoading) aiLoading = (async () => {
+    const webllm = await import(AI_URL);
+    let id = AI_MODEL; try { const a = await navigator.gpu.requestAdapter(); if (a && !a.features.has("shader-f16")) id = id.replace("q4f16_1", "q4f32_1"); } catch(_) {}
+    const e = await webllm.CreateMLCEngine(id, {initProgressCallback: r => { if (window.onAIProgress) window.onAIProgress(r.progress, r.text); }}, {context_window_size: 4096});
+    LSs("dl-ai-ready", "1"); aiEngine = e; return e;
+  })().finally(() => { aiLoading = null; });
+  return aiLoading;
+}
+const localAI = typeof navigator !== "undefined" && navigator.gpu ? {local: true, ready: () => !!LSg("dl-ai-ready"), json: async input => {
+  let e; try { e = await aiEngineGet(); } catch(err) { console.warn(err); throw {code: "unavailable", local: true}; }
+  const run = async temp => {
+    const r = await e.chat.completions.create({temperature: temp, max_tokens: 700, response_format: {type: "json_object"},
+      messages: [{role: "system", content: "You are a careful dog-care assistant for a family. Use only the facts you are given, never invent any, and answer with valid JSON only."}, {role: "user", content: input}]});
+    const t = (r.choices[0].message.content || ""), a = t.indexOf("{"), b = t.lastIndexOf("}"); return JSON.parse(t.slice(a, b + 1)); };
+  try { return await run(0.3); }
+  catch(err) { if (aiLost(err)) { try { await aiEngine.unload(); } catch(_) {} aiEngine = null; }
+    try { return await run(0.1); } catch(err2) { console.warn(err2); throw {code: "unavailable", local: true}; } }
+}} : null;
+
 /* ---------- what the app asks for ---------- */
 function api(){
   const path = col => collection(fs, "families", FID, col);
@@ -262,7 +288,7 @@ function api(){
     downloads: {save: async ({filename, data}) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], {type: /\.html$/.test(filename) ? "text/html" : "text/plain"})); a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }},
     sample: ADVICE_URL ? {json: async (input, opts) => {
       const r = await fetch(ADVICE_URL, {method: "POST", headers: {"Content-Type": "application/json", "Authorization": "Bearer " + await auth.currentUser.getIdToken()}, body: JSON.stringify({input, family: FID})});
-      if (!r.ok) throw {code: r.status === 429 ? "rate_limited" : "unavailable"}; return r.json(); }} : null
+      if (!r.ok) throw {code: r.status === 429 ? "rate_limited" : "unavailable"}; return r.json(); }} : localAI
   };
 }
 
