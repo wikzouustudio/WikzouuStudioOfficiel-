@@ -3249,6 +3249,7 @@ function quickLog(){
 }
 let liveTok = 0;
 function liveBanner(m, title, text, kind){
+  if (window.carnetPush) return; // website: only real phone notifications
   const tok = ++liveTok;
   $("#notif-root").innerHTML = `<div class="notif live" role="status">${m && m.color ? mav(m, 36) : `<span class="ico" style="background:var(--accent)">${kind === "msg" ? "💬" : "✓"}</span>`}<div class="main"><div class="t">${esc(title)}</div><div class="s">${esc(String(text).slice(0, 90))}</div></div>
     ${kind === "msg" ? `<button class="btn" data-act="go" data-tab="famille">${T("Voir")}</button>` : ""}<button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
@@ -3256,6 +3257,7 @@ function liveBanner(m, title, text, kind){
   setTimeout(() => { if (tok === liveTok) { const n = $("#notif-root .notif.live"); if (n) n.remove(); } }, 7000);
 }
 function liveLogNotice(x){
+  if (window.carnetPush) return; // website: only real phone notifications
   if ((x.dog || "main") !== dogId()) return;
   const q = QL[x.k] || QL.pipi, m = memberOf(x.mid), who = (m && m.name) || x.byName || T("Quelqu'un"), tok = ++liveTok;
   const what = x.k === "photo" && x.note ? x.note.slice(0, 40) : T(q.l) + (x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") : "");
@@ -4090,7 +4092,7 @@ document.addEventListener("pointerdown", () => { if (!actx && SOUND) { try { act
 function chime(){ if (!SOUND || !actx) return; try { const t = actx.currentTime; [880, 1175].forEach((f, i) => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; o.type = "sine";
   g.gain.setValueAtTime(0, t + i*.16); g.gain.linearRampToValueAtTime(.18, t + i*.16 + .02); g.gain.exponentialRampToValueAtTime(.001, t + i*.16 + .45); o.connect(g).connect(actx.destination); o.start(t + i*.16); o.stop(t + i*.16 + .5); }); } catch(_) {} }
 function checkNotifs(){
-  if (!NOTIF || !dog() || S.mode === "loading") return;
+  if (window.carnetPush || !NOTIF || !dog() || S.mode === "loading") return; // website: reminders come as real notifications from the server
   const today = ymd(new Date()), nm = toMin(hhmm(new Date())), st = dayStats(today), me = ME;
   const due = st.tasks.filter(t => !st.done[t.key] && toMin(t.time) <= nm && nm - toMin(t.time) <= 5 && !notified.has(today + t.key) && (!t.who || !me || t.who === me));
   if (!due.length && isPuppy()) {
@@ -4113,10 +4115,10 @@ function checkNotifs(){
 }
 function notifSection(){
   return `<div class="sec"><div class="sec-h"><h2>${T("Notifications")}</h2></div><div class="card list">
-    <div class="row"><div class="main"><div class="t">${T("Alertes à l'heure des tâches")}</div><div class="s">${T("Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.")}</div></div><button class="switch ${NOTIF?"on":""}" data-act="toggleNotif" role="switch" aria-checked="${NOTIF}" aria-label="${T("Alertes à l'heure des tâches")}"><i></i></button></div>
+    ${window.carnetPush ? "" : `<div class="row"><div class="main"><div class="t">${T("Alertes à l'heure des tâches")}</div><div class="s">${T("Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.")}</div></div><button class="switch ${NOTIF?"on":""}" data-act="toggleNotif" role="switch" aria-checked="${NOTIF}" aria-label="${T("Alertes à l'heure des tâches")}"><i></i></button></div>`}
     <div class="row"><div class="main"><div class="t">${T("Son")}</div></div><button class="switch ${SOUND?"on":""}" data-act="toggleSound" role="switch" aria-checked="${SOUND}" aria-label="${T("Son")}"><i></i></button></div>
     ${navigator.geolocation ? `<div class="row"><div class="main"><div class="t">${T("Suivre les balades par GPS")}</div><div class="s">${T("Distance et trajet mesurés sur ce téléphone pendant la balade.")}</div></div><button class="switch ${gpsOff() ? "" : "on"}" data-act="gpsPref" role="switch" aria-checked="${!gpsOff()}" aria-label="${T("Suivre les balades par GPS")}"><i></i></button></div>` : ""}
-    <button class="row" data-act="testNotif"><span class="main t" style="color:var(--accent)">${T("Tester une alerte")}</span></button>
+    ${window.carnetPush ? "" : `<button class="row" data-act="testNotif"><span class="main t" style="color:var(--accent)">${T("Tester une alerte")}</span></button>`}
     ${window.carnetPush && window.carnetPush.available() ? `<div class="row"><div class="main"><div class="t">${T("Notifications sur ce téléphone")}</div><div class="s">${T("Même app fermée : les tâches à l'heure et ce que fait la famille.")}</div></div><button class="switch ${window.carnetPush.state() ? "on" : ""}" data-act="togglePush" role="switch" aria-checked="${window.carnetPush.state()}" aria-label="${T("Notifications sur ce téléphone")}"><i></i></button></div>
       ${window.carnetPush.state() && window.carnetPush.prefs ? (() => { const pr = window.carnetPush.prefs();
         return [["tasks", "Rappels des tâches", "5 min avant, puis 30 min après si ce n'est pas fait."], ["family", "Activité de la famille", "Quand quelqu'un coche, note un pipi ou écrit un message."],
