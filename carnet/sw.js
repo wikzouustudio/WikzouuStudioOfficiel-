@@ -1,5 +1,5 @@
 // Dogs Life service worker: opens without network, and shows family notifications even when the app is closed.
-const CACHE = "dogslife-v19";
+const CACHE = "dogslife-v20";
 const SHELL = ["./", "index.html", "firebase-bridge.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.png", "dog.bin"];
 const LIBS = ["www.gstatic.com", "cdnjs.cloudflare.com"]; // Firebase and three.js: versioned files, safe to keep
 
@@ -26,14 +26,16 @@ self.addEventListener("push", e => {
   let p = {}; try { p = e.data ? e.data.json() : {}; } catch (_) { p = {data: {title: "Dogs Life", body: e.data ? e.data.text() : ""}}; }
   const d = p.data || p.notification || p, title = d.title || "Dogs Life";
   // a unique tag: on iPhone, a notification with the same tag as an earlier one replaces it without any sound or banner
-  const tag = (d.tag || "dl") + "-" + (d.id || Date.now());
-  e.waitUntil(self.registration.showNotification(title, {body: d.body || "", icon: "icon-192.png", badge: "icon-192.png", tag, timestamp: Date.now(), data: {url: d.url || "./"}}));
+  // one notification per event (nid): the same event received twice replaces itself instead of showing twice
+  const tag = d.nid ? "n-" + d.nid : (d.tag || "dl") + "-" + (d.id || Date.now());
+  e.waitUntil(self.registration.showNotification(title, {body: d.body || "", icon: "icon-192.png", badge: "icon-192.png", tag, timestamp: Date.now(), data: {url: (d.url || "./") + (d.nid ? "#n=" + encodeURIComponent(d.nid) + (d.tab ? "&t=" + d.tab : "") : ""), nid: d.nid || "", tab: d.tab || ""}}));
 });
 self.addEventListener("notificationclick", e => {
   e.notification.close();
   const url = (e.notification.data && e.notification.data.url) || "./";
   e.waitUntil(self.clients.matchAll({type: "window", includeUncontrolled: true}).then(ws => {
-    const w = ws.find(c => c.url.includes("/carnet/")); if (w) return w.focus();
+    const d = e.notification.data || {}, w = ws.find(c => c.url.includes("/carnet/"));
+    if (w) { if (d.nid) w.postMessage({type: "open-notif", nid: d.nid, tab: d.tab}); return w.focus(); }
     return self.clients.openWindow(url);
   }));
 });

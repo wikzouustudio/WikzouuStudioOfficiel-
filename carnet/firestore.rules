@@ -81,19 +81,27 @@ service cloud.firestore {
         allow update: if isMember(fid) && resource.data.uid == me() && request.resource.data.uid == me() && fields(12);
       }
 
+      // notification centre: each person sees, marks as read and deletes only their own notifications (only the server writes them)
+      match /inbox/{nid} {
+        allow read, delete: if isMember(fid) && resource.data.to == me();
+        allow update: if isMember(fid) && resource.data.to == me()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+        allow create: if false;
+      }
+
       // everything in the carnet (dog, routine, health, ticks, messages…): members only
       match /{col}/{docId} {
-        allow read: if isMember(fid) && !(col in ['access', 'pushTokens']);
+        allow read: if isMember(fid) && !(col in ['access', 'pushTokens', 'inbox']);
 
-        allow create: if isMember(fid) && !(col in ['access', 'pushTokens']) && fields(80)
+        allow create: if isMember(fid) && !(col in ['access', 'pushTokens', 'inbox']) && fields(80)
           && (canEdit(fid) || sitterCreate(col, docId));
-        allow update: if isMember(fid) && !(col in ['access', 'pushTokens']) && fields(80)
+        allow update: if isMember(fid) && !(col in ['access', 'pushTokens', 'inbox']) && fields(80)
           && (canEdit(fid) || sitterUpdate(col, docId))
           // a person's role and account link never change through the app
           && (col != 'members' || (request.resource.data.get('uid', '') == resource.data.get('uid', '')
                                    || resource.data.get('uid', '') == '')
                                && (canEdit(fid) || request.resource.data.get('role', '') == resource.data.get('role', '')));
-        allow delete: if isMember(fid) && !(col in ['access', 'pushTokens'])
+        allow delete: if isMember(fid) && !(col in ['access', 'pushTokens', 'inbox'])
           && (canEdit(fid) || sitterDelete(col, docId));
       }
 

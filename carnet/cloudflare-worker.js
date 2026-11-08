@@ -2,6 +2,8 @@
 //  - POST /notify : quand quelqu'un note un pipi, coche une tâche ou écrit un message, prévient le reste de la famille.
 //  - toutes les 5 minutes (Cron) : rappel 5 min avant chaque tâche (avec la météo pour les balades), relance 30 min après si pas faite,
 //    beau temps pour sortir (1 fois par jour), rendez-vous (la veille à 18 h et 1 h avant), bilan du soir à 20 h 30, croquettes bientôt finies (9 h).
+//  - centre de notifications : chaque événement crée une notification par destinataire (families/{id}/inbox), lue/non lue par personne,
+//    synchronisée sur tous ses appareils par Firestore, plus une notification push sur chacun de ses téléphones.
 //  - POST /test   : envoie une vraie notification à son propre téléphone (bouton « Tester » de l'app) et dit ce qui s'est passé.
 //  - POST /      : (facultatif) conseils de Claude, seulement si un secret ANTHROPIC_API_KEY est ajouté.
 // Secrets à ajouter dans Cloudflare (Settings → Variables and secrets) :
@@ -83,12 +85,40 @@ function val(v) {
 }
 function fields(f) { const o = {}; for (const k in (f || {})) o[k] = val(f[k]); return o; }
 const docId = name => name.split("/").pop();
-// a phone's notification address only counts while its person is still in the family (left or removed: cleaned up)
-async function familyTokens(env, fid) {
+// who is in the family (access) and their phones; a phone only counts while its person is still in the family (left or removed: cleaned up)
+async function familyCtx(env, fid) {
   const [toks, acc] = await Promise.all([list(env, `families/${fid}/pushTokens`), list(env, `families/${fid}/access`)]);
-  const ok = new Set(acc.map(a => a._id)), keep = [];
-  for (const t of toks) { if (t.uid && ok.has(t.uid)) keep.push(t); else await delDocAdmin(env, `families/${fid}/pushTokens/${t._id}`).catch(() => {}); }
-  return keep;
+  const ok = new Set(acc.map(a => a._id)), tokens = [];
+  for (const t of toks) { if (t.uid && ok.has(t.uid)) tokens.push(t); else await delDocAdmin(env, `families/${fid}/pushTokens/${t._id}`).catch(() => {}); }
+  return {tokens, uids: [...ok]};
+}
+
+/* ---------- notification centre: one entry per person, written once (a retry never duplicates nor resets "read") ---------- */
+const DB = `projects/${PROJECT}/databases/(default)/documents`;
+const toFs = v => typeof v === "boolean" ? {booleanValue: v} : typeof v === "number" ? (Number.isInteger(v) ? {integerValue: String(v)} : {doubleValue: v}) : v == null ? {nullValue: null} : {stringValue: String(v)};
+const nidOf = (ev, uid) => (String(ev).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 90) || "ev" + Date.now()) + "-" + uid;
+async function addInbox(env, fid, items) {
+  const fresh = new Set(); if (!items.length) return fresh;
+  const tok = await adminToken(env);
+  for (let i = 0; i < items.length; i += 400) {
+    const writes = items.slice(i, i + 400).map(({nid, data}) => { const f = {}; for (const k in data) f[k] = toFs(data[k]);
+      return {update: {name: `${DB}/families/${fid}/inbox/${nid}`, fields: f}, currentDocument: {exists: false}}; });
+    const r = await fetch(`https://firestore.googleapis.com/v1/${DB}:batchWrite`, {method: "POST", headers: {Authorization: "Bearer " + tok, "Content-Type": "application/json"}, body: JSON.stringify({writes})});
+    const part = items.slice(i, i + 400);
+    if (!r.ok) { console.log("inbox", r.status, (await r.text()).slice(0, 200)); part.forEach(x => fresh.add(x.nid)); continue; }
+    const st = ((await r.json()).status || []); part.forEach((x, k) => { if (!st[k] || !st[k].code) fresh.add(x.nid); }); // already there = same event again: no second push
+  }
+  return fresh;
+}
+// an event for some people of the family: their notification centre + a push on each of their phones (pushOnly: the sender's own phones, no entry)
+async function deliver(env, fid, ctx, o) {
+  const at = Date.now(), who = [...new Set(o.uids || [])].filter(u => ctx.uids.includes(u)), per = {};
+  const items = who.map(uid => { const t0 = ctx.tokens.find(t => t.uid === uid), m = o.make(tx(t0)), nid = nidOf(o.ev, uid); per[uid] = nid;
+    return {nid, data: {to: uid, from: o.from || "", fromName: o.fromName || "", type: o.type, title: m.title, body: m.body || "", tab: o.tab || "", ev: String(o.ev), at, read: false}}; });
+  const fresh = await addInbox(env, fid, items);
+  if (items.length && !fresh.size) return []; // this exact event was already delivered
+  const targets = ctx.tokens.filter(t => t.token && t.on !== false && wants(t, o.pref) && ((per[t.uid] && fresh.has(per[t.uid])) || (o.pushOnly || []).includes(t.uid)));
+  return Promise.all(targets.map(t => { const nid = per[t.uid] || ""; return push(env, fid, t, Object.assign(o.make(tx(t)), {nid, tag: nid || String(o.ev), tab: o.tab || ""})); }));
 }
 async function list(env, path) {
   const tok = await adminToken(env), out = []; let page = "";
@@ -122,7 +152,7 @@ async function delDocAdmin(env, path) { const tok = await adminToken(env); await
 async function push(env, family, t, msg) {
   const tok = await adminToken(env);
   const r = await fetch(`https://fcm.googleapis.com/v1/projects/${PROJECT}/messages:send`, {method: "POST", headers: {Authorization: "Bearer " + tok, "Content-Type": "application/json"},
-    body: JSON.stringify({message: {token: t.token, data: {title: String(msg.title || "Dogs Life"), body: String(msg.body || ""), tag: String(msg.tag || ""), id: String(Date.now()) + Math.random().toString(36).slice(2, 6), url: APP_URL},
+    body: JSON.stringify({message: {token: t.token, data: {title: String(msg.title || "Dogs Life"), body: String(msg.body || ""), tag: String(msg.tag || ""), id: String(Date.now()) + Math.random().toString(36).slice(2, 6), nid: String(msg.nid || ""), tab: String(msg.tab || ""), url: APP_URL},
       webpush: {headers: {Urgency: "high", TTL: "86400"}, fcm_options: {link: APP_URL}}}})});
   if (r.ok) return {ok: true};
   const e = await r.text().catch(() => "");
@@ -152,7 +182,7 @@ const L = {
 };
 const tx = t => L[t && t.lang] || L.fr;
 // each phone chooses what it wants: tasks, family, self (my own actions), weather, appts, daily (all on by default)
-const wants = (t, k) => !(t.prefs && t.prefs[k] === false);
+const wants = (t, k) => !k || !(t.prefs && t.prefs[k] === false);
 
 /* ---------- family events: someone did something, tell the others ---------- */
 async function onNotify(request, env, origin) {
@@ -164,14 +194,15 @@ async function onNotify(request, env, origin) {
   if (!validId(b.family) || !["msg", "log", "tick"].includes(b.kind)) return reply(400, {error: "famille"}, origin);
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
   const who = clean(b.who, 30), text = clean(b.text, 140), at = /^\d{1,2}:\d{2}$/.test(b.at || "") ? b.at : "";
-  const tokens = (await familyTokens(env, b.family)).filter(t => t.token && t.on !== false && wants(t, "family") && (t.uid !== uid || wants(t, "self")));
-  const res = await Promise.all(tokens.map(t => { const l = tx(t); let msg;
-    if (b.kind === "msg") msg = {title: `${l.wrote} ${who}`, body: text, tag: "msg"};
-    else if (b.kind === "log") msg = {title: `${who} · ${(Object.hasOwn(l.k, b.k) && l.k[b.k]) || text}`, body: at ? at : "", tag: "log"};
-    else msg = {title: `${who} ${l.did}`, body: text + (at ? " · " + at : ""), tag: "tick"};
-    return push(env, b.family, t, msg); }));
+  const ctx = await familyCtx(env, b.family), ev = (validId(b.ev) ? b.ev : b.kind + Date.now()).slice(0, 60);
+  const make = l => b.kind === "msg" ? {title: `${l.wrote} ${who}`, body: text}
+    : b.kind === "log" ? {title: `${who} · ${(Object.hasOwn(l.k, b.k) && l.k[b.k]) || text}`, body: at ? at : ""}
+    : {title: `${who} ${l.did}`, body: text + (at ? " · " + at : "")};
+  const self = ctx.tokens.some(t => t.uid === uid && wants(t, "self")) ? [uid] : [];
+  const res = await deliver(env, b.family, ctx, {ev: b.kind + "-" + ev, uids: ctx.uids.filter(u => u !== uid), pushOnly: self, from: uid, fromName: who, pref: "family",
+    type: b.kind === "msg" ? "message" : "activite", tab: b.kind === "msg" ? "famille" : "aujourdhui", make});
   const bad = res.filter(r => !r.ok);
-  return reply(200, {sent: tokens.length, ok: res.length - bad.length, fail: bad.map(r => `${r.status} ${r.err}`).slice(0, 3)}, origin);
+  return reply(200, {sent: res.length, ok: res.length - bad.length, people: ctx.uids.length - 1, fail: bad.map(r => `${r.status} ${r.err}`).slice(0, 3)}, origin);
 }
 
 /* ---------- a real test: the server sends to the caller's own phones and reports what happened ---------- */
@@ -183,8 +214,8 @@ async function onTest(request, env, origin) {
   let b; try { b = await request.json(); } catch { return reply(400, {error: "json"}, origin); }
   if (!validId(b.family)) return reply(400, {error: "famille"}, origin);
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
-  const all = await familyTokens(env, b.family), mine = all.filter(t => t.uid === uid && t.token);
-  const res = await Promise.all(mine.map(t => push(env, b.family, t, {title: "Dogs Life", body: tx(t).test, tag: "test"})));
+  const ctx = await familyCtx(env, b.family), all = ctx.tokens, mine = all.filter(t => t.uid === uid && t.token);
+  const res = await deliver(env, b.family, ctx, {ev: "test-" + Date.now(), uids: [uid], type: "admin", tab: "profil", make: l => ({title: "Dogs Life", body: l.test})});
   const bad = res.filter(r => !r.ok);
   return reply(200, {tokens: mine.length, family: all.length, ok: res.length - bad.length, off: mine.filter(t => t.on === false).length, fail: bad.map(r => `${r.status} ${r.err}`).slice(0, 3)}, origin);
 }
@@ -216,7 +247,7 @@ function betterHour(w, T, fromMin) { const H0 = Math.floor(T / 60), cur = wxScor
 const wxNote = (x, l) => !x ? "" : x.p >= 60 ? ` · 🌧️ ${l.rain} (${x.p} %)` : x.f >= 28 ? ` · 🥵 ${Math.round(x.f)}°, ${l.hot}` : x.t <= 0 ? ` · 🥶 ${Math.round(x.t)}°, ${l.cold}` : x.c <= 2 && x.p < 20 ? ` · ${wxIcon(x.c)} ${Math.round(x.t)}°, ${l.nice}` : ` · ${wxIcon(x.c)} ${Math.round(x.t)}°`;
 
 async function remindFamily(env, fid, when) {
-  const tokens = (await familyTokens(env, fid)).filter(t => t.token && t.on !== false);
+  const ctx = await familyCtx(env, fid), tokens = ctx.tokens.filter(t => t.token && t.on !== false);
   if (!tokens.length) return;
   const tz = tokens.find(t => t.tz) ? tokens.find(t => t.tz).tz : DEFAULT_TZ, n = localNow(tz, when), tmr = localNow(tz, new Date(when.getTime() + 86400000));
   const at = m => { const d = n.min - m; return d >= 0 && d < 5; }; // this 5-minute run covers minute m
@@ -226,8 +257,10 @@ async function remindFamily(env, fid, when) {
   const done = new Set(ticks.map(t => (t.dog || "main") + "|" + t.key));
   days.forEach(d => Object.keys(d.done || {}).forEach(k => done.add((d.dog || "main") + "|" + k)));
   const dogName = (dogCfg && dogCfg.name) || "";
-  const send = (k, targets, make) => Promise.all(targets.filter(t => wants(t, k)).map(t => push(env, fid, t, make(tx(t)))));
-  const forWho = who => { const m = members.find(x => x._id === who); return m && m.uid ? tokens.filter(t => t.uid === m.uid) : tokens; };
+  // send(pref, people, text, event id, type, tab): notification centre + phones
+  const send = (k, uids, make, ev, type, tab) => deliver(env, fid, ctx, {ev, uids, make, pref: k, type, tab: tab || "aujourdhui"});
+  const everyone = ctx.uids;
+  const forWho = who => { const m = members.find(x => x._id === who); return m && m.uid && everyone.includes(m.uid) ? [m.uid] : everyone; };
   let wx; const getWx = async () => wx === undefined ? (wx = await weather(wxCfg)) : wx;
 
   // tasks: 5 min before, then once more 30 min after if still not ticked
@@ -242,18 +275,19 @@ async function remindFamily(env, fid, when) {
     if (walk && at(T - 120)) { const w = await getWx(), x = w && w(Math.floor(T / 60));
       if (x && wxScore(x) >= 45) { const b = betterHour(w, T, n.min);
         if (b) await send("weather", forWho(task.who), l => ({title: `${wxIcon(x.c)} ${l.warn.replace("{h}", task.time)}`,
-          body: l.better.replace("{h}", hm(b.H * 60)).replace("{i}", wxIcon(b.x.c)).replace("{t}", Math.round(b.x.t)).replace("{p}", b.x.p) + " " + (b.H * 60 < T ? l.earlier : l.later), tag: "wx-" + task.key})); } }
+          body: l.better.replace("{h}", hm(b.H * 60)).replace("{i}", wxIcon(b.x.c)).replace("{t}", Math.round(b.x.t)).replace("{p}", b.x.p) + " " + (b.H * 60 < T ? l.earlier : l.later)}), `wx-${task.key}-${n.ds}`, "alerte"); } }
     const soon = at(T - EARLY_MIN), late = at(T + LATE_MIN); if (!soon && !late) continue;
     const w = soon && walk ? await getWx() : null, x = w ? w(Math.floor(T / 60)) : null, b = x && wxScore(x) >= 45 ? betterHour(w, T, n.min) : null;
     await send("tasks", forWho(task.who), l => { const dn = task.dog === "main" && dogName ? ` ${l.for} ${dogName}` : "";
-      return soon ? {title: `${l.soon} · ${task.time}`, body: task.title + dn + wxNote(x, l) + (b ? `, ${l.alsoBetter.replace("{h}", hm(b.H * 60))}` : ""), tag: task.key} : {title: `${l.late} · ${task.time}`, body: `${task.title} ${l.notYet}`, tag: task.key}; });
+      return soon ? {title: `${l.soon} · ${task.time}`, body: task.title + dn + wxNote(x, l) + (b ? `, ${l.alsoBetter.replace("{h}", hm(b.H * 60))}` : "")} : {title: `${l.late} · ${task.time}`, body: `${task.title} ${l.notYet}`}; },
+      `${soon ? "soon" : "late"}-${task.key}-${n.ds}`, "rappel");
   }
 
   // appointments: the evening before at 18:00, and 1 hour before
   for (const a of appts) {
     const T = a.time ? toMin(a.time) : null, title = a.title || "";
-    if (a.date === tmr.ds && at(18 * 60)) await send("appts", forWho(a.who), l => ({title: `${l.tomorrow}${a.time ? " " + l.at + " " + a.time : ""}`, body: title + (dogName ? ` · ${dogName}` : ""), tag: "appt-" + a._id}));
-    if (a.date === n.ds && T != null && at(T - 60)) await send("appts", forWho(a.who), l => ({title: `${l.in1h} · ${a.time}`, body: title + (dogName ? ` · ${dogName}` : ""), tag: "appt-" + a._id}));
+    if (a.date === tmr.ds && at(18 * 60)) await send("appts", forWho(a.who), l => ({title: `${l.tomorrow}${a.time ? " " + l.at + " " + a.time : ""}`, body: title + (dogName ? ` · ${dogName}` : "")}), `appt-${a._id}-eve`, "evenement", "planning");
+    if (a.date === n.ds && T != null && at(T - 60)) await send("appts", forWho(a.who), l => ({title: `${l.in1h} · ${a.time}`, body: title + (dogName ? ` · ${dogName}` : "")}), `appt-${a._id}-1h`, "evenement", "planning");
   }
 
   // perfect weather to go out: once a day, between 10:00 and 18:00, dry for the next 2 hours
@@ -262,20 +296,26 @@ async function remindFamily(env, fid, when) {
     const ok = x && x.c <= 2 && x.p < 15 && x.f >= 10 && x.f <= 24 && [1, 2].every(k => { const y = w(H + k); return y && y.p < 25; });
     if (ok) { let dry = H + 2; while (dry < 21 && w(dry + 1) && w(dry + 1).p < 25) dry++;
       await patchDocAdmin(env, `families/${fid}/config/notify`, {wxDay: n.ds});
-      await send("weather", tokens, l => ({title: `${wxIcon(x.c)} ${l.ideal}`, body: `${dogName ? l.goOut.replace("{n}", dogName) + " · " : ""}${Math.round(x.t)}° · ${l.dryUntil} ${hm((dry + 1) * 60)}`, tag: "wx"})); }
+      await send("weather", everyone, l => ({title: `${wxIcon(x.c)} ${l.ideal}`, body: `${dogName ? l.goOut.replace("{n}", dogName) + " · " : ""}${Math.round(x.t)}° · ${l.dryUntil} ${hm((dry + 1) * 60)}`}), `wxday-${n.ds}`, "alerte"); }
   }
 
   // evening recap at 20:30: what's still not ticked today
   if (at(20 * 60 + 30)) {
     const left = tasks.filter(t => !done.has(t.dog + "|" + t.key) && toMin(t.time) <= n.min);
-    if (left.length) await send("daily", tokens, l => ({title: l.recap, body: left.slice(0, 3).map(t => `${t.time} ${t.title}`).join(", ") + (left.length > 3 ? " " + l.more.replace("{n}", left.length - 3) : ""), tag: "recap"}));
+    if (left.length) await send("daily", everyone, l => ({title: l.recap, body: left.slice(0, 3).map(t => `${t.time} ${t.title}`).join(", ") + (left.length > 3 ? " " + l.more.replace("{n}", left.length - 3) : "")}), `recap-${n.ds}`, "rappel");
   }
 
   // food running low: 9:00, when about 3 days or less are left
   if (food && +food.bagKg && food.opened && at(9 * 60)) {
     let daily = +food.daily; if (!daily) { const m = String((dogCfg && dogCfg.ration) || "").match(/(\d+(?:[.,]\d+)?)\s*g/i); daily = m ? +m[1].replace(",", ".") : 0; }
     if (daily) { const since = Math.max(0, Math.round((Date.parse(n.ds) - Date.parse(food.opened)) / 86400000)), left = (food.bagKg * 1000 - since * daily) / daily;
-      if (left > 0 && left <= 3) await send("daily", tokens, l => ({title: `🦴 ${l.food}`, body: l.foodDays.replace("{n}", Math.max(1, Math.floor(left))), tag: "food"})); }
+      if (left > 0 && left <= 3) await send("daily", everyone, l => ({title: `🦴 ${l.food}`, body: l.foodDays.replace("{n}", Math.max(1, Math.floor(left)))}), `food-${n.ds}`, "alerte"); }
+  }
+
+  // 3:00: tidy the notification centre (read ones after 7 days, all after 30 days)
+  if (at(3 * 60)) {
+    const old = (await list(env, `families/${fid}/inbox`)).filter(x => { const age = Date.now() - (+x.at || 0); return age > 30 * 86400000 || (x.read && age > 7 * 86400000); });
+    for (const x of old) await delDocAdmin(env, `families/${fid}/inbox/${x._id}`).catch(() => {});
   }
 }
 

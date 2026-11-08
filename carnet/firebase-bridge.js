@@ -4,7 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, onSnapshot, terminate, clearIndexedDbPersistence, getDocFromServer } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, writeBatch, collection, query, where, onSnapshot, terminate, clearIndexedDbPersistence, getDocFromServer } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCgpdewI-Nfnq8V3HKrBwvFz0FDXX-9HJw",
@@ -197,6 +197,16 @@ window.carnetPush = {available: () => pushReady() && (!isIOS || standalone), ios
     if (j.tokens === undefined) j.old = true; // server not updated yet
     j.status = r.status; return j; },
   last: () => { try { return JSON.parse(LSg("dl-push-last") || "null"); } catch(_) { return null; } }};
+// notification centre: my notifications in this family, live on every device (read status included); works offline too
+window.carnetInbox = {
+  watch(cb){ if (!FID || !UID) return () => {};
+    return onSnapshot(query(collection(fs, "families", FID, "inbox"), where("to", "==", UID)), {includeMetadataChanges: true},
+      s => cb(s.docs.map(d => Object.assign({id: d.id}, d.data())).sort((a, b) => (b.at || 0) - (a.at || 0)), !s.metadata.fromCache && navigator.onLine),
+      e => { console.warn(e); cb(null, false); }); },
+  read: id => updateDoc(doc(fs, "families", FID, "inbox", id), {read: true, readAt: Date.now()}).catch(e => console.warn(e)),
+  readAll: async ids => { for (let i = 0; i < ids.length; i += 400) { const b = writeBatch(fs); ids.slice(i, i + 400).forEach(id => b.update(doc(fs, "families", FID, "inbox", id), {read: true, readAt: Date.now()})); await b.commit().catch(e => console.warn(e)); } },
+  del: id => deleteDoc(doc(fs, "families", FID, "inbox", id)).catch(e => console.warn(e))
+};
 // tell the rest of the family (the server skips the sender)
 window.carnetNotify = (kind, data) => { if (!WORKER_URL || !FID || !auth.currentUser) return;
   auth.currentUser.getIdToken().then(t => fetch(WORKER_URL.replace(/\/$/, "") + "/notify", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + t},
