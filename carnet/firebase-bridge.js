@@ -4,7 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, onSnapshot, terminate, clearIndexedDbPersistence, getDocFromServer } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCgpdewI-Nfnq8V3HKrBwvFz0FDXX-9HJw",
@@ -214,7 +214,10 @@ function api(){
       },
       async delete(){
         if (col === "invites") { try { const s = await getDoc(doc(fs, "families", FID, col, id)); const h = s.exists() && s.data().hash; if (h) await deleteDoc(doc(fs, "codes", h)); } catch(_) {} }
+        // removing someone from the family also closes their access to it
+        let gone = null; if (col === "members") { try { const s = await getDoc(doc(fs, "families", FID, col, id)); gone = s.exists() && s.data().uid; } catch(_) {} }
         await deleteDoc(doc(fs, "families", FID, col, id));
+        if (gone && gone !== UID) { try { await deleteDoc(doc(fs, "families", FID, "access", gone)); } catch(e) { console.warn(e); } }
       }
     })
   });
@@ -248,5 +251,44 @@ onAuthStateChanged(auth, async user => {
   if (fid) { let ok = null; try { ok = (await getDoc(doc(fs, "families", fid, "access", UID))).exists(); } catch(_) {} if (ok !== false) return enter(fid, false); }
   try { await createFamily(); } catch(e) { console.warn(e); msg = errText(e); step = "auth"; render(); }
 });
+// leaving the family: nothing of it stays on this account or this phone
+window.carnetLeave = async (name, removed) => {
+  if (!FID || !UID) return "no";
+  if (!navigator.onLine) return "offline";
+  const old = FID;
+  // the owner hands the family over first (someone of the family rather than a sitter), so it keeps working without them
+  try { const f = await getDoc(doc(fs, "families", old));
+    if (f.exists() && f.data().owner === UID) {
+      const others = (await getDocs(collection(fs, "families", old, "access"))).docs.filter(d => d.id !== UID);
+      const next = others.find(d => (d.data().role || "famille") !== "garde") || others[0];
+      if (next) await setDoc(doc(fs, "families", old), {owner: next.id}, {merge: true});
+    } } catch(e) { console.warn(e); }
+  try { if (name) await setDoc(doc(fs, "families", old, "notes", newId()), {kind: "leave", name: String(name).slice(0, 40), uid: UID, at: new Date().toISOString()}); } catch(_) {}
+  try { const qs = await getDocs(query(collection(fs, "families", old, "members"), where("uid", "==", UID))); await Promise.all(qs.docs.map(d => deleteDoc(d.ref))); } catch(e) { console.warn(e); }
+  await pushOff().catch(() => {});
+  try { await deleteDoc(doc(fs, "families", old, "access", UID)); } catch(e) { console.warn(e); }
+  // a new, empty space of one's own (Profile then offers to create or join a family)
+  const fid = newId() + newId();
+  await setDoc(doc(fs, "families", fid), {owner: UID, at: Date.now()});
+  await setDoc(doc(fs, "families", fid, "access", UID), {at: Date.now(), owner: true});
+  await setDoc(doc(fs, "users", UID), {family: fid});
+  // forget everything this phone kept about the old family: chosen profile, dog, read messages, walk in progress, offline copy
+  try { const drop = ["carnet-me@", "carnet-dog@", "carnet-notes-seen@", "dl-push@"].map(k => k + UID);
+    Object.keys(localStorage).forEach(k => { if (drop.includes(k) || k.startsWith("dl-gps@")) localStorage.removeItem(k); });
+    localStorage.setItem("dl-fid@" + UID, fid); sessionStorage.setItem("dl-left", removed ? "removed" : "1"); } catch(_) {}
+  try { await terminate(fs); await clearIndexedDbPersistence(fs); } catch(e) { console.warn(e); }
+  location.reload();
+  return "ok";
+};
+// someone removed this account from the family: clean up this phone the same way (checked with the server, never on a hunch)
+let goneCheck = false;
+window.carnetCheckGone = async () => {
+  if (goneCheck || !FID || !UID || !navigator.onLine) return false; goneCheck = true;
+  let gone = false;
+  try { gone = !(await getDocFromServer(doc(fs, "families", FID, "access", UID))).exists(); }
+  catch(e) { gone = e && e.code === "permission-denied"; }
+  if (!gone) { goneCheck = false; return false; }
+  await window.carnetLeave("", true); return true;
+};
 // joining another family from inside the app (Profile → Rejoindre une famille)
 window.carnetJoinCode = async (code, name) => { F.code = code; F.name = name; msg = ""; try { await joinWithCode(true); } catch(e) { console.warn(e); msg = errText(e); } return msg; };

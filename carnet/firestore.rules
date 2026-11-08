@@ -49,8 +49,10 @@ service cloud.firestore {
       allow create: if signedIn() && fid.size() <= 64
         && request.resource.data.keys().hasOnly(['owner', 'at'])
         && request.resource.data.owner == me();
-      // nobody can take the family over
-      allow update: if isOwner(fid) && request.resource.data.owner == resource.data.owner && fields(20);
+      // nobody can take the family over; the owner can hand it to someone already in it (when leaving)
+      allow update: if isOwner(fid) && fields(20) && request.resource.data.keys().hasOnly(['owner', 'at'])
+        && (request.resource.data.owner == resource.data.owner
+            || exists(/databases/$(database)/documents/families/$(fid)/access/$(request.resource.data.owner)));
       allow delete: if false;
 
       // who may enter: the owner, or someone holding a valid code (with exactly the role written in it)
@@ -110,7 +112,8 @@ service cloud.firestore {
       }
       function sitterDelete(col, docId) {
         return col in ['ticks', 'logs', 'invites']
-          || (col == 'notes' && resource.data.get('uid', '') == me());
+          || (col == 'notes' && resource.data.get('uid', '') == me())
+          || (col == 'members' && resource.data.get('uid', '') == me());
       }
     }
   }

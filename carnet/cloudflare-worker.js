@@ -82,6 +82,13 @@ function val(v) {
 }
 function fields(f) { const o = {}; for (const k in (f || {})) o[k] = val(f[k]); return o; }
 const docId = name => name.split("/").pop();
+// a phone's notification address only counts while its person is still in the family (left or removed: cleaned up)
+async function familyTokens(env, fid) {
+  const [toks, acc] = await Promise.all([list(env, `families/${fid}/pushTokens`), list(env, `families/${fid}/access`)]);
+  const ok = new Set(acc.map(a => a._id)), keep = [];
+  for (const t of toks) { if (t.uid && ok.has(t.uid)) keep.push(t); else await delDocAdmin(env, `families/${fid}/pushTokens/${t._id}`).catch(() => {}); }
+  return keep;
+}
 async function list(env, path) {
   const tok = await adminToken(env), out = []; let page = "";
   for (let i = 0; i < 20; i++) {
@@ -151,7 +158,7 @@ async function onNotify(request, env, origin) {
   if (!validId(b.family) || !["msg", "log", "tick"].includes(b.kind)) return reply(400, {error: "famille"}, origin);
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
   const who = clean(b.who, 30), text = clean(b.text, 140), at = /^\d{1,2}:\d{2}$/.test(b.at || "") ? b.at : "";
-  const tokens = (await list(env, `families/${b.family}/pushTokens`)).filter(t => t.token && t.on !== false && wants(t, "family") && (t.uid !== uid || wants(t, "self")));
+  const tokens = (await familyTokens(env, b.family)).filter(t => t.token && t.on !== false && wants(t, "family") && (t.uid !== uid || wants(t, "self")));
   await Promise.all(tokens.map(t => { const l = tx(t); let msg;
     if (b.kind === "msg") msg = {title: `${l.wrote} ${who}`, body: text, tag: "msg"};
     else if (b.kind === "log") msg = {title: `${who} · ${(Object.hasOwn(l.k, b.k) && l.k[b.k]) || text}`, body: at ? at : "", tag: "log"};
@@ -187,7 +194,7 @@ function betterHour(w, T, fromMin) { const H0 = Math.floor(T / 60), cur = wxScor
 const wxNote = (x, l) => !x ? "" : x.p >= 60 ? ` · 🌧️ ${l.rain} (${x.p} %)` : x.f >= 28 ? ` · 🥵 ${Math.round(x.f)}°, ${l.hot}` : x.t <= 0 ? ` · 🥶 ${Math.round(x.t)}°, ${l.cold}` : x.c <= 2 && x.p < 20 ? ` · ${wxIcon(x.c)} ${Math.round(x.t)}°, ${l.nice}` : ` · ${wxIcon(x.c)} ${Math.round(x.t)}°`;
 
 async function remindFamily(env, fid, when) {
-  const tokens = (await list(env, `families/${fid}/pushTokens`)).filter(t => t.token && t.on !== false);
+  const tokens = (await familyTokens(env, fid)).filter(t => t.token && t.on !== false);
   if (!tokens.length) return;
   const tz = tokens.find(t => t.tz) ? tokens.find(t => t.tz).tz : DEFAULT_TZ, n = localNow(tz, when), tmr = localNow(tz, new Date(when.getTime() + 86400000));
   const at = m => { const d = n.min - m; return d >= 0 && d < 5; }; // this 5-minute run covers minute m
