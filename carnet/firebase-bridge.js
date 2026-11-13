@@ -86,7 +86,7 @@ function render(){
     <label class="g-lab">${TXT.name}</label><input class="g-f" id="g-name" data-f="name" autocomplete="given-name" maxlength="24" placeholder="${TXT.name}" value="${esc(F.name || (u && u.displayName ? u.displayName.split(" ")[0] : ""))}">
     ${m}<button class="g-btn g-main" data-g="join" ${busy ? "disabled" : ""}>${busy ? TXT.wait : TXT.joinBtn}</button>
     <div class="g-links"><button data-g="back">${TXT.back}</button></div>`);
-  if (step === "loading") return show(`${head}<div class="g-spin"></div>`);
+  if (step === "loading") return show(`${head}<div class="g-spin"><i></i><i></i><i></i></div>`);
   if (step === "offline") return show(`${head}<p class="g-sub">${TXT.errNet}</p><button class="g-btn g-main" onclick="location.reload()">${({fr:"Réessayer", en:"Try again", hr:"Pokušaj ponovno"})[LANG] || "Réessayer"}</button>`);
 }
 const PAW = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><ellipse cx="6" cy="10" rx="2" ry="2.6"/><ellipse cx="10" cy="6" rx="2" ry="2.7"/><ellipse cx="14" cy="6" rx="2" ry="2.7"/><ellipse cx="18" cy="10" rx="2" ry="2.6"/><path d="M12 11c3 0 6 4.4 6 7 0 2-1.6 3-3.2 2.6-1-.3-1.8-.8-2.8-.8s-1.8.5-2.8.8C7.6 21 6 20 6 18c0-2.6 3-7 6-7Z"/></svg>';

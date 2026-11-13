@@ -1537,6 +1537,22 @@ body.intro .tabbar{animation:dl-tabin .7s cubic-bezier(.2,.9,.25,1.1) .35s both}
 :root[data-skin="aurora"] .leg:nth-child(3) i{background:linear-gradient(135deg,#B8ECFA,#1FA6C9)!important}
 :root[data-skin="aurora"] .bar.xp{background:var(--fill2);box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
 :root[data-skin="aurora"] .bar.xp i{background:var(--grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 0 10px color-mix(in srgb,var(--g3) 35%,transparent)}
+
+/* loading screen: "Rebond" — the logo bounces over its shadow, three dots hop, three still paws in the corner */
+.gate:has(.g-spin){display:block}
+.gate:has(.g-spin) .g-in{min-height:100%;justify-content:center;padding-top:0;padding-bottom:12vh;gap:6px}
+.gate:has(.g-spin) .g-logo{position:relative;flex-direction:column;align-items:center;margin-bottom:0}
+.gate:has(.g-spin) .g-logo img{animation:dl-bounce 1.1s cubic-bezier(.3,0,.4,1) infinite;transform-origin:50% 100%}
+.gate:has(.g-spin) .g-logo::after{content:"";width:78px;height:12px;margin-top:10px;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(4px);animation:dl-shadow 1.1s cubic-bezier(.3,0,.4,1) infinite}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .gate:has(.g-spin) .g-logo::after{background:rgba(0,0,0,.16)}}
+@keyframes dl-bounce{0%,100%{transform:translateY(0) scale(1.05,.95)}12%{transform:translateY(-4px) scale(.98,1.02)}45%,55%{transform:translateY(-30px) scale(1)}88%{transform:translateY(-3px) scale(1)}}
+@keyframes dl-shadow{0%,100%{transform:scale(1);opacity:1}45%,55%{transform:scale(.58);opacity:.45}}
+.g-spin{display:flex;gap:7px;justify-content:center;margin:16px auto 0;width:auto!important;height:auto!important;border:0!important;border-radius:0!important;animation:none!important}
+.g-spin i{width:8px;height:8px;border-radius:50%;background:var(--g3,#DE9A42);animation:dl-dot 1.2s ease-in-out infinite}
+.g-spin i:nth-child(2){animation-delay:.15s}.g-spin i:nth-child(3){animation-delay:.3s}
+@keyframes dl-dot{0%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-5px)}}
+.gate:has(.g-spin)::before{content:"";position:fixed;left:max(18px,env(safe-area-inset-left));bottom:calc(22px + env(safe-area-inset-bottom));width:132px;height:88px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20120%2080%22%20fill%3D%22%23DE9A42%22%3E%3Cg%20transform%3D%22translate%284%2044%29%20rotate%28-18%2012%2012%29%22%3E%3Cpath%20d%3D%22M5.5%209.5a2%202.6%200%201%200%20.01%200Zm4-3.6a2%202.7%200%201%200%20.01%200Zm5%200a2%202.7%200%201%200%20.01%200Zm4%203.6a2%202.6%200%201%200%20.01%200ZM12%2011.5c2.9%200%205.8%203.4%205.8%205.9%200%201.9-1.5%202.7-3.2%202.7-1.1%200-1.8-.6-2.6-.6s-1.5.6-2.7.6c-1.6%200-3.1-.8-3.1-2.7%200-2.5%203-5.9%205.8-5.9Z%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2836%2022%29%20rotate%28-10%2012%2012%29%20scale%28.9%29%22%3E%3Cpath%20d%3D%22M5.5%209.5a2%202.6%200%201%200%20.01%200Zm4-3.6a2%202.7%200%201%200%20.01%200Zm5%200a2%202.7%200%201%200%20.01%200Zm4%203.6a2%202.6%200%201%200%20.01%200ZM12%2011.5c2.9%200%205.8%203.4%205.8%205.9%200%201.9-1.5%202.7-3.2%202.7-1.1%200-1.8-.6-2.6-.6s-1.5.6-2.7.6c-1.6%200-3.1-.8-3.1-2.7%200-2.5%203-5.9%205.8-5.9Z%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2870%2034%29%20rotate%288%2012%2012%29%20scale%28.8%29%22%3E%3Cpath%20d%3D%22M5.5%209.5a2%202.6%200%201%200%20.01%200Zm4-3.6a2%202.7%200%201%200%20.01%200Zm5%200a2%202.7%200%201%200%20.01%200Zm4%203.6a2%202.6%200%201%200%20.01%200ZM12%2011.5c2.9%200%205.8%203.4%205.8%205.9%200%201.9-1.5%202.7-3.2%202.7-1.1%200-1.8-.6-2.6-.6s-1.5.6-2.7.6c-1.6%200-3.1-.8-3.1-2.7%200-2.5%203-5.9%205.8-5.9Z%22/%3E%3C/g%3E%3C/svg%3E") no-repeat left bottom/contain;opacity:.32;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.gate:has(.g-spin) .g-logo img,.gate:has(.g-spin) .g-logo::after,.g-spin i{animation:none}}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1565,7 +1581,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 <body class="gated">
 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="dl-r1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A7F3B5"/><stop offset="1" stop-color="#22B45A"/></linearGradient><linearGradient id="dl-r2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FDE3A0"/><stop offset="1" stop-color="#F08A24"/></linearGradient><linearGradient id="dl-r3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B8ECFA"/><stop offset="1" stop-color="#1FA6C9"/></linearGradient><linearGradient id="dl-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--g1)"/><stop offset=".45" style="stop-color:var(--g2)"/><stop offset="1" style="stop-color:var(--g4)"/></linearGradient></defs></svg>
-<div id="gate"><div class="gate"><div class="g-in"><div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>Dogs Life</h1><div class="g-spin"></div></div></div></div>
+<div id="gate"><div class="gate"><div class="g-in"><div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>Dogs Life</h1><div class="g-spin"><i></i><i></i><i></i></div></div></div></div>
 <template id="gate-dog"><svg viewBox="0 0 160 160" aria-hidden="true">
   <defs><linearGradient id="wzg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6B26B"/><stop offset="1" stop-color="#D9783A"/></linearGradient>
   <linearGradient id="wzs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
@@ -1600,7 +1616,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "49"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "50"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5834,7 +5850,7 @@ setInterval(() => { if (SPLASH.gone) return; const g = document.getElementById("
   if (g && g.innerHTML && !g.querySelector(".g-spin")) return; // sign-in / family screens belong to the bridge
   if (Date.now() - SPLASH.t0 > 15000 || S.stale) splashOut(); }, 300);
 // the bridge asks to close its screen once signed in: keep the loading screen until the data is really there
-window.__dlHold = root => { if (SPLASH.gone) return false; if (!root.querySelector(".g-spin")) root.innerHTML = '<div class="gate"><div class="g-in"><div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>Dogs Life</h1><div class="g-spin"></div></div></div>'; document.body.classList.add("gated"); SPLASH.t0 = Math.min(SPLASH.t0, Date.now()); setTimeout(splashCheck, 50); return true; };
+window.__dlHold = root => { if (SPLASH.gone) return false; if (!root.querySelector(".g-spin")) root.innerHTML = '<div class="gate"><div class="g-in"><div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>Dogs Life</h1><div class="g-spin"><i></i><i></i><i></i></div></div></div>'; document.body.classList.add("gated"); SPLASH.t0 = Math.min(SPLASH.t0, Date.now()); setTimeout(splashCheck, 50); return true; };
 function render(skipNames){
   setTimeout(() => { splashCheck(); pushGate(); inboxStart(); bellInject(); if (SPLASH.gone) setTimeout(whatsNew, 1600); if (S.openNid && window.carnetInbox && S.mode === "db" && S.ready) { window.carnetInbox.read(S.openNid); S.openNid = null; } }, 0);
   const v = $("#view");
