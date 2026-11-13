@@ -1398,6 +1398,46 @@ input,select,textarea{font-size:max(16px,1em)}
 .rp-jump{cursor:pointer;border-radius:10px;transition:background .15s}.rp-jump:active{background:var(--fill)}
 .rp-k{border:0;font:inherit;cursor:pointer;transition:transform .15s}.rp-k:active{transform:scale(.95)}
 @media (prefers-reduced-motion: reduce){.blink{animation:none;outline:2px solid var(--accent);outline-offset:-2px}}
+
+/* ===== Aurora 1.1: little moving shapes, livelier details ===== */
+:root[data-skin="aurora"] .shapes{position:absolute;inset:0}
+:root[data-skin="aurora"] .sh{position:absolute;width:var(--s);height:var(--s);color:var(--c);opacity:.32;animation:dl-float var(--d) ease-in-out var(--dl) infinite alternate;will-change:transform}
+:root[data-skin="aurora"] .sh svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 60%,transparent))}
+:root[data-skin="aurora"] .sh-dot{border-radius:50%;background:var(--c);box-shadow:0 0 12px var(--c);width:calc(var(--s)*.45);height:calc(var(--s)*.45)}
+:root[data-skin="aurora"] .sh-ring{border-radius:50%;border:2px solid var(--c);box-shadow:0 0 10px color-mix(in srgb,var(--c) 50%,transparent)}
+:root[data-skin="aurora"] .sh-sq{border-radius:30%;border:2px solid var(--c);transform:rotate(20deg)}
+:root[data-skin="aurora"] .sh-plus::before,:root[data-skin="aurora"] .sh-plus::after{content:"";position:absolute;left:50%;top:50%;width:100%;height:2.5px;margin:-1.25px 0 0 -50%;border-radius:2px;background:var(--c)}
+:root[data-skin="aurora"] .sh-plus::after{transform:rotate(90deg)}
+:root[data-skin="aurora"] .sh-paw{opacity:.22}
+@keyframes dl-float{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(var(--x),var(--y)) rotate(calc(var(--r)*.5))}100%{transform:translate(calc(var(--x)*-.6),calc(var(--y)*.4)) rotate(var(--r))}}
+@media (prefers-color-scheme: light){:root[data-skin="aurora"]:not([data-theme="dark"]) .sh{opacity:.42}:root[data-skin="aurora"]:not([data-theme="dark"]) .sh-paw{opacity:.28}}
+/* round tick that never shows a square on iPhone (Safari can drop the rounded clip while scaling): clip it, glow on the parent */
+.check span{-webkit-clip-path:circle(50%);clip-path:circle(50%)}
+:root[data-skin="aurora"] .check.on span{box-shadow:none;background:var(--grad)}
+:root[data-skin="aurora"] .check.on{filter:drop-shadow(0 0 7px color-mix(in srgb,var(--g3) 65%,transparent))}
+.check{position:relative}
+.check.pop::after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid var(--green);animation:dl-ripple .6s ease-out forwards;pointer-events:none}
+@keyframes dl-ripple{from{transform:scale(.6);opacity:.9}to{transform:scale(1.5);opacity:0}}
+:root[data-skin="aurora"] .check.pop::after{border-color:var(--g2)}
+/* living buttons */
+:root[data-skin="aurora"] .btn:not(.ghost):not(.danger),:root[data-skin="aurora"] .hx-add,:root[data-skin="aurora"] .sheet-h .save{background-image:linear-gradient(120deg,var(--g1),var(--g2),var(--g3),var(--g4),var(--g3),var(--g2),var(--g1));background-size:300% 100%;animation:dl-flow 8s ease-in-out infinite}
+@keyframes dl-flow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+/* quick log bubbles bob gently */
+:root[data-skin="aurora"] .ql-b i{animation:dl-bob 4.5s ease-in-out infinite}
+:root[data-skin="aurora"] .ql-b:nth-child(2) i{animation-delay:-.9s}:root[data-skin="aurora"] .ql-b:nth-child(3) i{animation-delay:-1.8s}
+:root[data-skin="aurora"] .ql-b:nth-child(4) i{animation-delay:-2.7s}:root[data-skin="aurora"] .ql-b:nth-child(5) i{animation-delay:-3.6s}
+@keyframes dl-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+:root[data-skin="aurora"] .ql-b:active i{animation:none;transform:scale(.86)}
+/* hero: two sparks orbit the progress ring */
+:root[data-skin="aurora"] .hx .sum>div:first-child::before,:root[data-skin="aurora"] .hx .sum>div:first-child::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:var(--g1);box-shadow:0 0 10px var(--g1);animation:dl-orbit 6s linear infinite;pointer-events:none}
+:root[data-skin="aurora"] .hx .sum>div:first-child::after{width:5px;height:5px;margin:-2.5px;background:var(--g3);box-shadow:0 0 10px var(--g3);animation-duration:9s;animation-direction:reverse}
+@keyframes dl-orbit{from{transform:rotate(0) translateX(52px) rotate(0)}to{transform:rotate(360deg) translateX(52px) rotate(-360deg)}}
+/* cards lift a touch when pressed, icons shine */
+:root[data-skin="aurora"] .ico{position:relative;overflow:hidden}
+:root[data-skin="aurora"] .ico::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.35),transparent 55%);pointer-events:none}
+:root[data-skin="aurora"] button.row:active,:root[data-skin="aurora"] button.alert:active{transform:scale(.985)}
+:root[data-skin="aurora"] .sec-h h2{background:linear-gradient(90deg,var(--fg),color-mix(in srgb,var(--fg) 70%,var(--g3)));-webkit-background-clip:text;background-clip:text;color:transparent}
+@media (prefers-reduced-motion: reduce){:root[data-skin="aurora"] .sh,:root[data-skin="aurora"] .ql-b i,:root[data-skin="aurora"] .btn,:root[data-skin="aurora"] .hx-add,:root[data-skin="aurora"] .sheet-h .save,:root[data-skin="aurora"] .hx .sum>div:first-child::before,:root[data-skin="aurora"] .hx .sum>div:first-child::after{animation:none!important}}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1424,7 +1464,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 </style>
 </head>
 <body>
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i><div class="shapes"><b class="sh sh-dot" style="left:43%;top:23%;--s:16px;--d:17s;--dl:-2s;--c:var(--g1);--r:-133deg;--y:-57px;--x:-27px"></b><b class="sh sh-ring" style="left:66%;top:31%;--s:10px;--d:18s;--dl:-13s;--c:var(--g2);--r:57deg;--y:-35px;--x:-25px"></b><b class="sh sh-plus" style="left:72%;top:58%;--s:10px;--d:19s;--dl:-30s;--c:var(--g3);--r:-200deg;--y:-57px;--x:30px"></b><b class="sh sh-paw" style="left:9%;top:77%;--s:18px;--d:28s;--dl:-1s;--c:var(--g4);--r:-51deg;--y:-55px;--x:24px"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6" cy="9" rx="2.2" ry="2.8"/><ellipse cx="10" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="14.5" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="18.5" cy="9" rx="2.2" ry="2.8"/><path d="M12.2 11c3 0 6 3.6 6 6.2 0 2-1.6 2.8-3.3 2.8-1.2 0-1.9-.6-2.7-.6s-1.6.6-2.8.6C7.6 20 6 19.2 6 17.2 6 14.6 9.2 11 12.2 11Z"/></svg></b><b class="sh sh-star" style="left:19%;top:41%;--s:16px;--d:20s;--dl:-17s;--c:var(--g1);--r:-186deg;--y:-39px;--x:5px"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c.6 5.6 4.9 9.9 10.5 10.5-5.6.6-9.9 4.9-10.5 10.5C11.4 16.9 7.1 12.6 1.5 12 7.1 11.4 11.4 7.1 12 1.5Z"/></svg></b><b class="sh sh-sq" style="left:89%;top:27%;--s:10px;--d:22s;--dl:-11s;--c:var(--g2);--r:-180deg;--y:-24px;--x:6px"></b><b class="sh sh-dot" style="left:9%;top:83%;--s:12px;--d:31s;--dl:-21s;--c:var(--g3);--r:120deg;--y:-49px;--x:7px"></b><b class="sh sh-ring" style="left:60%;top:50%;--s:14px;--d:23s;--dl:-25s;--c:var(--g4);--r:-102deg;--y:-25px;--x:6px"></b><b class="sh sh-star" style="left:40%;top:71%;--s:16px;--d:26s;--dl:-23s;--c:var(--g1);--r:113deg;--y:-58px;--x:-26px"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c.6 5.6 4.9 9.9 10.5 10.5-5.6.6-9.9 4.9-10.5 10.5C11.4 16.9 7.1 12.6 1.5 12 7.1 11.4 11.4 7.1 12 1.5Z"/></svg></b><b class="sh sh-paw" style="left:17%;top:69%;--s:16px;--d:21s;--dl:-24s;--c:var(--g2);--r:78deg;--y:-51px;--x:-4px"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6" cy="9" rx="2.2" ry="2.8"/><ellipse cx="10" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="14.5" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="18.5" cy="9" rx="2.2" ry="2.8"/><path d="M12.2 11c3 0 6 3.6 6 6.2 0 2-1.6 2.8-3.3 2.8-1.2 0-1.9-.6-2.7-.6s-1.6.6-2.8.6C7.6 20 6 19.2 6 17.2 6 14.6 9.2 11 12.2 11Z"/></svg></b><b class="sh sh-plus" style="left:7%;top:89%;--s:10px;--d:26s;--dl:-10s;--c:var(--g3);--r:192deg;--y:-51px;--x:7px"></b><b class="sh sh-dot" style="left:60%;top:12%;--s:26px;--d:18s;--dl:-30s;--c:var(--g4);--r:161deg;--y:-24px;--x:-27px"></b><b class="sh sh-sq" style="left:91%;top:43%;--s:22px;--d:30s;--dl:-9s;--c:var(--g1);--r:128deg;--y:-21px;--x:30px"></b><b class="sh sh-star" style="left:61%;top:49%;--s:12px;--d:19s;--dl:-15s;--c:var(--g2);--r:-95deg;--y:-38px;--x:-22px"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c.6 5.6 4.9 9.9 10.5 10.5-5.6.6-9.9 4.9-10.5 10.5C11.4 16.9 7.1 12.6 1.5 12 7.1 11.4 11.4 7.1 12 1.5Z"/></svg></b><b class="sh sh-ring" style="left:33%;top:54%;--s:16px;--d:31s;--dl:-2s;--c:var(--g3);--r:-154deg;--y:-45px;--x:5px"></b><b class="sh sh-paw" style="left:37%;top:21%;--s:26px;--d:29s;--dl:-27s;--c:var(--g4);--r:146deg;--y:-42px;--x:13px"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6" cy="9" rx="2.2" ry="2.8"/><ellipse cx="10" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="14.5" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="18.5" cy="9" rx="2.2" ry="2.8"/><path d="M12.2 11c3 0 6 3.6 6 6.2 0 2-1.6 2.8-3.3 2.8-1.2 0-1.9-.6-2.7-.6s-1.6.6-2.8.6C7.6 20 6 19.2 6 17.2 6 14.6 9.2 11 12.2 11Z"/></svg></b></div></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="dl-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde047"/><stop offset=".45" stop-color="#bef264"/><stop offset="1" stop-color="#10b981"/></linearGradient></defs></svg>
 <div id="gate"></div>
 <template id="gate-dog"><svg viewBox="0 0 160 160" aria-hidden="true">
@@ -1461,7 +1501,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "40"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "41"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
