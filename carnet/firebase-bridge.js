@@ -207,6 +207,17 @@ window.carnetInbox = {
   readAll: async ids => { for (let i = 0; i < ids.length; i += 400) { const b = writeBatch(fs); ids.slice(i, i + 400).forEach(id => b.update(doc(fs, "families", FID, "inbox", id), {read: true, readAt: Date.now()})); await b.commit().catch(e => console.warn(e)); } },
   del: id => deleteDoc(doc(fs, "families", FID, "inbox", id)).catch(e => console.warn(e))
 };
+// iPhone home-screen widget: a private read-only key for this phone (only its hash is stored)
+const sha256hex = async s => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map(x => x.toString(16).padStart(2, "0")).join("");
+window.carnetWidget = {
+  info: () => ({fid: FID, url: WORKER_URL, token: FID ? LSg("dl-widget@" + FID) : null}),
+  create: async (dog, tz) => { if (!FID || !UID) throw new Error("connexion");
+    const old = LSg("dl-widget@" + FID); if (old) { try { await deleteDoc(doc(fs, "families", FID, "widgets", await sha256hex(old))); } catch(_) {} }
+    const tok = [...crypto.getRandomValues(new Uint8Array(24))].map(x => x.toString(16).padStart(2, "0")).join("");
+    await setDoc(doc(fs, "families", FID, "widgets", await sha256hex(tok)), {uid: UID, dog: String(dog || "main"), tz: String(tz || ""), at: Date.now()});
+    LSs("dl-widget@" + FID, tok); return tok; },
+  remove: async () => { const tok = FID && LSg("dl-widget@" + FID); if (!tok) return; try { await deleteDoc(doc(fs, "families", FID, "widgets", await sha256hex(tok))); } catch(_) {} LSs("dl-widget@" + FID, null); }
+};
 // tell the rest of the family (the server skips the sender)
 window.carnetNotify = (kind, data) => { if (!WORKER_URL || !FID || !auth.currentUser) return;
   auth.currentUser.getIdToken().then(t => fetch(WORKER_URL.replace(/\/$/, "") + "/notify", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + t},

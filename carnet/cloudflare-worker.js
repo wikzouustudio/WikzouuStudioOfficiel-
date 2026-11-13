@@ -319,10 +319,39 @@ async function remindFamily(env, fid, when) {
   }
 }
 
+
+/* ---------- GET /widget?f=<family>&t=<key> : today's tasks for the iPhone widget (read-only, private key per phone) ---------- */
+async function onWidget(url, env) {
+  const J = (s, o) => new Response(JSON.stringify(o), {status: s, headers: {"Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}});
+  if (!env.FIREBASE_SA) return J(500, {error: "cle_manquante"});
+  const fid = url.searchParams.get("f") || "", key = url.searchParams.get("t") || "";
+  if (!validId(fid) || !/^[a-f0-9]{48}$/.test(key)) return J(400, {error: "lien"});
+  if (tooMany("w:" + fid + key.slice(0, 8), 120, 3600000)) return J(429, {error: "limite"});
+  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key)))].map(x => x.toString(16).padStart(2, "0")).join("");
+  const wd = await getDocAdmin(env, `families/${fid}/widgets/${hash}`); if (!wd) return J(403, {error: "lien"});
+  if (!(await getDocAdmin(env, `families/${fid}/access/${wd.uid}`))) return J(403, {error: "famille"});
+  const tz = wd.tz || DEFAULT_TZ, n = localNow(tz, new Date()), dog = wd.dog || "main";
+  const [routine, meds, extras, ticks, days, dogDoc] = await Promise.all([list(env, `families/${fid}/routine`), list(env, `families/${fid}/meds`), whereEq(env, `families/${fid}`, "extras", "date", n.ds),
+    whereEq(env, `families/${fid}`, "ticks", "date", n.ds), whereEq(env, `families/${fid}`, "days", "date", n.ds), getDocAdmin(env, dog === "main" ? `families/${fid}/config/dog` : `families/${fid}/dogs/${dog}`)]);
+  const done = {}; ticks.forEach(t => { if ((t.dog || "main") === dog) done[t.key] = t; });
+  days.forEach(d => { if ((d.dog || "main") === dog) Object.keys(d.done || {}).forEach(k => { done[k] = done[k] || {at: ""}; }); });
+  const tasks = [];
+  routine.forEach(r => { if ((r.dog || "main") === dog && (r.days || []).includes(n.wd)) tasks.push({key: "r-" + r._id, time: r.time || "00:00", title: r.title || "", cat: r.cat || "autre"}); });
+  meds.forEach(m => { if ((m.dog || "main") !== dog || (m.start && n.ds < m.start) || (m.end && n.ds > m.end)) return;
+    (m.times || []).filter(Boolean).forEach(t => tasks.push({key: "m-" + m._id + "-" + t.replace(":", ""), time: t, title: m.name || "", cat: "med"})); });
+  extras.forEach(x => { if ((x.dog || "main") === dog) tasks.push({key: "x-" + x._id, time: x.time || "00:00", title: x.title || "", cat: x.cat || "autre", extra: true}); });
+  tasks.sort((a, b) => toMin(a.time) - toMin(b.time));
+  const out = tasks.map(t => ({time: t.time, title: clean(t.title, 60), cat: t.cat, extra: !!t.extra, done: !!done[t.key], at: done[t.key] ? String(done[t.key].at || "") : ""}));
+  const next = out.find(t => !t.done && toMin(t.time) + 30 >= n.min) || null;
+  return J(200, {dog: clean((dogDoc && dogDoc.name) || "", 40), date: n.ds, now: hm(n.min), done: out.filter(t => t.done).length, total: out.length,
+    late: out.filter(t => !t.done && toMin(t.time) + 30 < n.min).length, next, upcoming: out.filter(t => !t.done && toMin(t.time) + 30 >= n.min).slice(0, 4), app: APP_URL});
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "", path = new URL(request.url).pathname;
     if (request.method === "OPTIONS") return new Response(null, {status: 204, headers: cors(origin)});
+    if (request.method === "GET" && path === "/widget") return onWidget(new URL(request.url), env);
     if (request.method !== "POST") return reply(405, {error: "method"}, origin);
     // only the Dogs Life site may call this server
     if (!ORIGINS.includes(origin)) return reply(403, {error: "origin"}, origin);
