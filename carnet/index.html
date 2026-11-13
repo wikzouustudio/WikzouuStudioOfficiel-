@@ -1428,10 +1428,6 @@ input,select,textarea{font-size:max(16px,1em)}
 :root[data-skin="aurora"] .ql-b:nth-child(4) i{animation-delay:-2.7s}:root[data-skin="aurora"] .ql-b:nth-child(5) i{animation-delay:-3.6s}
 @keyframes dl-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 :root[data-skin="aurora"] .ql-b:active i{animation:none;transform:scale(.86)}
-/* hero: two sparks orbit the progress ring */
-:root[data-skin="aurora"] .hx .sum>div:first-child::before,:root[data-skin="aurora"] .hx .sum>div:first-child::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:var(--g1);box-shadow:0 0 10px var(--g1);animation:dl-orbit 6s linear infinite;pointer-events:none}
-:root[data-skin="aurora"] .hx .sum>div:first-child::after{width:5px;height:5px;margin:-2.5px;background:var(--g3);box-shadow:0 0 10px var(--g3);animation-duration:9s;animation-direction:reverse}
-@keyframes dl-orbit{from{transform:rotate(0) translateX(52px) rotate(0)}to{transform:rotate(360deg) translateX(52px) rotate(-360deg)}}
 /* cards lift a touch when pressed, icons shine */
 :root[data-skin="aurora"] .ico{position:relative;overflow:hidden}
 :root[data-skin="aurora"] .ico::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.35),transparent 55%);pointer-events:none}
@@ -1481,6 +1477,11 @@ body.intro .tabbar{animation:dl-tabin .7s cubic-bezier(.2,.9,.25,1.1) .35s both}
 .ck-c{fill:var(--green)}.ck-p{stroke:#fff}
 :root[data-skin="aurora"] .ck-c{fill:url(#dl-grad)}:root[data-skin="aurora"] .ck-p{stroke:var(--on-grad)}
 .check.pop .ck-p{stroke-dasharray:24;animation:draw .32s .12s ease-out both}
+
+/* the real loading screen fades out once the data is there */
+#gate .gate{transition:opacity .55s ease,transform .55s ease}
+#gate .gate.out{opacity:0;transform:scale(1.04);pointer-events:none}
+#gate .gate.out .g-logo{transform:scale(.92);transition:transform .55s ease}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1506,11 +1507,10 @@ body.gated .wrap, body.gated .tabbar{display:none}
 .g-spin{width:28px;height:28px;margin:20px auto;border-radius:50%;border:3px solid var(--fill2);border-top-color:var(--accent);animation:sp .8s linear infinite}
 </style>
 </head>
-<body class="booting">
+<body class="gated">
 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="dl-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--g1)"/><stop offset=".45" style="stop-color:var(--g2)"/><stop offset="1" style="stop-color:var(--g4)"/></linearGradient></defs></svg>
-<div id="splash" aria-hidden="true"><div class="sp-glow"></div><div class="sp-in"><div class="sp-logo" id="sp-logo"></div><div class="sp-name">Dogs Life</div><div class="sp-bar"><i></i></div></div></div>
-<div id="gate"></div>
+<div id="gate"><div class="gate"><div class="g-in"><div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>Dogs Life</h1><div class="g-spin"></div></div></div></div>
 <template id="gate-dog"><svg viewBox="0 0 160 160" aria-hidden="true">
   <defs><linearGradient id="wzg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6B26B"/><stop offset="1" stop-color="#D9783A"/></linearGradient>
   <linearGradient id="wzs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
@@ -1545,7 +1545,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "44"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "45"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5755,17 +5755,17 @@ function renderTabs(){
 
 // ---- splash: stays until the family's data is really there, then the page comes in piece by piece (once) ----
 const SPLASH = {t0: Date.now(), gone: false};
-(function(){ const l = document.getElementById("sp-logo"), t = document.getElementById("gate-dog"); if (l && t) l.innerHTML = t.innerHTML; })();
 function splashOut(){
   if (SPLASH.gone) return; SPLASH.gone = true; S.readyAt = S.readyAt || Date.now();
-  const sp = document.getElementById("splash"); document.body.classList.remove("booting");
+  const g = document.getElementById("gate"), gs = g && g.querySelector(".gate");
+  const onLoading = gs && gs.querySelector(".g-spin");
   const host = $("#view .page") || $("#view");
   if (host && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
     [...host.children].forEach((c, i) => { c.classList.add("intro-i"); c.style.setProperty("--i", Math.min(i, 9)); });
     document.body.classList.add("intro");
     setTimeout(() => { document.body.classList.remove("intro"); document.querySelectorAll(".intro-i").forEach(c => c.classList.remove("intro-i")); }, 1800);
   }
-  if (sp) { sp.classList.add("out"); setTimeout(() => sp.remove(), 600); }
+  if (onLoading) { document.body.classList.remove("gated"); gs.classList.add("out"); setTimeout(() => { if (g.querySelector(".gate.out")) g.innerHTML = ""; }, 650); }
   setTimeout(whatsNew, 1900); setTimeout(pushGate, 2100);
 }
 function splashCheck(){
@@ -5776,8 +5776,10 @@ function splashCheck(){
 }
 // a sign-in / family screen from the bridge, or a very slow network: never keep the splash on top of it
 setInterval(() => { if (SPLASH.gone) return; const g = document.getElementById("gate");
-  if (g && g.innerHTML && !g.querySelector(".g-spin")) splashOut();
-  else if (Date.now() - SPLASH.t0 > 12000 || S.stale) splashOut(); }, 250);
+  if (g && g.innerHTML && !g.querySelector(".g-spin")) return; // sign-in / family screens belong to the bridge
+  if (Date.now() - SPLASH.t0 > 15000 || S.stale) splashOut(); }, 300);
+// the bridge asks to close its screen once signed in: keep the loading screen until the data is really there
+window.__dlHold = root => { if (SPLASH.gone) return false; if (!root.querySelector(".g-spin")) root.innerHTML = '<div class="gate"><div class="g-in"><div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>Dogs Life</h1><div class="g-spin"></div></div></div>'; document.body.classList.add("gated"); SPLASH.t0 = Math.min(SPLASH.t0, Date.now()); setTimeout(splashCheck, 50); return true; };
 function render(skipNames){
   setTimeout(() => { splashCheck(); pushGate(); inboxStart(); bellInject(); if (SPLASH.gone) setTimeout(whatsNew, 1600); if (S.openNid && window.carnetInbox && S.mode === "db" && S.ready) { window.carnetInbox.read(S.openNid); S.openNid = null; } }, 0);
   const v = $("#view");

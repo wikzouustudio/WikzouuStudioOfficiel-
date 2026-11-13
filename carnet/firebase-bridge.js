@@ -63,7 +63,7 @@ const root = document.getElementById("gate");
 let busy = false, step = "auth", msg = "", authMode = "signin";
 const F = {email:"", pass:"", code:"", name:""}; // typed values survive every re-render
 function show(html){ root.innerHTML = `<div class="gate"><div class="g-in">${html}</div></div>`; document.body.classList.add("gated"); }
-function hide(){ root.innerHTML = ""; document.body.classList.remove("gated"); }
+function hide(){ if (window.__dlHold && window.__dlHold(root)) return; root.innerHTML = ""; document.body.classList.remove("gated"); }
 function render(){
   const u = auth.currentUser;
   const head = `<div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>${TXT.title}</h1>`;
