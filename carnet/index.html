@@ -1182,7 +1182,7 @@ input.f.big{font-size:18px;font-weight:600;min-height:50px;border-radius:14px;ba
 @keyframes dl-drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(12%,-8%) scale(1.15)}100%{transform:translate(-10%,6%) scale(.9)}}
 @keyframes dl-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .aurora{display:none}
-:root{--g1:#F4E6CB;--g2:#E3C792;--g3:#C99A5B;--g4:#8F6237;--on-grad:#22160B;--acc-l:#8F6237;--acc-d:#E3C792}
+:root{--g1:#FAEBC6;--g2:#F1C76A;--g3:#DE9A42;--g4:#A65D24;--on-grad:#251507;--acc-l:#9A5718;--acc-d:#F1C76A}
 :root[data-skin="aurora"]{
   --grad:linear-gradient(120deg,var(--g1),var(--g2) 40%,var(--g3) 85%,color-mix(in srgb,var(--g3) 70%,var(--g4)));
   --ring:conic-gradient(from var(--a),var(--g1),var(--g2),var(--g3),var(--g4),var(--g3),var(--g2),var(--g1));
@@ -1484,20 +1484,20 @@ body.intro .tabbar{animation:dl-tabin .7s cubic-bezier(.2,.9,.25,1.1) .35s both}
 #gate .gate.out .g-logo{transform:scale(.92);transition:transform .55s ease}
 
 /* ===== Golden, toned down: champagne & bronze, softer light ===== */
-:root[data-skin="aurora"] .aurora{opacity:.38}
-:root[data-skin="aurora"] .aurora i{opacity:.22;filter:blur(90px)}
-:root[data-skin="aurora"] .eyebrow{background:none;color:var(--accent);-webkit-text-fill-color:currentColor;opacity:.9}
-:root[data-skin="aurora"] .hx,:root[data-skin="aurora"] .lw{border-width:1px;box-shadow:0 0 0 1px color-mix(in srgb,var(--g2) 10%,transparent),0 18px 40px rgba(0,0,0,.28),0 0 34px color-mix(in srgb,var(--g3) 10%,transparent)}
-:root[data-skin="aurora"] .hx{--ring:conic-gradient(from var(--a),color-mix(in srgb,var(--g2) 70%,transparent),color-mix(in srgb,var(--g3) 25%,transparent) 25%,color-mix(in srgb,var(--g2) 15%,transparent) 50%,color-mix(in srgb,var(--g3) 25%,transparent) 75%,color-mix(in srgb,var(--g2) 70%,transparent))}
-:root[data-skin="aurora"] circle[stroke="var(--green)"]{filter:drop-shadow(0 0 4px color-mix(in srgb,var(--g3) 35%,transparent))}
-:root[data-skin="aurora"] .dayb.sel.today .n{box-shadow:0 0 0 3px color-mix(in srgb,var(--g2) 18%,transparent),0 6px 16px color-mix(in srgb,var(--g3) 25%,transparent)}
+:root[data-skin="aurora"] .aurora{opacity:.48}
+:root[data-skin="aurora"] .aurora i{opacity:.27;filter:blur(85px)}
+:root[data-skin="aurora"] .eyebrow{background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 70%,var(--g3)));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+:root[data-skin="aurora"] .hx,:root[data-skin="aurora"] .lw{border-width:1px;box-shadow:0 0 0 1px color-mix(in srgb,var(--g2) 10%,transparent),0 18px 40px rgba(0,0,0,.28),0 0 38px color-mix(in srgb,var(--g3) 17%,transparent)}
+:root[data-skin="aurora"] .hx{--ring:conic-gradient(from var(--a),var(--g2),color-mix(in srgb,var(--g3) 55%,transparent) 25%,color-mix(in srgb,var(--g2) 35%,transparent) 50%,color-mix(in srgb,var(--g3) 55%,transparent) 75%,var(--g2))}
+:root[data-skin="aurora"] circle[stroke="var(--green)"]{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--g3) 45%,transparent))}
+:root[data-skin="aurora"] .dayb.sel.today .n{box-shadow:0 0 0 3px color-mix(in srgb,var(--g2) 18%,transparent),0 6px 18px color-mix(in srgb,var(--g3) 35%,transparent)}
 :root[data-skin="aurora"] .btn:not(.ghost):not(.danger),:root[data-skin="aurora"] .hx-add,:root[data-skin="aurora"] .sheet-h .save{box-shadow:0 6px 18px color-mix(in srgb,var(--g3) 18%,transparent)}
 :root[data-skin="aurora"] .tab.on::before{background:color-mix(in srgb,var(--g2) 12%,transparent);box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--g2) 30%,transparent)}
 :root[data-skin="aurora"] .tab.on svg{filter:none}
 :root[data-skin="aurora"] .sec-h h2{background:none;-webkit-text-fill-color:currentColor;color:var(--fg)}
 :root[data-skin="aurora"] .avatar{box-shadow:0 0 0 2px var(--bg),0 0 0 3px color-mix(in srgb,var(--g2) 55%,transparent)}
 :root[data-skin="aurora"] .ql-b i{box-shadow:0 4px 12px color-mix(in srgb,var(--c) 25%,transparent),inset 0 1px 0 rgba(255,255,255,.25)}
-:root[data-skin="aurora"] .check.on{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--g3) 35%,transparent))}
+:root[data-skin="aurora"] .check.on{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--g3) 45%,transparent))}
 :root[data-skin="aurora"] .hx-tick{border-color:color-mix(in srgb,var(--g2) 70%,transparent);color:var(--g3)}
 </style>
 <style>
@@ -1562,7 +1562,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "46"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "47"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
