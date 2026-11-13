@@ -1499,6 +1499,31 @@ body.intro .tabbar{animation:dl-tabin .7s cubic-bezier(.2,.9,.25,1.1) .35s both}
 :root[data-skin="aurora"] .ql-b i{box-shadow:0 4px 12px color-mix(in srgb,var(--c) 25%,transparent),inset 0 1px 0 rgba(255,255,255,.25)}
 :root[data-skin="aurora"] .check.on{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--g3) 45%,transparent))}
 :root[data-skin="aurora"] .hx-tick{border-color:color-mix(in srgb,var(--g2) 70%,transparent);color:var(--g3)}
+
+/* ===== refined outlines (same shapes): hairline edges lit from above, gold-tinted rings ===== */
+:root[data-skin="aurora"]{--hl-a:rgba(255,255,255,1);--hl-b:rgba(20,30,20,.12);--sf:color-mix(in srgb,var(--fg) 4%,var(--solid));--cardS:#FFFFFF;--edge-g:linear-gradient(180deg,var(--hl-a),var(--hl-b))}
+@media (prefers-color-scheme: dark){:root[data-skin="aurora"]:not([data-theme="light"]){--hl-a:rgba(255,255,255,.16);--hl-b:rgba(255,255,255,.035);--sf:color-mix(in srgb,var(--fg) 8%,var(--solid));--cardS:#191B21}}
+:root[data-skin="aurora"][data-theme="dark"]{--hl-a:rgba(255,255,255,.16);--hl-b:rgba(255,255,255,.035);--sf:color-mix(in srgb,var(--fg) 8%,var(--solid));--cardS:#191B21}
+/* cards and alerts */
+:root[data-skin="aurora"] .card:not(.hx):not(.lw),:root[data-skin="aurora"] .alert{border:1px solid transparent;background:linear-gradient(var(--cardS),var(--cardS)) padding-box,var(--edge-g) border-box}
+/* secondary buttons, chips, pills, segmented, inputs */
+:root[data-skin="aurora"] .btn.ghost,:root[data-skin="aurora"] .pill,:root[data-skin="aurora"] .qk,:root[data-skin="aurora"] .hx-next,:root[data-skin="aurora"] .seg,:root[data-skin="aurora"] .opts span,:root[data-skin="aurora"] .when,:root[data-skin="aurora"] .tgl-row,:root[data-skin="aurora"] input.f,:root[data-skin="aurora"] select.f,:root[data-skin="aurora"] textarea.f{border:1px solid transparent;background:linear-gradient(var(--sf),var(--sf)) padding-box,var(--edge-g) border-box}
+:root[data-skin="aurora"] .opts input:checked+span,:root[data-skin="aurora"] .qk.on{border-color:transparent;background:var(--grad) padding-box,linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.08)) border-box}
+:root[data-skin="aurora"] .seg button.on{box-shadow:0 1px 3px rgba(0,0,0,.18),inset 0 1px 0 var(--hl-a)}
+:root[data-skin="aurora"] input.f:focus,:root[data-skin="aurora"] select.f:focus,:root[data-skin="aurora"] textarea.f:focus{background:linear-gradient(var(--sf),var(--sf)) padding-box,linear-gradient(135deg,var(--g2),var(--g3)) border-box}
+/* primary buttons: light rim on top, soft edge below */
+:root[data-skin="aurora"] .btn:not(.ghost):not(.danger),:root[data-skin="aurora"] .hx-add,:root[data-skin="aurora"] .sheet-h .save,:root[data-skin="aurora"] .al-done{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.14),0 0 0 1px color-mix(in srgb,var(--g4) 35%,transparent),0 6px 18px color-mix(in srgb,var(--g3) 22%,transparent)}
+/* round controls: gold-tinted gradient rings */
+:root[data-skin="aurora"] .check:not(.on) span{border:2px solid transparent;background:linear-gradient(var(--cardS),var(--cardS)) padding-box,linear-gradient(160deg,color-mix(in srgb,var(--g2) 75%,transparent),color-mix(in srgb,var(--fg3) 80%,transparent)) border-box}
+:root[data-skin="aurora"] .hx-tick{border:2px solid transparent;background:linear-gradient(var(--sf),var(--sf)) padding-box,linear-gradient(160deg,var(--g2),var(--g4)) border-box}
+:root[data-skin="aurora"] .ql-b i{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 0 1px rgba(255,255,255,.12),0 4px 12px color-mix(in srgb,var(--c) 25%,transparent)}
+:root[data-skin="aurora"] .ico,:root[data-skin="aurora"] .alert .ic,:root[data-skin="aurora"] .hx-ni{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1px rgba(255,255,255,.1)}
+:root[data-skin="aurora"] .bell,:root[data-skin="aurora"] .top .bell-btn{box-shadow:inset 0 0 0 1px var(--hl-b),inset 0 1px 0 var(--hl-a)}
+/* floating tab bar: lit edge */
+:root[data-skin="aurora"] .tabbar{border:1px solid transparent;background:linear-gradient(var(--bar),var(--bar)) padding-box,var(--edge-g) border-box}
+:root[data-skin="aurora"] .tab.on::before{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g2) 32%,transparent),inset 0 1px 0 color-mix(in srgb,var(--g1) 30%,transparent)}
+/* week strip: selected day gets a rim */
+:root[data-skin="aurora"] .dayb.sel.today .n{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.15),0 0 0 3px color-mix(in srgb,var(--g2) 18%,transparent),0 6px 18px color-mix(in srgb,var(--g3) 32%,transparent)}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1562,7 +1587,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "47"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "48"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
