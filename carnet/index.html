@@ -1461,7 +1461,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "39"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "40"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2290,7 +2290,7 @@ function viewToday(){
       else if (n < 0 && a.repeat) al.push({c:"var(--red)", i:I.warn, t:a.title, s: relDays(a.date), act:canEdit()?"editAppt":"", id:a.id, done: canEdit()}); });
   }
   if (isToday) vaxItems().filter(v => v.status === "late" || (v.status === "soon" && daysBetween(today, v.due) <= 3)).forEach(v => { const t = ATYPES[v.ty] || ATYPES.autre; al.push({c: v.status === "late" ? "var(--red)" : t.color, i: t.icon, t: T(v.t), s: relDays(v.due), act: "vaxSheet", id: v.code}); });
-  const alerts = al.length ? `<div class="sec-h hx-h"><h2>${T("À surveiller")}</h2><span class="hx-count num">${al.length}</span></div><div class="alerts" style="margin-top:0">${al.map(a => { const inner = `<span class="ic" style="background:${a.c}">${a.i.replace("<svg","<svg width=\"18\" height=\"18\"")}</span><div class="main">${esc(a.t)}<small>${esc(a.s)}</small></div>`;
+  const alerts = al.length ? `<div class="sec-h hx-h"><h2>${T("À surveiller")}</h2><span class="hx-count num">${al.length}</span></div><div class="alerts" id="al-sec" style="margin-top:0;border-radius:16px">${al.map(a => { const inner = `<span class="ic" style="background:${a.c}">${a.i.replace("<svg","<svg width=\"18\" height=\"18\"")}</span><div class="main">${esc(a.t)}<small>${esc(a.s)}</small></div>`;
     if (a.done) return `<div class="alert al2"><button class="al-main" data-act="${a.act}" data-id="${esc(a.id||"")}">${inner}</button><button class="al-done" data-act="apptDone" data-id="${esc(a.id||"")}">${I.tick}<span>${T("Fait")}</span></button></div>`;
     return a.act ? `<button class="alert" data-act="${a.act}" data-id="${esc(a.id||"")}" data-k="${esc(a.id||"")}" data-v="${esc(a.id||"")}">${inner}<span class="chev">${I.chevR}</span></button>` : `<div class="alert">${inner}</div>`; }).join("")}</div>` : "";
 
@@ -2316,7 +2316,7 @@ function viewToday(){
 
   const day = getDay(sel);
   const segf = field => `<div class="seg" role="group">${OPT[field].map(o => `<button class="${day[field]===o?"on":""}" data-act="jset" data-f="${field}" data-v="${esc(o)}" aria-pressed="${day[field]===o}">${T(field === "appetite" && o === "Moyen" ? "Moyen (appétit)" : o)}</button>`).join("")}</div>`;
-  const journal = `<div class="sec"><div class="sec-h"><h2>${T("Journal du jour")}</h2></div><div class="card">
+  const journal = `<div class="sec" id="jr-sec"><div class="sec-h"><h2>${T("Journal du jour")}</h2></div><div class="card">
     <div class="jrow"><label>${T("Appétit")}</label>${segf("appetite")}</div>
     <div class="jrow"><label>${T("Énergie")}</label>${segf("energy")}</div>
     <div class="jrow"><label>${T("Selles")}</label>${segf("stool")}</div>
@@ -2733,11 +2733,12 @@ function dayReport(ds){
     const nd = notDone[t.cat]; if (nd && due(t)) return {s: "no", h: `<span class="rp-no">${esc(T("Non effectué"))}</span>${nd.who ? " · " + esc(T("signalé par {n}", {n: nd.who})) : ""}`};
     if (lateT(t)) return {s: "miss", h: `<span class="rp-miss">${esc(T("Non enregistré"))}</span> · ${esc(T("à vérifier"))}`};
     return {s: "soon", h: `<span class="rp-soon">${esc(T("À venir"))}</span>`}; };
-  const line = (time, title, rest, x, key) => `<li${key && ds === S.sel ? ` class="rp-jump" data-act="jump" data-to="task-${esc(key)}" role="button" tabindex="0"` : ""}><b class="num">${esc(time || "")}</b><div class="rp-li"><span class="rp-lt">${esc(title)}${x ? ` <span class="xtra">${esc(T("Extra"))}</span>` : ""}</span>${rest ? `<span class="rp-lr">${String(rest).replace(/^ · /, "")}</span>` : ""}</div></li>`;
+  const J = to => to && ds === S.sel ? ` class="rp-jump" data-act="jump" data-to="${esc(to)}" role="button" tabindex="0"` : "";
+  const line = (time, title, rest, x, to) => `<li${J(to)}><b class="num">${esc(time || "")}</b><div class="rp-li"><span class="rp-lt">${esc(title)}${x ? ` <span class="xtra">${esc(T("Extra"))}</span>` : ""}</span>${rest ? `<span class="rp-lr">${String(rest).replace(/^ · /, "")}</span>` : ""}</div></li>`;
   const list = items => items.length ? `<ul class="rp-l">${items.join("")}</ul>` : "";
   const none = txt => `<p class="rp-none">${esc(txt)}</p>`;
   const RPI = {1: ["var(--accent)", I.cal || CATS.autre.icon], 2: [CATS.balade.color, CATS.balade.icon], 3: [QL.pipi.c, QL.pipi.i], 4: [CATS.repas.color, CATS.repas.icon], 5: [CATS.jeu.color, CATS.jeu.icon], 6: [QL.sieste.c, QL.sieste.i], 7: [CATS.med.color, CATS.med.icon], 8: ["var(--orange)", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3 1.8"/></svg>'], 9: ["var(--red)", I.warn], 10: ["var(--teal)", '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Zm-2.5 18h5v.5A1.5 1.5 0 0 1 13 22h-2a1.5 1.5 0 0 1-1.5-1.5V20Z"/></svg>'], 11: ["var(--pink)", '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.1 0 3.7 1.2 5.2 3 1.5-1.8 3.1-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21Z"/></svg>']};
-  const S2 = [], sec = (n, t, html) => { const [c, ic] = RPI[n] || ["var(--gray)", ""]; S2.push(`<section class="rp-s" id="rp-s-${n}" style="--c:${c}"><h3><span class="rp-ic">${ic}</span>${esc(t)}</h3><div class="rp-b">${html}</div></section>`); };
+  const SECTO = {}; const S2 = [], sec = (n, t, html) => { const [c, ic] = RPI[n] || ["var(--gray)", ""], to = SECTO[n]; S2.push(`<section class="rp-s" id="rp-s-${n}" style="--c:${c}"><h3${to && ds === S.sel ? ` class="rp-jump" data-act="jump" data-to="${esc(to)}" role="button" tabindex="0"` : ""}><span class="rp-ic">${ic}</span>${esc(t)}</h3><div class="rp-b">${html}</div></section>`); };
   const of = c => st.tasks.filter(t => t.cat === c);
   const planned = st.tasks.map(t => Object.assign({}, t, status(t)));
   const P = c => planned.filter(t => t.cat === c);
@@ -2750,6 +2751,8 @@ function dayReport(ds){
   const minW = walksL.reduce((a, x) => a + (+x.dur || 0), 0), kmW = walksL.reduce((a, x) => a + (+x.dist || 0), 0) / 1000;
   const walkPl = P("balade"), mealPl = P("repas"), medPl = P("med"), carePl = P("soin"), playPl = P("jeu"), otherPl = P("autre");
   const missing = planned.filter(t => t.s === "miss" || t.s === "no");
+  const firstOpen = arr => { const t = arr.find(t => t.s !== "ok"); return t ? "task-" + t.key : arr[0] ? "task-" + arr[0].key : ""; };
+  Object.assign(SECTO, {1: "prog-h", 2: firstOpen(walkPl) || "ql-balade", 3: "ql-pipi", 4: firstOpen(mealPl) || "jr-sec", 5: firstOpen(playPl) || "ql-plus", 6: "jr-sec", 7: firstOpen(medPl.concat(carePl)) || "", 8: missing[0] ? "task-" + missing[0].key : "prog-h", 9: "al-sec"});
   const jr = [day.appetite && T("appétit {v}", {v: T(day.appetite).toLowerCase()}), day.energy && T("énergie {v}", {v: T(day.energy).toLowerCase()}), day.stool && T("selles {v}", {v: T(day.stool).toLowerCase()})].filter(Boolean);
   const people = [...new Set(Object.values(st.done).map(who).concat(logs.map(who), msgs.map(m => m.name || "")).filter(Boolean))];
 
@@ -2765,31 +2768,31 @@ function dayReport(ds){
   else if (st.total && st.n === st.total) sum.push(T("Tout ce qui était prévu pour {n} a été fait.", {n: name}));
   if (people.length) sum.push(T("Ont participé : {p}.", {p: people.join(", ")}));
   let sumH = `<p>${esc(sum.join(" "))}</p>`;
-  if (msgs.length) sumH += `<div class="rp-q">${msgs.slice(-6).map(m => `<div>«&nbsp;${esc(String(m.text).slice(0, 200))}&nbsp;»<span>${esc(m.name || "")}${m.name ? ", " : ""}${esc(hhmm(new Date(m.at)))}</span></div>`).join("")}</div>`;
+  if (msgs.length) sumH += `<div class="rp-q rp-jump" data-act="go" data-tab="famille" role="button" tabindex="0">${msgs.slice(-6).map(m => `<div>«&nbsp;${esc(String(m.text).slice(0, 200))}&nbsp;»<span>${esc(m.name || "")}${m.name ? ", " : ""}${esc(hhmm(new Date(m.at)))}</span></div>`).join("")}</div>`;
   if (day.note) sumH += `<div class="rp-q"><div>«&nbsp;${esc(String(day.note).slice(0, 240))}&nbsp;»<span>${esc(T("note du jour"))}</span></div></div>`;
   sec(1, T("Résumé de la journée"), sumH);
 
   // 2. walks
-  const wItems = walksL.map(x => line(x.at, T("Balade"), [x.dur && x.dur + " min", x.dist && fmtKm(x.dist), x.pee && T("pipi"), x.poo && T("caca")].filter(Boolean).map(esc).join(" · ") + by(x)));
-  const wPlan = walkPl.map(t => line(t.time, t.title, t.h, t.extra, t.key));
+  const wItems = walksL.map(x => line(x.at, T("Balade"), [x.dur && x.dur + " min", x.dist && fmtKm(x.dist), x.pee && T("pipi"), x.poo && T("caca")].filter(Boolean).map(esc).join(" · ") + by(x), 0, "ql-balade"));
+  const wPlan = walkPl.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key));
   sec(2, T("Promenades et sorties"), (wItems.length ? list(wItems) : "") + (wPlan.length ? `<div class="rp-sub">${esc(T("Prévu dans la routine"))}</div>` + list(wPlan) : "") + (!wItems.length && !wPlan.length ? none(T("Aucune sortie prévue ni enregistrée.")) : !wItems.length && !walkPl.some(t => t.s === "ok") ? none(T("Aucune balade enregistrée pour l'instant.")) : ""));
 
   // 3. toilet
-  const tItems = [].concat(L("pipi").map(x => line(x.at, T("Pipi"), by(x).replace(/^ · /, ""))), L("caca").map(x => line(x.at, T("Caca"), [x.q && esc(T(x.q))].filter(Boolean).join("") + by(x))), walksL.filter(x => x.pee || x.poo).map(x => line(x.at, [x.pee && T("Pipi"), x.poo && T("Caca")].filter(Boolean).join(" + "), esc(T("pendant la balade")))), accL.map(x => line(x.at, T("Accident"), by(x).replace(/^ · /, "")))).sort();
+  const tItems = [].concat(L("pipi").map(x => line(x.at, T("Pipi"), by(x).replace(/^ · /, ""), 0, "ql-pipi")), L("caca").map(x => line(x.at, T("Caca"), [x.q && esc(T(x.q))].filter(Boolean).join("") + by(x), 0, "ql-caca")), walksL.filter(x => x.pee || x.poo).map(x => line(x.at, [x.pee && T("Pipi"), x.poo && T("Caca")].filter(Boolean).join(" + "), esc(T("pendant la balade")), 0, "ql-balade")), accL.map(x => line(x.at, T("Accident"), by(x).replace(/^ · /, ""), 0, "ql-accident"))).sort();
   let tH = tItems.length ? `<p>${esc(T("Pipi : {a} · Caca : {b}", {a: peeL.length, b: pooL.length}) + (accL.length ? " · " + T("Accident : {n}", {n: accL.length}) : ""))}</p>` + list(tItems) : none(T("Aucun besoin enregistré aujourd'hui : cela ne veut pas dire qu'il n'y en a pas eu."));
   if (day.stool) tH += `<p>${esc(T("Selles notées dans le journal : {v}.", {v: T(day.stool).toLowerCase()}))}</p>`;
   sec(3, T("Besoins naturels"), tH);
 
   // 4. food & water
   const daily = dailyG(), per = daily && of("repas").length ? Math.round(daily / of("repas").length) : 0;
-  let fH = mealPl.length ? list(mealPl.map(t => line(t.time, t.title, (per && !t.extra ? esc(T("{g} g prévus", {g: per})) + " · " : "") + t.h, t.extra, t.key))) : none(T("Aucun repas n'est prévu dans la routine."));
+  let fH = mealPl.length ? list(mealPl.map(t => line(t.time, t.title, (per && !t.extra ? esc(T("{g} g prévus", {g: per})) + " · " : "") + t.h, t.extra, "task-" + t.key))) : none(T("Aucun repas n'est prévu dans la routine."));
   if (day.appetite) fH += `<p>${esc(T("Appétit noté : {v}.", {v: T(day.appetite).toLowerCase()}))}</p>`;
   if (treatL.length) fH += `<p>${esc(T(treatL.length > 1 ? "{n} friandises" : "Une friandise", {n: treatL.length}))} (${esc(treatL.map(x => x.at).join(", "))}).</p>`;
   fH += waterL.length ? `<p>${esc(T("Eau notée à {t}.", {t: waterL.map(x => x.at).join(", ")}))}</p>` : `<p class="rp-none">${esc(T("Hydratation non enregistrée."))}</p>`;
   sec(4, T("Alimentation et hydratation"), fH);
 
   // 5. play
-  const pItems = playL.map(x => line(x.at, T("Jeu"), by(x).replace(/^ · /, ""))).concat(playPl.map(t => line(t.time, t.title, t.h, t.extra, t.key)), trains.map(x => line("", T("Éducation : {s}", {s: x.name || x.skill || ""}), x.status ? esc(T(x.status)) : "")));
+  const pItems = playL.map(x => line(x.at, T("Jeu"), by(x).replace(/^ · /, ""), 0, "ql-plus")).concat(playPl.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key)), trains.map(x => line("", T("Éducation : {s}", {s: x.name || x.skill || ""}), x.status ? esc(T(x.status)) : "")));
   sec(5, T("Jeux et stimulation mentale"), pItems.length ? list(pItems) : none(T("Aucun jeu ni exercice enregistré.")));
 
   // 6. rest
@@ -2798,7 +2801,7 @@ function dayReport(ds){
   sec(6, T("Repos et sommeil"), rH || none(T("Repos non enregistré.")));
 
   // 7. health & care
-  const hItems = medPl.map(t => line(t.time, t.title + (t.detail ? " (" + t.detail + ")" : ""), t.h, t.extra, t.key)).concat(carePl.map(t => line(t.time, t.title, t.h, t.extra, t.key)), otherPl.map(t => line(t.time, t.title, t.h, t.extra, t.key)), vomL.map(x => line(x.at, T("Vomissement"), by(x).replace(/^ · /, ""))));
+  const hItems = medPl.map(t => line(t.time, t.title + (t.detail ? " (" + t.detail + ")" : ""), t.h, t.extra, "task-" + t.key)).concat(carePl.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key)), otherPl.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key)), vomL.map(x => line(x.at, T("Vomissement"), by(x).replace(/^ · /, ""), 0, "ql-plus")));
   const w = weights().filter(x => x.date === ds); w.forEach(x => hItems.push(line("", T("Pesée"), esc(nf(x.kg) + " kg"))));
   const ap = appts().filter(a => { const n = daysBetween(ds, a.date); return n >= 0 && n <= 7; });
   let hH = hItems.length ? list(hItems) : none(T("Aucun soin, traitement ou symptôme enregistré."));
@@ -2806,13 +2809,13 @@ function dayReport(ds){
   sec(7, T("Santé et soins"), hH);
 
   // 8. not done / not recorded
-  sec(8, T("Activités non réalisées ou non enregistrées"), !st.total ? none(T("Rien n'était prévu : aucun oubli à signaler.")) : missing.length ? list(missing.map(t => line(t.time, t.title, t.h, t.extra, t.key))) : none(cnt(planned, "soon") ? T("Rien de manquant pour l'instant ; le reste est à venir.") : T("Tout ce qui était prévu a été enregistré.")));
+  sec(8, T("Activités non réalisées ou non enregistrées"), !st.total ? none(T("Rien n'était prévu : aucun oubli à signaler.")) : missing.length ? list(missing.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key))) : none(cnt(planned, "soon") ? T("Rien de manquant pour l'instant ; le reste est à venir.") : T("Tout ce qui était prévu a été enregistré.")));
 
   // 9. attention
   const att = warn.map(c => `<li><b>${esc(c.titre)}</b>${c.tag ? ` <span class="rp-tag">${esc(c.tag)}</span>` : ""} — ${esc(c.texte)}</li>`);
-  const mMiss = medPl.filter(t => t.s === "miss"); if (mMiss.length) att.push(`<li><b>${esc(T("Traitement non confirmé"))}</b> — ${esc(T("{t} : vérifiez qu'il a bien été donné avant d'en redonner.", {t: mMiss.map(t => t.title + " " + t.time).join(", ")}))}</li>`);
-  const fMiss = mealPl.filter(t => t.s === "miss"); if (fMiss.length && !notDone.repas) att.push(`<li><b>${esc(T("Repas non enregistré"))}</b> — ${esc(T("{t} : il a peut-être été donné sans être coché, à confirmer.", {t: fMiss.map(t => t.time).join(", ")}))}</li>`);
-  if (!jr.length && (!isToday || nowM > 17 * 60)) att.push(`<li><b>${esc(T("Journal incomplet"))}</b> — ${esc(T("Appétit, énergie et selles ne sont pas remplis : le suivi est plus fiable avec."))}</li>`);
+  const mMiss = medPl.filter(t => t.s === "miss"); if (mMiss.length) att.push(`<li${J("task-" + mMiss[0].key)}><b>${esc(T("Traitement non confirmé"))}</b> — ${esc(T("{t} : vérifiez qu'il a bien été donné avant d'en redonner.", {t: mMiss.map(t => t.title + " " + t.time).join(", ")}))}</li>`);
+  const fMiss = mealPl.filter(t => t.s === "miss"); if (fMiss.length && !notDone.repas) att.push(`<li${J("task-" + fMiss[0].key)}><b>${esc(T("Repas non enregistré"))}</b> — ${esc(T("{t} : il a peut-être été donné sans être coché, à confirmer.", {t: fMiss.map(t => t.time).join(", ")}))}</li>`);
+  if (!jr.length && (!isToday || nowM > 17 * 60)) att.push(`<li${J("jr-sec")}><b>${esc(T("Journal incomplet"))}</b> — ${esc(T("Appétit, énergie et selles ne sont pas remplis : le suivi est plus fiable avec."))}</li>`);
   const attTxt = att.length ? pl(att.length, "Un point est à surveiller, détaillé plus bas.", "{n} points sont à surveiller, détaillés plus bas.") : "";
   S2[0] = S2[0].replace(esc(" @@ATT@@"), attTxt ? " " + esc(attTxt) : "").replace(esc("@@ATT@@"), esc(attTxt));
   sec(9, T("Points d'attention"), att.length ? `<ul class="rp-l rp-att">${att.join("")}</ul>` : none(T("Rien de particulier à signaler.")));
@@ -2832,7 +2835,7 @@ function dayReport(ds){
   else word = T("Merci de prendre le temps de noter la journée de {n} : ce suivi régulier est précieux, pour vous comme pour le vétérinaire.", {n: name});
   sec(11, T("Le petit mot"), `<p class="rp-word">${esc(word)}</p>`);
   const tile = (v, l, c, to) => `<button type="button" class="rp-k" style="--c:${c}" data-act="jump" data-to="${to}"><b class="num">${v}</b><span>${esc(l)}</span></button>`;
-  const kpis = `<div class="rp-kpis">${tile(st.total ? st.n + "/" + st.total : "—", T("tâches"), "var(--green)", "rp-s-8")}${(minW ? tile(minW, T("min de balade"), CATS.balade.color, "rp-s-2") : tile(walksL.length, T(walksL.length > 1 ? "balades" : "balade"), CATS.balade.color, "rp-s-2"))}${tile(peeL.length + pooL.length, T("besoins notés"), QL.pipi.c, "rp-s-3")}${tile(att.length, T(att.length > 1 ? "points d'attention" : "point d'attention"), att.length ? "var(--red)" : "var(--gray)", "rp-s-9")}</div>`;
+  const kpis = `<div class="rp-kpis">${tile(st.total ? st.n + "/" + st.total : "—", T("tâches"), "var(--green)", (planned.find(t => t.s !== "ok") ? "task-" + planned.find(t => t.s !== "ok").key : "prog-h"))}${(minW ? tile(minW, T("min de balade"), CATS.balade.color, walkPl.find(t => t.s !== "ok") ? "task-" + walkPl.find(t => t.s !== "ok").key : "ql-balade") : tile(walksL.length, T(walksL.length > 1 ? "balades" : "balade"), CATS.balade.color, walkPl.find(t => t.s !== "ok") ? "task-" + walkPl.find(t => t.s !== "ok").key : "ql-balade"))}${tile(peeL.length + pooL.length, T("besoins notés"), QL.pipi.c, "ql-pipi")}${tile(att.length, T(att.length > 1 ? "points d'attention" : "point d'attention"), att.length ? "var(--red)" : "var(--gray)", "al-sec")}</div>`;
   return `<div class="rp">${kpis}${S2.join("")}</div>`;
 }
 function tipsFor(ds){ return tipsForRaw(ds).map(c => Object.assign({}, c, {titre: sx(c.titre), texte: sx(c.texte)})); }
@@ -3837,7 +3840,7 @@ function quickLog(){
     const by = new Date(lp.t.getTime() + hold * 60000); hint = by < new Date() ? `<span class="ql-hint late">${T("Une sortie pipi est conseillée maintenant")}</span>` : `<span class="ql-hint">${T("Prochaine sortie pipi conseillée vers {h}",{h:hhmm(by)})}</span>`; }
   const walkCard = "", walkOld = w ? `<div class="ql-walk"><span class="ql-pulse"></span><div class="main"><div class="t">${T("Balade en cours")}</div><div class="s"><b class="num" id="walk-min">${Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000))} min</b>${memberOf(w.mid) ? " · " + esc(memberOf(w.mid).name) : ""}<span class="gps" id="walk-gps">${gpsLine(w) ? " · " + gpsLine(w) : ""}</span></div></div>
       ${can ? `<button class="btn ghost sm" data-act="walkCancel">${T("Annuler")}</button><button class="btn sm" data-act="walkEnd">${T("Terminer")}</button>` : ""}</div>` : "";
-  const btn = k => { const q = QL[k], on = k === "balade" && w; return `<button class="ql-b ${on ? "on" : ""}" data-act="ql" data-k="${k}" ${can ? "" : "disabled"} style="--c:${q.c}"><i>${q.i}</i><span>${on ? Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000)) + " min" : T(q.l)}</span></button>`; };
+  const btn = k => { const q = QL[k], on = k === "balade" && w; return `<button class="ql-b ${on ? "on" : ""}" id="ql-${k}" data-act="ql" data-k="${k}" ${can ? "" : "disabled"} style="--c:${q.c}"><i>${q.i}</i><span>${on ? Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000)) + " min" : T(q.l)}</span></button>`; };
   const items = log.slice(-6).reverse().map(x => { const q = QL[x.k] || QL.pipi, m = memberOf(x.mid);
     const extra = x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") + (x.pee ? " · " + T("pipi") : "") + (x.poo ? " · " + T("caca") : "") : "";
     if (x.photo) return `<button class="ql-item ph ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="photoView" data-src="${esc(x.photo)}"><img src="${esc(x.photo)}" alt=""><span class="num">${esc(x.at)}</span>${x.note ? esc(x.note.slice(0, 24)) : ""}${m ? mav(m, 18) : ""}</button>`;
