@@ -1720,7 +1720,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "66"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "67"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2859,7 +2859,7 @@ function widgetSection(){
 }
 function viewSettings(){
   return `${subBar(T("Famille"))}
-  <div class="top" style="padding-top:4px"><div><div class="eyebrow">Dogs Life · ${T("version")} ${APP_RELEASE} (${APP_VERSION})</div><h1>${T("Réglages")}</h1></div></div>
+  <div class="top" style="padding-top:4px"><div><div class="eyebrow">Dogs Life · ${T("version")} ${APP_RELEASE}</div><h1>${T("Réglages")}</h1></div></div>
   <div class="brand-tag">${logoImg(26, "sm")} Dogs Life</div>
   ${notifSection()}
   ${SITE && window.carnetAccount ? `<div class="sec"><div class="sec-h"><h2>${T("Compte")}</h2></div><div class="card list">
