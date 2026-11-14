@@ -10,7 +10,7 @@ document.addEventListener("touchmove",function(e){if(e.scale!==undefined&&e.scal
 var __lastTouch=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-__lastTouch<300&&!(e.target.closest&&e.target.closest("input,textarea,select,[contenteditable]")))e.preventDefault();__lastTouch=n;},{passive:false});
 </script>
 <script>try{var k=localStorage.getItem("dl-skin");document.documentElement.dataset.skin=k==="classic"?"classic":"aurora";}catch(e){document.documentElement.dataset.skin="aurora";}</script>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://www.gstatic.com https://cdnjs.cloudflare.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://dogs-life.radanovicvik.workers.dev; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src https://dogs-life-official-web.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://www.gstatic.com https://cdnjs.cloudflare.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://dogs-life.radanovicvik.workers.dev https://tiles.openfreemap.org; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src https://dogs-life-official-web.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="Le carnet de votre chien : routine du jour, santé, vaccins, croissance, éducation et famille.">
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
@@ -1804,6 +1804,14 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .aw .main{display:grid;gap:2px;font-size:14px;color:var(--fg2)}.aw .main b{font-size:16px;color:var(--fg)}
 .aw-b{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .aw-b .btn{width:100%}
+
+/* interactive map */
+.ml-box,.ml-box.maplibregl-map{position:absolute;inset:0}
+.rmap .maplibregl-ctrl-attrib{font-size:10px;background:rgba(255,255,255,.7)}
+.rmap .maplibregl-ctrl-attrib.maplibregl-compact{min-height:20px}
+.ml-home{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--accent);box-shadow:0 0 0 3px #fff,0 4px 12px rgba(0,0,0,.35)}
+:root[data-skin="aurora"] .ml-home{background:var(--grad)}
+.rmap.wmap{height:min(52vh,420px)}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1867,7 +1875,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "78"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "79"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3856,6 +3864,68 @@ function drawRoutes(box, routes, o){
   const hm = o.home ? (() => { const h = P(o.home); return `<g transform="translate(${h[0]} ${h[1]})"><circle r="11" class="mr-home"/><path d="M-5 1 0-4 5 1M-3.5 0v4.5h7V0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`; })() : "";
   box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}${ends}${hm}</svg><span class="rmap-c">© OpenStreetMap · © CARTO</span>`;
 }
+// real, interactive map (MapLibre + OpenFreeMap: free, no key). Falls back to the static map if it can't start.
+let MLP = null;
+function mapLib(){
+  if (window.maplibregl) return Promise.resolve(window.maplibregl);
+  if (!MLP) MLP = new Promise((res, rej) => {
+    const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "vendor/maplibre-gl.css"; document.head.appendChild(l);
+    const sc = document.createElement("script"); sc.src = "vendor/maplibre-gl.js"; sc.async = true;
+    sc.onload = () => window.maplibregl ? res(window.maplibregl) : rej(new Error("maplibre")); sc.onerror = () => { MLP = null; rej(new Error("maplibre")); };
+    document.head.appendChild(sc); });
+  return MLP;
+}
+const mapStyleURL = () => "https://tiles.openfreemap.org/styles/" + (isDarkUI() ? "dark" : "liberty");
+const routesGeo = routes => ({type: "FeatureCollection", features: routes.filter(r => r.pts && r.pts.length > 1).map(r => ({type: "Feature", properties: {id: r.id}, geometry: {type: "LineString", coordinates: r.pts.map(q => [q[1], q[0]])}}))});
+function endsGeo(routes, sel){ const r = routes.find(x => x.id === sel); if (!r || !r.pts.length) return {type: "FeatureCollection", features: []};
+  const a = r.pts[0], b = r.pts[r.pts.length - 1];
+  return {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [a[1], a[0]]}}, {type: "Feature", properties: {k: "b"}, geometry: {type: "Point", coordinates: [b[1], b[0]]}}]}; }
+function mapBounds(routes, sel, home){
+  const pts = routes.filter(r => !sel || r.id === sel).flatMap(r => r.pts).concat(home && !sel ? [home] : []); if (!pts.length) return null;
+  let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const q of pts) { la0 = Math.min(la0, q[0]); la1 = Math.max(la1, q[0]); lo0 = Math.min(lo0, q[1]); lo1 = Math.max(lo1, q[1]); }
+  return [[lo0, la0], [lo1, la1]];
+}
+// create (or update) an interactive map in el; o: {sel, home, onPick}
+function liveMapSet(M, routes, o){
+  const map = M.map; M.routes = routes; M.o = o;
+  if (!M.ready) return;
+  map.getSource("r").setData(routesGeo(routes)); map.getSource("e").setData(endsGeo(routes, o.sel));
+  const sel = o.sel || "";
+  map.setFilter("r-sel-c", ["==", ["get", "id"], sel]); map.setFilter("r-sel", ["==", ["get", "id"], sel]);
+  map.setPaintProperty("r-line", "line-opacity", sel ? .28 : .9);
+  if (o.home && !M.homeMk) { const e = document.createElement("div"); e.className = "ml-home"; e.innerHTML = I_HOME.replace(/26/g, "16"); M.homeMk = new maplibregl.Marker({element: e}).setLngLat([o.home[1], o.home[0]]).addTo(map); }
+  const key = sel + "|" + routes.length;
+  if (M.fitKey !== key) { const b = mapBounds(routes, sel, o.home); if (b) map.fitBounds(b, {padding: 44, maxZoom: 17, duration: M.fitKey == null ? 0 : 650}); M.fitKey = key; }
+}
+let ML_FAIL = false;
+async function liveMap(el, routes, o, M){
+  o = o || {}; let gl;
+  M = M || {el, style: mapStyleURL()}; Object.assign(M, {ready: false, fitKey: null}); if (!M.routes) { M.routes = routes; M.o = o; }
+  const static_ = () => { ML_FAIL = true; M.dead = true; el.innerHTML = ""; drawRoutes(el, M.routes, M.o); };
+  if (ML_FAIL) { static_(); return null; }
+  try { gl = await mapLib(); } catch(_) { static_(); return null; }
+  el.innerHTML = ""; const box = document.createElement("div"); box.className = "ml-box"; el.appendChild(box);
+  try { M.map = new gl.Map({container: box, style: M.style, attributionControl: {compact: true}, dragRotate: false, pitchWithRotate: false, touchPitch: false, fadeDuration: 0}); }
+  catch(_) { static_(); return null; }
+  const map = M.map; map.touchZoomRotate.disableRotation();
+  const fail = setTimeout(() => { if (!M.ready && !M.dead) { try { map.remove(); } catch(_) {} static_(); } }, 9000);
+  map.on("load", () => { clearTimeout(fail); if (M.dead) return; M.ready = true; M.fitKey = null;
+    const dark = isDarkUI();
+    map.addSource("r", {type: "geojson", data: routesGeo(M.routes)}); map.addSource("e", {type: "geojson", data: endsGeo(M.routes, M.o.sel)});
+    const lay = {"line-cap": "round", "line-join": "round"};
+    map.addLayer({id: "r-case", type: "line", source: "r", layout: lay, paint: {"line-color": dark ? "#0b0c10" : "#ffffff", "line-width": 7, "line-opacity": .55}});
+    map.addLayer({id: "r-line", type: "line", source: "r", layout: lay, paint: {"line-color": "#30D158", "line-width": 4, "line-opacity": .9}});
+    map.addLayer({id: "r-sel-c", type: "line", source: "r", layout: lay, filter: ["==", ["get", "id"], ""], paint: {"line-color": "#ffffff", "line-width": 10}});
+    map.addLayer({id: "r-sel", type: "line", source: "r", layout: lay, filter: ["==", ["get", "id"], ""], paint: {"line-color": "#FF9F0A", "line-width": 6}});
+    map.addLayer({id: "r-hit", type: "line", source: "r", layout: lay, paint: {"line-color": "#000", "line-width": 22, "line-opacity": 0}});
+    map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7, "circle-color": ["match", ["get", "k"], "a", "#30D158", "#FF453A"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 2.5}});
+    map.on("click", "r-hit", e => { const f = e.features && e.features[0]; if (f && M.o.onPick) M.o.onPick(f.properties.id); });
+    map.on("mouseenter", "r-hit", () => { map.getCanvas().style.cursor = "pointer"; }); map.on("mouseleave", "r-hit", () => { map.getCanvas().style.cursor = ""; });
+    liveMapSet(M, M.routes, M.o); });
+  map.on("error", e => { if (!M.ready && e && e.error && /style|fetch|Failed/i.test(String(e.error.message || ""))) { clearTimeout(fail); if (M.dead) return; try { map.remove(); } catch(_) {} static_(); } });
+  return M;
+}
+function liveMapDrop(M){ if (M && M.map) { try { M.map.remove(); } catch(_) {} } }
 function walksMapView(){
   const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f), d = dog() || {};
   if (S.mapSel && !list.some(l => l.id === S.mapSel)) S.mapSel = null;
@@ -3870,9 +3940,14 @@ function walksMapView(){
     + (list.length ? `<div class="sec"><div class="sec-h"><h2>${T("Trajets")}</h2></div><div class="card list">${rows}</div><div class="foot">${T("Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.")}</div></div>` : `<div class="foot" style="margin-top:14px">${T("Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.")}</div>`);
 }
 function paintWalksMap(){
-  const box = document.getElementById("wm-map"); if (!box) return; const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f); if (!list.length) return;
-  const aw = awCfg();
-  drawRoutes(box, list.map(l => ({id: l.id, pts: polyDec(l.route)})), {sel: S.mapSel, home: aw.home});
+  const box = document.getElementById("wm-map"); if (!box) return; const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f);
+  if (!list.length) { if (S.wm) { liveMapDrop(S.wm); S.wm = null; } return; }
+  const routes = list.map(l => ({id: l.id, pts: polyDec(l.route)})), o = {sel: S.mapSel, home: awCfg().home, onPick: id => { S.mapSel = S.mapSel === id ? null : id; render(); }};
+  if (S.wm && S.wm.style === mapStyleURL() && (!S.wm.dead || ML_FAIL)) { if (box !== S.wm.el) box.replaceWith(S.wm.el);
+    if (S.wm.dead) { S.wm.el.innerHTML = ""; drawRoutes(S.wm.el, routes, o); return; }
+    if (S.wm.ready) { liveMapSet(S.wm, routes, o); S.wm.map.resize(); } else { S.wm.routes = routes; S.wm.o = o; } return; }
+  if (S.wm) liveMapDrop(S.wm);
+  S.wm = {el: box, style: mapStyleURL()}; liveMap(box, routes, o, S.wm);
 }
 
 // ---------- automatic walk detection (asks before doing anything) ----------
@@ -4722,7 +4797,8 @@ function walkView(id){
     ${x.pee || x.poo ? `<div class="wv-tags">${x.pee ? `<span>${QL.pipi.i}${T("Pipi")}</span>` : ""}${x.poo ? `<span>${QL.caca.i}${T("Caca")}</span>` : ""}</div>` : ""}
     ${week.length > 1 ? `<div class="wv-week">${T("Ces 7 derniers jours : {k} en {n} balades suivies", {k: fmtKm(wkKm), n: week.length})}</div>` : ""}
     <div class="foot" style="margin:10px 4px 0">${T("Le trajet n'est visible que par votre famille.")}</div>`, null);
-  requestAnimationFrame(() => { const b = document.getElementById("wv-map"); if (b) drawRoute(b, pts); });
+  liveMapDrop(S.wvMap); S.wvMap = null;
+  requestAnimationFrame(() => { const b = document.getElementById("wv-map"); if (b) liveMap(b, [{id: "w", pts}], {sel: "w"}).then(M => { S.wvMap = M; }); });
 }
 setInterval(() => { const w = walkNow();
   if (w && GPS.watch == null && GPS.state !== "denied" && gLS.g(gpsKey(w.start)) != null) gpsBegin(w.start);   // app reopened during a walk
@@ -6725,7 +6801,7 @@ function render(skipNames){
   if (ml1) { if (mlKeep && mlKeep.first === ml1.dataset.first) ml1.scrollTop = mlKeep.top; msgFade(ml1); ml1.addEventListener("scroll", () => msgFade(ml1), {passive:true}); }
   mountBuddy();
   if (keepNote) { const n = document.getElementById(keepNote.id); if (n && n !== active) { n.value = keepNote.v; n.focus(); try { n.setSelectionRange(keepNote.s, keepNote.s); } catch(e){} } }
-  renderTabs(); syncChat(); presenceBeat(); replyBar(); chatSeen(); if (S.tab === "chien" && S.sub === "carte") requestAnimationFrame(paintWalksMap);
+  renderTabs(); syncChat(); presenceBeat(); replyBar(); chatSeen(); if (S.tab === "chien" && S.sub === "carte") requestAnimationFrame(paintWalksMap); else if (S.wm) { liveMapDrop(S.wm); S.wm = null; }
   if (!skipNames) { resolveNames(); resolveAvatars(); }
   syncOrbit();
   renderJoin();
@@ -6766,7 +6842,7 @@ function openSheet(title, body, onSave, onDelete){
     <form id="sheet-form">${body}${onDelete?`<button type="button" class="btn danger" data-act="sheetDel" style="width:100%;margin-top:6px">${T("Supprimer")}</button>`:""}</form></div></div>`;
   const f = $("#sheet-form input, #sheet-form select"); if (f) setTimeout(()=>f.focus(), 50);
 }
-function closeSheet(){ sheetSave = sheetDelete = null; const sc = $("#sheet-root .scrim"); if (!sc) return; const tok = ++sheetTok; sc.classList.add("closing"); setTimeout(() => { if (tok === sheetTok) $("#sheet-root").innerHTML = ""; }, 220); }
+function closeSheet(){ sheetSave = sheetDelete = null; const sc = $("#sheet-root .scrim"); if (!sc) return; const tok = ++sheetTok; sc.classList.add("closing"); setTimeout(() => { if (tok === sheetTok) { $("#sheet-root").innerHTML = ""; if (S.wvMap) { liveMapDrop(S.wvMap); S.wvMap = null; } } }, 220); }
 const val = id => { const e = document.getElementById(id); return e ? e.value.trim() : ""; };
 
 function routineSheet(r){
