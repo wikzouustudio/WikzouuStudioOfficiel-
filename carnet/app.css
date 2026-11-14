@@ -1953,7 +1953,7 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .scrub-ind{transform-origin:center}
 
 /* colour palettes for the Aurora design (Réglages → Apparence) */
-:root{--g1:#FFB088;--g2:#FF7A5C;--g3:#F2456E;--g4:#B4235C;--on-grad:#FFFFFF;--acc-l:#D2334A;--acc-d:#FF8A70}
+:root[data-pal="corail"]{--g1:#FFB088;--g2:#FF7A5C;--g3:#F2456E;--g4:#B4235C;--on-grad:#FFFFFF;--acc-l:#D2334A;--acc-d:#FF8A70}
 .pal-sw[data-pal="corail"]{background:linear-gradient(135deg,#FFB088,#FF7A5C 45%,#F2456E 80%,#B4235C)}
 :root[data-pal="ocean"]{--g1:#8ADAFF;--g2:#3EA6FF;--g3:#2563EB;--g4:#1E3A8A;--on-grad:#FFFFFF;--acc-l:#1D5FD6;--acc-d:#62B6FF}
 .pal-sw[data-pal="ocean"]{background:linear-gradient(135deg,#8ADAFF,#3EA6FF 45%,#2563EB 80%,#1E3A8A)}
@@ -1970,3 +1970,7 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .pal-o[aria-checked="true"] .pal-sw{box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--accent),0 6px 16px rgba(0,0,0,.2);transform:scale(1.04)}
 .pal-o[aria-checked="true"] small{color:var(--fg)}
 .pal-o:active .pal-sw{transform:scale(.88)}
+:root{--g1:#8CC8FF;--g2:#4D8DFF;--g3:#5B5BF0;--g4:#7B3FE4;--on-grad:#FFFFFF;--acc-l:#3B53DD;--acc-d:#86A8FF}
+:root[data-pal="indigo"]{--g1:#8CC8FF;--g2:#4D8DFF;--g3:#5B5BF0;--g4:#7B3FE4;--on-grad:#FFFFFF;--acc-l:#3B53DD;--acc-d:#86A8FF}
+.pal-sw[data-pal="indigo"]{background:linear-gradient(135deg,#8CC8FF,#4D8DFF 45%,#5B5BF0 80%,#7B3FE4)}
+.pal-pick{grid-template-columns:repeat(6,1fr);gap:2px}.pal-sw{width:40px;height:40px}
