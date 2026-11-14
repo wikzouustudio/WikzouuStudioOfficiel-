@@ -1,0 +1,5894 @@
+(function(){
+"use strict";
+/* ---------- language ---------- */
+const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
+const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
+// per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
+const APP_VERSION = "91"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
+let LSU = "";
+const LS = {
+  k: key => PER_USER.includes(key) ? key + "@" + (LSU || "anon") : key,
+  get(key){ try { return localStorage.getItem(LS.k(key)); } catch(_) { return null; } },
+  set(key, v){ try { localStorage.setItem(LS.k(key), v); } catch(_) {} },
+  del(key){ try { localStorage.removeItem(LS.k(key)); } catch(_) {} }
+};
+let LANG = "fr";
+try { const l = localStorage.getItem("carnet-lang"); LANG = LANGS.some(x => x[0] === l) ? l : navLang(); } catch(_) { LANG = navLang(); }
+const EN = {
+  // tabs & headers
+  "Aujourd'hui":"Today","Routine":"Routine","Santé":"Health","Profil":"Profile","Chargement":"Loading",
+  "Planning de la semaine":"Weekly schedule","Ajouter":"Add","Votre chien":"Your dog",
+  // categories
+  "Repas":"Meal","Balade":"Walk","Médicament":"Medication","Soin":"Care","Jeu & éducation":"Play & training","Autre":"Other",
+  "Vétérinaire":"Vet","Vaccin":"Vaccine","Vermifuge":"Dewormer","Antipuces / tiques":"Flea / tick","Toilettage":"Grooming",
+  // today
+  "Prochain :":"Next:","à":"at","maintenant":"now","dans {t}":"in {t}","Tout est fait pour aujourd'hui.":"Everything is done for today.",
+  "{n} tâche en retard":"{n} task overdue","{n} tâches en retard":"{n} tasks overdue",
+  "Stock bas : {m}":"Low stock: {m}","Environ {q} {u} restant(s), ~{d} j":"About {q} {u} left, ~{d} days",
+  "Matin":"Morning","Midi":"Midday","Après-midi":"Afternoon","Soir":"Evening",
+  "Fait":"Done","Fait à {t}":"Done at {t}","par {w}":"by {w}","vous":"you",
+  "Annuler":"Cancel","Marquer comme fait":"Mark as done",
+  "Rien de prévu ce jour-là.":"Nothing planned that day.","Organiser la routine":"Set up the routine",
+  "Journal du jour":"Daily log","Appétit":"Appetite","Énergie":"Energy","Selles":"Stools",
+  "Bon":"Good","Moyen":"Fair","Faible":"Poor","Haute":"High","Normale":"Normal","Basse":"Low","Normales":"Normal","Molles":"Soft","Aucune":"None",
+  "Observations, comportement, symptômes…":"Observations, behaviour, symptoms…",
+  "Partagé avec toute la famille. Utile pour le vétérinaire.":"Shared with the whole family. Useful for the vet.",
+  "Semaine précédente":"Previous week","Semaine suivante":"Next week",
+  "tâches faites":"tasks done","tâches faites pour {n}":"tasks done for {n}",
+  // routine
+  "{d} : {n} activité(s), dont {w} sortie(s).":"{d}: {n} activit(ies), including {w} walk(s).",
+  "Aucune activité ce jour-là.":"No activity that day.","Médicaments en cours":"Current medications","Gérer":"Manage",
+  "Les prises s'ajoutent automatiquement chaque jour du traitement.":"Doses are added automatically on each day of treatment.",
+  "Tous les jours":"Every day","En semaine":"Weekdays","Le week-end":"Weekends","Week-end":"Weekend",
+  // health
+  "Jour {a} sur {b}":"Day {a} of {b}","Fin le {d}":"Ends {d}","Depuis le {d}":"Since {d}","Traitement continu":"Ongoing treatment",
+  "Stock estimé : {q} {u}":"Estimated stock: {q} {u}","Besoin jusqu'à la fin : {q}":"Needed until the end: {q}",
+  "Aucune pesée enregistrée.":"No weigh-ins yet.","Dernière pesée · {d}":"Last weigh-in · {d}","{x} kg depuis le {d}":"{x} kg since {d}",
+  "Évolution du poids":"Weight trend","Poids en kg":"Weight in kg","tous les {n} mois":"every {n} months",
+  "Fait, reprogrammer":"Done, reschedule","Aucun rendez-vous prévu.":"No appointments planned.",
+  "Taux de réalisation sur 14 jours":"Completion rate over 14 days",
+  "Médicaments":"Medications","Aucun traitement en cours.":"No current treatment.","Terminés : {l}":"Finished: {l}",
+  "Le stock est estimé à partir des horaires de prise.":"Stock is estimated from the dose times.",
+  "Rendez-vous et rappels":"Appointments & reminders",
+  "Vaccins, vermifuge, antipuces : les rappels réguliers se reprogramment quand vous les marquez faits.":"Vaccines, dewormer, flea treatment: recurring reminders reschedule themselves when you mark them done.",
+  "Poids":"Weight","Régularité sur 14 jours":"14-day consistency","Part des tâches cochées chaque jour, sans compter aujourd'hui.":"Share of tasks ticked each day, not counting today.",
+  "Aujourd'hui ":"Today","Demain":"Tomorrow","Hier":"Yesterday","Dans {n} jours":"In {n} days","En retard de {n} jours":"{n} days overdue",
+  // profile
+  "Identité":"Identity","Alimentation":"Food","Race":"Breed","Sexe":"Sex","Né(e) le":"Born","Gabarit":"Size","Stérilisé(e)":"Neutered","N° de puce":"Microchip no.",
+  "Type":"Type","Marque":"Brand","Marque, saveur":"Brand, flavour","Ration / jour":"Daily ration","Repas / jour":"Meals / day","Friandises":"Treats","Allergies":"Allergies",
+  "Cabinet":"Practice","Nom":"Name","Téléphone":"Phone","Adresse":"Address","Rue, ville":"Street, town","Urgences 24 h":"24 h emergency","Numéro":"Number","Assurance":"Insurance","N° de contrat":"Policy no.","Optionnel":"Optional",
+  "Mâle":"Male","Femelle":"Female","Petit":"Small","Grand":"Large","Géant":"Giant","Oui":"Yes","Non":"No","Prévu":"Planned",
+  "Croquettes":"Kibble","Pâtée":"Wet food","Croquettes + pâtée":"Kibble + wet food","BARF (cru)":"BARF (raw)","Ration ménagère":"Home-cooked",
+  "Seulement pour l'éducation":"Only for training","10 % de la ration au maximum":"Max 10 % of the ration","Une par jour":"One a day","Sans restriction":"No limit",
+  "Poulet":"Chicken","Bœuf":"Beef","Agneau":"Lamb","Poisson":"Fish","Céréales / gluten":"Grains / gluten","Produits laitiers":"Dairy","Pollen":"Pollen","Puces":"Fleas",
+  "{n} repas":"{n} meals","Copier":"Copy","Choisir":"Choose","Autre…":"Other…","Précisez":"Specify",
+  "Photo":"Photo","Nom du chien":"Dog's name","Enregistrer":"Save","Modifier la fiche":"Edit profile","À savoir":"Good to know",
+  "Peurs, habitudes, consignes pour la garde…":"Fears, habits, instructions for the sitter…",
+  "Peurs, habitudes, consignes pour la personne qui le garde…":"Fears, habits, instructions for whoever looks after them…",
+  "Rechercher":"Search","Autre : précisez":"Other: specify","Tapez la réponse":"Type your answer","Effacer la réponse":"Clear answer",
+  "Tapez une réponse ou choisissez dans la liste.":"Type an answer or pick one from the list.","Tapez une allergie à ajouter.":"Type an allergy to add.",
+  "Langue":"Language","Réglages":"Settings",
+  // banners & onboarding
+  "Ce carnet est enregistré uniquement sur cet appareil.":"This log is saved on this device only.",
+  "Les données ne sont pas encore accessibles. Vérifiez la connexion.":"The data can't be reached yet. Check your connection.",
+  "Données d'exemple.":"Sample data.","Remplacez-les par celles de votre chien, ou repartez de zéro.":"Replace it with your dog's details, or start from scratch.",
+  "Confirmer l'effacement":"Confirm delete","Tout effacer":"Delete everything","Garder comme base":"Keep as a starting point",
+  "Le carnet de votre chien":"Your dog's log","Routine du jour, médicaments, rendez-vous et poids, partagés avec toute la famille.":"Daily routine, medication, appointments and weight, shared with the whole family.",
+  "Créer la fiche":"Create the profile","Partir d'un exemple":"Start from an example","Le carnet n'a pas encore été rempli.":"The log hasn't been filled in yet.",
+  // sheets
+  "OK":"OK","Supprimer":"Delete","Confirmer la suppression":"Confirm delete","Modifier":"Edit","Nouvelle activité":"New activity","Activité":"Activity",
+  "Balade, repas, brossage…":"Walk, meal, brushing…","Catégorie":"Category","Heure":"Time","Jours":"Days","Détails":"Details","Durée, quantité, consigne…":"Duration, amount, instruction…",
+  "Les médicaments s'ajoutent dans l'onglet Santé.":"Medications are added in the Health tab.","Indiquez l'activité, l'heure et au moins un jour.":"Enter the activity, the time and at least one day.",
+  "Modifier le traitement":"Edit treatment","Nouveau médicament":"New medication","Nom et dosage":"Name and strength","Dose par prise":"Dose per intake","1 comprimé, 5 gouttes…":"1 tablet, 5 drops…",
+  "½ comprimé":"½ tablet","1 comprimé":"1 tablet","2 comprimés":"2 tablets","5 gouttes":"5 drops","1 pipette":"1 pipette","1 ml":"1 ml",
+  "Heures de prise":"Dose times","Prise {n}":"Dose {n}","Début":"Start","Fin":"End","Laissez la fin vide pour un traitement continu.":"Leave the end empty for ongoing treatment.",
+  "Stock actuel":"Current stock","Unité":"Unit","Autre unité (tapez-la)":"Other unit (type it)","Unités par prise":"Units per dose","Consigne":"Instruction","Avec le repas, caché dans une friandise…":"With food, hidden in a treat…",
+  "comprimés":"tablets","gélules":"capsules","gouttes":"drops","ml":"ml","pipettes":"pipettes","sachets":"sachets",
+  "Indiquez le nom et au moins une heure de prise.":"Enter the name and at least one dose time.","La date de fin précède la date de début.":"The end date is before the start date.",
+  "Nouveau rendez-vous":"New appointment","Intitulé":"Title","Rappel vaccin, contrôle…":"Booster, check-up…","Date":"Date","Répéter":"Repeat","Jamais":"Never",
+  "Tous les mois":"Every month","Tous les 2 mois":"Every 2 months","Tous les 3 mois":"Every 3 months","Tous les 6 mois":"Every 6 months","Tous les ans":"Every year",
+  "Note":"Note","À apporter, questions à poser…":"What to bring, questions to ask…","Indiquez l'intitulé et la date.":"Enter the title and the date.",
+  // toasts
+  "Vous pouvez consulter ce carnet, mais pas le modifier.":"You can view this log but not edit it.","Le carnet est plein. Supprimez d'anciennes entrées.":"The log is full. Delete some old entries.",
+  "Modification non enregistrée. Réessayez dans un instant.":"Change not saved. Try again in a moment.","Reprogrammé au {d}":"Rescheduled to {d}","Rendez-vous marqué comme fait":"Appointment marked as done",
+  "Fiche enregistrée":"Profile saved","Copié : {v}":"Copied: {v}","Indiquez un poids et une date.":"Enter a weight and a date.","Pesée ajoutée":"Weigh-in added","Mon chien":"My dog",
+  // advice
+  "Bien":"Good","Conseil":"Tip","À surveiller":"Watch","Bilan provisoire":"Early summary","Bilan et conseils":"Summary & tips",
+  "Conseils générés le {d} à {t}. Ils ne remplacent pas l'avis du vétérinaire.":"Tips generated on {d} at {t}. They don't replace your vet's advice.",
+  "Bilan provisoire : il se précise au fil de la journée et du journal.":"Early summary: it gets more precise as the day and the log fill in.",
+  "Repères selon la race, l'âge, la journée et le journal. Ils ne remplacent pas l'avis du vétérinaire.":"Pointers based on breed, age, the day and the log. They don't replace your vet's advice.",
+  "Analyse de la journée…":"Analysing the day…","Actualiser les conseils":"Refresh tips","Conseils personnalisés pour {n}":"Personalised tips for {n}","le chien":"your dog",
+  "Conseils personnalisés non autorisés pour cette page.":"Personalised tips aren't allowed for this page.","Trop de demandes pour l'instant. Réessayez plus tard.":"Too many requests right now. Try again later.",
+  "Les conseils n'ont pas pu être générés. Réessayez.":"The tips couldn't be generated. Try again.","Âge":"Age",
+  " Vétérinaire : {p}.":" Vet: {p}.",
+  "Appétit et énergie en baisse":"Low appetite and energy","Gardez-le au calme et vérifiez qu'il boit. Si ça dure plus de 24 h, ou en cas de vomissements, de fièvre ou de ventre gonflé, appelez le vétérinaire.":"Keep them calm and check they're drinking. If it lasts more than 24 h, or with vomiting, fever or a swollen belly, call the vet.",
+  "Peu d'appétit depuis 2 jours":"Poor appetite for 2 days","Appétit faible":"Poor appetite",
+  "Deux jours de suite, ça mérite un appel au vétérinaire, surtout s'il maigrit ou semble abattu.":"Two days in a row is worth a call to the vet, especially if they're losing weight or seem low.",
+  "Proposez sa ration à heure fixe et retirez la gamelle après 20 minutes. Évitez de compenser avec des friandises.":"Offer the ration at a fixed time and remove the bowl after 20 minutes. Don't make up for it with treats.",
+  "Journée calme":"Quiet day","Laissez-le se reposer et vérifiez qu'il boit et mange. Si la fatigue dure plus de 24 h ou s'accompagne d'autres signes, appelez le vétérinaire.":"Let them rest and check they eat and drink. If the tiredness lasts more than 24 h or comes with other signs, call the vet.",
+  "Selles molles depuis 2 jours":"Soft stools for 2 days","Selles molles":"Soft stools",
+  "Si ça continue, s'il y a du sang ou s'il est abattu, consultez.":"If it continues, if there's blood or they seem low, see the vet.",
+  "Eau fraîche à volonté, pas de friandises ni de restes de table demain. Au-delà de 48 h ou avec du sang, consultez.":"Plenty of fresh water, no treats or table scraps tomorrow. Beyond 48 h or with blood, see the vet.",
+  "Pas de selles depuis 2 jours":"No stools for 2 days","S'il force sans résultat ou semble avoir mal au ventre, appelez le vétérinaire.":"If they strain without result or seem to have tummy pain, call the vet.",
+  "Vomissement noté":"Vomiting noted","Un épisode isolé n'est souvent pas grave. S'il se répète, s'il ne garde pas l'eau ou semble abattu, consultez.":"A single episode is often nothing serious. If it repeats, they can't keep water down or seem low, see the vet.",
+  "Patte ou boiterie notée":"Limp or paw issue noted","Limitez les sauts et les escaliers, balades courtes en laisse. Sans amélioration en 48 h, faites contrôler.":"Limit jumping and stairs, short walks on the lead. No improvement in 48 h: get it checked.",
+  "Démangeaisons":"Itching","Notez les zones et les moments où il se gratte : c'est précieux pour le vétérinaire.":"Note where and when they scratch: it's valuable for the vet.",
+  "Prise oubliée":"Missed dose","{l}. Ne doublez pas la prise suivante sans l'avis du vétérinaire.":"{l}. Don't double the next dose without asking the vet.",
+  "Beaucoup d'énergie, peu de sorties":"Lots of energy, few walks","Une séance de flair de 10 minutes (friandises cachées dans l'appartement) le fatigue autant qu'une balade.":"A 10-minute sniffing session (treats hidden around the home) tires them as much as a walk.",
+  "{a} sortie(s) sur {b}":"{a} of {b} walks","Il a eu moins de sorties que prévu. Demain, reprenez simplement le rythme habituel, sans rallonger les balades : 10 minutes de jeux de flair aident à se dépenser sans forcer.":"Fewer walks than planned. Tomorrow, just keep the usual rhythm without making walks longer: 10 minutes of sniffing games help burn energy without overdoing it.",
+  "Encore de l'énergie":"Still full of energy","Toutes les sorties sont faites : ajoutez plutôt un jeu de réflexion (tapis de fouille, jouet à remplir) qu'une sortie de plus.":"All walks are done: add a brain game (snuffle mat, stuffed toy) rather than another walk.",
+  "Prise de poids":"Weight gain","Perte de poids":"Weight loss","{a} → {b} kg depuis la pesée précédente. Parlez-en au vétérinaire et ajustez la ration avec lui.":"{a} → {b} kg since the previous weigh-in. Talk to your vet and adjust the ration together.",
+  "Demain : {t}":"Tomorrow: {t}","Après-demain : {t}":"In 2 days: {t}","À {t}. ":"At {t}. ","Pensez à préparer le carnet de santé.":"Remember to bring the health record.",
+  "Complétez le journal":"Fill in the log","Indiquez l'appétit, l'énergie et les selles pour des conseils plus précis.":"Enter appetite, energy and stools for more precise tips.",
+  "Belle journée":"Great day","Routine complète et tout semble normal.":"Routine complete and everything looks normal.","Routine complète pour {n} et tout semble normal.":"Routine complete for {n} and everything looks normal.",
+  "Sorties du soir":"Evening walks","Les journées sont courtes : un collier ou un harnais lumineux le rend visible dans le noir.":"Days are short: a light-up collar or harness makes them visible in the dark.",
+  "Chaleur":"Heat","Sortez-le aux heures fraîches et emportez de l'eau lors des longues balades.":"Walk in the cooler hours and bring water on long walks."
+,  // sitter
+  "Du {a} au {b}":"{a} to {b}","Dernier jour de garde":"Last day of pet sitting","Encore {n} jour(s)":"{n} day(s) left","Propriétaire":"Owner",
+  "Garde de {n}":"Looking after {n}","Garde":"Pet sitting","Gardé par {n}":"Looked after by {n}","Consignes":"Instructions",
+  "Ne donnez rien qui en contient, friandises comprises.":"Don't give anything containing these, treats included.","Contacts":"Contacts",
+  "Programme de la journée":"Today's schedule","Cocher":"Tick off","Cochez chaque tâche dans l'onglet Aujourd'hui : la famille voit ce qui est fait.":"Tick each task in the Today tab: the family sees what's done.",
+  "Aperçu du mode garde.":"Pet-sitter preview.","Voici ce que voit la personne qui garde le chien.":"This is what the pet sitter sees.","Quitter l'aperçu":"Exit preview",
+  "Chien sous garde":"Pet sitting","Dates":"Dates","Gardé par":"Sitter","Voir comme la personne qui garde":"View as the pet sitter",
+  "Partagez le carnet avec elle au niveau « Contributeur » : elle peut cocher les tâches et remplir le journal, mais pas modifier la fiche, la routine ni les traitements. La famille garde le niveau « Éditeur ».":"Share the log with them as a “Contributor”: they can tick tasks and fill in the log, but can't change the profile, routine or treatments. Family members stay “Editors”.",
+  "Du":"From","Au":"To","Clés, codes, où est la nourriture, ce qu'il n'a pas le droit de faire…":"Keys, codes, where the food is, what isn't allowed…",
+  // buddy
+  "Chiot":"Puppy","Explorateur":"Explorer","Compagnon":"Buddy","Héros":"Hero","Légende":"Legend",
+  "3 jours parfaits":"3 perfect days","7 jours parfaits":"7 perfect days","Toutes les balades de la semaine":"Every walk this week","Aucun médicament oublié":"No missed medication","Journal rempli 5 jours":"Log filled in 5 days","3 pesées enregistrées":"3 weigh-ins recorded",
+  "Zzz… on se voit demain matin.":"Zzz… see you in the morning.","Je ne me sens pas très bien. Tu peux garder un œil sur moi ?":"I don't feel great. Can you keep an eye on me?",
+  "N'oublie pas mon {m} !":"Don't forget my {m}!","Mon ventre gargouille… c'est l'heure du repas ?":"My tummy's rumbling… is it dinner time?","On sort ? J'ai la laisse dans la gueule !":"Walk time? I've got the lead in my mouth!",
+  "Journée parfaite, merci !":"Perfect day, thank you!","Je suis le chien le plus heureux du monde !":"I'm the happiest dog in the world!","Tout va bien. On joue ?":"All good. Shall we play?",
+  "Mini {n}":"Mini {n}","En pleine forme":"Full of beans","Content":"Content","Un peu triste":"A bit sad","Pas en forme":"Under the weather","Endormi":"Asleep",
+  "Le double de {n}":"{n}'s twin","votre chien":"your dog","Caresser":"Pet","{n} jour(s) parfait(s) d'affilée":"{n} perfect day(s) in a row",
+  "Bonheur":"Happiness","Ventre plein":"Full tummy","Évolution vers {s}":"Next stage: {s}","Niveau maximum atteint":"Top level reached","pts":"pts","{n} pts":"{n} pts",
+  "Il reflète l'état réel de {n} : le journal et les médicaments font sa santé, les balades son bonheur, les repas son ventre. Chaque tâche cochée lui donne des points pour évoluer.":"It mirrors how {n} is really doing: the log and medication drive health, walks drive happiness, meals fill the tummy. Every ticked task earns points to evolve.",
+  "Évolutions":"Stages","Glissez pour le faire tourner, touchez-le pour le caresser.":"Drag to turn, tap to pet.","Tout petit":"Tiny","Un bandana":"A bandana","Une médaille":"A medal","Une cape de héros":"A hero's cape","Une couronne":"A crown","Actuel":"Current","Badges":"Badges"
+};
+const HR = {};
+const DICT = () => LANG === "en" ? EN : LANG === "hr" ? HR : null;
+const FRX = {"Moyen (appétit)":"Moyen", "Pipi": "Petit besoin", "Caca": "Grand besoin", "Cacas": "Grands besoins", "pipi": "petit besoin", "caca": "grand besoin", "Pipi : {a} · Caca : {b}": "Petits besoins : {a} · Grands besoins : {b}", "Pipi fait": "Besoin fait", "Pipi, balade, repas : un geste et c'est noté.": "Besoins, balade, repas : un geste et c'est noté.", "Pipi, balade, repas : un geste, l'heure et votre prénom sont notés.": "Besoins, balade, repas : un geste, l'heure et votre prénom sont notés.", "Pipi, caca, balade chronométrée, accident, photo… Un toucher suffit : l'heure et votre prénom sont notés.": "Besoins, balade chronométrée, accident, photo… Un toucher suffit : l'heure et votre prénom sont notés.", "Prochaine sortie pipi conseillée vers {h}": "Prochaine sortie hygiénique conseillée vers {h}", "Quand quelqu'un coche, note un pipi ou écrit un message.": "Quand quelqu'un coche, note un besoin ou écrit un message.", "Sortie pipi": "Sortie hygiénique", "Sorties pipi": "Sorties hygiéniques", "Une sortie pipi est conseillée maintenant": "Une sortie hygiénique est conseillée maintenant", "Utilisez le journal rapide sur Aujourd'hui (pipi, caca, balade…) : les tendances de la semaine apparaîtront ici.": "Utilisez le journal rapide sur Aujourd'hui (besoins, balade…) : les tendances de la semaine apparaîtront ici.", "pipi aujourd'hui": "petits besoins aujourd'hui", "{n} pipi": "petits besoins : {n}", "{n} caca": "grands besoins : {n}"};
+const T = (s, v) => { const dct = DICT(); let r = !dct && FRX[s] ? FRX[s] : dct ? (dct[s] != null ? dct[s] : (EN[s] != null && LANG !== "fr" ? EN[s] : s)) : s; if (v) r = r.replace(/\{(\w+)\}/g, (m, k) => v[k] != null ? v[k] : ""); return r; };
+const LOC = () => LANG === "en" ? "en-GB" : LANG === "hr" ? "hr-HR" : "fr-CH";
+const nf = x => LANG === "en" ? String(x) : String(x).replace(".", ",");
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad2 = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+const parseYmd = s => { const [y,m,d] = String(s).split("-").map(Number); return new Date(y, m-1, d); };
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const hhmm = d => pad2(d.getHours())+":"+pad2(d.getMinutes());
+const toMin = t => { const [h,m] = String(t||"0:0").split(":").map(Number); return h*60+(m||0); };
+const newId = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fmt = (d, o) => new Intl.DateTimeFormat(LOC(), o).format(d);
+const cap = s => s ? s[0].toUpperCase()+s.slice(1) : s;
+const daysBetween = (a,b) => Math.round((parseYmd(b)-parseYmd(a))/864e5);
+const WD = () => LANG === "en" ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] : LANG === "hr" ? ["Ned","Pon","Uto","Sri","Čet","Pet","Sub"] : ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+const WDL = () => LANG === "en" ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"] : LANG === "hr" ? ["nedjelja","ponedjeljak","utorak","srijeda","četvrtak","petak","subota"] : ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+const hrPl = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
+const ORDER = [1,2,3,4,5,6,0];
+
+/* ---------- icons ---------- */
+const I = {
+  bowl:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="8.4" cy="7.9" r="1.75"/><circle cx="12.3" cy="6.6" r="1.75"/><circle cx="15.9" cy="8.3" r="1.65"/><path d="M2.7 10.8h18.6c.6 0 1.1.5 1 1.1-.6 3.9-3.5 7-7.3 7.8v.3a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1v-.3c-3.8-.8-6.7-3.9-7.3-7.8-.1-.6.4-1.1 1-1.1Z"/></svg>',
+  paw:'<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="5.1" cy="10.4" rx="2.1" ry="2.6" transform="rotate(-20 5.1 10.4)"/><ellipse cx="9.2" cy="5.7" rx="2.2" ry="2.8" transform="rotate(-7 9.2 5.7)"/><ellipse cx="14.8" cy="5.7" rx="2.2" ry="2.8" transform="rotate(7 14.8 5.7)"/><ellipse cx="18.9" cy="10.4" rx="2.1" ry="2.6" transform="rotate(20 18.9 10.4)"/><path d="M12 11.1c2.4 0 4.7 2.6 5.8 4.8 1 2 .3 4.2-1.9 4.5-1.4.2-2.4-.6-3.9-.6s-2.5.8-3.9.6c-2.2-.3-2.9-2.5-1.9-4.5 1.1-2.2 3.4-4.8 5.8-4.8Z"/></svg>',
+  pill:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 3.7a5 5 0 0 1 7.1 7.1L17 15.1 8.9 7l5.3-3.3Z" opacity=".5"/><path d="M14.3 3.6a5 5 0 0 1 7.1 7.1l-4.3 4.3-7.1-7.1 4.3-4.3Z" opacity=".55"/><path d="M8.6 9.3l7.1 7.1-3.9 3.9a5 5 0 0 1-7.1-7.1l3.9-3.9Z"/></svg>',
+  drop:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6c.3 0 .6.1.8.4 1.9 2.4 6.2 7.6 6.2 11.6a7 7 0 0 1-14 0c0-4 4.3-9.2 6.2-11.6.2-.3.5-.4.8-.4Z"/></svg>',
+  ball:'<svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20ZM5.3 5.2A10.4 10.4 0 0 1 8.1 12a10.4 10.4 0 0 1-2.8 6.8l1.2 1.2A12.1 12.1 0 0 0 9.8 12a12.1 12.1 0 0 0-3.3-8L5.3 5.2Zm13.4 0-1.2-1.2a12.1 12.1 0 0 0-3.3 8 12.1 12.1 0 0 0 3.3 8l1.2-1.2a10.4 10.4 0 0 1-2.8-6.8 10.4 10.4 0 0 1 2.8-6.8Z"/></svg>',
+  dot:'<svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20ZM7 10.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2Zm5 0a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2Zm5 0a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2Z"/></svg>',
+  syringe:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.3 2.3a1 1 0 0 1 1.4 0l4 4a1 1 0 0 1-1.4 1.4l-.8-.8-1.6 1.6 1 1a1 1 0 0 1-1.4 1.4l-.3-.3-7.6 7.6a2 2 0 0 1-1.4.6H6.4l-2.7 2.7a1 1 0 0 1-1.4-1.4L5 17.6v-2.8c0-.5.2-1 .6-1.4l7.6-7.6-.3-.3a1 1 0 0 1 1.4-1.4l1 1 1.6-1.6-.8-.8a1 1 0 0 1 0-1.4Z"/></svg>',
+  steth:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3H5a1.5 1.5 0 0 0-1.5 1.5V9a5 5 0 0 0 10 0V4.5A1.5 1.5 0 0 0 12 3h-.5"/><path d="M8.5 14v1.5a6 6 0 0 0 12 0V13"/><circle cx="20.5" cy="10.2" r="2.3" fill="currentColor" stroke="none"/></svg>',
+  scissors:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="6" cy="6.2" r="3"/><circle cx="6" cy="17.8" r="3"/><path d="M8.4 8.1 20.5 19.5M8.4 15.9 20.5 4.5"/></svg>',
+  bug:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 4a3 3 0 0 1 6 0v1.2H9V4Z"/><path fill-rule="evenodd" d="M12 6.4c3.9 0 7 3.4 7 7.6S15.9 21.5 12 21.5 5 18.2 5 14s3.1-7.6 7-7.6Zm-.8 1.7v11.8h1.6V8.1h-1.6ZM8.6 11.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Zm6.8 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Zm-6.8 4.4a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Zm6.8 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path fill-rule="evenodd" d="M10.3 3.4a2 2 0 0 1 3.4 0l8.4 14.6a2 2 0 0 1-1.7 3H3.6a2 2 0 0 1-1.7-3l8.4-14.6ZM10.9 8.6h2.2l-.3 6.2h-1.6l-.3-6.2Zm1.1 7.6a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path fill-rule="evenodd" d="M7 1.8a1 1 0 0 1 1 1V4h8V2.8a1 1 0 1 1 2 0V4h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V2.8a1 1 0 0 1 1-1ZM4 9.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9.5H4Zm2.5 2.5h2.6v2.5H6.5V12Zm4.2 0h2.6v2.5h-2.6V12Zm4.2 0h2.6v2.5h-2.6V12Zm-8.4 4h2.6v2.5H6.5V16Zm4.2 0h2.6v2.5h-2.6V16Z"/></svg>',
+  dna:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 3c0 6 10 6 10 12s-10 3-10 6M17 3c0 6-10 6-10 12s10 3 10 6M8 7h8M8 17h8"/></svg>',
+  chevR:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  chevL:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>',
+  chevR2:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  tick:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  tToday:'<svg viewBox="0 0 28 28" fill="currentColor"><path d="M8 3h2v2h8V3h2v2h2.5A2.5 2.5 0 0 1 25 7.5v15a2.5 2.5 0 0 1-2.5 2.5h-17A2.5 2.5 0 0 1 3 22.5v-15A2.5 2.5 0 0 1 5.5 5H8V3Zm-3 8v11.5c0 .3.2.5.5.5h17c.3 0 .5-.2.5-.5V11H5Zm7.3 9.6-3.6-3.5 1.4-1.4 2.2 2.1 5.1-5 1.4 1.4-6.5 6.4Z"/></svg>',
+  tRoutine:'<svg viewBox="0 0 28 28" fill="currentColor"><path d="M14 3a11 11 0 1 1 0 22 11 11 0 0 1 0-22Zm0 2a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm1 3v5.6l3.7 3.7-1.4 1.4L13 14.4V8h2Z"/></svg>',
+  tHealth:'<svg viewBox="0 0 28 28" fill="currentColor"><path d="M14 24.5 4.6 15.3A6 6 0 0 1 14 7.6a6 6 0 0 1 9.4 7.7L14 24.5Z"/></svg>',
+  tProfile:'<svg viewBox="0 0 28 28" fill="currentColor"><ellipse cx="7" cy="12" rx="2.3" ry="3"/><ellipse cx="11.5" cy="7" rx="2.3" ry="3.1"/><ellipse cx="16.5" cy="7" rx="2.3" ry="3.1"/><ellipse cx="21" cy="12" rx="2.3" ry="3"/><path d="M14 13c3.4 0 7 5 7 8 0 2.3-1.9 3.4-3.7 3-1.1-.3-2.1-.9-3.3-.9s-2.2.6-3.3.9C8.9 24.4 7 23.3 7 21c0-3 3.6-8 7-8Z"/></svg>'
+};
+const CATS = {
+  repas:{label:"Repas", color:"var(--orange)", icon:I.bowl},
+  balade:{label:"Balade", color:"var(--green)", icon:I.paw},
+  med:{label:"Médicament", color:"var(--pink)", icon:I.pill},
+  soin:{label:"Soin", color:"var(--teal)", icon:I.drop},
+  jeu:{label:"Jeu & éducation", color:"var(--purple)", icon:I.ball},
+  autre:{label:"Autre", color:"var(--gray)", icon:I.dot}
+};
+const ATYPES = {
+  veto:{label:"Vétérinaire", color:"var(--blue)", icon:I.steth},
+  vaccin:{label:"Vaccin", color:"var(--pink)", icon:I.syringe},
+  vermifuge:{label:"Vermifuge", color:"var(--purple)", icon:I.pill},
+  antiparasitaire:{label:"Antipuces / tiques", color:"var(--orange)", icon:I.bug},
+  toilettage:{label:"Toilettage", color:"var(--teal)", icon:I.scissors},
+  autre:{label:"Autre", color:"var(--gray)", icon:I.cal}
+};
+
+/* ---------- breeds ---------- */
+const BREED_EN = {"Croisé / mixte":"Mixed breed","Berger australien":"Australian Shepherd","Berger allemand":"German Shepherd","Berger blanc suisse":"White Swiss Shepherd","Bouvier bernois":"Bernese Mountain Dog","Bouvier de l'Entlebuch":"Entlebucher Mountain Dog","Bouvier appenzellois":"Appenzeller Sennenhund","Grand bouvier suisse":"Greater Swiss Mountain Dog","Saint-Bernard":"St. Bernard","Malinois":"Belgian Malinois","Bouledogue français":"French Bulldog","Carlin":"Pug","Teckel":"Dachshund","Caniche":"Poodle","Bichon frisé":"Bichon Frise","Bichon maltais":"Maltese","Spitz nain (Poméranien)":"Pomeranian","Cocker anglais":"English Cocker Spaniel","Husky sibérien":"Siberian Husky","Dalmatien":"Dalmatian","Bouledogue anglais":"English Bulldog"};
+Object.assign(EN, BREED_EN);
+const BREEDS = ["Croisé / mixte","Labrador Retriever","Golden Retriever","Berger australien","Berger allemand","Berger blanc suisse","Bouvier bernois","Bouvier de l'Entlebuch","Bouvier appenzellois","Grand bouvier suisse","Saint-Bernard","Border Collie","Malinois","Jack Russell Terrier","Yorkshire Terrier","Chihuahua","Bouledogue français","Carlin","Cavalier King Charles","Teckel","Beagle","Caniche","Bichon frisé","Bichon maltais","Shih Tzu","Spitz nain (Poméranien)","Cocker anglais","Husky sibérien","Shiba Inu","Boxer","Dalmatien","Rottweiler","Lagotto Romagnolo","Bouledogue anglais","Whippet","Vizsla"];
+const BREED_TRAITS = {
+  "Labrador Retriever":["weight","water","joints"], "Golden Retriever":["weight","coat","ears","joints"],
+  "Berger australien":["herding","coat"], "Berger allemand":["herding","coat","bloat"], "Berger blanc suisse":["herding","coat"],
+  "Bouvier bernois":["giant","bloat","coat","heat"], "Bouvier de l'Entlebuch":["herding","joints"], "Bouvier appenzellois":["herding"],
+  "Grand bouvier suisse":["giant","bloat","heat"], "Saint-Bernard":["giant","bloat","heat","coat"], "Border Collie":["herding","coat"], "Malinois":["herding","energy"],
+  "Jack Russell Terrier":["terrier","teeth"], "Yorkshire Terrier":["teeth","cold"], "Chihuahua":["teeth","cold"],
+  "Bouledogue français":["brachy","heat"], "Carlin":["brachy","heat","weight"], "Cavalier King Charles":["heart","ears","weight"],
+  "Teckel":["back","weight"], "Beagle":["scent","weight","ears"], "Caniche":["curly","teeth","ears"], "Bichon frisé":["curly","teeth"],
+  "Bichon maltais":["teeth","cold","eyes"], "Shih Tzu":["brachy","teeth","eyes"], "Spitz nain (Poméranien)":["teeth","coat"],
+  "Cocker anglais":["ears","coat"], "Husky sibérien":["sled","heat","coat"], "Shiba Inu":["independent","coat"],
+  "Boxer":["brachy","heat","bloat"], "Dalmatien":["urinary","energy"], "Rottweiler":["giant","joints"],
+  "Lagotto Romagnolo":["curly","scent","ears"], "Bouledogue anglais":["brachy","heat","skinfolds"], "Whippet":["sight","cold"], "Vizsla":["energy","cold"]
+};
+// score(ctx) > 0 makes a trait eligible; higher is more relevant today
+const TRAITS = {
+  herding:{fr:["Race de berger : occupez sa tête","10 minutes de jeux de recherche ou de nouveaux tours le fatiguent autant qu'une longue balade, et l'empêchent de s'inventer des occupations."],
+    en:["Herding breed: work their brain","10 minutes of scent games or new tricks tire them as much as a long walk, and stop them inventing their own jobs."], score:c => c.walksMissed || c.energy === "Haute" ? 6 : 2},
+  energy:{fr:["Grand besoin d'exercice","Comptez au moins 1 h 30 d'activité par jour, dont du temps en liberté ou à la longe."],
+    en:["Needs a lot of exercise","Plan at least 1.5 hours of activity a day, including off-lead or long-line time."], score:c => c.walksMissed || c.energy === "Haute" ? 6 : 1},
+  weight:{fr:["Tendance à prendre du poids","Pesez la ration plutôt que de l'estimer et retirez-y les friandises. Une pesée par mois suffit pour suivre."],
+    en:["Prone to weight gain","Weigh the ration instead of guessing and take treats out of it. Weighing once a month is enough to keep track."], score:c => c.weightUp ? 7 : c.noRecentWeight ? 3 : 1},
+  water:{fr:["Adore l'eau","Après la baignade ou la pluie, séchez bien ses oreilles pour éviter les otites."],
+    en:["Loves water","After swimming or rain, dry their ears well to avoid ear infections."], score:c => c.summer ? 3 : 0},
+  joints:{fr:["Articulations à ménager","Évitez les sauts répétés et les escaliers en descente. Un tapis antidérapant aide à la maison."],
+    en:["Go easy on the joints","Avoid repeated jumping and going down stairs. A non-slip rug helps at home."], score:c => c.age < 1.5 || c.age >= 7 ? 4 : 1},
+  coat:{fr:["Sous-poil dense","Brossez-le 2 à 3 fois par semaine, et chaque jour pendant la mue du printemps et de l'automne."],
+    en:["Thick undercoat","Brush 2 to 3 times a week, and daily during the spring and autumn moult."], score:c => c.moult && !c.hasBrush ? 5 : c.moult ? 2 : 0},
+  ears:{fr:["Oreilles tombantes","Vérifiez et séchez ses oreilles après la pluie ou la baignade. Mauvaise odeur ou grattage : consultez."],
+    en:["Floppy ears","Check and dry their ears after rain or swimming. Bad smell or scratching: see the vet."], score:c => c.wet ? 3 : 1},
+  bloat:{fr:["Pas d'effort juste après le repas","Les grands chiens au thorax profond risquent la torsion d'estomac : pas de course ni de jeu intense dans l'heure qui suit le repas."],
+    en:["No exercise right after meals","Large, deep-chested dogs are at risk of bloat: no running or rough play in the hour after a meal."], score:c => c.walkAfterMeal ? 8 : 1},
+  giant:{fr:["Grande race","Les grandes races vieillissent plus tôt : un bilan vétérinaire tous les 6 mois dès 6 ans, et pas d'efforts longs avant la fin de la croissance."],
+    en:["Giant breed","Large breeds age sooner: a vet check every 6 months from age 6, and no long efforts before growth is complete."], score:c => c.age >= 6 || c.age < 1.5 ? 4 : 0},
+  heat:{fr:["Craint la chaleur","Sorties tôt le matin et tard le soir en été, de l'eau à chaque balade, jamais seul en voiture."],
+    en:["Struggles in the heat","In summer walk early and late, bring water every time, never leave them in the car."], score:c => c.summer ? 6 : 0},
+  brachy:{fr:["Museau court : respiration à surveiller","Préférez un harnais au collier, évitez les efforts intenses et surveillez une respiration bruyante ou difficile."],
+    en:["Short muzzle: watch the breathing","Use a harness rather than a collar, avoid intense effort and watch for noisy or laboured breathing."], score:c => c.summer ? 7 : c.energy === "Haute" ? 3 : 2},
+  teeth:{fr:["Dents à surveiller","Les petites races font vite du tartre : brossez-lui les dents idéalement 3 fois par semaine."],
+    en:["Watch the teeth","Small breeds build tartar fast: ideally brush their teeth 3 times a week."], score:c => c.hasTeeth ? 0 : 3},
+  cold:{fr:["Frileux","En hiver, un manteau pour les sorties et une serviette pour le sécher au retour."],
+    en:["Feels the cold","In winter, a coat for walks and a towel to dry them when you get home."], score:c => c.winter ? 5 : 0},
+  heart:{fr:["Cœur à faire contrôler","La race est prédisposée aux maladies de la valve cardiaque : demandez une auscultation à chaque visite. Toux ou essoufflement : consultez."],
+    en:["Get the heart checked","The breed is prone to heart valve disease: ask for a heart check at every visit. Coughing or breathlessness: see the vet."], score:c => c.energy === "Basse" ? 7 : 2},
+  back:{fr:["Dos fragile","Évitez les sauts du canapé et les escaliers, et portez-le en soutenant le dos et l'arrière-train. Un poids stable protège son dos."],
+    en:["Fragile back","Avoid jumping off the sofa and stairs, and carry them supporting the back and hindquarters. A stable weight protects the back."], score:c => 3},
+  scent:{fr:["Un nez qui commande","Le rappel est difficile quand il suit une piste : longe en forêt, et jeux de flair pour le satisfaire."],
+    en:["Led by the nose","Recall is hard once they're on a scent: use a long line in the woods, and scent games to satisfy them."], score:c => c.walksMissed ? 5 : 2},
+  curly:{fr:["Poil qui pousse en continu","Toilettage toutes les 6 à 8 semaines et démêlage régulier, surtout derrière les oreilles et sous les pattes."],
+    en:["Coat keeps growing","Groom every 6 to 8 weeks and detangle regularly, especially behind the ears and under the legs."], score:c => c.hasGroomAppt ? 0 : 3},
+  eyes:{fr:["Yeux qui coulent","Nettoyez le coin des yeux chaque jour avec une compresse humide."], en:["Weepy eyes","Clean the corners of the eyes daily with a damp pad."], score:c => 1},
+  sled:{fr:["Endurant et fugueur","Il lui faut de longues sorties (canicross, vélo par temps frais) et un jardin bien clôturé."],
+    en:["Endurance runner and escape artist","They need long outings (canicross, cycling in cool weather) and a well-fenced garden."], score:c => c.walksMissed || c.energy === "Haute" ? 6 : 2},
+  independent:{fr:["Indépendant","Rappel peu fiable : gardez-le en laisse ou à la longe hors des zones fermées."], en:["Independent","Unreliable recall: keep them on a lead or long line outside fenced areas."], score:c => 2},
+  urinary:{fr:["Boire beaucoup","La race est prédisposée aux calculs urinaires : eau fraîche toujours disponible et sorties pipi fréquentes."],
+    en:["Keep them drinking","The breed is prone to urinary stones: always fresh water and frequent toilet breaks."], score:c => 3},
+  terrier:{fr:["Énergie de terrier","Jeux de tir, de recherche et un coin où creuser canalisent son énergie, sinon il trouvera ses propres jeux."],
+    en:["Terrier energy","Tug, search games and a spot to dig channel their energy, otherwise they'll find their own games."], score:c => c.walksMissed || c.energy === "Haute" ? 6 : 2},
+  sight:{fr:["Lévrier : rappel et peau fine","Lâchez-le seulement en zone fermée, car il part sur ce qui bouge, et vérifiez sa peau après les courses."],
+    en:["Sighthound: recall and thin skin","Only let them off-lead in fenced areas, since they chase anything that moves, and check their skin after running."], score:c => 2},
+  skinfolds:{fr:["Plis de peau","Nettoyez et séchez les plis du visage plusieurs fois par semaine pour éviter les irritations."],
+    en:["Skin folds","Clean and dry the facial folds several times a week to avoid irritation."], score:c => 3},
+  puppy:{fr:["Chiot","Des sorties courtes et fréquentes, beaucoup de sieste et une socialisation calme valent mieux qu'une longue balade."],
+    en:["Puppy","Short, frequent outings, plenty of naps and calm socialisation are better than one long walk."], score:c => 5},
+  senior:{fr:["Chien senior","Un bilan vétérinaire tous les 6 mois et des balades plus courtes mais plus fréquentes."],
+    en:["Senior dog","A vet check every 6 months, and shorter but more frequent walks."], score:c => 4}
+};
+
+Object.assign(HR, {"Bilan de la semaine":"Tjedni sažetak","Le bilan de la semaine est prêt":"Tjedni sažetak je spreman","Programme proposé pour la semaine prochaine":"Prijedlog plana za sljedeći tjedan","Balades":"Šetnje","Repas et routine":"Obroci i rutina","Besoins et santé":"Nužda i zdravlje","La famille":"Obitelj","{n} jours parfaits d'affilée":"Savršenih dana zaredom: {n}","{n} jour parfait":"Savršen dan: {n}","C'est fait : programmer le suivant":"Obavljeno: zakaži sljedeće","NOUVEAU":"NOVO","Choisissez votre style":"Odaberite stil","Continuer avec ce style":"Nastavi s ovim stilom","Apparence":"Izgled","Nouveau design lumineux":"Novi svijetleći dizajn","Classique":"Klasični","Le design d'avant":"Prijašnji dizajn","Le mode clair ou sombre suit les réglages de votre téléphone.":"Svijetli ili tamni način prati postavke telefona.","Design Aurora activé":"Aurora dizajn uključen","Design classique activé":"Klasični dizajn uključen","Changer l'heure":"Promijeni vrijeme","Heure prévue":"Planirano vrijeme","Il y a 15 min":"Prije 15 min","Il y a 30 min":"Prije 30 min","Il y a 1 h":"Prije 1 h","Heure de la tâche":"Vrijeme zadatka","Prévu à {t}":"Planirano u {t}","Fait à":"Obavljeno u","Heure modifiée : {t}":"Vrijeme promijenjeno: {t}","prévu {t}":"planirano {t}","Prochain":"Sljedeće","Programme du jour":"Današnji raspored","Programme":"Raspored","Terminer la balade":"Završi šetnju","Un imprévu pour ce jour-là":"Nešto neplanirano za taj dan","Quand":"Kada","Maintenant":"Sada","Dans 1 h":"Za 1 h","Ce soir":"Večeras","Demain matin":"Sutra ujutro","Déjà fait":"Već obavljeno","Modifier le rendez-vous":"Uredi termin","Demain":"Sutra","Dans 1 semaine":"Za 1 tjedan","Dans 1 mois":"Za 1 mjesec","Dans 1 an":"Za 1 godinu","1 mois":"1 mj.","3 mois":"3 mj.","6 mois":"6 mj.","1 an":"1 god.","Antipuces":"Buhe/krpelji","Jeu":"Igra","Prises ponctuelles":"Jednokratne doze","Donné à {t}":"Dano u {t}","Prévu à {t}":"Planirano u {t}","Ajouter un extra":"Dodaj extra","Une balade, un médicament ou un soin en plus, juste pour ce jour-là. Toute la famille peut le cocher.":"Dodatna šetnja, lijek ili njega, samo za taj dan. Cijela obitelj ga može označiti.","Nouvel extra":"Novi extra","Modifier l'extra":"Uredi extra","Balade en plus, Smecta, bain…":"Dodatna šetnja, lijek, kupanje…","Détail":"Detalj","Dose, durée, raison…":"Doza, trajanje, razlog…","Qui s'en occupe ?":"Tko se brine?","Déjà fait (cocher tout de suite)":"Već obavljeno (označi odmah)","Indiquez la date.":"Unesite datum.","Extra : {t}":"Extra: {t}","Extra ajouté":"Extra dodan","Extra modifié":"Extra izmijenjen","Extra supprimé":"Extra obrisan","Mise à jour…":"Ažuriranje…","Régénérer le bilan":"Ponovno izradi sažetak","Mis à jour à {t}.":"Ažurirano u {t}.","Bilan régénéré avec les dernières infos":"Sažetak izrađen s najnovijim podacima","d'après {n}":"prema: {n}","Peut-être une intoxication":"Moguće trovanje","Chocolat, raisin, xylitol, oignon, ail ou médicaments humains peuvent être toxiques, même en petite quantité. Appelez tout de suite le vétérinaire en indiquant quoi, combien et à quelle heure.":"Čokolada, grožđe, ksilitol, luk, češnjak ili lijekovi za ljude mogu biti otrovni i u malim količinama. Odmah nazovite veterinara i recite što, koliko i kada.","{n} vomissements aujourd'hui":"Povraćanja danas: {n}","Plusieurs vomissements dans la journée : retirez la nourriture quelques heures, laissez de l'eau en petite quantité et appelez le vétérinaire si ça continue ou s'il est abattu.":"Više povraćanja danas: uklonite hranu na nekoliko sati, ostavite malo vode i nazovite veterinara ako se nastavi ili je klonuo.","Diarrhée signalée":"Prijavljen proljev","Eau fraîche à volonté, repas léger et pas de friandises. Au-delà de 48 h, avec du sang ou s'il est abattu, consultez.":"Svježa voda, lagan obrok i bez poslastica. Nakon 48 h, s krvi ili ako je klonuo: veterinar.","Tique trouvée":"Pronađen krpelj","Retirez-la avec un tire-tique en tournant, désinfectez et notez la date. Fièvre, fatigue ou boiterie dans les semaines suivantes : vétérinaire.":"Uklonite ga hvataljkom okretanjem, dezinficirajte i zapišite datum. Vrućica, umor ili šepanje sljedećih tjedana: veterinar.","Toux signalée":"Prijavljen kašalj","Notez quand il tousse (effort, nuit, après avoir bu). Si la toux dure plus de 2 jours, s'accompagne de fièvre ou d'essoufflement, consultez.":"Zapišite kada kašlje (napor, noć, nakon pijenja). Traje li dulje od 2 dana ili uz vrućicu ili zaduhu: veterinar.","Blessure signalée":"Prijavljena ozljeda","Rincez à l'eau claire et surveillez. Une plaie profonde, qui saigne encore après 10 minutes de pression ou qu'il lèche sans arrêt : vétérinaire.":"Isperite čistom vodom i pratite. Duboka rana, krvarenje nakon 10 minuta pritiska ili stalno lizanje: veterinar.","Repas refusé":"Odbijen obrok","Un repas sauté n'est pas grave chez un chien en forme. S'il refuse aussi le suivant, ou s'il vomit ou semble abattu, appelez le vétérinaire.":"Jedan preskočen obrok nije ozbiljan. Ako odbije i sljedeći, povraća ili je klonuo, nazovite veterinara.","Boit beaucoup":"Puno pije","Après l'effort ou la chaleur c'est normal. Si ça dure plusieurs jours sans raison, parlez-en au vétérinaire : c'est un signe à vérifier.":"Nakon napora ili vrućine je normalno. Traje li danima bez razloga, recite veterinaru.","Appétit":"Apetit","Énergie":"Energija","Selles":"Stolica","Traitements":"Terapije","prise(s)":"doza","Vomissement":"Povraćanje","Friandise":"Poslastica","Eau":"Voda","Jeu":"Igra","Sieste":"Drijemež","Autres notes":"Ostali unosi","Famille":"Obitelj","messages aujourd'hui":"poruka danas","message aujourd'hui":"poruka danas","Tout voir":"Vidi sve","À venir":"Uskoro","Énergie basse aujourd'hui":"Niska energija danas","reste":"preostalo","tout est fait":"sve je obavljeno","Balades":"Šetnje","Besoins":"Nužda","Repas":"Obroci","pas encore rempli":"još nije ispunjeno","Poids":"Težina","sous le repère de la race ({a}–{b} kg)":"ispod raspona pasmine ({a}–{b} kg)","au-dessus du repère de la race ({a}–{b} kg)":"iznad raspona pasmine ({a}–{b} kg)","dans le repère de la race ({a}–{b} kg)":"u rasponu pasmine ({a}–{b} kg)","{m} mois":"{m} mj.","chiot":"štene","jeune adulte":"mladi odrasli","senior":"stariji","adulte":"odrasli","Fiche {b}":"Profil: {b}","Poids adulte":"Težina odraslog","Espérance de vie":"Životni vijek","ans":"god.","Exercice":"Aktivnost","par jour (adulte)":"dnevno (odrasli)","Entretien":"Njega","À surveiller":"Pratiti","Caractère":"Karakter","Repères généraux de la race, pas un diagnostic : chaque chien est différent. Votre vétérinaire reste la référence.":"Opći podaci o pasmini, ne dijagnoza: svaki je pas drugačiji. Veterinar ostaje mjerodavan.","Chiffres tirés de vos données du jour ; conseils selon des règles vétérinaires, la race et l'âge. Rien n'est inventé. Ils ne remplacent pas l'avis du vétérinaire.":"Brojke iz vaših današnjih podataka; savjeti prema veterinarskim pravilima, pasmini i dobi. Ništa nije izmišljeno. Ne zamjenjuju veterinara.","Chien":"Pas","{n} ans":"{n} god.","Tâches":"Zadaci","Journal":"Dnevnik","appétit":"apetit","énergie":"energija","selles":"stolica","non rempli":"nije ispunjeno","Note":"Bilješka","Conseils de l'expert":"Savjeti stručnjaka","{n} : {a} tâche(s) sur {b} faites aujourd'hui.":"{n}: danas obavljeno {a} od {b} zadataka.","L'IA n'a pas pu se lancer sur ce téléphone : {e}":"AI se nije mogao pokrenuti na ovom telefonu: {e}","Préparation de l'IA…":"Priprema AI…","Analysé par l'IA de ce téléphone : rien ne sort de l'appareil.":"Analizirao AI ovog telefona: ništa ne napušta uređaj.","L'IA tourne sur ce téléphone : la première fois, elle se télécharge (environ {s}, en Wi-Fi de préférence), ensuite elle marche même hors ligne.":"AI radi na ovom telefonu: prvi put se preuzima (oko {s}, najbolje preko Wi-Fija), zatim radi i bez interneta.","Téléchargement de l'IA… {p} %":"Preuzimanje AI… {p} %","Notification non envoyée : {e}":"Obavijest nije poslana: {e}","serveur injoignable":"poslužitelj nedostupan","Personne d'autre dans la famille pour l'instant":"Još nema nikoga u obitelji","Personne n'a encore activé les notifications sur son téléphone":"Nitko još nije uključio obavijesti","Notification refusée par Apple/Google : {e}":"Apple/Google je odbio obavijest: {e}","Famille prévenue ({n})":"Obitelj obaviještena ({n})","Notifications":"Obavijesti","{n} non lue(s)":"nepročitano: {n}","En direct":"Uživo","Hors ligne · tout arrivera au retour du réseau":"Izvan mreže · sve stiže kad se vrati veza","Tout marquer comme lu":"Označi sve kao pročitano","Non lue":"Nepročitano","Aucune notification pour l'instant.":"Još nema obavijesti.","Réglages des notifications":"Postavke obavijesti","Installez Dogs Life":"Instalirajte Dogs Life","Sur iPhone, les notifications ne marchent que depuis l'écran d'accueil.":"Na iPhoneu obavijesti rade samo s početnog zaslona.","Touchez le bouton Partager en bas de Safari":"Dodirnite Dijeli na dnu Safarija","Choisissez « Sur l'écran d'accueil »":"Odaberite „Dodaj na početni zaslon”","Ouvrez Dogs Life depuis l'icône sur votre écran d'accueil":"Otvorite Dogs Life s ikone na početnom zaslonu","Notifications bloquées":"Obavijesti blokirane","Dogs Life a besoin des notifications pour prévenir la famille. Autorisez-les puis revenez ici.":"Dogs Life treba obavijesti da obavijesti obitelj. Dopustite ih pa se vratite.","Ouvrez Réglages sur le téléphone":"Otvorite Postavke na telefonu","Notifications → Dogs Life":"Obavijesti → Dogs Life","Activez « Autoriser les notifications »":"Uključite „Dopusti obavijesti”","C'est fait, réessayer":"Gotovo, pokušaj ponovno","Activez les notifications":"Uključite obavijesti","Dogs Life prévient toute la famille : rappels des tâches, messages, balades, rendez-vous. Elles sont obligatoires pour utiliser l'app.":"Dogs Life obavještava cijelu obitelj: podsjetnici, poruke, šetnje, termini. Obavezne su za korištenje aplikacije.","Activer les notifications":"Uključi obavijesti","Vous pourrez choisir ensuite lesquelles recevoir dans Réglages.":"Zatim u Postavkama možete odabrati koje primate.","Un instant…":"Trenutak…","Activées":"Uključene","Message de {n}":"Poruka od {n}","Nouveau message":"Nova poruka","{n} a fait":"{n} je obavio/la","Voir":"Pogledaj","Auj.":"Danas","Semaine du {a} au {b}":"Tjedan {a} – {b}","Revenir à aujourd'hui":"Natrag na danas","{n} act.":"{n} akt.","Envoi par le serveur…":"Slanje preko poslužitelja…","Le code du serveur Cloudflare n'est pas à jour : collez la dernière version pour tester l'envoi réel.":"Kod Cloudflare poslužitelja nije ažuran: zalijepite najnoviju verziju za pravi test.","Le serveur a refusé ({e}).":"Poslužitelj je odbio ({e}).","Ce téléphone n'est pas inscrit sur le serveur : coupez puis réactivez « Notifications sur ce téléphone ».":"Ovaj telefon nije prijavljen na poslužitelju: isključite pa ponovno uključite obavijesti.","Envoyée. Revenez à l'écran d'accueil : elle arrive dans quelques secondes.":"Poslano. Vratite se na početni zaslon: stiže za nekoliko sekundi.","Envoi refusé par Apple/Google : {e}":"Apple/Google je odbio: {e}","Serveur injoignable : {e}":"Poslužitelj nedostupan: {e}","Dernier envoi":"Zadnje slanje","message":"poruka","journal":"dnevnik","tâche cochée":"označen zadatak","{n} téléphone(s) prévenu(s)":"obaviješteno telefona: {n}","échec":"neuspjeh","Vous ne faites plus partie de cette famille":"Više niste dio ove obitelji","Départ de la famille…":"Napuštanje obitelji…","Connectez-vous à Internet pour quitter la famille.":"Spojite se na internet da biste napustili obitelj.","{n} a quitté la famille":"{n} je napustio/la obitelj","Balade de {t} : plutôt à {h}":"Šetnja u {t}: bolje u {h}","Balade de {t} : météo défavorable":"Šetnja u {t}: loše vrijeme","Réduire":"Prikaži manje","GPS refusé : distance non mesurée":"GPS odbijen: udaljenost nije izmjerena","Recherche du GPS…":"Traženje GPS-a…","Signal GPS faible":"Slab GPS signal","GPS actif":"GPS uključen","Balade":"Šetnja","Distance":"Udaljenost","Durée":"Trajanje","Vitesse moy.":"Prosj. brzina","Ces 7 derniers jours : {k} en {n} balades suivies":"Zadnjih 7 dana: {k} u {n} praćenih šetnji","Le trajet n'est visible que par votre famille.":"Rutu vidi samo vaša obitelj.","Carte":"Karta","Balade lancée : gardez l'app ouverte pour mesurer le trajet":"Šetnja pokrenuta: držite aplikaciju otvorenom za praćenje rute","Suivre les balades par GPS":"Prati šetnje GPS-om","Distance et trajet mesurés sur ce téléphone pendant la balade.":"Udaljenost i ruta mjere se na ovom telefonu tijekom šetnje.",
+  "Vous pouvez consulter ce carnet, mais pas le modifier.":"Možete pregledavati ovaj dnevnik, ali ga ne možete mijenjati.",
+  "Le carnet est plein. Supprimez d'anciennes entrées.":"Dnevnik je pun. Izbrišite stare unose.",
+  "Modification non enregistrée. Réessayez dans un instant.":"Promjena nije spremljena. Pokušajte ponovno za trenutak.",
+  "Aujourd'hui":"Danas","Demain":"Sutra","Hier":"Jučer","Dans {n} jours":"Za {n} dana","En retard de {n} jours":"Kasni {n} dana","vous":"vi",
+  "Prochain :":"Sljedeće:","à":"u","maintenant":"sada","dans {t}":"za {t}","Tout est fait pour aujourd'hui.":"Sve je obavljeno za danas.",
+  "Stock bas : {m}":"Zaliha pri kraju: {m}","Environ {q} {u} restant(s), ~{d} j":"Preostalo oko {q} {u}, ~{d} d.",
+  "Fait à {t}":"Obavljeno u {t}","Fait":"Obavljeno","par {w}":"– {w}","Annuler":"Odustani","Marquer comme fait":"Označi kao obavljeno",
+  "Rien de prévu ce jour-là.":"Za taj dan nema ništa u planu.","Organiser la routine":"Postavi raspored","Journal du jour":"Dnevni zapis",
+  "Appétit":"Apetit","Énergie":"Energija","Selles":"Stolica","Observations, comportement, symptômes…":"Zapažanja, ponašanje, simptomi…",
+  "Partagé avec toute la famille. Utile pour le vétérinaire.":"Dijeli se s cijelom obitelji. Korisno za veterinara.",
+  "Semaine précédente":"Prethodni tjedan","Semaine suivante":"Sljedeći tjedan","tâches faites pour {n}":"obavljenih zadataka za {n}","tâches faites":"obavljenih zadataka",
+  "Tous les jours":"Svaki dan","En semaine":"Radnim danima","Le week-end":"Vikendom","Week-end":"Vikend",
+  "Planning de la semaine":"Tjedni raspored","Routine":"Raspored","Ajouter":"Dodaj","{d} : {n} activité(s), dont {w} sortie(s).":"{d}: aktivnosti {n}, od toga šetnji {w}.",
+  "Aucune activité ce jour-là.":"Nema aktivnosti taj dan.","Médicaments en cours":"Trenutni lijekovi","Gérer":"Uredi",
+  "Les prises s'ajoutent automatiquement chaque jour du traitement.":"Doze se automatski dodaju svaki dan liječenja.",
+  "Jour {a} sur {b}":"{a}. dan od {b}","Fin le {d}":"Završava {d}","Depuis le {d}":"Od {d}","Traitement continu":"Trajna terapija",
+  "Stock estimé : {q} {u}":"Procijenjena zaliha: {q} {u}","Besoin jusqu'à la fin : {q}":"Potrebno do kraja: {q}",
+  "Aucune pesée enregistrée.":"Još nema vaganja.","Dernière pesée · {d}":"Zadnje vaganje · {d}","{x} kg depuis le {d}":"{x} kg od {d}",
+  "Évolution du poids":"Kretanje težine","Poids en kg":"Težina u kg","tous les {n} mois":"svakih {n} mj.","Fait, reprogrammer":"Obavljeno, ponovi",
+  "Aucun rendez-vous prévu.":"Nema zakazanih termina.","Taux de réalisation sur 14 jours":"Postotak obavljenog u 14 dana","Votre chien":"Vaš pas","Santé":"Zdravlje",
+  "Médicaments":"Lijekovi","Aucun traitement en cours.":"Nema trenutne terapije.","Terminés : {l}":"Završeno: {l}",
+  "Le stock est estimé à partir des horaires de prise.":"Zaliha se procjenjuje prema vremenima doza.","Rendez-vous et rappels":"Termini i podsjetnici",
+  "Vaccins, vermifuge, antipuces : les rappels réguliers se reprogramment quand vous les marquez faits.":"Cjepiva, sredstvo protiv glista, protiv buha: ponavljajući podsjetnici sami se ponovno zakažu kad ih označite obavljenima.",
+  "Poids":"Težina","Régularité sur 14 jours":"Redovitost u 14 dana","Part des tâches cochées chaque jour, sans compter aujourd'hui.":"Udio označenih zadataka po danu, bez današnjeg dana.",
+  "{n} repas":"{n} obroka","Choisir":"Odaberi","Autre…":"Drugo…","Précisez":"Navedite","Copier":"Kopiraj","Enregistrer":"Spremi","Photo":"Fotografija",
+  "Nom du chien":"Ime psa","Modifier la fiche":"Uredi profil","À savoir":"Dobro je znati",
+  "Peurs, habitudes, consignes pour la garde…":"Strahovi, navike, upute za čuvanje…","Peurs, habitudes, consignes pour la personne qui le garde…":"Strahovi, navike, upute za osobu koja ga čuva…",
+  "Réglages":"Postavke","Langue":"Jezik","Rechercher":"Traži","Autre : précisez":"Drugo: navedite","Tapez la réponse":"Upišite odgovor","Effacer la réponse":"Obriši odgovor",
+  "Tapez une réponse ou choisissez dans la liste.":"Upišite odgovor ili odaberite s popisa.",
+  "Ce carnet est enregistré uniquement sur cet appareil.":"Ovaj dnevnik spremljen je samo na ovom uređaju.",
+  "Les données ne sont pas encore accessibles. Vérifiez la connexion.":"Podaci još nisu dostupni. Provjerite vezu.",
+  "Données d'exemple.":"Primjer podataka.","Remplacez-les par celles de votre chien, ou repartez de zéro.":"Zamijenite ih podacima svog psa ili krenite ispočetka.",
+  "Confirmer l'effacement":"Potvrdi brisanje","Tout effacer":"Izbriši sve","Garder comme base":"Zadrži kao početak",
+  "Le carnet de votre chien":"Dnevnik vašeg psa","Routine du jour, médicaments, rendez-vous et poids, partagés avec toute la famille.":"Dnevni raspored, lijekovi, termini i težina, zajedno s cijelom obitelji.",
+  "Créer la fiche":"Izradi profil","Partir d'un exemple":"Kreni od primjera","Le carnet n'a pas encore été rempli.":"Dnevnik još nije ispunjen.",
+  "Âge":"Dob"," Vétérinaire : {p}.":" Veterinar: {p}.",
+  "Appétit et énergie en baisse":"Slabiji apetit i energija","Gardez-le au calme et vérifiez qu'il boit. Si ça dure plus de 24 h, ou en cas de vomissements, de fièvre ou de ventre gonflé, appelez le vétérinaire.":"Neka miruje i provjerite pije li vodu. Ako traje dulje od 24 h, ili uz povraćanje, temperaturu ili napuhnut trbuh, nazovite veterinara.",
+  "Deux jours de suite, ça mérite un appel au vétérinaire, surtout s'il maigrit ou semble abattu.":"Dva dana zaredom – vrijedi nazvati veterinara, osobito ako gubi na težini ili je bezvoljan.",
+  "Proposez sa ration à heure fixe et retirez la gamelle après 20 minutes. Évitez de compenser avec des friandises.":"Ponudite obrok u stalno vrijeme i maknite zdjelicu nakon 20 minuta. Ne nadoknađujte poslasticama.",
+  "Journée calme":"Miran dan","Laissez-le se reposer et vérifiez qu'il boit et mange. Si la fatigue dure plus de 24 h ou s'accompagne d'autres signes, appelez le vétérinaire.":"Pustite ga da se odmori i provjerite jede li i pije. Ako umor traje dulje od 24 h ili ima drugih znakova, nazovite veterinara.",
+  "Si ça continue, s'il y a du sang ou s'il est abattu, consultez.":"Ako se nastavi, ima krvi ili je bezvoljan, javite se veterinaru.",
+  "Eau fraîche à volonté, pas de friandises ni de restes de table demain. Au-delà de 48 h ou avec du sang, consultez.":"Svježa voda po volji, sutra bez poslastica i ostataka sa stola. Nakon 48 h ili uz krv, javite se veterinaru.",
+  "Pas de selles depuis 2 jours":"Bez stolice 2 dana","S'il force sans résultat ou semble avoir mal au ventre, appelez le vétérinaire.":"Ako se napinje bez rezultata ili ga boli trbuh, nazovite veterinara.",
+  "Vomissement noté":"Zabilježeno povraćanje","Un épisode isolé n'est souvent pas grave. S'il se répète, s'il ne garde pas l'eau ou semble abattu, consultez.":"Jedna epizoda često nije ozbiljna. Ako se ponovi, ne zadržava vodu ili je bezvoljan, javite se veterinaru.",
+  "Patte ou boiterie notée":"Zabilježeno šepanje ili šapa","Limitez les sauts et les escaliers, balades courtes en laisse. Sans amélioration en 48 h, faites contrôler.":"Ograničite skakanje i stepenice, kratke šetnje na povodcu. Ako nema poboljšanja za 48 h, neka ga pregledaju.",
+  "Démangeaisons":"Svrbež","Notez les zones et les moments où il se gratte : c'est précieux pour le vétérinaire.":"Zapišite gdje i kada se češe: to je vrijedno za veterinara.",
+  "Prise oubliée":"Propuštena doza","{l}. Ne doublez pas la prise suivante sans l'avis du vétérinaire.":"{l}. Ne udvostručujte sljedeću dozu bez savjeta veterinara.",
+  "Beaucoup d'énergie, peu de sorties":"Puno energije, malo šetnji","Une séance de flair de 10 minutes (friandises cachées dans l'appartement) le fatigue autant qu'une balade.":"Deset minuta igre njuškanja (skrivene poslastice po stanu) umori ga kao šetnja.",
+  "{a} sortie(s) sur {b}":"Šetnji: {a} od {b}","Il a eu moins de sorties que prévu. Demain, reprenez simplement le rythme habituel, sans rallonger les balades : 10 minutes de jeux de flair aident à se dépenser sans forcer.":"Imao je manje šetnji nego što je planirano. Dulja šetnja sutra ujutro pomoći će mu da bude miran.",
+  "Encore de l'énergie":"Još ima energije","Toutes les sorties sont faites : ajoutez plutôt un jeu de réflexion (tapis de fouille, jouet à remplir) qu'une sortie de plus.":"Sve šetnje su obavljene: radije dodajte igru za razmišljanje (podloga za njuškanje, igračka za punjenje) nego još jednu šetnju.",
+  "{a} → {b} kg depuis la pesée précédente. Parlez-en au vétérinaire et ajustez la ration avec lui.":"{a} → {b} kg od prethodnog vaganja. Razgovarajte s veterinarom i zajedno prilagodite obrok.",
+  "À {t}. ":"U {t}. ","Pensez à préparer le carnet de santé.":"Ne zaboravite zdravstvenu knjižicu.","Belle journée":"Odličan dan",
+  "Routine complète pour {n} et tout semble normal.":"Cijeli raspored obavljen za {n} i sve izgleda normalno.","Routine complète et tout semble normal.":"Cijeli raspored obavljen i sve izgleda normalno.",
+  "Complétez le journal":"Ispunite dnevni zapis","Indiquez l'appétit, l'énergie et les selles pour des conseils plus précis.":"Unesite apetit, energiju i stolicu za preciznije savjete.",
+  "Sorties du soir":"Večernje šetnje","Les journées sont courtes : un collier ou un harnais lumineux le rend visible dans le noir.":"Dani su kratki: svjetleća ogrlica ili oprsnica čini ga vidljivim u mraku.",
+  "Chaleur":"Vrućina","Sortez-le aux heures fraîches et emportez de l'eau lors des longues balades.":"Šećite u svježijem dijelu dana i ponesite vodu na duge šetnje.",
+  "Conseils personnalisés non autorisés pour cette page.":"Osobni savjeti nisu dopušteni za ovu stranicu.","Trop de demandes pour l'instant. Réessayez plus tard.":"Previše zahtjeva trenutno. Pokušajte kasnije.",
+  "Les conseils n'ont pas pu être générés. Réessayez.":"Savjete nije bilo moguće izraditi. Pokušajte ponovno.",
+  "Conseils générés le {d} à {t}. Ils ne remplacent pas l'avis du vétérinaire.":"Savjeti izrađeni {d} u {t}. Ne zamjenjuju mišljenje veterinara.",
+  "Bilan provisoire : il se précise au fil de la journée et du journal.":"Privremeni pregled: postaje precizniji tijekom dana i s dnevnim zapisom.",
+  "Repères selon la race, l'âge, la journée et le journal. Ils ne remplacent pas l'avis du vétérinaire.":"Smjernice prema pasmini, dobi, danu i dnevnom zapisu. Ne zamjenjuju mišljenje veterinara.",
+  "Analyse de la journée…":"Analiza dana…","Actualiser les conseils":"Osvježi savjete","Conseils personnalisés pour {n}":"Osobni savjeti za {n}","le chien":"psa",
+  "Bilan provisoire":"Privremeni pregled","Bilan et conseils":"Pregled i savjeti",
+  "Du {a} au {b}":"Od {a} do {b}","Dernier jour de garde":"Zadnji dan čuvanja","Encore {n} jour(s)":"Još dana: {n}","Propriétaire":"Vlasnik","Téléphone":"Telefon",
+  "Vétérinaire":"Veterinar","Urgences 24 h":"Hitna služba 24 h","Adresse":"Adresa","Type":"Vrsta","Ration / jour":"Dnevni obrok","Repas / jour":"Obroka dnevno","Friandises":"Poslastice",
+  "Garde de {n}":"Čuvanje: {n}","Garde":"Čuvanje","Gardé par {n}":"Čuva: {n}","Consignes":"Upute","Allergies":"Alergije",
+  "Ne donnez rien qui en contient, friandises comprises.":"Ne dajte ništa što to sadrži, uključujući poslastice.","Contacts":"Kontakti",
+  "Programme de la journée":"Današnji raspored","Cocher":"Označi","Cochez chaque tâche dans l'onglet Aujourd'hui : la famille voit ce qui est fait.":"Označite svaki zadatak na kartici Danas: obitelj vidi što je obavljeno.",
+  "Alimentation":"Prehrana","Aperçu du mode garde.":"Pregled načina čuvanja.","Voici ce que voit la personne qui garde le chien.":"Ovo vidi osoba koja čuva psa.","Quitter l'aperçu":"Izađi iz pregleda",
+  "Chien sous garde":"Čuvanje psa","Modifier":"Uredi","Dates":"Datumi","Gardé par":"Čuva","Voir comme la personne qui garde":"Prikaži kao osoba koja čuva",
+  "Partagez le carnet avec elle au niveau « Contributeur » : elle peut cocher les tâches et remplir le journal, mais pas modifier la fiche, la routine ni les traitements. La famille garde le niveau « Éditeur ».":"Podijelite dnevnik s njom kao „Suradnik”: može označavati zadatke i ispunjavati dnevni zapis, ali ne može mijenjati profil, raspored ni terapije. Obitelj ostaje „Urednik”.",
+  "Du":"Od","Au":"Do","Nom":"Ime","Clés, codes, où est la nourriture, ce qu'il n'a pas le droit de faire…":"Ključevi, šifre, gdje je hrana, što mu nije dopušteno…",
+  "La date de fin précède la date de début.":"Datum završetka je prije datuma početka.",
+  "Zzz… on se voit demain matin.":"Zzz… vidimo se ujutro.","Je ne me sens pas très bien. Tu peux garder un œil sur moi ?":"Ne osjećam se baš dobro. Možeš li paziti na mene?",
+  "N'oublie pas mon {m} !":"Ne zaboravi moj {m}!","Mon ventre gargouille… c'est l'heure du repas ?":"Kruli mi trbuh… je li vrijeme za obrok?","On sort ? J'ai la laisse dans la gueule !":"Idemo van? Već držim povodac u zubima!",
+  "Journée parfaite, merci !":"Savršen dan, hvala!","Je suis le chien le plus heureux du monde !":"Ja sam najsretniji pas na svijetu!","Tout va bien. On joue ?":"Sve je u redu. Igramo se?",
+  "Mini {n}":"Mini {n}","Le double de {n}":"Dvojnik: {n}","votre chien":"vaš pas","Compagnon":"Ljubimac","Caresser":"Pomazi",
+  "{n} jour(s) parfait(s) d'affilée":"Savršenih dana zaredom: {n}","Bonheur":"Sreća","Ventre plein":"Pun trbuh","Évolution vers {s}":"Sljedeća razina: {s}","Niveau maximum atteint":"Dosegnuta najviša razina","pts":"bod.",
+  "Il reflète l'état réel de {n} : le journal et les médicaments font sa santé, les balades son bonheur, les repas son ventre. Chaque tâche cochée lui donne des points pour évoluer.":"Odražava stvarno stanje ({n}): dnevni zapis i lijekovi čine zdravlje, šetnje sreću, obroci pun trbuh. Svaki označeni zadatak donosi bodove za napredak.",
+  "Évolutions":"Razine","Glissez pour le faire tourner, touchez-le pour le caresser.":"Povucite za okretanje, dodirnite za maženje.","{n} pts":"{n} bod.","Actuel":"Trenutno","Badges":"Značke","OK":"U redu","Supprimer":"Izbriši","Nouvelle activité":"Nova aktivnost","Activité":"Aktivnost",
+  "Balade, repas, brossage…":"Šetnja, obrok, četkanje…","Catégorie":"Kategorija","Heure":"Vrijeme","Jours":"Dani","Détails":"Detalji","Durée, quantité, consigne…":"Trajanje, količina, uputa…",
+  "Les médicaments s'ajoutent dans l'onglet Santé.":"Lijekovi se dodaju na kartici Zdravlje.","Indiquez l'activité, l'heure et au moins un jour.":"Unesite aktivnost, vrijeme i barem jedan dan.",
+  "Modifier le traitement":"Uredi terapiju","Nouveau médicament":"Novi lijek","Médicament":"Lijek","Nom et dosage":"Naziv i jačina","Dose par prise":"Doza po uzimanju","1 comprimé, 5 gouttes…":"1 tableta, 5 kapi…",
+  "Heures de prise":"Vremena doza","Prise {n}":"Doza {n}","Début":"Početak","Fin":"Kraj","Laissez la fin vide pour un traitement continu.":"Ostavite kraj prazan za trajnu terapiju.",
+  "Stock actuel":"Trenutna zaliha","Optionnel":"Neobavezno","Unité":"Jedinica","Autre unité (tapez-la)":"Druga jedinica (upišite)","Unités par prise":"Jedinica po dozi","Consigne":"Uputa",
+  "Avec le repas, caché dans une friandise…":"Uz obrok, skriveno u poslastici…","Indiquez le nom et au moins une heure de prise.":"Unesite naziv i barem jedno vrijeme doze.",
+  "Nouveau rendez-vous":"Novi termin","Intitulé":"Naziv","Rappel vaccin, contrôle…":"Docjepljivanje, kontrola…","Date":"Datum","Répéter":"Ponavljanje","Note":"Bilješka",
+  "À apporter, questions à poser…":"Što ponijeti, pitanja…","Indiquez l'intitulé et la date.":"Unesite naziv i datum.","Reprogrammé au {d}":"Ponovno zakazano za {d}",
+  "Rendez-vous marqué comme fait":"Termin označen kao obavljen","Confirmer la suppression":"Potvrdi brisanje","Mon chien":"Moj pas","Fiche enregistrée":"Profil spremljen",
+  "Tapez une allergie à ajouter.":"Upišite alergiju za dodavanje.","Copié : {v}":"Kopirano: {v}","Indiquez un poids et une date.":"Unesite težinu i datum.","Pesée ajoutée":"Vaganje dodano",
+  "Peu d'appétit depuis 2 jours":"Slab apetit 2 dana","Appétit faible":"Slab apetit","Selles molles depuis 2 jours":"Mekana stolica 2 dana","Selles molles":"Mekana stolica",
+  "Mâle":"Mužjak","Femelle":"Ženka","Petit":"Mali","Moyen":"Srednji","Moyen (appétit)":"Srednji","Grand":"Veliki","Géant":"Divovski","Oui":"Da","Non":"Ne","Prévu":"Planirano",
+  "Croquettes":"Granule","Pâtée":"Mokra hrana","Croquettes + pâtée":"Granule + mokra hrana","BARF (cru)":"BARF (sirovo)","Ration ménagère":"Domaća hrana",
+  "Aucune":"Nema","Seulement pour l'éducation":"Samo za dresuru","10 % de la ration au maximum":"Najviše 10 % obroka","Une par jour":"Jedna dnevno","Sans restriction":"Bez ograničenja",
+  "Poulet":"Piletina","Bœuf":"Govedina","Agneau":"Janjetina","Poisson":"Riba","Céréales / gluten":"Žitarice / gluten","Produits laitiers":"Mliječni proizvodi","Pollen":"Pelud","Puces":"Buhe",
+  "comprimés":"tablete","gélules":"kapsule","gouttes":"kapi","ml":"ml","pipettes":"pipete","sachets":"vrećice",
+  "½ comprimé":"½ tablete","1 comprimé":"1 tableta","2 comprimés":"2 tablete","5 gouttes":"5 kapi","1 pipette":"1 pipeta","1 ml":"1 ml",
+  "Bon":"Dobar","Faible":"Slab","Haute":"Visoka","Normale":"Normalna","Basse":"Niska","Normales":"Normalna","Molles":"Mekana",
+  "Repas":"Obrok","Balade":"Šetnja","Soin":"Njega","Jeu & éducation":"Igra i dresura","Autre":"Drugo","Vaccin":"Cjepivo","Vermifuge":"Protiv glista","Antipuces / tiques":"Protiv buha / krpelja","Toilettage":"Šišanje",
+  "Race":"Pasmina","Sexe":"Spol","Né(e) le":"Rođen(a)","Gabarit":"Veličina","Stérilisé(e)":"Kastriran(a)","N° de puce":"Br. mikročipa","Marque":"Marka","Cabinet":"Ambulanta","Assurance":"Osiguranje","N° de contrat":"Br. police",
+  "3 jours parfaits":"3 savršena dana","7 jours parfaits":"7 savršenih dana","Toutes les balades de la semaine":"Sve šetnje ovog tjedna","Aucun médicament oublié":"Nijedan propušten lijek","Journal rempli 5 jours":"Dnevni zapis 5 dana","3 pesées enregistrées":"3 vaganja",
+  "Marque, saveur":"Marka, okus","Rue, ville":"Ulica, grad","Numéro":"Broj","Chiot":"Štene","Explorateur":"Istraživač","Héros":"Junak","Légende":"Legenda",
+  "Jamais":"Nikad","Tous les mois":"Svaki mjesec","Tous les 2 mois":"Svaka 2 mjeseca","Tous les 3 mois":"Svaka 3 mjeseca","Tous les 6 mois":"Svakih 6 mjeseci","Tous les ans":"Svake godine",
+  "Identité":"Osnovno","Matin":"Jutro","Midi":"Podne","Après-midi":"Poslijepodne","Soir":"Večer","Profil":"Profil",
+  "Tout petit":"Sasvim mali","Un bandana":"Marama","Une médaille":"Medalja","Une cape de héros":"Junački plašt","Une couronne":"Kruna",
+  "En pleine forme":"U top formi","Content":"Zadovoljan","Un peu triste":"Malo tužan","Pas en forme":"Nije u formi","Endormi":"Spava",
+  "Croisé / mixte":"Mješanac","Berger australien":"Australski ovčar","Berger allemand":"Njemački ovčar","Berger blanc suisse":"Bijeli švicarski ovčar","Bouvier bernois":"Bernski planinski pas",
+  "Bouvier de l'Entlebuch":"Entlebuški planinski pas","Bouvier appenzellois":"Appenzellski planinski pas","Grand bouvier suisse":"Veliki švicarski planinski pas","Saint-Bernard":"Bernardinac",
+  "Malinois":"Belgijski ovčar malinois","Bouledogue français":"Francuski buldog","Carlin":"Mops","Teckel":"Jazavčar","Caniche":"Pudla","Bichon frisé":"Bichon frisé","Bichon maltais":"Maltezer",
+  "Spitz nain (Poméranien)":"Pomeranac","Cocker anglais":"Engleski koker španijel","Husky sibérien":"Sibirski haski","Dalmatien":"Dalmatinac","Bouledogue anglais":"Engleski buldog",
+  "Chargement":"Učitavanje","{n} tâche en retard":"Zadataka u zakašnjenju: {n}","{n} tâches en retard":"Zadataka u zakašnjenju: {n}",
+  "Bien":"Dobro","Conseil":"Savjet","À surveiller":"Pratiti","Prise de poids":"Dobivanje na težini","Perte de poids":"Gubitak težine","Demain : {t}":"Sutra: {t}","Après-demain : {t}":"Prekosutra: {t}"
+});
+const TRAITS_HR = {
+  herding:["Ovčarska pasmina: zaposlite mu glavu","Deset minuta igara traženja ili novih trikova umori ga kao duga šetnja i spriječi da sam sebi izmišlja poslove."],
+  energy:["Treba puno kretanja","Računajte barem 1,5 sat aktivnosti dnevno, dio slobodno ili na dugom povodcu."],
+  weight:["Sklon debljanju","Važite obrok umjesto da ga procjenjujete i poslastice uračunajte u njega. Vaganje jednom mjesečno je dovoljno."],
+  water:["Voli vodu","Nakon kupanja ili kiše dobro mu osušite uši da spriječite upalu."],
+  joints:["Čuvajte zglobove","Izbjegavajte ponavljano skakanje i silazak niz stepenice. Protuklizni tepih pomaže kod kuće."],
+  coat:["Gusta poddlaka","Četkajte ga 2 do 3 puta tjedno, a svaki dan tijekom proljetnog i jesenskog linjanja."],
+  ears:["Klempave uši","Provjerite i osušite uši nakon kiše ili kupanja. Neugodan miris ili češanje: veterinar."],
+  bloat:["Bez napora odmah nakon obroka","Veliki psi dubokih prsa skloni su torziji želuca: bez trčanja i grube igre sat vremena nakon obroka."],
+  giant:["Velika pasmina","Velike pasmine brže stare: pregled kod veterinara svakih 6 mjeseci od 6. godine i bez dugih napora prije kraja rasta."],
+  heat:["Teško podnosi vrućinu","Ljeti šećite rano ujutro i kasno navečer, uvijek ponesite vodu i nikad ga ne ostavljajte u autu."],
+  brachy:["Kratka njuška: pazite na disanje","Koristite oprsnicu umjesto ogrlice, izbjegavajte jak napor i pazite na glasno ili otežano disanje."],
+  teeth:["Pazite na zube","Male pasmine brzo stvaraju kamenac: zube perite idealno 3 puta tjedno."],
+  cold:["Lako mu je hladno","Zimi kaputić za šetnje i ručnik da ga osušite kad se vratite."],
+  heart:["Redovito provjeravajte srce","Pasmina je sklona bolestima srčanog zaliska: tražite slušanje srca pri svakom pregledu. Kašalj ili zaduha: veterinar."],
+  back:["Osjetljiva leđa","Izbjegavajte skakanje s kauča i stepenice, a nosite ga podupirući leđa i stražnji dio. Stabilna težina štiti leđa."],
+  scent:["Vodi ga nos","Opoziv je težak kad uhvati trag: dugi povodac u šumi i igre njuškanja da ga zadovolje."],
+  curly:["Dlaka stalno raste","Šišanje svakih 6 do 8 tjedana i redovito raščešljavanje, osobito iza ušiju i ispod nogu."],
+  eyes:["Suzne oči","Svaki dan očistite kutove očiju vlažnom gazom."],
+  sled:["Izdržljiv i sklon bijegu","Trebaju mu duge aktivnosti (kanikros, bicikl po hladnijem vremenu) i dobro ograđen vrt."],
+  independent:["Neovisan","Opoziv nije pouzdan: izvan ograđenih prostora držite ga na povodcu ili dugom povodcu."],
+  urinary:["Neka puno pije","Pasmina je sklona mokraćnim kamencima: uvijek svježa voda i česti izlasci."],
+  terrier:["Terijerska energija","Igre natezanja, traženja i kutak za kopanje usmjeravaju energiju, inače će izmisliti svoje igre."],
+  sight:["Hrt: opoziv i tanka koža","Puštajte ga samo u ograđenom prostoru jer juri sve što se miče i provjerite mu kožu nakon trčanja."],
+  skinfolds:["Kožni nabori","Nekoliko puta tjedno očistite i osušite nabore na licu da spriječite iritacije."],
+  puppy:["Štene","Kratki i česti izlasci, puno spavanja i mirna socijalizacija bolji su od jedne duge šetnje."],
+  senior:["Stariji pas","Pregled kod veterinara svakih 6 mjeseci i kraće, ali češće šetnje."]
+};
+Object.keys(TRAITS_HR).forEach(k => { if (TRAITS[k]) TRAITS[k].hr = TRAITS_HR[k]; });
+EN["Moyen (appétit)"] = "Fair"; EN["Moyen"] = "Medium";
+Object.assign(EN,{"Demander à Claude pour {n}":"Ask Claude about {n}","Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.":"Opens Claude with today's summary. Free with a Claude account."}); Object.assign(HR,{"Demander à Claude pour {n}":"Pitajte Claude o {n}","Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.":"Otvara Claude sa sažetkom dana. Besplatno uz Claude račun."});
+Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} ({n} times)","Petite sortie":"Short outing","les accidents arrivent en moyenne vers {t}":"accidents happen around {t} on average","Aucune routine pour l'instant.":"No routine yet.","≈ {m} min":"≈ {m} min","avant {t}":"was {t}","oubliée {p} % du temps":"missed {p}% of the time","Nouveau":"New","Nouvel horaire":"New time","Ajouter":"Add","Appliquer les {n} nouveaux horaires":"Apply the {n} new times","Appliquer le nouvel horaire":"Apply the new time","Les heures en surbrillance suivent ce que vous avez vraiment fait cette semaine ; les durées de balade sont vos moyennes, ajustées au repère de la race.":"Highlighted times follow what you really did this week; walk lengths are your averages, adjusted to the breed guide.","Vos horaires correspondent déjà à ce que vous faites : rien à changer.":"Your times already match what you do: nothing to change.","Conseils de la semaine":"This week's tips","{n} horaire(s) mis à jour":"{n} time(s) updated","Petite sortie ajoutée à {t}":"Short outing added at {t}","Sortie courte pour éviter les accidents":"Short outing to prevent accidents","Heures moyennes de départ":"Average start times","Bilan de la semaine":"Weekly summary","Balades, repas, besoins, famille et programme proposé":"Walks, meals, toilet, family and a suggested plan","Le bilan de la semaine est prêt":"Your weekly summary is ready","Le bilan de la semaine dernière":"Last week's summary","Moyennes, tendances et un programme adapté pour la semaine prochaine":"Averages, trends and a plan tailored for next week","Semaine d'avant":"Previous week","Semaine suivante":"Next week","Rien n'a été enregistré cette semaine-là.":"Nothing was recorded that week.","des tâches faites":"of tasks done","de balade / jour":"walking / day","sorties / jour":"outings / day","jours parfaits":"perfect days","jour parfait":"perfect day","accidents":"accidents","accident":"accident","Balades":"Walks","Sorties":"Outings","{n} par jour":"{n} per day","Durée totale":"Total time","Moyenne par jour":"Daily average","repère {a}–{b} min":"guide {a}–{b} min","Distance":"Distance","Heure moyenne de départ":"Average start time","Par moment":"By time of day","Matin":"Morning","Midi":"Midday","Soir":"Evening","Plus longue":"Longest","Repas et routine":"Meals and routine","Appétit":"Appetite","Friandises":"Treats","Eau notée":"Water logged","Besoins et santé":"Toilet and health","Selles":"Stools","Accidents":"Accidents","Vomissements":"Vomiting","Traitements":"Treatments","Énergie":"Energy","Poids":"Weight","La famille":"The family","Messages":"Messages","non noté":"not logged","Programme proposé pour la semaine prochaine":"Suggested plan for next week","Calculé uniquement à partir de ce qui a été enregistré cette semaine. Les conseils de santé ne remplacent pas l'avis du vétérinaire.":"Based only on what was recorded this week. Health tips don't replace the vet's advice.","Décaler « {t} » à {h}":"Move \"{t}\" to {h}","Prévue à {p}, faite en moyenne à {r} ({n} fois cette semaine). Caler l'heure sur la réalité rend les rappels utiles.":"Planned at {p}, done on average at {r} ({n} times this week). Matching real life makes reminders useful.","Mettre à {h}":"Set to {h}","Un peu plus de balade : visez {m} min par jour":"A bit more walking: aim for {m} min a day","Cette semaine : {a} min par jour en moyenne. Repère de la race : {lo} à {hi} min. Augmentez de 10 à 15 min, pas plus d'un coup.":"This week: {a} min a day on average. Breed guide: {lo} to {hi} min. Add 10 to 15 min, no more at once.","Gardez des jours plus calmes":"Keep some calmer days","Le rythme des balades est bon":"The walking rhythm is good","{a} min par jour en moyenne, dans le repère de la race ({lo} à {hi} min). Gardez ce rythme.":"{a} min a day on average, within the breed guide ({lo} to {hi} min). Keep it up.","Mesurez les balades":"Measure the walks","« {t} » oubliée {n} fois":"\"{t}\" missed {n} times","Modifier":"Edit","Ajoutez une petite sortie vers {h}":"Add a short outing around {h}","Appétit faible {n} jours":"Low appetite {n} days","Énergie basse {n} jours":"Low energy {n} days","{n} vomissements cette semaine":"{n} vomits this week","Remplissez le journal plus souvent":"Fill in the log more often","Gardez ce rythme":"Keep this rhythm","« {t} » passe à {h}":"\"{t}\" moved to {h}","Widget iPhone":"iPhone widget","PROCHAIN · 18:30":"NEXT · 18:30","Balade du soir":"Evening walk","La prochaine tâche et l'avancement du jour sur l'écran d'accueil, mis à jour environ toutes les 15 minutes. Toucher le widget ouvre Dogs Life.":"The next task and today's progress on your home screen, updated about every 15 minutes. Tapping it opens Dogs Life.","Copier le script":"Copy the script","Désactiver":"Turn off","Créer mon widget":"Create my widget","Installez l'app gratuite « Scriptable » depuis l'App Store.":"Install the free \"Scriptable\" app from the App Store.","Ici, touchez « Copier le script ».":"Here, tap \"Copy the script\".","Dans Scriptable, touchez +, collez, puis appelez le script « Dogs Life ».":"In Scriptable, tap +, paste, and name the script \"Dogs Life\".","Sur l'écran d'accueil : appui long → + → Scriptable → choisissez une taille → Ajouter.":"On the home screen: long press → + → Scriptable → pick a size → Add.","Appui long sur le widget → Modifier → Script : « Dogs Life ».":"Long press the widget → Edit → Script: \"Dogs Life\".","Le script contient une clé personnelle qui ne permet que de lire les tâches du jour. « Désactiver » la coupe aussitôt.":"The script holds a personal key that can only read today's tasks. \"Turn off\" cuts it at once.","Widget créé : copiez le script":"Widget created: copy the script","Impossible de créer le widget. Réessayez.":"Couldn't create the widget. Try again.","Script copié : collez-le dans Scriptable":"Script copied: paste it into Scriptable","Script du widget":"Widget script","Widget désactivé":"Widget turned off","{n} jours parfaits d'affilée":"{n} perfect days in a row","{n} jour parfait":"{n} perfect day","C'est fait : programmer le suivant":"Done: schedule the next one","NOUVEAU":"NEW","Choisissez votre style":"Choose your style","Touchez un style pour l'essayer : l'app change tout de suite derrière.":"Tap a style to try it: the app changes right behind.","Verre, halo doré animé, nouvelle police":"Glass, animated golden glow, new font","Le design d'origine, sobre, façon iPhone":"The original design, clean, iPhone-like","Vous pourrez changer à tout moment dans Jiji → Réglages → Apparence.":"You can change it any time in Jiji → Settings → Appearance.","Continuer avec ce style":"Continue with this style","la page Famille qui dépassait de l'écran sur les petits téléphones":"the Family page overflowing on small phones","min de balade":"min walked","tâches":"tasks","balades":"walks","balade":"walk","besoins notés":"toilet breaks","points d'attention":"points to watch","point d'attention":"point to watch","Quoi de neuf":"What's new","Dogs Life fait peau neuve. Voici tout ce qui change.":"Dogs Life gets a makeover. Here's everything that changed.","Corrigé":"Fixed","C'est parti":"Let's go","Nouveau design Aurora":"New Aurora design","Verre, halo doré animé et nouvelle police. L'ancien design reste disponible dans Réglages → Apparence.":"Glass, an animated golden glow and a new font. The previous design is still in Settings → Appearance.","Page Aujourd'hui réorganisée":"Today page reorganised","La balade en cours en haut, la prochaine tâche à cocher d'un geste, puis le journal rapide et le programme du jour.":"The walk in progress at the top, the next task one tap away, then the quick log and the day's schedule.","Extras":"Extras","Ajoutez une balade, un médicament ou un soin imprévu pour un jour précis. Toute la famille peut le cocher.":"Add an unplanned walk, medicine or care for a given day. The whole family can tick it.","Médicaments reconnus":"Medicines recognised","L'app dit à quoi sert un médicament, alerte en rouge pour ceux qui sont toxiques pour le chien, et range les prises ponctuelles dans Traitements et dans le résumé pour le vétérinaire.":"The app says what a medicine is for, warns in red about those toxic to dogs, and lists one-off doses in Treatments and in the vet summary.","L'heure exacte":"The exact time","Une tâche cochée affiche l'heure où vous avez appuyé. Touchez cette heure pour la corriger.":"A ticked task shows the time you tapped. Tap that time to correct it.","Bilan du jour complet":"Full daily summary","Onze rubriques factuelles : sorties, besoins, repas, santé, ce qui manque, conseils. Il lit les messages de la famille et s'accorde au féminin pour une chienne.":"Eleven factual sections: walks, toilet, meals, health, what's missing, tips. It reads the family's messages.","Notifications de la famille":"Family notifications","La cloche regroupe ce que fait la famille, sur chaque téléphone.":"The bell gathers what the family does, on every phone.","Balades GPS":"GPS walks","Distance et trajet sur une carte pendant la balade.":"Distance and route on a map during the walk.","Fiches redessinées":"Redesigned forms","Extras et rendez-vous : types en tuiles, raccourcis « Maintenant », « Demain », « Dans 1 mois ».":"Extras and appointments: tiles for types, shortcuts like \"Now\", \"Tomorrow\", \"In 1 month\".","la touche Entrée du clavier créait des extras vides":"the keyboard's Return key created empty extras","une tâche cochée pour un autre jour prenait l'heure actuelle":"a task ticked for another day took the current time","les dates du planning":"the planning dates","le faux message « données inaccessibles »":"the false \"data can't be reached\" message","quitter une famille laissait des infos sur le téléphone":"leaving a family left data on the phone","les animations qui se rejouaient à chaque mise à jour":"animations replaying on every update","Apparence":"Appearance","Nouveau design lumineux":"New glowing design","Classique":"Classic","Le design d'avant":"The previous design","Le mode clair ou sombre suit les réglages de votre téléphone.":"Light or dark mode follows your phone's settings.","Design Aurora activé":"Aurora design on","Design classique activé":"Classic design on","Changer l'heure":"Change the time","Heure prévue":"Planned time","Il y a 15 min":"15 min ago","Il y a 30 min":"30 min ago","Il y a 1 h":"1 h ago","Heure de la tâche":"Task time","Prévu à {t}":"Planned at {t}","coché par {w}":"ticked by {w}","Fait à":"Done at","Indiquez l'heure.":"Enter the time.","Cette heure n'est pas encore passée.":"That time hasn't come yet.","Heure modifiée : {t}":"Time changed: {t}","prévu {t}":"planned {t}","Prochain":"Next","Programme du jour":"Today's schedule","Programme":"Schedule","Terminer la balade":"End the walk","Un imprévu pour ce jour-là":"Something unplanned that day","Il s'ajoute à la liste du jour et toute la famille peut le cocher.":"It joins the day's list and the whole family can tick it.","Quand":"When","Maintenant":"Now","Dans 1 h":"In 1 h","Ce soir":"Tonight","Demain matin":"Tomorrow morning","Déjà fait":"Already done","Coché tout de suite, avec l'heure et votre prénom.":"Ticked right away, with the time and your name.","Modifier le rendez-vous":"Edit appointment","Demain":"Tomorrow","Dans 1 semaine":"In 1 week","Dans 1 mois":"In 1 month","Dans 1 an":"In 1 year","1 mois":"1 month","3 mois":"3 months","6 mois":"6 months","1 an":"1 year","2 mois":"2 months","Antipuces":"Flea & tick","Jeu":"Play","Toxique pour le chien, même à petite dose. N'en donnez pas sans l'accord du vétérinaire ; s'il en a pris, appelez-le tout de suite.":"Toxic to dogs, even in small doses. Don't give it without the vet's approval; if your dog took some, call the vet right away.","Donné à {t}":"Given at {t}","Prévu à {t}":"Planned at {t}","Prises ponctuelles":"One-off doses","Les médicaments ajoutés en extra. Le type est reconnu à partir du nom, à titre indicatif : suivez toujours l'ordonnance.":"Medicines added as extras. The type is recognised from the name, as a guide only: always follow the prescription.","non confirmé":"not confirmed","Extra":"Extra","Ajouter un extra":"Add an extra","Une balade, un médicament ou un soin en plus, juste pour ce jour-là. Toute la famille peut le cocher.":"An extra walk, medicine or care, just for that day. The whole family can tick it.","Nouvel extra":"New extra","Modifier l'extra":"Edit extra","Balade en plus, Smecta, bain…":"Extra walk, medicine, bath…","Détail":"Detail","Dose, durée, raison…":"Dose, length, reason…","Qui s'en occupe ?":"Who takes care of it?","Déjà fait (cocher tout de suite)":"Already done (tick it now)","Indiquez la date.":"Enter the date.","Extra : {t}":"Extra: {t}","Extra ajouté":"Extra added","Extra modifié":"Extra updated","Extra supprimé":"Extra deleted","Effectuée":"Done","Non effectuée":"Not done","signalée par {n}":"reported by {n}","Non enregistrée":"Not recorded","Prise non confirmée":"Dose not confirmed","{l} : vérifiez qu'elle a bien été donnée. En cas de doute, ne doublez pas la prise suivante sans l'avis du vétérinaire.":"{l}: check it was given. If in doubt, don't double the next dose without asking the vet.","Tâches enregistrées : {a} sur {b}":"Tasks recorded: {a} of {b}","une encore à venir":"one still upcoming","{n} encore à venir":"{n} still upcoming","Une balade suivie":"One walk tracked","{n} balades suivies":"{n} walks tracked","Un point est à surveiller, détaillé plus bas.":"One point to watch, detailed below.","{n} points sont à surveiller, détaillés plus bas.":"{n} points to watch, detailed below.","Siestes notées à {t}.":"Naps noted at {t}.","Sieste notée à {t}.":"Nap noted at {t}.","{n} friandises":"{n} treats","Une friandise":"One treat","votre chienne":"your dog","votre chien":"your dog","par {n}":"by {n}","Effectué":"Done","à {t}":"at {t}","Non effectué":"Not done","signalé par {n}":"reported by {n}","Non enregistré":"Not recorded","à vérifier":"to check","À venir":"Upcoming","appétit {v}":"appetite {v}","énergie {v}":"energy {v}","selles {v}":"stools {v}","{a} tâche(s) sur {b} enregistrée(s)":"{a} of {b} tasks recorded","{n} encore à venir":"{n} still upcoming","Aucune routine n'était prévue ce jour-là.":"No routine was planned that day.","{n} balade(s) suivie(s)":"{n} walk(s) tracked","{m} min au total":"{m} min in total","Journal : {j}.":"Log: {j}.","{n} point(s) à surveiller, détaillé(s) plus bas.":"{n} point(s) to watch, detailed below.","Tout ce qui était prévu pour {n} a été fait.":"Everything planned for {n} was done.","Ont participé : {p}.":"Taking part: {p}.","note du jour":"note of the day","Résumé de la journée":"Summary of the day","Balade":"Walk","pipi":"pee","caca":"poop","Prévu dans la routine":"Planned in the routine","Promenades et sorties":"Walks and outings","Aucune sortie prévue ni enregistrée.":"No outing planned or recorded.","Aucune balade enregistrée pour l'instant.":"No walk recorded yet.","pendant la balade":"during the walk","Pipi : {a} · Caca : {b}":"Pee: {a} · Poop: {b}","Accident : {n}":"Accident: {n}","Aucun besoin enregistré aujourd'hui : cela ne veut pas dire qu'il n'y en a pas eu.":"No toilet break recorded today: that doesn't mean there were none.","Selles notées dans le journal : {v}.":"Stools in the log: {v}.","Besoins naturels":"Toilet","{g} g prévus":"{g} g planned","Aucun repas n'est prévu dans la routine.":"No meal is planned in the routine.","Appétit noté : {v}.":"Appetite noted: {v}.","Friandises : {n}":"Treats: {n}","Eau notée à {t}.":"Water noted at {t}.","Hydratation non enregistrée.":"Water not recorded.","Alimentation et hydratation":"Food and water","Éducation : {s}":"Training: {s}","Jeux et stimulation mentale":"Play and mental stimulation","Aucun jeu ni exercice enregistré.":"No play or exercise recorded.","Sieste(s) notée(s) à {t}.":"Nap(s) noted at {t}.","Énergie notée : {v}.":"Energy noted: {v}.","Repos et sommeil":"Rest and sleep","Repos non enregistré.":"Rest not recorded.","Pesée":"Weigh-in","Aucun soin, traitement ou symptôme enregistré.":"No care, treatment or symptom recorded.","Rendez-vous à venir":"Upcoming appointments","Santé et soins":"Health and care","Activités non réalisées ou non enregistrées":"Not done or not recorded","Rien n'était prévu : aucun oubli à signaler.":"Nothing was planned: nothing missed.","Rien de manquant pour l'instant ; le reste est à venir.":"Nothing missing so far; the rest is still to come.","Tout ce qui était prévu a été enregistré.":"Everything planned was recorded.","Traitement non confirmé":"Treatment not confirmed","{t} : vérifiez qu'il a bien été donné avant d'en redonner.":"{t}: check it was given before giving it again.","Repas non enregistré":"Meal not recorded","{t} : il a peut-être été donné sans être coché, à confirmer.":"{t}: it may have been given without being ticked, please confirm.","Journal incomplet":"Log incomplete","Appétit, énergie et selles ne sont pas remplis : le suivi est plus fiable avec.":"Appetite, energy and stools aren't filled in: tracking is more reliable with them.","Points d'attention":"Points to watch","Rien de particulier à signaler.":"Nothing in particular to report.","Gardez le rythme":"Keep the rhythm","Une sortie manquée ne se rattrape pas en forçant : demain, les balades habituelles suffisent.":"A missed walk isn't made up by pushing harder: tomorrow, the usual walks are enough.","Même routine demain":"Same routine tomorrow","Cochez chaque tâche au moment où elle est faite : le bilan sera plus précis et toute la famille sera à jour.":"Tick each task when it's done: the summary gets more precise and the whole family stays up to date.","Conseils pour demain":"Tips for tomorrow","Aujourd'hui, un point demande l'avis du vétérinaire : mieux vaut appeler pour rien que d'attendre. Pour le reste, {n} est bien entouré{e} par la famille.":"Today, one point needs the vet's opinion: better to call for nothing than to wait. Otherwise, {n} is well looked after by the family.","Journée complète pour {n} : tout ce qui était prévu a été fait. Merci à {p} pour ce suivi.":"A complete day for {n}: everything planned was done. Thanks to {p} for the care.","toute la famille":"the whole family","Quelques éléments ne sont pas encore enregistrés. Pensez à les cocher s'ils ont été faits : le suivi de {n} n'en sera que meilleur.":"A few things aren't recorded yet. Tick them if they were done: {n}'s tracking will be all the better.","La journée de {n} se déroule comme prévu ; le bilan se complétera au fil des tâches.":"{n}'s day is going as planned; the summary will fill in as tasks are done.","Merci de prendre le temps de noter la journée de {n} : ce suivi régulier est précieux, pour vous comme pour le vétérinaire.":"Thanks for taking the time to log {n}'s day: regular tracking is valuable, for you and for the vet.","Le petit mot":"A little word","Bilan du jour":"Daily summary","Compte rendu établi uniquement à partir de ce qui a été enregistré dans l'app ; « Non enregistré » ne veut pas dire « non fait ». Conseils selon des règles vétérinaires, la race et l'âge. Ils ne remplacent pas l'avis du vétérinaire.":"Report built only from what was recorded in the app; \"Not recorded\" doesn't mean \"not done\". Tips follow veterinary rules, breed and age. They don't replace the vet's advice.","Mise à jour…":"Updating…","Régénérer le bilan":"Regenerate summary","Mis à jour à {t}.":"Updated at {t}.","Bilan régénéré avec les dernières infos":"Summary regenerated with the latest info","d'après {n}":"from {n}","Peut-être une intoxication":"Possible poisoning","Chocolat, raisin, xylitol, oignon, ail ou médicaments humains peuvent être toxiques, même en petite quantité. Appelez tout de suite le vétérinaire en indiquant quoi, combien et à quelle heure.":"Chocolate, grapes, xylitol, onion, garlic or human medicines can be toxic even in small amounts. Call the vet right away saying what, how much and when.","{n} vomissements aujourd'hui":"{n} vomits today","Plusieurs vomissements dans la journée : retirez la nourriture quelques heures, laissez de l'eau en petite quantité et appelez le vétérinaire si ça continue ou s'il est abattu.":"Several vomits today: remove food for a few hours, leave a little water and call the vet if it continues or they seem low.","Diarrhée signalée":"Diarrhoea reported","Eau fraîche à volonté, repas léger et pas de friandises. Au-delà de 48 h, avec du sang ou s'il est abattu, consultez.":"Plenty of fresh water, a light meal and no treats. Beyond 48 h, with blood or if they seem low, see the vet.","Tique trouvée":"Tick found","Retirez-la avec un tire-tique en tournant, désinfectez et notez la date. Fièvre, fatigue ou boiterie dans les semaines suivantes : vétérinaire.":"Remove it with a tick twister, disinfect and note the date. Fever, tiredness or limping in the following weeks: vet.","Toux signalée":"Cough reported","Notez quand il tousse (effort, nuit, après avoir bu). Si la toux dure plus de 2 jours, s'accompagne de fièvre ou d'essoufflement, consultez.":"Note when they cough (effort, night, after drinking). If it lasts more than 2 days, or comes with fever or breathlessness, see the vet.","Blessure signalée":"Injury reported","Rincez à l'eau claire et surveillez. Une plaie profonde, qui saigne encore après 10 minutes de pression ou qu'il lèche sans arrêt : vétérinaire.":"Rinse with clean water and watch it. A deep wound, still bleeding after 10 minutes of pressure, or licked non-stop: vet.","Repas refusé":"Meal refused","Un repas sauté n'est pas grave chez un chien en forme. S'il refuse aussi le suivant, ou s'il vomit ou semble abattu, appelez le vétérinaire.":"One skipped meal isn't serious in a fit dog. If they refuse the next one too, or vomit or seem low, call the vet.","Boit beaucoup":"Drinking a lot","Après l'effort ou la chaleur c'est normal. Si ça dure plusieurs jours sans raison, parlez-en au vétérinaire : c'est un signe à vérifier.":"Normal after effort or heat. If it lasts several days for no reason, tell the vet: it's a sign to check.","Appétit":"Appetite","Énergie":"Energy","Selles":"Stools","Traitements":"Treatments","prise(s)":"dose(s)","Vomissement":"Vomiting","Friandise":"Treat","Eau":"Water","Jeu":"Play","Sieste":"Nap","Autres notes":"Other entries","Famille":"Family","messages aujourd'hui":"messages today","message aujourd'hui":"message today","Tout voir":"See all","À venir":"Coming up","Énergie basse aujourd'hui":"Low energy today","reste":"left","tout est fait":"all done","Balades":"Walks","Besoins":"Toilet","Repas":"Meals","pas encore rempli":"not filled yet","Poids":"Weight","sous le repère de la race ({a}–{b} kg)":"below the breed range ({a}–{b} kg)","au-dessus du repère de la race ({a}–{b} kg)":"above the breed range ({a}–{b} kg)","dans le repère de la race ({a}–{b} kg)":"within the breed range ({a}–{b} kg)","{m} mois":"{m} months","chiot":"puppy","jeune adulte":"young adult","senior":"senior","adulte":"adult","Fiche {b}":"{b} profile","Poids adulte":"Adult weight","Espérance de vie":"Life expectancy","ans":"years","Exercice":"Exercise","par jour (adulte)":"a day (adult)","Entretien":"Grooming","À surveiller":"Watch for","Caractère":"Character","Repères généraux de la race, pas un diagnostic : chaque chien est différent. Votre vétérinaire reste la référence.":"General breed references, not a diagnosis: every dog is different. Your vet remains the reference.","Chiffres tirés de vos données du jour ; conseils selon des règles vétérinaires, la race et l'âge. Rien n'est inventé. Ils ne remplacent pas l'avis du vétérinaire.":"Figures from your own data for the day; advice from veterinary rules, breed and age. Nothing is made up. It doesn't replace the vet's advice.","Chien":"Dog","{n} ans":"{n} years","Tâches":"Tasks","Journal":"Log","appétit":"appetite","énergie":"energy","selles":"stools","non rempli":"not filled","Note":"Note","Conseils de l'expert":"Expert advice","{n} : {a} tâche(s) sur {b} faites aujourd'hui.":"{n}: {a} of {b} tasks done today.","L'IA n'a pas pu se lancer sur ce téléphone : {e}":"The AI couldn't start on this phone: {e}","Préparation de l'IA…":"Preparing the AI…","Analysé par l'IA de ce téléphone : rien ne sort de l'appareil.":"Analysed by this phone's AI: nothing leaves the device.","L'IA tourne sur ce téléphone : la première fois, elle se télécharge (environ {s}, en Wi-Fi de préférence), ensuite elle marche même hors ligne.":"The AI runs on this phone: the first time it downloads (about {s}, Wi-Fi recommended), then it works even offline.","Téléchargement de l'IA… {p} %":"Downloading the AI… {p}%","Notification non envoyée : {e}":"Notification not sent: {e}","serveur injoignable":"server unreachable","Personne d'autre dans la famille pour l'instant":"Nobody else in the family yet","Personne n'a encore activé les notifications sur son téléphone":"Nobody has turned on notifications on their phone yet","Notification refusée par Apple/Google : {e}":"Notification rejected by Apple/Google: {e}","Famille prévenue ({n})":"Family notified ({n})","Notifications":"Notifications","{n} non lue(s)":"{n} unread","En direct":"Live","Hors ligne · tout arrivera au retour du réseau":"Offline · everything arrives when you're back online","Tout marquer comme lu":"Mark all as read","Non lue":"Unread","Aucune notification pour l'instant.":"No notifications yet.","Réglages des notifications":"Notification settings","Installez Dogs Life":"Install Dogs Life","Sur iPhone, les notifications ne marchent que depuis l'écran d'accueil.":"On iPhone, notifications only work from the home screen.","Touchez le bouton Partager en bas de Safari":"Tap the Share button at the bottom of Safari","Choisissez « Sur l'écran d'accueil »":"Choose \"Add to Home Screen\"","Ouvrez Dogs Life depuis l'icône sur votre écran d'accueil":"Open Dogs Life from its icon on your home screen","Notifications bloquées":"Notifications blocked","Dogs Life a besoin des notifications pour prévenir la famille. Autorisez-les puis revenez ici.":"Dogs Life needs notifications to keep the family informed. Allow them, then come back here.","Ouvrez Réglages sur le téléphone":"Open Settings on the phone","Notifications → Dogs Life":"Notifications → Dogs Life","Activez « Autoriser les notifications »":"Turn on \"Allow Notifications\"","C'est fait, réessayer":"Done, try again","Activez les notifications":"Turn on notifications","Dogs Life prévient toute la famille : rappels des tâches, messages, balades, rendez-vous. Elles sont obligatoires pour utiliser l'app.":"Dogs Life keeps the whole family informed: task reminders, messages, walks, appointments. They are required to use the app.","Activer les notifications":"Turn on notifications","Vous pourrez choisir ensuite lesquelles recevoir dans Réglages.":"You can then choose which ones you get in Settings.","Un instant…":"One moment…","Activées":"On","Message de {n}":"Message from {n}","Nouveau message":"New message","{n} a fait":"{n} did","Voir":"View","Auj.":"Today","Semaine du {a} au {b}":"Week of {a} to {b}","Revenir à aujourd'hui":"Back to today","{n} act.":"{n} act.","Envoi par le serveur…":"Sending through the server…","Le code du serveur Cloudflare n'est pas à jour : collez la dernière version pour tester l'envoi réel.":"The Cloudflare server code is out of date: paste the latest version to test real sending.","Le serveur a refusé ({e}).":"The server refused ({e}).","Ce téléphone n'est pas inscrit sur le serveur : coupez puis réactivez « Notifications sur ce téléphone ».":"This phone isn't registered on the server: turn \"Notifications on this phone\" off and on again.","Envoyée. Revenez à l'écran d'accueil : elle arrive dans quelques secondes.":"Sent. Go back to the home screen: it arrives in a few seconds.","Envoi refusé par Apple/Google : {e}":"Rejected by Apple/Google: {e}","Serveur injoignable : {e}":"Server unreachable: {e}","Dernier envoi":"Last send","message":"message","journal":"log","tâche cochée":"ticked task","{n} téléphone(s) prévenu(s)":"{n} phone(s) notified","échec":"failed","Vous ne faites plus partie de cette famille":"You are no longer part of this family","Départ de la famille…":"Leaving the family…","Connectez-vous à Internet pour quitter la famille.":"Connect to the internet to leave the family.","{n} a quitté la famille":"{n} left the family","Balade de {t} : plutôt à {h}":"{t} walk: better at {h}","Balade de {t} : météo défavorable":"{t} walk: poor weather","Réduire":"Show less","GPS refusé : distance non mesurée":"GPS denied: distance not measured","Recherche du GPS…":"Finding GPS…","Signal GPS faible":"Weak GPS signal","GPS actif":"GPS on","Balade":"Walk","Distance":"Distance","Durée":"Duration","Vitesse moy.":"Avg speed","Ces 7 derniers jours : {k} en {n} balades suivies":"Last 7 days: {k} over {n} tracked walks","Le trajet n'est visible que par votre famille.":"Only your family can see the route.","Carte":"Map","Balade lancée : gardez l'app ouverte pour mesurer le trajet":"Walk started: keep the app open to track the route","Suivre les balades par GPS":"Track walks with GPS","Distance et trajet mesurés sur ce téléphone pendant la balade.":"Distance and route measured on this phone during the walk.","Compte": "Account", "Connecté sur cet appareil": "Signed in on this device", "Se déconnecter": "Sign out"});
+Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
+Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
+Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"Qui était de la balade, et qu'a fait chacun ?": "Who came on the walk, and what did each one do?", "aussi pour {n}": "also for {n}"}); Object.assign(HR, {"Qui était de la balade, et qu'a fait chacun ?": "Tko je bio u šetnji i što je tko napravio?", "aussi pour {n}": "i za {n}"});
+Object.assign(EN, {"GPS précis · avec {n}": "Precise GPS · with {n}", "Vers {p}": "To {p}", "Aller simple par {p}": "One way via {p}", "Aller simple": "One way", "Boucle": "Loop", "Départ : {p}": "Start: {p}", "la maison": "home", "votre position": "your location", "Type de balade": "Kind of walk", "Boucle : retour au départ": "Loop: back to the start", "Aller simple : finir ailleurs": "One way: end somewhere else", "Un autre endroit": "Somewhere else", "Adresse, parc, village…": "Address, park, village…", "Chercher": "Search", "Cherchez et choisissez d'abord le lieu de départ.": "Search and pick the starting place first.", "Recherche…": "Searching…", "Aucun lieu trouvé.": "No place found.", "Recherche impossible pour le moment.": "Search isn't available right now."}); Object.assign(HR, {"GPS précis · avec {n}": "Precizni GPS · s {n}", "Vers {p}": "Prema: {p}", "Aller simple par {p}": "U jednom smjeru preko: {p}", "Aller simple": "U jednom smjeru", "Boucle": "Krug", "Départ : {p}": "Polazak: {p}", "la maison": "kuća", "votre position": "vaša lokacija", "Type de balade": "Vrsta šetnje", "Boucle : retour au départ": "Krug: povratak na polazište", "Aller simple : finir ailleurs": "U jednom smjeru: završiti drugdje", "Un autre endroit": "Drugo mjesto", "Adresse, parc, village…": "Adresa, park, selo…", "Chercher": "Traži", "Cherchez et choisissez d'abord le lieu de départ.": "Prvo potražite i odaberite polazište.", "Recherche…": "Tražim…", "Aucun lieu trouvé.": "Nije pronađeno.", "Recherche impossible pour le moment.": "Pretraga trenutno nije moguća."});
+Object.assign(EN, {"Sortir en balade": "Go for a walk", "Touchez en partant avec {n} : le GPS précis suit votre trajet.": "Tap when you head out with {n}: precise GPS follows your route.", "GPS précis": "Precise GPS", "Bouton « Sortir en balade »": "“Go for a walk” button", "En haut de la page Aujourd'hui : un geste pour lancer le suivi GPS précis quand vous partez avec le chien.": "At the top of Today: one tap to start precise GPS tracking when you head out with the dog.", "Un bouton en haut d'Aujourd'hui lance le suivi en partant avec le chien. Le GPS est bien plus précis : positions filtrées, sauts ignorés, trajet collé aux vrais chemins.": "A button at the top of Today starts tracking when you head out with the dog. GPS is much more precise: filtered positions, jumps ignored, route snapped to real paths.", "Carte des balades": "Walks map", "Tous vos trajets sur une vraie carte façon Plans, en clair ou sombre. Touchez un trajet pour le voir en couleur.": "All your routes on a real Maps-style map, light or dark. Tap a route to see it in colour.", "Balades proposées": "Suggested walks", "Une boucle autour de vous selon la durée, le terrain (forêt ou ville), les parcs à chiens, les points d'eau et la météo.": "A loop around you based on duration, terrain (woods or town), dog parks, water points and the weather.", "Détection des balades": "Walk detection", "Option : l'app propose de démarrer quand vous partez à pied, et de terminer et cocher au retour. Les trajets en voiture sont ignorés.": "Option: the app offers to start when you leave on foot, and to end and tick off when you're back. Car trips are ignored.", "Réactions et réponses": "Reactions and replies", "Appui long sur un message pour réagir, répondre ou copier. Glissez vers la droite pour répondre.": "Long-press a message to react, reply or copy. Swipe right to reply.", "Messages vocaux": "Voice messages", "Le bouton micro enregistre jusqu'à 60 secondes.": "The mic button records up to 60 seconds.", "Vu par, en ligne, en train d'écrire": "Seen by, online, typing", "Qui a lu votre message, combien sont en ligne, et la bulle quand quelqu'un écrit. Le chat s'ouvre aussi en plein écran.": "Who read your message, how many are online, and a bubble when someone is typing. The chat also opens full screen.", "Anniversaire et jour d'arrivée": "Birthday and arrival day", "Une carte de fête et une notification le jour J. Ajoutez la date d'arrivée dans la fiche du chien.": "A party card and a notification on the day. Add the arrival date in the dog's profile.", "Garde simplifiée": "Simpler pet sitting", "Choisissez le gardien parmi la famille. À la fin de la garde, son accès est retiré tout seul.": "Pick the sitter from the family. When the sitting ends, their access is removed automatically.", "Notifications plus claires": "Clearer notifications", "Qui, quoi, et le contenu, sans répétition.": "Who, what and the content, without repetition.", "le clavier de l'iPhone qui décalait le chat": "the iPhone keyboard shifting the chat", "l'adresse e-mail proposée au-dessus du clavier": "the email address suggested above the keyboard", "les icônes refaites sans aucun emoji": "icons redrawn without any emoji", "Balades, carte et messages : voici tout ce qui change.": "Walks, map and messages: here's everything new."}); Object.assign(HR, {"Sortir en balade": "Idemo u šetnju", "Touchez en partant avec {n} : le GPS précis suit votre trajet.": "Dodirnite kad krenete s {n}: precizni GPS prati vašu rutu.", "GPS précis": "Precizni GPS", "Bouton « Sortir en balade »": "Gumb „Idemo u šetnju“", "En haut de la page Aujourd'hui : un geste pour lancer le suivi GPS précis quand vous partez avec le chien.": "Na vrhu stranice Danas: jedan dodir za precizno GPS praćenje kad krenete sa psom.", "Un bouton en haut d'Aujourd'hui lance le suivi en partant avec le chien. Le GPS est bien plus précis : positions filtrées, sauts ignorés, trajet collé aux vrais chemins.": "Gumb na vrhu stranice Danas pokreće praćenje kad krenete sa psom. GPS je puno precizniji: filtrirane pozicije, bez skokova, ruta na stvarnim stazama.", "Carte des balades": "Karta šetnji", "Tous vos trajets sur une vraie carte façon Plans, en clair ou sombre. Touchez un trajet pour le voir en couleur.": "Sve vaše rute na pravoj karti, svijetloj ili tamnoj. Dodirnite rutu za prikaz u boji.", "Balades proposées": "Predložene šetnje", "Une boucle autour de vous selon la durée, le terrain (forêt ou ville), les parcs à chiens, les points d'eau et la météo.": "Krug u blizini prema trajanju, terenu (šuma ili grad), parkovima za pse, vodi i vremenu.", "Détection des balades": "Otkrivanje šetnji", "Option : l'app propose de démarrer quand vous partez à pied, et de terminer et cocher au retour. Les trajets en voiture sont ignorés.": "Opcija: aplikacija predlaže početak kad krenete pješice, a po povratku završetak i označavanje. Vožnje autom se zanemaruju.", "Réactions et réponses": "Reakcije i odgovori", "Appui long sur un message pour réagir, répondre ou copier. Glissez vers la droite pour répondre.": "Dugo pritisnite poruku za reakciju, odgovor ili kopiranje. Povucite udesno za odgovor.", "Messages vocaux": "Glasovne poruke", "Le bouton micro enregistre jusqu'à 60 secondes.": "Gumb mikrofona snima do 60 sekundi.", "Vu par, en ligne, en train d'écrire": "Vidjeli, na mreži, piše", "Qui a lu votre message, combien sont en ligne, et la bulle quand quelqu'un écrit. Le chat s'ouvre aussi en plein écran.": "Tko je pročitao poruku, koliko ih je na mreži i oblačić kad netko piše. Chat se otvara i preko cijelog zaslona.", "Anniversaire et jour d'arrivée": "Rođendan i dan dolaska", "Une carte de fête et une notification le jour J. Ajoutez la date d'arrivée dans la fiche du chien.": "Svečana kartica i obavijest na taj dan. Dodajte datum dolaska u profil psa.", "Garde simplifiée": "Jednostavnije čuvanje", "Choisissez le gardien parmi la famille. À la fin de la garde, son accès est retiré tout seul.": "Odaberite čuvara iz obitelji. Kad čuvanje završi, pristup se sam uklanja.", "Notifications plus claires": "Jasnije obavijesti", "Qui, quoi, et le contenu, sans répétition.": "Tko, što i sadržaj, bez ponavljanja.", "le clavier de l'iPhone qui décalait le chat": "iPhone tipkovnica koja je pomicala chat", "l'adresse e-mail proposée au-dessus du clavier": "e-mail adresa predložena iznad tipkovnice", "les icônes refaites sans aucun emoji": "ikone ponovno nacrtane bez emojija", "Balades, carte et messages : voici tout ce qui change.": "Šetnje, karta i poruke: evo što je novo."});
+Object.assign(EN, {"Vous êtes parti à pied, et c'est l'heure de « {t} ». Démarrer la balade de {n} ?": "You left on foot and it's time for “{t}”. Start {n}'s walk?", "Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Les trajets en voiture, vélo ou bus sont ignorés. Fonctionne quand l'app est ouverte.": "When you leave home, the app offers to start the walk. When you come back, it offers to end it and tick off the task. Nothing happens without your OK. Car, bike and bus trips are ignored. Works while the app is open.", "Chemin de terre": "Dirt path", "Terrain": "Terrain", "Peu importe": "Any", "Nature : forêt, chemins de terre": "Nature: woods, dirt paths", "Ville : trottoirs, chemins goudronnés": "Town: pavements, paved paths", "Sans béton, c'est plus doux pour les pattes et plus frais quand il fait chaud.": "No concrete is softer on the paws and cooler when it's hot.", "Peu de chemins de terre ou de forêt autour de vous : cette boucle suit surtout des chemins revêtus.": "Few dirt paths or woods around you: this loop mostly follows paved paths."}); Object.assign(HR, {"Vous êtes parti à pied, et c'est l'heure de « {t} ». Démarrer la balade de {n} ?": "Krenuli ste pješice i vrijeme je za „{t}“. Pokrenuti šetnju ({n})?", "Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Les trajets en voiture, vélo ou bus sont ignorés. Fonctionne quand l'app est ouverte.": "Kad izađete iz kuće, aplikacija predlaže početak šetnje. Po povratku predlaže završetak i označavanje zadatka. Ništa bez vašeg pristanka. Vožnje autom, biciklom ili autobusom se zanemaruju. Radi dok je aplikacija otvorena.", "Chemin de terre": "Zemljani put", "Terrain": "Teren", "Peu importe": "Svejedno", "Nature : forêt, chemins de terre": "Priroda: šuma, zemljani putevi", "Ville : trottoirs, chemins goudronnés": "Grad: pločnici, asfaltirani putevi", "Sans béton, c'est plus doux pour les pattes et plus frais quand il fait chaud.": "Bez betona je mekše za šape i hladnije po vrućini.", "Peu de chemins de terre ou de forêt autour de vous : cette boucle suit surtout des chemins revêtus.": "Malo zemljanih puteva ili šume u blizini: ovaj krug uglavnom ide asfaltom."});
+Object.assign(EN, {"Enregistrement du trajet…":"Saving the route…"}); Object.assign(HR, {"Enregistrement du trajet…":"Spremanje rute…"});
+Object.assign(EN, {"Proposer une balade": "Suggest a walk", "Une boucle adaptée à {n}, autour de vous": "A loop around you, suited to {n}", "Recherche des parcs, chemins et points d'eau autour de vous…": "Looking for parks, paths and water points around you…", "Chiot de {m} mois : environ 5 minutes par mois d'âge.": "{m}-month-old puppy: about 5 minutes per month of age.", "Chien âgé : une balade plus courte et tranquille.": "Older dog: a shorter, calmer walk.", "Chien adulte : environ 45 minutes.": "Adult dog: about 45 minutes.", "Boucle par {p}": "Loop via {p}", "Boucle autour de vous": "Loop around you", "Impossible de préparer une balade pour le moment. Vérifiez la connexion et réessayez.": "Couldn't prepare a walk right now. Check the connection and try again.", "Durée": "Duration", "conseillé": "suggested", "Le parcours doit passer par": "The route should go past", "Un parc à chiens": "A dog park", "Un point d'eau potable": "A drinking water point", "Départ": "Start", "Ma position": "My location", "La maison": "Home", "L'app cherche les parcs, forêts, parcs à chiens et points d'eau autour de vous (OpenStreetMap), tient compte de la météo et trace une boucle à pied pour {n}.": "The app looks for parks, woods, dog parks and water points around you (OpenStreetMap), checks the weather and plans a walking loop for {n}.", "Il fait {t}° : parcours à l'ombre privilégié, évitez le bitume chaud et emportez de l'eau.": "It's {t}°: shady paths preferred, avoid hot pavement and bring water.", "Il fait {t}° : attention au gel et au sel sur les pattes.": "It's {t}°: watch out for ice and salt on the paws.", "Il pleut en ce moment.": "It's raining right now.", "Durée réduite à cause de la chaleur.": "Shorter because of the heat.", "Fermer": "Close", "Pas de parc repéré sur ce trajet : il suit les chemins piétons les plus proches.": "No park found on this route: it follows the nearest footpaths.", "Autre idée": "Another idea", "Balade en cours": "Walk in progress", "Démarrer la balade": "Start the walk", "Données OpenStreetMap · itinéraire FOSSGIS · météo Open-Meteo": "OpenStreetMap data · FOSSGIS routing · Open-Meteo weather", "Balade lancée : suivez le tracé violet": "Walk started: follow the purple route", "Parc à chiens": "Dog park", "Eau potable": "Drinking water", "Sachets pour chien": "Dog bags", "Parc": "Park", "Forêt": "Woods", "Eau": "Water"}); Object.assign(HR, {"Proposer une balade": "Predloži šetnju", "Une boucle adaptée à {n}, autour de vous": "Krug u blizini, prilagođen za {n}", "Recherche des parcs, chemins et points d'eau autour de vous…": "Tražim parkove, staze i izvore vode u blizini…", "Chiot de {m} mois : environ 5 minutes par mois d'âge.": "Štene od {m} mj.: oko 5 minuta po mjesecu starosti.", "Chien âgé : une balade plus courte et tranquille.": "Stariji pas: kraća i mirnija šetnja.", "Chien adulte : environ 45 minutes.": "Odrasli pas: oko 45 minuta.", "Boucle par {p}": "Krug preko: {p}", "Boucle autour de vous": "Krug u blizini", "Impossible de préparer une balade pour le moment. Vérifiez la connexion et réessayez.": "Trenutno nije moguće pripremiti šetnju. Provjerite vezu i pokušajte ponovno.", "Durée": "Trajanje", "conseillé": "preporučeno", "Le parcours doit passer par": "Ruta treba proći pored", "Un parc à chiens": "Park za pse", "Un point d'eau potable": "Izvor pitke vode", "Départ": "Polazak", "Ma position": "Moja lokacija", "La maison": "Kuća", "L'app cherche les parcs, forêts, parcs à chiens et points d'eau autour de vous (OpenStreetMap), tient compte de la météo et trace une boucle à pied pour {n}.": "Aplikacija traži parkove, šume, parkove za pse i izvore vode u blizini (OpenStreetMap), uzima u obzir vrijeme i crta pješački krug za {n}.", "Il fait {t}° : parcours à l'ombre privilégié, évitez le bitume chaud et emportez de l'eau.": "{t}°: prednost hladovini, izbjegavajte vrući asfalt i ponesite vodu.", "Il fait {t}° : attention au gel et au sel sur les pattes.": "{t}°: pazite na led i sol na šapama.", "Il pleut en ce moment.": "Trenutno pada kiša.", "Durée réduite à cause de la chaleur.": "Skraćeno zbog vrućine.", "Fermer": "Zatvori", "Pas de parc repéré sur ce trajet : il suit les chemins piétons les plus proches.": "Na ovoj ruti nema parka: prati najbliže pješačke staze.", "Autre idée": "Druga ideja", "Balade en cours": "Šetnja u tijeku", "Démarrer la balade": "Pokreni šetnju", "Données OpenStreetMap · itinéraire FOSSGIS · météo Open-Meteo": "Podaci OpenStreetMap · ruta FOSSGIS · vrijeme Open-Meteo", "Balade lancée : suivez le tracé violet": "Šetnja pokrenuta: pratite ljubičastu rutu", "Parc à chiens": "Park za pse", "Eau potable": "Pitka voda", "Sachets pour chien": "Vrećice za pse", "Parc": "Park", "Forêt": "Šuma", "Eau": "Voda"});
+Object.assign(EN, {"Arrivé(e) le": "Arrived on", "Joyeux anniversaire {n} !": "Happy birthday {n}!", "Jour d'arrivée de {n}": "{n}'s arrival day", "{n} a {y} ans aujourd'hui.": "{n} turns {y} today.", "{n} a {y} an aujourd'hui.": "{n} turns {y} today.", "Il y a {y} ans, {n} arrivait dans la famille.": "{y} years ago, {n} joined the family.", "Il y a {y} an, {n} arrivait dans la famille.": "{y} year ago, {n} joined the family.", "Carte des balades": "Walks map", "7 jours": "7 days", "30 jours": "30 days", "Tout": "All", "Aucune balade suivie par GPS sur cette période.": "No GPS-tracked walk in this period.", "balades": "walks", "balade": "walk", "Trajets": "Routes", "Détails": "Details", "Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.": "Tap a route to see it on the map, tap again for details.", "Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.": "Start a walk from Today: with GPS on, the route shows up here.", "{n} trajets sur 30 jours · {k}": "{n} routes in 30 days · {k}", "Les trajets GPS de vos balades": "The GPS routes of your walks", "Balade détectée": "Walk detected", "De retour à la maison": "Back home", "Vous venez de quitter la maison. Démarrer la balade de {n} ?": "You just left home. Start {n}'s walk?", "Terminer la balade et cocher « {t} » ?": "End the walk and tick off “{t}”?", "Terminer la balade de {n} ?": "End {n}'s walk?", "Pas maintenant": "Not now", "Démarrer": "Start", "Terminer": "End", "Balade lancée": "Walk started", "Position introuvable : autorisez la localisation pour Dogs Life.": "Location not found: allow location for Dogs Life.", "Maison enregistrée à cet endroit": "Home saved at this spot", "Détecter les balades": "Detect walks", "Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Fonctionne quand l'app est ouverte.": "When you leave home, the app offers to start the walk. When you come back, it offers to end it and tick off the task. Nothing happens without your OK. Works while the app is open.", "La maison est ici (redéfinir)": "Home is here (set again)"}); Object.assign(HR, {"Arrivé(e) le": "Stigao/la", "Joyeux anniversaire {n} !": "Sretan rođendan, {n}!", "Jour d'arrivée de {n}": "Dan dolaska: {n}", "{n} a {y} ans aujourd'hui.": "{n} danas puni {y}.", "{n} a {y} an aujourd'hui.": "{n} danas puni {y}.", "Il y a {y} ans, {n} arrivait dans la famille.": "Prije {y} god. {n} je stigao/la u obitelj.", "Il y a {y} an, {n} arrivait dans la famille.": "Prije {y} god. {n} je stigao/la u obitelj.", "Carte des balades": "Karta šetnji", "7 jours": "7 dana", "30 jours": "30 dana", "Tout": "Sve", "Aucune balade suivie par GPS sur cette période.": "Nema GPS šetnji u ovom razdoblju.", "balades": "šetnje", "balade": "šetnja", "Trajets": "Rute", "Détails": "Detalji", "Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.": "Dodirnite rutu za prikaz na karti, ponovno za detalje.", "Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.": "Pokrenite šetnju s Danas: uz GPS ruta se dodaje ovdje.", "{n} trajets sur 30 jours · {k}": "{n} ruta u 30 dana · {k}", "Les trajets GPS de vos balades": "GPS rute vaših šetnji", "Balade détectée": "Otkrivena šetnja", "De retour à la maison": "Natrag kući", "Vous venez de quitter la maison. Démarrer la balade de {n} ?": "Upravo ste izašli iz kuće. Pokrenuti šetnju ({n})?", "Terminer la balade et cocher « {t} » ?": "Završiti šetnju i označiti „{t}“?", "Terminer la balade de {n} ?": "Završiti šetnju ({n})?", "Pas maintenant": "Ne sada", "Démarrer": "Pokreni", "Terminer": "Završi", "Balade lancée": "Šetnja pokrenuta", "Position introuvable : autorisez la localisation pour Dogs Life.": "Lokacija nije pronađena: dopustite lokaciju za Dogs Life.", "Maison enregistrée à cet endroit": "Dom spremljen na ovom mjestu", "Détecter les balades": "Otkrivanje šetnji", "Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Fonctionne quand l'app est ouverte.": "Kad izađete iz kuće, aplikacija predlaže početak šetnje. Po povratku predlaže završetak i označavanje zadatka. Ništa bez vašeg pristanka. Radi dok je aplikacija otvorena.", "La maison est ici (redéfinir)": "Dom je ovdje (ponovno postavi)"});
+Object.assign(EN, {"Vu par": "Seen by", "Envoyé": "Sent", "Répondre": "Reply", "Réponse à {n}": "Replying to {n}", "Message vocal": "Voice message", "Écouter": "Play", "Les messages vocaux ne sont pas pris en charge sur cet appareil.": "Voice messages aren't supported on this device.", "Autorisez le micro pour envoyer un message vocal.": "Allow the microphone to send a voice message.", "Message vocal trop long.": "Voice message too long.", "Enregistrement… 60 s max": "Recording… 60 s max", "Lecture impossible.": "Can't play this.", "Copié": "Copied"}); Object.assign(HR, {"Vu par": "Vidjeli", "Envoyé": "Poslano", "Répondre": "Odgovori", "Réponse à {n}": "Odgovor za {n}", "Message vocal": "Glasovna poruka", "Écouter": "Slušaj", "Les messages vocaux ne sont pas pris en charge sur cet appareil.": "Glasovne poruke nisu podržane na ovom uređaju.", "Autorisez le micro pour envoyer un message vocal.": "Dopustite mikrofon za glasovnu poruku.", "Message vocal trop long.": "Glasovna poruka je preduga.", "Enregistrement… 60 s max": "Snimanje… najviše 60 s", "Lecture impossible.": "Reprodukcija nije moguća.", "Copié": "Kopirano"});
+Object.assign(EN, {"{n} écrit…":"{n} is typing…"}); Object.assign(HR, {"{n} écrit…":"{n} piše…"});
+Object.assign(EN, {"{n} membre(s)": "{n} member(s)", "{n} en ligne": "{n} online", "En ligne": "Online", "Vu {t}": "Seen {t}"}); Object.assign(HR, {"{n} membre(s)": "Članova: {n}", "{n} en ligne": "{n} na mreži", "En ligne": "Na mreži", "Vu {t}": "Viđen/a {t}"});
+Object.assign(EN, {"Votre téléphone": "Your phone", "Dogs Life est installée": "Dogs Life is installed", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Now open it from its icon on your home screen.", "Installez Dogs Life": "Install Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "To get notifications and open it full screen, install the app on your phone. Watch the 45-second tutorial:", "Installer maintenant": "Install now", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Once installed, always open Dogs Life from its icon: this screen won't show again.", "Fermer": "Close"}); Object.assign(HR, {"Votre téléphone": "Vaš telefon", "Dogs Life est installée": "Dogs Life je instaliran", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Sada ga otvorite preko ikone na početnom zaslonu.", "Installez Dogs Life": "Instalirajte Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "Za obavijesti i prikaz preko cijelog zaslona instalirajte aplikaciju na telefon. Pogledajte vodič od 45 sekundi:", "Installer maintenant": "Instaliraj sada", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Nakon instalacije uvijek otvarajte Dogs Life preko ikone: ovaj se zaslon više neće prikazivati.", "Fermer": "Zatvori"});
+Object.assign(EN, {"Touchez le bouton menu dans la barre d'adresse, puis « Partager »": "Tap the menu button in the address bar, then “Share”", "Touchez « Afficher plus », puis « Sur l'écran d'accueil »": "Tap “View More”, then “Add to Home Screen”", "Touchez « Ajouter »": "Tap “Add”", "Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.": "On older iOS versions: the Share button at the bottom of Safari."}); Object.assign(HR, {"Touchez le bouton menu dans la barre d'adresse, puis « Partager »": "Dodirnite gumb izbornika u adresnoj traci, pa „Dijeli”", "Touchez « Afficher plus », puis « Sur l'écran d'accueil »": "Dodirnite „Prikaži više”, pa „Dodaj na početni zaslon”", "Touchez « Ajouter »": "Dodirnite „Dodaj”", "Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.": "Na starijim verzijama iOS-a: gumb Dijeli na dnu Safarija."});
+Object.assign(EN, {"Message à la famille":"Message the family"}); Object.assign(HR, {"Message à la famille":"Poruka obitelji"});
+Object.assign(EN, {"Agrandir":"Expand","Réduire":"Close","Conversation ouverte en plein écran.":"Conversation open full screen.","Message":"Message"}); Object.assign(HR, {"Agrandir":"Povećaj","Réduire":"Zatvori","Conversation ouverte en plein écran.":"Razgovor je otvoren preko cijelog zaslona.","Message":"Poruka"});
+Object.assign(EN, {"La date de fin est déjà passée.":"The end date has already passed."}); Object.assign(HR, {"La date de fin est déjà passée.":"Datum završetka je već prošao."});
+Object.assign(EN, {"Personne n'a le rôle « Garde » dans la famille. Invitez la personne qui garde le chien avec ce rôle, puis choisissez-la ici.": "Nobody in the family has the “Sitter” role. Invite the person looking after the dog with that role, then pick them here.", "Inviter une personne en garde": "Invite a sitter", "Le dernier jour passé, la personne qui garde perd l'accès à la famille. Votre nom et votre téléphone (fiche « Vous ») lui sont donnés comme contact.": "Once the last day has passed, the sitter loses access to the family. Your name and phone (your “You” card) are given as the contact.", "Choisissez la personne qui garde le chien.": "Choose who is looking after the dog.", "Indiquez les dates de garde.": "Enter the dates.", "Garde terminée": "Dog-sitting over", "Date de garde terminée : accès à la famille retiré.": "Dog-sitting dates are over: access to the family removed.", "Merci d'avoir gardé {n} !": "Thanks for looking after {n}!", "garde terminée": "over"}); Object.assign(HR, {"Personne n'a le rôle « Garde » dans la famille. Invitez la personne qui garde le chien avec ce rôle, puis choisissez-la ici.": "Nitko u obitelji nema ulogu „Čuvanje”. Pozovite osobu koja čuva psa s tom ulogom, pa je odaberite ovdje.", "Inviter une personne en garde": "Pozovi čuvara", "Le dernier jour passé, la personne qui garde perd l'accès à la famille. Votre nom et votre téléphone (fiche « Vous ») lui sont donnés comme contact.": "Nakon zadnjeg dana čuvar gubi pristup obitelji. Vaše ime i telefon (kartica „Vi”) daju mu se kao kontakt.", "Choisissez la personne qui garde le chien.": "Odaberite tko čuva psa.", "Indiquez les dates de garde.": "Upišite datume čuvanja.", "Garde terminée": "Čuvanje završeno", "Date de garde terminée : accès à la famille retiré.": "Čuvanje je završeno: pristup obitelji je uklonjen.", "Merci d'avoir gardé {n} !": "Hvala što ste čuvali {n}!", "garde terminée": "završeno"});
+Object.assign(EN, {"Notifications, style, langue, widget, aide":"Notifications, style, language, widget, help"}); Object.assign(HR, {"Notifications, style, langue, widget, aide":"Obavijesti, stil, jezik, widget, pomoć"});
+Object.assign(EN, {"{n} activit\u00e9s": "{n} activities", "{n} pass\u00e9e(s)": "{n} past"}); Object.assign(HR, {"{n} activités": "Aktivnosti: {n}", "{n} passée(s)": "prošlo: {n}"});
+Object.assign(HR, {"Compte": "Račun", "Connecté sur cet appareil": "Prijavljeni na ovom uređaju", "Se déconnecter": "Odjava"});
+Object.assign(EN, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Your account can only view this logbook (“Can view”), so it can't join the family yet. The owner needs to add your email address as “Editor”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "You open the logbook again and enter the code they gave you", "Un instant…": "One moment…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Your account can't join yet: ask the owner to add you as “Editor”."});
+Object.assign(HR, {"Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».": "Vaš račun može samo gledati ovaj dnevnik („Može gledati”) pa se još ne može pridružiti obitelji. Vlasnik vas mora dodati putem e-adrese kao „Urednik”.", "Vous rouvrez le carnet et vous entrez le code qu'il vous a donné": "Ponovno otvorite dnevnik i unesite kod koji ste dobili", "Un instant…": "Trenutak…", "Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur ».": "Vaš se račun još ne može pridružiti: zamolite vlasnika da vas doda kao „Urednik”."});
+Object.assign(EN, {"Ajouter quelqu'un": "Add someone", "Choisissez son rôle : le carnet crée un code à lui donner. Avec ce code, elle rejoint la famille depuis son propre compte.": "Choose their role: the logbook creates a code to give them. With it, they join the family from their own account.", "Créer le code": "Create the code", "Code à donner": "Code to give", "Valable 7 jours, pour une seule personne": "Valid 7 days, for one person", "Copier le code": "Copy the code", "Donnez-lui ce code": "Give them this code", "De vive voix ou par message. Il ne sera plus affiché ensuite : si vous le perdez, créez-en un nouveau.": "In person or by message. It won't be shown again: if you lose it, create a new one.", "Elle ouvre le carnet avec son compte": "They open the logbook with their account", "Elle entre le code, puis son prénom : elle rejoint la famille avec le rôle choisi.": "They enter the code, then their name: they join the family with the chosen role.", "Pour qu'elle puisse ouvrir le carnet, ajoutez aussi son e-mail en « Éditeur » dans « Partager » en haut de la page.": "So they can open the logbook, also add their email as “Editor” under “Share” at the top of the page.", "Terminé": "Done", "Votre code": "Your code", "Le code vous est donné par un membre de la famille.": "A family member gives you the code.", "Code valide": "Valid code", "Vous rejoignez avec le rôle {r}": "You join with the {r} role", "Entrez le code que la famille vous a donné.": "Enter the code the family gave you.", "Code incorrect ou expiré. Encore {n} essai(s).": "Wrong or expired code. {n} tries left.", "Ce code n'est plus valable.": "This code is no longer valid.", "Code copié": "Code copied", "Code {r} en attente": "{r} code pending", "Expire dans {n} j": "Expires in {n} d", "Chaque personne a son propre compte. « Ajouter quelqu'un » crée un code avec le rôle choisi ; la personne l'entre avec son compte et rejoint la famille.": "Everyone has their own account. “Add someone” creates a code with the chosen role; the person enters it with their account and joins the family.", "Code en attente": "Pending code", "Le code n'est plus affichable. S'il est perdu, créez-en un nouveau : l'ancien ne marchera plus.": "The code can't be shown again. If it's lost, create a new one: the old one will stop working.", "Créer un nouveau code": "Create a new code", "Annuler ce code": "Cancel this code", "Code annulé": "Code cancelled"});
+Object.assign(HR, {"Ajouter quelqu'un": "Dodaj nekoga", "Choisissez son rôle : le carnet crée un code à lui donner. Avec ce code, elle rejoint la famille depuis son propre compte.": "Odaberite ulogu: dnevnik izrađuje kod koji joj date. S tim kodom pridružuje se obitelji sa svog računa.", "Créer le code": "Izradi kod", "Code à donner": "Kod za predaju", "Valable 7 jours, pour une seule personne": "Vrijedi 7 dana, za jednu osobu", "Copier le code": "Kopiraj kod", "Donnez-lui ce code": "Dajte joj ovaj kod", "De vive voix ou par message. Il ne sera plus affiché ensuite : si vous le perdez, créez-en un nouveau.": "Osobno ili porukom. Više se neće prikazati: ako ga izgubite, izradite novi.", "Elle ouvre le carnet avec son compte": "Otvori dnevnik svojim računom", "Elle entre le code, puis son prénom : elle rejoint la famille avec le rôle choisi.": "Unese kod, pa svoje ime: pridružuje se obitelji s odabranom ulogom.", "Pour qu'elle puisse ouvrir le carnet, ajoutez aussi son e-mail en « Éditeur » dans « Partager » en haut de la page.": "Da bi mogla otvoriti dnevnik, dodajte i njezinu e-adresu kao „Urednik” pod „Podijeli” na vrhu stranice.", "Terminé": "Gotovo", "Votre code": "Vaš kod", "Le code vous est donné par un membre de la famille.": "Kod vam daje član obitelji.", "Code valide": "Kod je valjan", "Vous rejoignez avec le rôle {r}": "Pridružujete se s ulogom {r}", "Entrez le code que la famille vous a donné.": "Unesite kod koji vam je dala obitelj.", "Code incorrect ou expiré. Encore {n} essai(s).": "Kod je pogrešan ili istekao. Preostalo pokušaja: {n}.", "Ce code n'est plus valable.": "Ovaj kod više ne vrijedi.", "Code copié": "Kod kopiran", "Code {r} en attente": "Kod ({r}) na čekanju", "Expire dans {n} j": "Istječe za {n} d.", "Chaque personne a son propre compte. « Ajouter quelqu'un » crée un code avec le rôle choisi ; la personne l'entre avec son compte et rejoint la famille.": "Svatko ima svoj račun. „Dodaj nekoga” izrađuje kod s odabranom ulogom; osoba ga unese svojim računom i pridruži se obitelji.", "Code en attente": "Kod na čekanju", "Le code n'est plus affichable. S'il est perdu, créez-en un nouveau : l'ancien ne marchera plus.": "Kod se više ne može prikazati. Ako je izgubljen, izradite novi: stari više neće raditi.", "Créer un nouveau code": "Izradi novi kod", "Annuler ce code": "Poništi ovaj kod", "Code annulé": "Kod poništen"});
+Object.assign(EN, {"Rejoignez la famille": "Join the family", "Le carnet s'affiche une fois que vous avez rejoint la famille avec son code.": "The logbook appears once you've joined the family with its code.", "Entrer le code de la famille": "Enter the family code"});
+Object.assign(HR, {"Rejoignez la famille": "Pridružite se obitelji", "Le carnet s'affiche une fois que vous avez rejoint la famille avec son code.": "Dnevnik se prikazuje kad se pridružite obitelji pomoću njezina koda.", "Entrer le code de la famille": "Unesite obiteljski kod"});
+Object.assign(EN, {"Changer le code de la famille": "Change the family code", "Créer le code de la famille": "Create the family code", "Choisissez un code facile à dire mais difficile à deviner. Toute personne qui veut rejoindre la famille devra l'entrer.": "Pick a code that's easy to say but hard to guess. Anyone who wants to join the family will have to enter it.", "Nouveau code": "New code", "ex. JIJI-2026": "e.g. JIJI-2026", "Au moins 4 caractères. Le code n'est jamais affiché ensuite : notez-le ou changez-le quand vous voulez.": "At least 4 characters. The code is never shown again afterwards: write it down, or change it whenever you like.", "Le code doit faire au moins 4 caractères.": "The code must be at least 4 characters.", "Code de la famille : {c}": "Family code: {c}", "Code de la famille": "Family code", "Pas encore de code": "No code yet", "Défini par {n} · {d}": "Set by {n} · {d}", "Créez-le : sans code, personne ne peut rejoindre la famille.": "Create it: without a code, nobody can join the family.", "Changer": "Change", "Pour rejoindre, chaque personne entre ce code avec son propre compte. Donnez-le de vive voix ou par message, jamais publiquement.": "To join, each person enters this code with their own account. Give it in person or by message, never publicly.", "La famille n'a pas encore créé son code. Demandez à un membre de la famille d'en créer un dans l'onglet Famille, puis rouvrez le carnet.": "The family hasn't created its code yet. Ask a family member to create one in the Family tab, then open the logbook again.", "Trop d'essais. Réessayez dans {n} s.": "Too many tries. Try again in {n} s.", "Demandez-le à un membre de la famille.": "Ask a family member for it.", "Valider le code": "Check the code", "Code correct": "Correct code", "Plus qu'une étape": "One more step", "Pas dans la liste ? Votre prénom": "Not on the list? Your first name", "Sans invitation, vous rejoignez avec le rôle Famille.": "Without an invitation, you join with the Family role.", "Chaque famille a son propre code. Entrez celui de votre famille pour la rejoindre.": "Every family has its own code. Enter your family's code to join.", "Code incorrect. Encore {n} essai(s).": "Wrong code. {n} tries left.", "Dernière chose : créez le code de la famille dans l'onglet Famille. Les autres en auront besoin pour vous rejoindre.": "One last thing: create the family code in the Family tab. The others will need it to join you.", "Envoyez-lui le lien et donnez-lui le code de la famille": "Send them the link and give them the family code", "À sa première visite, elle entre le code, choisit son invitation et rejoint la famille avec le rôle que vous avez choisi.": "On their first visit, they enter the code, pick their invitation and join with the role you chose."});
+Object.assign(HR, {"Changer le code de la famille": "Promijeni obiteljski kod", "Créer le code de la famille": "Izradi obiteljski kod", "Choisissez un code facile à dire mais difficile à deviner. Toute personne qui veut rejoindre la famille devra l'entrer.": "Odaberite kod koji je lako reći, a teško pogoditi. Svatko tko se želi pridružiti obitelji morat će ga unijeti.", "Nouveau code": "Novi kod", "ex. JIJI-2026": "npr. JIJI-2026", "Au moins 4 caractères. Le code n'est jamais affiché ensuite : notez-le ou changez-le quand vous voulez.": "Najmanje 4 znaka. Kod se poslije više ne prikazuje: zapišite ga ili ga promijenite kad god želite.", "Le code doit faire au moins 4 caractères.": "Kod mora imati najmanje 4 znaka.", "Code de la famille : {c}": "Obiteljski kod: {c}", "Code de la famille": "Obiteljski kod", "Pas encore de code": "Još nema koda", "Défini par {n} · {d}": "Postavio/la {n} · {d}", "Créez-le : sans code, personne ne peut rejoindre la famille.": "Izradite ga: bez koda nitko se ne može pridružiti obitelji.", "Changer": "Promijeni", "Pour rejoindre, chaque personne entre ce code avec son propre compte. Donnez-le de vive voix ou par message, jamais publiquement.": "Za pridruživanje svaka osoba unosi ovaj kod svojim računom. Dajte ga osobno ili porukom, nikad javno.", "La famille n'a pas encore créé son code. Demandez à un membre de la famille d'en créer un dans l'onglet Famille, puis rouvrez le carnet.": "Obitelj još nije izradila kod. Zamolite člana obitelji da ga izradi na kartici Obitelj, zatim ponovno otvorite dnevnik.", "Trop d'essais. Réessayez dans {n} s.": "Previše pokušaja. Pokušajte ponovno za {n} s.", "Demandez-le à un membre de la famille.": "Zatražite ga od člana obitelji.", "Valider le code": "Potvrdi kod", "Code correct": "Kod je ispravan", "Plus qu'une étape": "Još jedan korak", "Pas dans la liste ? Votre prénom": "Niste na popisu? Vaše ime", "Sans invitation, vous rejoignez avec le rôle Famille.": "Bez pozivnice pridružujete se s ulogom Obitelj.", "Chaque famille a son propre code. Entrez celui de votre famille pour la rejoindre.": "Svaka obitelj ima svoj kod. Unesite kod svoje obitelji da biste se pridružili.", "Code incorrect. Encore {n} essai(s).": "Pogrešan kod. Preostalo pokušaja: {n}.", "Dernière chose : créez le code de la famille dans l'onglet Famille. Les autres en auront besoin pour vous rejoindre.": "Još jedno: izradite obiteljski kod na kartici Obitelj. Ostali će ga trebati da vam se pridruže.", "Envoyez-lui le lien et donnez-lui le code de la famille": "Pošaljite poveznicu i recite obiteljski kod", "À sa première visite, elle entre le code, choisit son invitation et rejoint la famille avec le rôle que vous avez choisi.": "Pri prvom posjetu unese kod, odabere pozivnicu i pridruži se s ulogom koju ste odabrali."});
+Object.assign(EN, {"Renvoyer le lien": "Send the link again", "Annuler l'invitation": "Cancel the invitation", "Invitation annulée": "Invitation cancelled", "Pour tout le monde, même la personne qui garde le chien : c'est le rôle choisi dans l'invitation qui compte dans le carnet.": "For everyone, even the dog sitter: the role chosen in the invitation is what counts in the logbook.", "Invitez-la depuis Famille avec le rôle « Garde » : elle pourra cocher les tâches et remplir le journal, mais pas modifier la fiche, la routine ni les traitements.": "Invite them from Family with the “Sitter” role: they can tick tasks and fill in the log, but not change the profile, routine or treatments."});
+Object.assign(HR, {"Renvoyer le lien": "Ponovno pošalji poveznicu", "Annuler l'invitation": "Otkaži pozivnicu", "Invitation annulée": "Pozivnica otkazana", "Pour tout le monde, même la personne qui garde le chien : c'est le rôle choisi dans l'invitation qui compte dans le carnet.": "Za sve, pa i za osobu koja čuva psa: u dnevniku vrijedi uloga odabrana u pozivnici.", "Invitez-la depuis Famille avec le rôle « Garde » : elle pourra cocher les tâches et remplir le journal, mais pas modifier la fiche, la routine ni les traitements.": "Pozovite je iz Obitelji s ulogom „Čuvanje”: moći će označavati zadatke i ispunjavati dnevnik, ali ne i mijenjati profil, rutinu ni terapije."});
+Object.assign(EN, {"Voit tout, coche les tâches, modifie la routine, la santé et la fiche.": "Sees everything, ticks tasks, edits the routine, health and profile.", "Voit les consignes et coche les tâches, sans rien modifier.": "Sees the instructions and ticks tasks, without changing anything.", "Invitation en attente": "Invitation pending", "par {n}": "by {n}", "Renvoyer": "Resend", "Chaque personne a son propre compte. Vous choisissez son rôle en l'invitant ; elle rejoint ensuite avec son compte, et vous pouvez lui confier des tâches.": "Everyone has their own account. You choose their role when inviting; they then join with their account, and you can give them tasks.", "Son prénom": "Their first name", "Son rôle": "Their role", "La personne retrouvera son invitation en ouvrant le carnet avec son propre compte. Vous pourrez changer son rôle plus tard.": "They'll find their invitation when opening the logbook with their own account. You can change their role later.", "Créer": "Create", "Invitation créée pour {n}": "Invitation created for {n}", "À sa première visite, elle choisit son invitation et rejoint la famille avec le rôle que vous avez choisi.": "On their first visit, they pick their invitation and join the family with the role you chose.", "Rejoignez d'abord la famille pour inviter quelqu'un.": "Join the family first to invite someone.", "Votre compte devient votre place dans la famille : les tâches que vous cochez sont signées à votre nom.": "Your account becomes your place in the family: tasks you tick are signed with your name.", "Choisissez votre invitation": "Pick your invitation", "invité(e) par {n}": "invited by {n}", "Aucune invitation en attente. Demandez à un membre de la famille de vous inviter : dans Famille, « Inviter quelqu'un », avec votre prénom et votre rôle. Rouvrez ensuite le carnet.": "No pending invitation. Ask a family member to invite you: in Family, “Invite someone”, with your name and role. Then open the logbook again.", "Connectez-vous pour rejoindre la famille.": "Sign in to join the family.", "Vous faites déjà partie de la famille.": "You're already part of the family."});
+Object.assign(HR, {"Voit tout, coche les tâches, modifie la routine, la santé et la fiche.": "Vidi sve, označava zadatke, mijenja rutinu, zdravlje i profil.", "Voit les consignes et coche les tâches, sans rien modifier.": "Vidi upute i označava zadatke, bez mijenjanja.", "Invitation en attente": "Pozivnica na čekanju", "par {n}": "od: {n}", "Renvoyer": "Pošalji ponovno", "Chaque personne a son propre compte. Vous choisissez son rôle en l'invitant ; elle rejoint ensuite avec son compte, et vous pouvez lui confier des tâches.": "Svatko ima svoj račun. Ulogu birate pri pozivu; osoba se zatim pridruži svojim računom i možete joj dodijeliti zadatke.", "Son prénom": "Ime osobe", "Son rôle": "Uloga", "La personne retrouvera son invitation en ouvrant le carnet avec son propre compte. Vous pourrez changer son rôle plus tard.": "Osoba će pronaći pozivnicu kad otvori dnevnik svojim računom. Ulogu možete promijeniti kasnije.", "Créer": "Izradi", "Invitation créée pour {n}": "Pozivnica izrađena za: {n}", "À sa première visite, elle choisit son invitation et rejoint la famille avec le rôle que vous avez choisi.": "Pri prvom posjetu odabere svoju pozivnicu i pridruži se obitelji s ulogom koju ste odabrali.", "Rejoignez d'abord la famille pour inviter quelqu'un.": "Najprije se pridružite obitelji da biste nekoga pozvali.", "Votre compte devient votre place dans la famille : les tâches que vous cochez sont signées à votre nom.": "Vaš račun postaje vaše mjesto u obitelji: zadaci koje označite potpisani su vašim imenom.", "Choisissez votre invitation": "Odaberite svoju pozivnicu", "invité(e) par {n}": "pozvao/la: {n}", "Aucune invitation en attente. Demandez à un membre de la famille de vous inviter : dans Famille, « Inviter quelqu'un », avec votre prénom et votre rôle. Rouvrez ensuite le carnet.": "Nema pozivnica na čekanju. Zamolite člana obitelji da vas pozove: u Obitelji, „Pozovi nekoga”, s vašim imenom i ulogom. Zatim ponovno otvorite dnevnik.", "Connectez-vous pour rejoindre la famille.": "Prijavite se da biste se pridružili obitelji.", "Vous faites déjà partie de la famille.": "Već ste dio obitelji."});
+Object.assign(EN, {"Bienvenue dans la famille": "Welcome to the family", "Bienvenue dans la famille de {n}, {p} !": "Welcome to {n}'s family, {p}!", "Bienvenue dans la famille, {p} !": "Welcome to the family, {p}!", "Vous êtes maintenant {n} à vous en occuper. La famille a été prévenue.": "There are now {n} of you looking after the dog. The family has been told.", "Vous êtes le premier membre de la famille.": "You're the first family member.", "Cochez les tâches : elles sont signées à votre nom": "Tick tasks: they're signed with your name", "Retrouvez les vôtres avec « Les miennes »": "Find yours under “Mine”", "Écrivez à la famille dans l'onglet Famille": "Write to the family in the Family tab", "Le carnet du chien n'est pas encore créé. La personne qui vous a invité(e) va le remplir, ou vous pouvez le créer vous-même.": "The dog's logbook hasn't been created yet. The person who invited you will fill it in, or you can create it yourself.", "{n} a rejoint la famille": "{n} joined the family", "Vous avez été invité(e) ?": "Have you been invited?", "Rejoignez la famille au lieu de créer un carnet": "Join the family instead of creating a logbook", "Vous avez rejoint la famille. Le carnet du chien n'est pas encore créé : la personne qui vous a invité(e) va le remplir, ou créez-le vous-même.": "You've joined the family. The dog's logbook hasn't been created yet: the person who invited you will fill it in, or create it yourself.", "Créer le carnet de mon chien": "Create my dog's logbook", "Rejoindre une famille": "Join a family", "A rejoint le {d}": "Joined on {d}"});
+Object.assign(HR, {"Bienvenue dans la famille": "Dobro došli u obitelj", "Bienvenue dans la famille de {n}, {p} !": "Dobro došli u obitelj psa {n}, {p}!", "Bienvenue dans la famille, {p} !": "Dobro došli u obitelj, {p}!", "Vous êtes maintenant {n} à vous en occuper. La famille a été prévenue.": "Sada se o psu brine vas {n}. Obitelj je obaviještena.", "Vous êtes le premier membre de la famille.": "Vi ste prvi član obitelji.", "Cochez les tâches : elles sont signées à votre nom": "Označavajte zadatke: potpisani su vašim imenom", "Retrouvez les vôtres avec « Les miennes »": "Svoje pronađite pod „Moji”", "Écrivez à la famille dans l'onglet Famille": "Pišite obitelji na kartici Obitelj", "Le carnet du chien n'est pas encore créé. La personne qui vous a invité(e) va le remplir, ou vous pouvez le créer vous-même.": "Dnevnik psa još nije izrađen. Osoba koja vas je pozvala ispunit će ga, ili ga možete izraditi sami.", "{n} a rejoint la famille": "{n} se pridružio/la obitelji", "Vous avez été invité(e) ?": "Jeste li pozvani?", "Rejoignez la famille au lieu de créer un carnet": "Pridružite se obitelji umjesto izrade dnevnika", "Vous avez rejoint la famille. Le carnet du chien n'est pas encore créé : la personne qui vous a invité(e) va le remplir, ou créez-le vous-même.": "Pridružili ste se obitelji. Dnevnik psa još nije izrađen: osoba koja vas je pozvala ispunit će ga, ili ga izradite sami.", "Créer le carnet de mon chien": "Izradi dnevnik mog psa", "Rejoindre une famille": "Pridruži se obitelji", "A rejoint le {d}": "Pridružio/la se {d}"});
+Object.assign(EN, {"Ce carnet est privé": "This logbook is private", "Le propriétaire touche « Partager » en haut de la page": "The owner taps “Share” at the top of the page", "Il ajoute votre adresse e-mail en « Éditeur »": "They add your email address as “Editor”", "Vous rouvrez le lien : le carnet s'affiche et vous rejoignez la famille": "You open the link again: the logbook appears and you join the family", "Invitez-la par e-mail en « Éditeur », puis donnez-lui le rôle « Garde » dans la liste des membres : elle pourra cocher les tâches et remplir le journal, mais pas modifier la fiche, la routine ni les traitements.": "Invite them by email as “Editor”, then give them the “Sitter” role in the member list: they can tick tasks and fill in the log, but not change the profile, routine or treatments.", "Le carnet est privé : seules les personnes que vous invitez par e-mail peuvent l'ouvrir.": "The logbook is private: only people you invite by email can open it.", "Dans « Accès général », gardez « Personnes invitées uniquement » (pas « Toute personne disposant du lien »).": "Under “General access”, keep “Only people invited” (not “Anyone with the link”).", "Ajoutez son adresse e-mail en « Éditeur »": "Add their email address as “Editor”", "Aussi pour la personne qui garde le chien : vous lui donnerez ensuite le rôle « Garde » dans Famille.": "Also for the dog sitter: you'll then give them the “Sitter” role in Family.", "Envoyez-lui le lien": "Send them the link", "À sa première visite, elle choisit son prénom et rejoint la famille.": "On their first visit, they pick their name and join the family.", "Connectez-vous avec le compte que la famille a invité pour l'ouvrir.": "Sign in with the account the family invited to open it.", "Seules les personnes invitées par la famille peuvent le voir. Demandez au propriétaire de vous inviter avec votre adresse e-mail.": "Only people invited by the family can see it. Ask the owner to invite you with your email address."});
+Object.assign(HR, {"Ce carnet est privé": "Ovaj dnevnik je privatan", "Le propriétaire touche « Partager » en haut de la page": "Vlasnik dodirne „Podijeli” na vrhu stranice", "Il ajoute votre adresse e-mail en « Éditeur »": "Doda vašu e-adresu kao „Urednik”", "Vous rouvrez le lien : le carnet s'affiche et vous rejoignez la famille": "Ponovno otvorite poveznicu: dnevnik se prikaže i pridružite se obitelji", "Invitez-la par e-mail en « Éditeur », puis donnez-lui le rôle « Garde » dans la liste des membres : elle pourra cocher les tâches et remplir le journal, mais pas modifier la fiche, la routine ni les traitements.": "Pozovite je e-poštom kao „Urednik”, zatim joj na popisu članova dodijelite ulogu „Čuvanje”: moći će označavati zadatke i ispunjavati dnevnik, ali ne i mijenjati profil, rutinu ni terapije.", "Le carnet est privé : seules les personnes que vous invitez par e-mail peuvent l'ouvrir.": "Dnevnik je privatan: mogu ga otvoriti samo osobe koje pozovete e-poštom.", "Dans « Accès général », gardez « Personnes invitées uniquement » (pas « Toute personne disposant du lien »).": "Pod „Opći pristup” ostavite „Samo pozvane osobe” (ne „Svatko s poveznicom”).", "Ajoutez son adresse e-mail en « Éditeur »": "Dodajte njegovu ili njezinu e-adresu kao „Urednik”", "Aussi pour la personne qui garde le chien : vous lui donnerez ensuite le rôle « Garde » dans Famille.": "I za osobu koja čuva psa: zatim joj u Obitelji dodijelite ulogu „Čuvanje”.", "Envoyez-lui le lien": "Pošaljite poveznicu", "À sa première visite, elle choisit son prénom et rejoint la famille.": "Pri prvom posjetu odabere svoje ime i pridruži se obitelji.", "Connectez-vous avec le compte que la famille a invité pour l'ouvrir.": "Prijavite se računom koji je obitelj pozvala da biste ga otvorili.", "Seules les personnes invitées par la famille peuvent le voir. Demandez au propriétaire de vous inviter avec votre adresse e-mail.": "Mogu ga vidjeti samo osobe koje je obitelj pozvala. Zamolite vlasnika da vas pozove putem e-adrese."});
+Object.assign(EN, {"plusieurs choix possibles": "several choices possible", "Ajout du chien…": "Adding the dog…", "Journée": "Day"});
+Object.assign(HR, {"plusieurs choix possibles": "moguće je više odgovora", "Ajout du chien…": "Dodavanje psa…", "Journée": "Dan"});
+Object.assign(EN, {"Dernière fois ? Touchez pour l'indiquer": "Last time? Tap to enter it", "Facultatif · à partir du {d}": "Optional · from {d}", "Vaccins": "Vaccines"});
+Object.assign(HR, {"Dernière fois ? Touchez pour l'indiquer": "Zadnji put? Dodirnite za unos", "Facultatif · à partir du {d}": "Neobavezno · od {d}", "Vaccins": "Cijepljenja"});
+Object.assign(EN, {"Mes chiens": "My dogs", "Chien perdu": "Lost dog", "Affiche et annonce prêtes en une minute": "Poster and post ready in a minute", "Alertes, langue, aide": "Alerts, language, help", "Chien": "Dog", "{n} a rejoint le carnet": "{n} has been added to the logbook", "Ajouter un chien": "Add a dog", "Chaque chien a sa propre routine, sa santé et son journal. La famille et les messages sont communs.": "Each dog has its own routine, health and log. Family and messages are shared.", "Affiché": "Shown", "Fait le {d}": "Done on {d}", "En retard": "Overdue", "facultatif": "optional", "Vaccins et soins": "Vaccines and care", "Ajoutez la date de naissance dans la fiche : le calendrier des vaccins se calcule tout seul.": "Add the date of birth in the profile: the vaccine calendar is worked out automatically.", "À faire": "To do", "Déjà fait": "Done", "Calendrier indicatif pour la Suisse. Votre vétérinaire peut l'adapter : suivez ce qu'il indique dans le passeport.": "Indicative schedule for Switzerland. Your vet may adapt it: follow what they write in the passport.", "Historique": "History", "Fait le": "Done on", "Ajouter au planning": "Add to planning", "Enregistré": "Saved", "Marquer fait": "Mark done", "Courbe de croissance": "Growth curve", "m.": "mo", "Repère pour sa race": "Reference for the breed", "Croissance et poids": "Growth and weight", "Adulte, environ": "Adult, about", "Pesées": "Weigh-ins", "Repère approximatif selon la race, le sexe et l'âge. Chaque chien est différent : seul le vétérinaire peut dire s'il a le bon poids.": "Approximate reference by breed, sex and age. Every dog is different: only the vet can tell whether the weight is right.", "{n} mois": "{n} months", "{n} ans": "{n} years", "Éducation": "Training", "{n} acquis sur {t}": "{n} of {t} learnt", "Des séances courtes (5 minutes), plusieurs fois par jour, toujours avec une récompense.": "Short sessions (5 minutes), several times a day, always with a reward.", "À travailler maintenant": "Work on now", "Tout le programme": "Full programme", "Où en est-il ?": "How far along is it?", "À partir de {n} mois environ.": "From about {n} months.", "Bravo ! « {s} » est acquis": "Well done! “{s}” is learnt", "Photo ou note": "Photo or note", "Ce qu'il a fait de drôle, un symptôme…": "Something funny they did, a symptom…", "Ajoutez une photo ou une note.": "Add a photo or a note.", "Noter autre chose": "Log something else", "CHIEN PERDU": "LOST DOG", "Vu pour la dernière fois : {w}": "Last seen: {w}", "Puce : {c}": "Microchip: {c}", "Appelez le {p}": "Call {p}", "Récompense": "Reward", "Préparez une affiche à imprimer et une annonce à partager sur les réseaux, avec sa photo et votre numéro.": "Prepare a poster to print and a post to share online, with their photo and your number.", "Téléphone à appeler": "Phone to call", "Vu pour la dernière fois": "Last seen", "Lieu, date, heure": "Place, date, time", "Copier l'annonce": "Copy the post", "Télécharger l'affiche": "Download the poster", "Prévenez aussi AMICUS (registre suisse des puces), les vétérinaires et la police du quartier.": "Also notify AMICUS (Swiss microchip registry), vets and the local police.", "Rapport de garde – {n}": "Sitting report – {n}", "{a}/{b} tâches": "{a}/{b} tasks", "médicaments {a}/{b}": "medication {a}/{b}", "{n} min de balade": "{n} min walking", "{n} pipi": "{n} pee", "{n} caca": "{n} poop", "{n} accident(s)": "{n} accident(s)", "appétit {v}": "appetite {v}", "énergie {v}": "energy {v}", "En tout : {a} tâches sur {b} faites.": "In total: {a} of {b} tasks done.", "{n} min de balade.": "{n} min of walking.", "{n} accident(s).": "{n} accident(s).", "Rapport de garde": "Sitting report", "Envoyer à la famille": "Send to the family", "Planning": "Planning", "Soins à prévoir": "Care coming up", "{a}/{b} prises aujourd'hui": "{a}/{b} doses today", "À jour": "Up to date", "Croissance": "Growth", "Aucune pesée": "No weigh-ins", "Propreté et activité": "House-training and activity", "pipi aujourd'hui": "pees today", "{p} % dehors sur 7 jours": "{p}% outside over 7 days", "jours de croquettes": "days of kibble", "{r} par jour": "{r} a day", "{p} % des besoins faits dehors": "{p}% of business done outside", "Sur 14 jours : {o} dehors, {a} accident(s) à l'intérieur.": "Over 14 days: {o} outside, {a} accident(s) indoors.", "Ensuite : {s}": "Next: {s}", "Tout est acquis": "Everything learnt", "Ce qui a été fait pendant la garde, à envoyer à la famille": "What was done while dog-sitting, to send to the family", "Carnet de {n}": "{n}'s logbook", "Retiré du carnet": "Removed from the logbook", "Ajouté au planning": "Added to planning", "Supprimer ?": "Delete?", "Annonce copiée": "Post copied", "chien-perdu": "lost-dog", "Téléchargement impossible ici. Utilisez « Copier l'annonce ».": "Download isn't possible here. Use “Copy the post”.", "Affiche téléchargée : ouvrez-la puis imprimez": "Poster downloaded: open it and print", "Rapport copié": "Report copied", "Rapport envoyé dans les messages de la famille": "Report sent to the family messages", "Photo illisible.": "Photo can't be read.", "Ajoutez la date de naissance dans la fiche pour voir la courbe de croissance.": "Add the date of birth in the profile to see the growth curve.", "Indiquez la race ou le gabarit dans la fiche pour voir la courbe de croissance.": "Set the breed or size in the profile to see the growth curve.", "Vaccin CHPPi + L (1re injection)": "DHPPi + L vaccine (1st shot)", "Vaccin CHPPi + L (2e injection)": "DHPPi + L vaccine (2nd shot)", "Vaccin CHPPi + L (3e injection)": "DHPPi + L vaccine (3rd shot)", "Rage (obligatoire pour voyager)": "Rabies (required to travel)", "Rappel CHPPi + L (vers 15 mois)": "DHPPi + L booster (around 15 months)", "Rappel leptospirose (chaque année)": "Leptospirosis booster (yearly)", "Rappel CHPPi (tous les 3 ans)": "DHPPi booster (every 3 years)", "Maladie de Carré, hépatite, parvovirose, toux du chenil et leptospirose. Souvent faite chez l'éleveur : vérifiez le passeport.": "Distemper, hepatitis, parvovirus, kennel cough and leptospirosis. Often done at the breeder: check the passport.", "Deuxième injection du même vaccin, 3 à 4 semaines après la première.": "Second shot of the same vaccine, 3 to 4 weeks after the first.", "Troisième injection, recommandée pour bien protéger le chiot contre la parvovirose.": "Third shot, recommended to properly protect the puppy against parvovirus.", "Obligatoire pour sortir de Suisse avec le chien. Elle se fait à partir de 12 semaines, au moins 21 jours avant le voyage.": "Required to leave Switzerland with the dog. Given from 12 weeks, at least 21 days before travelling.", "Rappel qui complète la vaccination de chiot.": "Booster that completes the puppy vaccinations.", "La leptospirose se rappelle chaque année.": "Leptospirosis needs a yearly booster.", "Carré, hépatite et parvovirose : un rappel tous les 3 ans suffit en général chez l'adulte.": "Distemper, hepatitis and parvovirus: a booster every 3 years is usually enough for adults.", "Toutes les 2 semaines jusqu'à 3 mois, puis chaque mois jusqu'à 6 mois, puis tous les 3 mois (plus souvent s'il mange des proies).": "Every 2 weeks until 3 months, then monthly until 6 months, then every 3 months (more often if they eat prey).", "De mars à novembre, une protection contre les puces et les tiques chaque mois (ou selon le produit).": "From March to November, flea and tick protection every month (or as the product says).", "Propreté": "House-training", "Sortez-le après chaque repas, sieste et jeu, et récompensez dehors tout de suite. Les accidents s'ignorent : on nettoie sans gronder.": "Take them out after every meal, nap and play, and reward outside right away. Ignore accidents: clean up without scolding.", "Répondre à son nom": "Respond to their name", "Dites son nom d'une voix joyeuse et récompensez dès qu'il vous regarde. N'utilisez jamais son nom pour gronder.": "Say their name cheerfully and reward as soon as they look at you. Never use their name to scold.", "Socialisation": "Socialisation", "Surtout avant 4 mois : nouvelles personnes, chiens calmes, bruits, voiture, transports. Toujours à son rythme, sans le forcer.": "Especially before 4 months: new people, calm dogs, noises, car, public transport. Always at their pace, never forced.", "Manipulations": "Handling", "Touchez pattes, oreilles et dents quelques secondes, puis récompensez. Les soins et le vétérinaire seront plus faciles.": "Touch paws, ears and teeth for a few seconds, then reward. Care and vet visits will be easier.", "Assis": "Sit", "Tenez une friandise au-dessus de sa tête et reculez-la doucement : les fesses se posent, récompensez aussitôt. Ajoutez le mot ensuite.": "Hold a treat above their head and move it back slowly: the bottom goes down, reward at once. Add the word afterwards.", "Rappel (« viens »)": "Recall (“come”)", "Accroupissez-vous, appelez joyeusement et faites la fête à chaque retour. Ne l'appelez jamais pour quelque chose de désagréable.": "Crouch down, call cheerfully and celebrate every return. Never call them for something unpleasant.", "Couché": "Down", "Depuis l'assis, descendez la friandise entre ses pattes puis glissez-la vers vous. Récompensez dès que les coudes touchent le sol.": "From sit, lower the treat between their paws then slide it towards you. Reward as soon as the elbows touch the floor.", "Marcher en laisse": "Loose-lead walking", "Arrêtez-vous dès que la laisse se tend, repartez quand elle se détend. Récompensez quand il marche à côté de vous.": "Stop as soon as the lead tightens, go again when it loosens. Reward when they walk beside you.", "Lâche": "Drop it", "Échangez l'objet contre une friandise en disant « lâche ». Rendez-lui souvent l'objet pour qu'il n'apprenne pas à le défendre.": "Swap the object for a treat while saying “drop it”. Often give it back so they don't learn to guard it.", "Aller au panier": "Go to bed", "Lancez une friandise dans son panier et récompensez quand il s'y couche. C'est son coin calme, jamais une punition.": "Toss a treat into their bed and reward when they lie down there. It's their calm spot, never a punishment.", "Rester seul au calme": "Staying home alone calmly", "Partez quelques secondes, puis quelques minutes, sans grands adieux ni grandes retrouvailles. Un jouet à mâcher aide.": "Leave for a few seconds, then a few minutes, without big goodbyes or reunions. A chew toy helps.", "Pas bouger": "Stay", "Commencez par 2 secondes à un pas, revenez récompenser. Allongez la durée avant d'augmenter la distance.": "Start with 2 seconds at one step away, go back and reward. Build duration before distance.", "Laisse (ne touche pas)": "Leave it", "Fermez la main sur une friandise ; dès qu'il s'écarte, récompensez avec l'autre main.": "Close your hand over a treat; as soon as they back off, reward with the other hand.", "Donne la patte": "Give paw", "Attendez qu'il gratte la main fermée qui tient la friandise, puis ouvrez-la. Juste pour le plaisir !": "Wait until they paw at the closed hand holding the treat, then open it. Just for fun!", "À apprendre": "To learn", "Acquis": "Learnt", "Pipi, caca, balade chronométrée, accident, photo… Un toucher suffit : l'heure et votre prénom sont notés.": "Pee, poop, timed walk, accident, photo… One tap is enough: the time and your name are saved.", "La routine de la semaine et les rendez-vous. Choisissez qui s'occupe de quoi.": "The weekly routine and appointments. Choose who handles what.", "Traitements, vaccins, croissance, propreté, croquettes et résumé pour le vétérinaire.": "Treatments, vaccines, growth, house-training, kibble and a vet summary.", "Qui fait quoi, les messages, les invitations et la garde. C'est aussi ici qu'on rejoint ou quitte la famille.": "Who does what, messages, invitations and dog-sitting. It's also where you join or leave the family.", "Sa fiche, son compagnon 3D, l'éducation, vos autres chiens et les réglages.": "Their profile, 3D buddy, training, your other dogs and settings.", "Votre chien": "Your dog", "Accident": "Accident", "Jeu": "Play", "Vomissement": "Vomiting", "Plus": "More", "Son poids est dans le repère pour son âge et sa race.": "Their weight is within the reference for their age and breed.", "Il est un peu en dessous du repère. Rien d'inquiétant s'il est en forme, mais parlez-en au vétérinaire à la prochaine visite.": "A little below the reference. Nothing to worry about if they're well, but mention it to the vet at the next visit.", "Il est un peu au-dessus du repère. Vérifiez la ration et les friandises, et demandez l'avis du vétérinaire.": "A little above the reference. Check the ration and treats, and ask the vet's opinion.", "Dans le repère": "Within the reference", "Un peu en dessous du repère": "A little below the reference", "Un peu au-dessus du repère": "A little above the reference", "Routine de la semaine": "Weekly routine"});
+Object.assign(HR, {"Mes chiens": "Moji psi", "Chien perdu": "Izgubljeni pas", "Affiche et annonce prêtes en une minute": "Plakat i objava spremni za minutu", "Alertes, langue, aide": "Podsjetnici, jezik, pomoć", "Chien": "Pas", "{n} a rejoint le carnet": "{n} je dodan/a u dnevnik", "Ajouter un chien": "Dodaj psa", "Chaque chien a sa propre routine, sa santé et son journal. La famille et les messages sont communs.": "Svaki pas ima svoju rutinu, zdravlje i dnevnik. Obitelj i poruke su zajednički.", "Affiché": "Prikazan", "Fait le {d}": "Obavljeno {d}", "En retard": "Kasni", "facultatif": "neobavezno", "Vaccins et soins": "Cijepljenja i njega", "Ajoutez la date de naissance dans la fiche : le calendrier des vaccins se calcule tout seul.": "Dodajte datum rođenja u profil: kalendar cijepljenja izračunat će se sam.", "À faire": "Za obaviti", "Déjà fait": "Obavljeno", "Calendrier indicatif pour la Suisse. Votre vétérinaire peut l'adapter : suivez ce qu'il indique dans le passeport.": "Okvirni raspored za Švicarsku. Veterinar ga može prilagoditi: slijedite ono što upiše u putovnicu.", "Historique": "Povijest", "Fait le": "Obavljeno", "Ajouter au planning": "Dodaj u plan", "Enregistré": "Spremljeno", "Marquer fait": "Označi obavljeno", "Courbe de croissance": "Krivulja rasta", "m.": "mj.", "Repère pour sa race": "Referenca za pasminu", "Croissance et poids": "Rast i težina", "Adulte, environ": "Odrasli, otprilike", "Pesées": "Vaganja", "Repère approximatif selon la race, le sexe et l'âge. Chaque chien est différent : seul le vétérinaire peut dire s'il a le bon poids.": "Okvirna referenca prema pasmini, spolu i dobi. Svaki je pas drukčiji: samo veterinar može reći je li težina dobra.", "{n} mois": "{n} mj.", "{n} ans": "{n} god.", "Éducation": "Dresura", "{n} acquis sur {t}": "Naučeno {n} od {t}", "Des séances courtes (5 minutes), plusieurs fois par jour, toujours avec une récompense.": "Kratki treninzi (5 minuta), nekoliko puta dnevno, uvijek s nagradom.", "À travailler maintenant": "Sada vježbati", "Tout le programme": "Cijeli program", "Où en est-il ?": "Dokle je stigao/la?", "À partir de {n} mois environ.": "Otprilike od {n} mjeseci.", "Bravo ! « {s} » est acquis": "Bravo! „{s}” je naučeno", "Photo ou note": "Fotografija ili bilješka", "Ce qu'il a fait de drôle, un symptôme…": "Nešto smiješno, neki simptom…", "Ajoutez une photo ou une note.": "Dodajte fotografiju ili bilješku.", "Noter autre chose": "Zabilježi nešto drugo", "CHIEN PERDU": "IZGUBLJEN PAS", "Vu pour la dernière fois : {w}": "Posljednji put viđen/a: {w}", "Puce : {c}": "Čip: {c}", "Appelez le {p}": "Nazovite {p}", "Récompense": "Nagrada", "Préparez une affiche à imprimer et une annonce à partager sur les réseaux, avec sa photo et votre numéro.": "Pripremite plakat za ispis i objavu za društvene mreže, s fotografijom i vašim brojem.", "Téléphone à appeler": "Telefon za poziv", "Vu pour la dernière fois": "Posljednji put viđen/a", "Lieu, date, heure": "Mjesto, datum, vrijeme", "Copier l'annonce": "Kopiraj objavu", "Télécharger l'affiche": "Preuzmi plakat", "Prévenez aussi AMICUS (registre suisse des puces), les vétérinaires et la police du quartier.": "Obavijestite i AMICUS (švicarski registar čipova), veterinare i lokalnu policiju.", "Rapport de garde – {n}": "Izvješće o čuvanju – {n}", "{a}/{b} tâches": "{a}/{b} zadataka", "médicaments {a}/{b}": "lijekovi {a}/{b}", "{n} min de balade": "{n} min šetnje", "{n} pipi": "piš: {n}", "{n} caca": "kakica: {n}", "{n} accident(s)": "nezgoda: {n}", "appétit {v}": "apetit {v}", "énergie {v}": "energija {v}", "En tout : {a} tâches sur {b} faites.": "Ukupno: obavljeno {a} od {b} zadataka.", "{n} min de balade.": "{n} min šetnje.", "{n} accident(s).": "Nezgoda: {n}.", "Rapport de garde": "Izvješće o čuvanju", "Envoyer à la famille": "Pošalji obitelji", "Planning": "Plan", "Soins à prévoir": "Nadolazeća njega", "{a}/{b} prises aujourd'hui": "{a}/{b} doza danas", "À jour": "Ažurno", "Croissance": "Rast", "Aucune pesée": "Nema vaganja", "Propreté et activité": "Čistoća i aktivnost", "pipi aujourd'hui": "piš danas", "{p} % dehors sur 7 jours": "{p} % vani u 7 dana", "jours de croquettes": "dana granula", "{r} par jour": "{r} dnevno", "{p} % des besoins faits dehors": "{p} % obavljeno vani", "Sur 14 jours : {o} dehors, {a} accident(s) à l'intérieur.": "U 14 dana: {o} vani, {a} nezgoda u kući.", "Ensuite : {s}": "Sljedeće: {s}", "Tout est acquis": "Sve je naučeno", "Ce qui a été fait pendant la garde, à envoyer à la famille": "Što je obavljeno tijekom čuvanja, za slanje obitelji", "Carnet de {n}": "Dnevnik psa {n}", "Retiré du carnet": "Uklonjeno iz dnevnika", "Ajouté au planning": "Dodano u plan", "Supprimer ?": "Izbrisati?", "Annonce copiée": "Objava kopirana", "chien-perdu": "izgubljeni-pas", "Téléchargement impossible ici. Utilisez « Copier l'annonce ».": "Preuzimanje ovdje nije moguće. Koristite „Kopiraj objavu”.", "Affiche téléchargée : ouvrez-la puis imprimez": "Plakat preuzet: otvorite ga i ispišite", "Rapport copié": "Izvješće kopirano", "Rapport envoyé dans les messages de la famille": "Izvješće poslano u obiteljske poruke", "Photo illisible.": "Fotografija se ne može pročitati.", "Ajoutez la date de naissance dans la fiche pour voir la courbe de croissance.": "Dodajte datum rođenja u profil da vidite krivulju rasta.", "Indiquez la race ou le gabarit dans la fiche pour voir la courbe de croissance.": "Unesite pasminu ili veličinu u profil da vidite krivulju rasta.", "Vaccin CHPPi + L (1re injection)": "Cjepivo DHPPi + L (1. doza)", "Vaccin CHPPi + L (2e injection)": "Cjepivo DHPPi + L (2. doza)", "Vaccin CHPPi + L (3e injection)": "Cjepivo DHPPi + L (3. doza)", "Rage (obligatoire pour voyager)": "Bjesnoća (obavezno za putovanja)", "Rappel CHPPi + L (vers 15 mois)": "Docjepljivanje DHPPi + L (oko 15 mjeseci)", "Rappel leptospirose (chaque année)": "Docjepljivanje protiv leptospiroze (godišnje)", "Rappel CHPPi (tous les 3 ans)": "Docjepljivanje DHPPi (svake 3 godine)", "Maladie de Carré, hépatite, parvovirose, toux du chenil et leptospirose. Souvent faite chez l'éleveur : vérifiez le passeport.": "Štenećak, hepatitis, parvoviroza, kenelski kašalj i leptospiroza. Često se obavi kod uzgajivača: provjerite putovnicu.", "Deuxième injection du même vaccin, 3 à 4 semaines après la première.": "Druga doza istog cjepiva, 3 do 4 tjedna nakon prve.", "Troisième injection, recommandée pour bien protéger le chiot contre la parvovirose.": "Treća doza, preporučuje se za dobru zaštitu šteneta od parvoviroze.", "Obligatoire pour sortir de Suisse avec le chien. Elle se fait à partir de 12 semaines, au moins 21 jours avant le voyage.": "Obavezno za izlazak iz Švicarske s psom. Daje se od 12 tjedana, najmanje 21 dan prije putovanja.", "Rappel qui complète la vaccination de chiot.": "Docjepljivanje koje dovršava cijepljenje šteneta.", "La leptospirose se rappelle chaque année.": "Leptospiroza se docjepljuje svake godine.", "Carré, hépatite et parvovirose : un rappel tous les 3 ans suffit en général chez l'adulte.": "Štenećak, hepatitis i parvoviroza: kod odraslih obično je dovoljno docjepljivanje svake 3 godine.", "Toutes les 2 semaines jusqu'à 3 mois, puis chaque mois jusqu'à 6 mois, puis tous les 3 mois (plus souvent s'il mange des proies).": "Svaka 2 tjedna do 3 mjeseca, zatim mjesečno do 6 mjeseci, potom svaka 3 mjeseca (češće ako jede plijen).", "De mars à novembre, une protection contre les puces et les tiques chaque mois (ou selon le produit).": "Od ožujka do studenog zaštita od buha i krpelja svaki mjesec (ili prema proizvodu).", "Propreté": "Čistoća", "Sortez-le après chaque repas, sieste et jeu, et récompensez dehors tout de suite. Les accidents s'ignorent : on nettoie sans gronder.": "Izvedite ga nakon svakog obroka, drijemeža i igre te odmah nagradite vani. Nezgode ignorirajte: počistite bez grdnje.", "Répondre à son nom": "Odazivanje na ime", "Dites son nom d'une voix joyeuse et récompensez dès qu'il vous regarde. N'utilisez jamais son nom pour gronder.": "Veselo izgovorite ime i nagradite čim vas pogleda. Nikad ne koristite ime za grdnju.", "Socialisation": "Socijalizacija", "Surtout avant 4 mois : nouvelles personnes, chiens calmes, bruits, voiture, transports. Toujours à son rythme, sans le forcer.": "Osobito prije 4. mjeseca: novi ljudi, mirni psi, zvukovi, auto, prijevoz. Uvijek njegovim tempom, bez prisile.", "Manipulations": "Rukovanje", "Touchez pattes, oreilles et dents quelques secondes, puis récompensez. Les soins et le vétérinaire seront plus faciles.": "Dodirnite šape, uši i zube nekoliko sekundi pa nagradite. Njega i posjeti veterinaru bit će lakši.", "Assis": "Sjedni", "Tenez une friandise au-dessus de sa tête et reculez-la doucement : les fesses se posent, récompensez aussitôt. Ajoutez le mot ensuite.": "Držite poslasticu iznad glave i polako je pomaknite unatrag: stražnjica sjeda, odmah nagradite. Riječ dodajte poslije.", "Rappel (« viens »)": "Opoziv („dođi”)", "Accroupissez-vous, appelez joyeusement et faites la fête à chaque retour. Ne l'appelez jamais pour quelque chose de désagréable.": "Čučnite, veselo pozovite i slavite svaki povratak. Nikad ga ne zovite zbog nečeg neugodnog.", "Couché": "Lezi", "Depuis l'assis, descendez la friandise entre ses pattes puis glissez-la vers vous. Récompensez dès que les coudes touchent le sol.": "Iz sjedenja spustite poslasticu između šapa i povucite je prema sebi. Nagradite čim laktovi dotaknu pod.", "Marcher en laisse": "Hodanje na povodcu", "Arrêtez-vous dès que la laisse se tend, repartez quand elle se détend. Récompensez quand il marche à côté de vous.": "Stanite čim se povodac zategne, krenite kad se opusti. Nagradite kad hoda uz vas.", "Lâche": "Pusti", "Échangez l'objet contre une friandise en disant « lâche ». Rendez-lui souvent l'objet pour qu'il n'apprenne pas à le défendre.": "Zamijenite predmet za poslasticu govoreći „pusti”. Često mu ga vratite da ne nauči čuvati predmete.", "Aller au panier": "Na mjesto", "Lancez une friandise dans son panier et récompensez quand il s'y couche. C'est son coin calme, jamais une punition.": "Bacite poslasticu u njegov krevetić i nagradite kad legne. To je njegov mirni kutak, nikad kazna.", "Rester seul au calme": "Mirno ostati sam", "Partez quelques secondes, puis quelques minutes, sans grands adieux ni grandes retrouvailles. Un jouet à mâcher aide.": "Izađite na nekoliko sekundi, pa minuta, bez velikih oproštaja i dočeka. Pomaže igračka za žvakanje.", "Pas bouger": "Ostani", "Commencez par 2 secondes à un pas, revenez récompenser. Allongez la durée avant d'augmenter la distance.": "Počnite s 2 sekunde na jedan korak, vratite se i nagradite. Produžite trajanje prije udaljenosti.", "Laisse (ne touche pas)": "Ostavi", "Fermez la main sur une friandise ; dès qu'il s'écarte, récompensez avec l'autre main.": "Zatvorite šaku s poslasticom; čim se odmakne, nagradite drugom rukom.", "Donne la patte": "Daj šapu", "Attendez qu'il gratte la main fermée qui tient la friandise, puis ouvrez-la. Juste pour le plaisir !": "Pričekajte da šapom dotakne zatvorenu ruku s poslasticom, pa je otvorite. Samo iz zabave!", "À apprendre": "Za naučiti", "Acquis": "Naučeno", "Pipi, caca, balade chronométrée, accident, photo… Un toucher suffit : l'heure et votre prénom sont notés.": "Piš, kakica, šetnja s mjeračem, nezgoda, fotografija… Dovoljan je jedan dodir: vrijeme i vaše ime se spremaju.", "La routine de la semaine et les rendez-vous. Choisissez qui s'occupe de quoi.": "Tjedna rutina i termini. Odaberite tko je za što zadužen.", "Traitements, vaccins, croissance, propreté, croquettes et résumé pour le vétérinaire.": "Terapije, cijepljenja, rast, čistoća, granule i sažetak za veterinara.", "Qui fait quoi, les messages, les invitations et la garde. C'est aussi ici qu'on rejoint ou quitte la famille.": "Tko što radi, poruke, pozivnice i čuvanje. Ovdje se i pridružujete obitelji ili je napuštate.", "Sa fiche, son compagnon 3D, l'éducation, vos autres chiens et les réglages.": "Profil, 3D prijatelj, dresura, vaši drugi psi i postavke.", "Votre chien": "Vaš pas", "Accident": "Nezgoda", "Jeu": "Igra", "Vomissement": "Povraćanje", "Plus": "Više", "Son poids est dans le repère pour son âge et sa race.": "Težina je u okviru reference za dob i pasminu.", "Il est un peu en dessous du repère. Rien d'inquiétant s'il est en forme, mais parlez-en au vétérinaire à la prochaine visite.": "Malo je ispod reference. Nema razloga za brigu ako je dobro, ali spomenite to veterinaru pri sljedećem posjetu.", "Il est un peu au-dessus du repère. Vérifiez la ration et les friandises, et demandez l'avis du vétérinaire.": "Malo je iznad reference. Provjerite obrok i poslastice te pitajte veterinara.", "Dans le repère": "U okviru reference", "Un peu en dessous du repère": "Malo ispod reference", "Un peu au-dessus du repère": "Malo iznad reference", "Routine de la semaine": "Tjedna rutina"});
+Object.assign(EN, {"il y a {n} min": "{n} min ago", "il y a {h} h {m}": "{h} h {m} ago", "il y a {h} h": "{h} h ago", "Une sortie pipi est conseillée maintenant": "A potty break is a good idea now", "Prochaine sortie pipi conseillée vers {h}": "Next potty break suggested around {h}", "Balade en cours": "Walk in progress", "pipi": "pee", "caca": "poop", "Journal rapide": "Quick log", "Tout voir": "See all", "Pipi": "Pee", "Caca": "Poop", "Eau": "Water", "Friandise": "Treat", "Sieste": "Nap", "En cours": "Ongoing", "Liquides": "Liquid", "Dures": "Hard", "Sorties pipi": "Pee breaks", "Cacas": "Poops", "Minutes de balade": "Walking minutes", "Touchez un bouton dès que c'est fait : l'heure et votre prénom sont notés, toute la famille le voit.": "Tap a button as soon as it's done: the time and your name are saved, and the whole family sees it.", "{k} noté à {h}": "{k} logged at {h}", "Comment étaient les selles ?": "How was the stool?", "Balade de {n} min notée · « {t} » cochée": "{n}-min walk logged · “{t}” ticked", "Balade de {n} min notée": "{n}-min walk logged", "Terminer la balade": "Finish the walk", "Pendant la balade, il a fait :": "During the walk, they did:", "{n} en moyenne par jour": "{n} a day on average", "Statistiques 7 jours": "7-day stats", "Qualité des selles": "Stool quality", "{n} sur {t} molles ou liquides": "{n} of {t} soft or liquid", "Toutes normales": "All normal", "Utilisez le journal rapide sur Aujourd'hui (pipi, caca, balade…) : les tendances de la semaine apparaîtront ici.": "Use the quick log on Today (pee, poop, walk…): the week's trends will show up here.", "Pratique pour la propreté d'un chiot, et pour répondre au vétérinaire en cas de souci digestif.": "Handy for puppy house-training, and for answering the vet about digestive issues.", "Sortie pipi": "Potty break", "{n} a mangé il y a {m} min : c'est le bon moment pour sortir.": "{n} ate {m} min ago: it's a good time to go out.", "Pipi fait": "Pee done", "Balade lancée : touchez Terminer au retour": "Walk started: tap Finish when you're back"});
+Object.assign(HR, {"il y a {n} min": "prije {n} min", "il y a {h} h {m}": "prije {h} h {m}", "il y a {h} h": "prije {h} h", "Une sortie pipi est conseillée maintenant": "Sada je vrijeme za izlazak na pišanje", "Prochaine sortie pipi conseillée vers {h}": "Sljedeći izlazak na pišanje oko {h}", "Balade en cours": "Šetnja u tijeku", "pipi": "piš", "caca": "kakica", "Journal rapide": "Brzi zapis", "Tout voir": "Prikaži sve", "Pipi": "Piš", "Caca": "Kakica", "Eau": "Voda", "Friandise": "Poslastica", "Sieste": "Drijemež", "En cours": "U tijeku", "Liquides": "Tekuća", "Dures": "Tvrda", "Sorties pipi": "Izlasci na piš", "Cacas": "Kakice", "Minutes de balade": "Minute šetnje", "Touchez un bouton dès que c'est fait : l'heure et votre prénom sont notés, toute la famille le voit.": "Dodirnite gumb čim je gotovo: vrijeme i vaše ime se spremaju, a cijela obitelj to vidi.", "{k} noté à {h}": "{k} zabilježeno u {h}", "Comment étaient les selles ?": "Kakva je bila stolica?", "Balade de {n} min notée · « {t} » cochée": "Šetnja od {n} min zabilježena · „{t}” označeno", "Balade de {n} min notée": "Šetnja od {n} min zabilježena", "Terminer la balade": "Završi šetnju", "Pendant la balade, il a fait :": "Tijekom šetnje obavio/la je:", "{n} en moyenne par jour": "prosječno {n} dnevno", "Statistiques 7 jours": "Statistika 7 dana", "Qualité des selles": "Kvaliteta stolice", "{n} sur {t} molles ou liquides": "{n} od {t} meka ili tekuća", "Toutes normales": "Sve normalne", "Utilisez le journal rapide sur Aujourd'hui (pipi, caca, balade…) : les tendances de la semaine apparaîtront ici.": "Koristite brzi zapis na Danas (piš, kakica, šetnja…): ovdje će se pojaviti tjedni trendovi.", "Pratique pour la propreté d'un chiot, et pour répondre au vétérinaire en cas de souci digestif.": "Korisno za učenje čistoće kod šteneta i za odgovore veterinaru kod probavnih problema.", "Sortie pipi": "Izlazak na piš", "{n} a mangé il y a {m} min : c'est le bon moment pour sortir.": "{n} je jeo/la prije {m} min: pravo je vrijeme za izlazak.", "Pipi fait": "Piš obavljen", "Balade lancée : touchez Terminer au retour": "Šetnja pokrenuta: dodirnite Završi po povratku"});
+Object.assign(EN, {"Personne n'a encore rejoint la famille. Invitez quelqu'un : dès qu'il a rejoint, vous pourrez lui confier des tâches.": "Nobody has joined the family yet. Invite someone: once they've joined, you can give them tasks.", "Les autres rejoignent eux-mêmes : à la fin, touchez « Inviter quelqu'un » dans l'espace Famille et envoyez-leur le lien. Une fois qu'ils ont rejoint, vous pourrez leur confier des tâches.": "The others join by themselves: at the end, tap “Invite someone” in the Family space and send them the link. Once they've joined, you can give them tasks.", "On n'ajoute personne à la main : chaque personne rejoint elle-même avec le lien d'invitation, puis vous pouvez lui confier des tâches et des rendez-vous.": "Nobody is added by hand: each person joins with the invitation link, then you can give them tasks and appointments.", "{n} n'a pas encore rejoint la famille : on ne peut pas encore lui confier de tâches.": "{n} hasn't joined the family yet, so they can't be given tasks yet.", "Les personnes qui n'ont pas encore rejoint n'apparaissent pas ici.": "People who haven't joined yet don't appear here.", "Qui y va ?": "Who's going?"});
+Object.assign(HR, {"Personne n'a encore rejoint la famille. Invitez quelqu'un : dès qu'il a rejoint, vous pourrez lui confier des tâches.": "Još se nitko nije pridružio obitelji. Pozovite nekoga: kad se pridruži, moći ćete mu dodijeliti zadatke.", "Les autres rejoignent eux-mêmes : à la fin, touchez « Inviter quelqu'un » dans l'espace Famille et envoyez-leur le lien. Une fois qu'ils ont rejoint, vous pourrez leur confier des tâches.": "Ostali se pridružuju sami: na kraju dodirnite „Pozovi nekoga” u prostoru Obitelj i pošaljite im poveznicu. Kad se pridruže, moći ćete im dodijeliti zadatke.", "On n'ajoute personne à la main : chaque personne rejoint elle-même avec le lien d'invitation, puis vous pouvez lui confier des tâches et des rendez-vous.": "Nitko se ne dodaje ručno: svaka se osoba pridružuje sama putem pozivnice, a zatim joj možete dodijeliti zadatke i termine.", "{n} n'a pas encore rejoint la famille : on ne peut pas encore lui confier de tâches.": "{n} se još nije pridružio/la obitelji pa mu/joj još ne možete dodijeliti zadatke.", "Les personnes qui n'ont pas encore rejoint n'apparaissent pas ici.": "Osobe koje se još nisu pridružile ne prikazuju se ovdje.", "Qui y va ?": "Tko ide?"});
+Object.assign(EN, {"Message copié : collez-le dans l'app de votre choix": "Message copied: paste it in the app of your choice", "Message copié. Si l'app ne s'ouvre pas, collez-le dans {a}.": "Message copied. If the app doesn't open, paste it in {a}.", "Copiez le lien ci-dessus et envoyez-le dans {a}.": "Copy the link above and send it in {a}."});
+Object.assign(HR, {"Message copié : collez-le dans l'app de votre choix": "Poruka kopirana: zalijepite je u aplikaciju po izboru", "Message copié. Si l'app ne s'ouvre pas, collez-le dans {a}.": "Poruka kopirana. Ako se aplikacija ne otvori, zalijepite je u: {a}.", "Copiez le lien ci-dessus et envoyez-le dans {a}.": "Kopirajte poveznicu iznad i pošaljite je u: {a}."});
+Object.assign(EN, {"Le carnet de {n}": "{n}'s logbook", "Copier le lien": "Copy link", "E-mail": "Email", "Autres": "More", "Code QR du lien": "QR code of the link", "À scanner avec l'appareil photo d'un téléphone": "Scan it with a phone camera", "Pour qu'il puisse cocher les tâches": "So they can tick tasks", "Retirer la photo": "Remove photo", "Le partage n'est pas disponible ici. Copiez le lien.": "Sharing isn't available here. Copy the link.", "Copié": "Copied", "Lien copié": "Link copied", "Photo du compte · touchez pour en choisir une autre": "Account photo · tap to choose another", "Touchez pour ajouter une photo": "Tap to add a photo"});
+Object.assign(HR, {"Le carnet de {n}": "Dnevnik psa {n}", "Copier le lien": "Kopiraj poveznicu", "E-mail": "E-pošta", "Autres": "Više", "Code QR du lien": "QR kod poveznice", "À scanner avec l'appareil photo d'un téléphone": "Skenirajte kamerom mobitela", "Pour qu'il puisse cocher les tâches": "Da bi mogli označavati zadatke", "Retirer la photo": "Ukloni fotografiju", "Le partage n'est pas disponible ici. Copiez le lien.": "Dijeljenje ovdje nije dostupno. Kopirajte poveznicu.", "Copié": "Kopirano", "Lien copié": "Poveznica kopirana", "Photo du compte · touchez pour en choisir une autre": "Fotografija računa · dodirnite za drugu", "Touchez pour ajouter une photo": "Dodirnite za dodavanje fotografije"});
+Object.assign(EN, {"{n} membre(s) · touchez pour répartir les tâches":"{n} member(s) · tap to assign tasks"});
+Object.assign(HR, {"{n} membre(s) · touchez pour répartir les tâches":"Članova: {n} · dodirnite za podjelu zadataka"});
+Object.assign(EN, {"La famille": "Family", "Membres, messages, qui fait quoi": "Members, messages, who does what", "à l'instant": "just now", "Ajoutez qui s'occupe du chien pour partager les tâches": "Add who looks after the dog to share the tasks", "Touchez pour rejoindre la famille": "Tap to join the family", "Prochain : {n} – {t} à {h}": "Next: {n} – {t} at {h}", "{n} membre(s) · tout est à jour": "{n} member(s) · all up to date", "Nouveau message": "New message", "La famille de {n}": "{n}'s family", "{n} membre(s) · {j} connecté(s) au carnet": "{n} member(s) · {j} connected to the logbook", "Personne pour l'instant": "Nobody yet", "Vous": "You", "Ce n'est pas moi": "That's not me", "Quitter": "Leave", "Vous n'êtes pas encore dans la famille": "You're not in the family yet", "Rejoignez-la pour signer vos tâches, voir les vôtres et écrire aux autres.": "Join to sign your tasks, see your own and write to the others.", "Prochain : {t} à {h}": "Next: {t} at {h}", "Rien d'attribué aujourd'hui": "Nothing assigned today", "{n} cochée(s)": "{n} ticked", "Tâches sans personne attitrée": "Tasks with nobody assigned", "Répartir": "Assign", "Messages": "Messages", "Un mot pour la famille…": "A note for the family…", "Envoyer": "Send", "Rejoignez la famille pour écrire un message.": "Join the family to write a message.", "Pas encore de message. Laissez une consigne, un rappel ou une nouvelle de {n}.": "No messages yet. Leave an instruction, a reminder or news about {n}.", "Dernières activités": "Recent activity", "{n} : {t}": "{n}: {t}", "Les tâches cochées apparaîtront ici, avec le prénom de qui les a faites.": "Ticked tasks will show up here, with the name of who did them.", "Membres": "Members", "Appeler {n}": "Call {n}", "Ajouter un prénom": "Add a name", "Famille : voit et coche tout. Garde : la personne qui garde le chien, elle voit la fiche de garde et coche les tâches.": "Family: sees and ticks everything. Sitter: the person looking after the dog, sees the sitter sheet and ticks tasks.", "Couleur": "Colour", "Rôle": "Role", "Appeler": "Call", "faites en 7 jours": "done in 7 days", "prévues en 7 jours": "planned in 7 days", "dans la routine": "in the routine", "S'occupe de": "Looks after", "Quitter la famille": "Leave the family", "Indiquez un prénom.": "Enter a name.", "Tous": "Everyone", "Répartir les tâches": "Assign tasks", "Choisissez qui s'occupe de chaque activité. Chacun verra les siennes avec « Les miennes ».": "Choose who handles each activity. Everyone will see theirs under “Mine”.", "Répartition enregistrée": "Assignments saved", "Toucher encore pour quitter": "Tap again to leave", "Vous avez quitté la famille": "You left the family", "Qui fait quoi aujourd'hui, les messages de la famille et la liste des membres. C'est aussi ici qu'on rejoint ou quitte la famille.": "Who does what today, family messages and the member list. This is also where you join or leave the family."});
+Object.assign(HR, {"La famille": "Obitelj", "Membres, messages, qui fait quoi": "Članovi, poruke, tko što radi", "à l'instant": "upravo sada", "Ajoutez qui s'occupe du chien pour partager les tâches": "Dodajte tko se brine o psu da podijelite zadatke", "Touchez pour rejoindre la famille": "Dodirnite da se pridružite obitelji", "Prochain : {n} – {t} à {h}": "Sljedeće: {n} – {t} u {h}", "{n} membre(s) · tout est à jour": "Članova: {n} · sve je obavljeno", "Nouveau message": "Nova poruka", "La famille de {n}": "Obitelj psa {n}", "{n} membre(s) · {j} connecté(s) au carnet": "Članova: {n} · povezanih s dnevnikom: {j}", "Personne pour l'instant": "Zasad nikoga", "Vous": "Vi", "Ce n'est pas moi": "To nisam ja", "Quitter": "Napusti", "Vous n'êtes pas encore dans la famille": "Još niste u obitelji", "Rejoignez-la pour signer vos tâches, voir les vôtres et écrire aux autres.": "Pridružite se da potpisujete zadatke, vidite svoje i pišete ostalima.", "Prochain : {t} à {h}": "Sljedeće: {t} u {h}", "Rien d'attribué aujourd'hui": "Danas ništa dodijeljeno", "{n} cochée(s)": "označeno: {n}", "Tâches sans personne attitrée": "Zadaci bez zaduženih", "Répartir": "Podijeli", "Messages": "Poruke", "Un mot pour la famille…": "Poruka za obitelj…", "Envoyer": "Pošalji", "Rejoignez la famille pour écrire un message.": "Pridružite se obitelji da napišete poruku.", "Pas encore de message. Laissez une consigne, un rappel ou une nouvelle de {n}.": "Još nema poruka. Ostavite uputu, podsjetnik ili novost o psu {n}.", "Dernières activités": "Nedavne aktivnosti", "{n} : {t}": "{n}: {t}", "Les tâches cochées apparaîtront ici, avec le prénom de qui les a faites.": "Označeni zadaci pojavit će se ovdje, s imenom osobe koja ih je obavila.", "Membres": "Članovi", "Appeler {n}": "Nazovi: {n}", "Ajouter un prénom": "Dodaj ime", "Famille : voit et coche tout. Garde : la personne qui garde le chien, elle voit la fiche de garde et coche les tâches.": "Obitelj: vidi i označava sve. Čuvanje: osoba koja čuva psa, vidi upute za čuvanje i označava zadatke.", "Couleur": "Boja", "Rôle": "Uloga", "Appeler": "Nazovi", "faites en 7 jours": "obavljeno u 7 dana", "prévues en 7 jours": "planirano u 7 dana", "dans la routine": "u rutini", "S'occupe de": "Zadužen/a za", "Quitter la famille": "Napusti obitelj", "Indiquez un prénom.": "Upišite ime.", "Tous": "Svi", "Répartir les tâches": "Podjela zadataka", "Choisissez qui s'occupe de chaque activité. Chacun verra les siennes avec « Les miennes ».": "Odaberite tko je zadužen za koju aktivnost. Svatko će svoje vidjeti pod „Moji”.", "Répartition enregistrée": "Podjela spremljena", "Toucher encore pour quitter": "Dodirnite ponovno za izlazak", "Vous avez quitté la famille": "Napustili ste obitelj", "Qui fait quoi aujourd'hui, les messages de la famille et la liste des membres. C'est aussi ici qu'on rejoint ou quitte la famille.": "Tko što radi danas, obiteljske poruke i popis članova. Ovdje se i pridružujete obitelji ili je napuštate."});
+Object.assign(EN, {"Aide": "Help", "Revoir le tutoriel": "Replay the tour", "Relancer l'assistant de départ": "Run the setup assistant again", "Pour un nouveau chien : remplace la fiche actuelle.": "For a new dog: replaces the current profile.", "C'est vous": "That's you", "A rejoint": "Has joined", "Pas encore rejoint": "Not joined yet", "Inviter quelqu'un": "Invite someone", "Rejoins le carnet de {n} : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.": "Join {n}'s logbook: open this link, pick your name and tick off walks and meals when you take care of them.", "notre chien": "our dog", "Touchez « Partager » en haut de cette page": "Tap “Share” at the top of this page", "Ajoutez son adresse e-mail.": "Add their email address.", "Choisissez son rôle": "Choose their role", "Éditeur pour la famille (peut tout modifier). Contributeur pour la personne qui garde le chien (peut seulement cocher).": "Editor for family (can change everything). Contributor for the dog sitter (can only tick tasks).", "À sa première visite": "On their first visit", "Le carnet lui demande son prénom et l'ajoute à la famille.": "The logbook asks for their name and adds them to the family.", "Copier le message d'invitation": "Copy the invitation message", "Balade du matin": "Morning walk", "Sortie de midi": "Midday outing", "Balade du soir": "Evening walk", "Dernière sortie": "Last outing", "Petit-déjeuner": "Breakfast", "Dîner": "Dinner", "Déjeuner": "Lunch", "Goûter": "Afternoon snack", "Jeu et éducation": "Play and training", "Brossage": "Brushing", "Brossage des dents": "Teeth brushing", "Bienvenue dans le carnet de votre chien": "Welcome to your dog's logbook", "En quelques étapes : son profil, sa journée type, son vétérinaire et la famille. Tout pourra être modifié ensuite.": "A few quick steps: profile, typical day, vet and family. You can change everything later.", "Voir d'abord un exemple": "See an example first", "Comment s'appelle votre chien ?": "What's your dog's name?", "Son nom": "Their name", "Quelle est la race de {n} ?": "What breed is {n}?", "Autre race": "Other breed", "Tapez la race": "Type the breed", "Parlez-nous de {n}": "Tell us about {n}", "Date de naissance": "Date of birth", "Que mange {n} ?": "What does {n} eat?", "La journée type de {n}": "{n}'s typical day", "Gardez ce qui correspond et ajustez les heures. Vous pourrez tout changer dans Routine.": "Keep what fits and adjust the times. You can change it all in Routine.", "Son vétérinaire": "Their vet", "Utile en cas d'urgence et pour la personne qui le garde.": "Handy in an emergency and for the dog sitter.", "Qui s'occupe de {n} ?": "Who looks after {n}?", "Chacun pourra cocher les tâches avec son prénom et recevoir les siennes.": "Everyone can tick tasks under their own name and get their own alerts.", "Votre prénom": "Your first name", "Les autres membres": "Other members", "Pour qu'ils aient accès au carnet : touchez Partager en haut de la page et invitez-les par e-mail. À leur première visite, ils choisissent leur prénom et rejoignent la famille.": "To give them access: tap Share at the top of the page and invite them by email. On their first visit they pick their name and join the family.", "Configuration": "Setup", "Retour": "Back", "Passer": "Skip", "Création du carnet…": "Creating the logbook…", "Commencer": "Get started", "Terminer": "Finish", "Continuer": "Continue", "Rejoindre la famille": "Join the family", "Rejoindre la famille de {n}": "Join {n}'s family", "Dites-nous qui vous êtes : les tâches que vous cochez seront signées à votre nom, et vous verrez les vôtres.": "Tell us who you are: tasks you tick will carry your name, and you'll see your own.", "Vous êtes dans la liste ?": "Are you on the list?", "Sinon, votre prénom": "Otherwise, your first name", "Vous êtes": "You are", "Rejoindre": "Join", "Plus tard": "Later", "Tutoriel": "Tour", "C'est parti !": "Let's go!", "Suivant": "Next", "Bienvenue, {n} !": "Welcome, {n}!", "Indiquez votre prénom.": "Enter your first name.", "Toucher encore pour confirmer": "Tap again to confirm", "Message copié": "Message copied", "Changer la photo": "Change photo", "Ajouter une photo": "Add a photo", "Oui, m'alerter": "Yes, alert me", "À l'heure de chaque balade, repas ou médicament.": "At the time of each walk, meal or medication.", "Non merci": "No thanks", "Vous pourrez les activer dans Réglages.": "You can turn them on in Settings.", "Recevoir des alertes ?": "Get alerts?", "Une bannière, une vibration et un petit son à l'heure de chaque tâche, tant que le carnet est ouvert.": "A banner, a vibration and a little sound when each task is due, while the logbook is open.", "De la famille": "Family", "La personne qui le garde": "The dog sitter", "Votre journée": "Your day", "L'anneau se remplit à chaque tâche cochée. Juste à côté : la prochaine tâche et le temps qu'il reste.": "The ring fills up with every task you tick. Right next to it: the next task and how long until it's due.", "Tableau de bord": "Dashboard", "Médicaments, croquettes, rendez-vous : touchez une tuile pour aller au bon endroit.": "Medications, kibble, appointments: tap a tile to jump to the right place.", "Cocher une tâche": "Tick a task", "Touchez le rond à droite quand c'est fait. La famille le voit tout de suite, signé à votre nom.": "Tap the circle on the right when it's done. The family sees it right away, signed with your name.", "Le soir, notez l'appétit, l'énergie et les selles. Le bilan vous donne des conseils adaptés à sa race.": "In the evening, note appetite, energy and stools. The summary gives you tips suited to their breed.", "Le planning de la semaine. Ajoutez une activité et choisissez qui s'en occupe.": "The weekly schedule. Add an activity and choose who handles it.", "Traitements, stock de croquettes, rendez-vous, poids et résumé pour le vétérinaire.": "Treatments, kibble stock, appointments, weight and a summary for the vet.", "Son double en 3D : il est en forme quand vous vous occupez bien de lui, et il évolue.": "Their 3D twin: it's in great shape when you take good care of your dog, and it evolves.", "Profil et réglages": "Profile and settings", "La fiche du chien. Dans Réglages : la famille, le mode garde, les alertes et la langue.": "The dog's profile. In Settings: family, sitter mode, alerts and language."});
+Object.assign(HR, {"Aide": "Pomoć", "Revoir le tutoriel": "Ponovno pogledaj vodič", "Relancer l'assistant de départ": "Ponovno pokreni čarobnjak za postavljanje", "Pour un nouveau chien : remplace la fiche actuelle.": "Za novog psa: zamjenjuje trenutačni profil.", "C'est vous": "To ste vi", "A rejoint": "Pridružio/la se", "Pas encore rejoint": "Još se nije pridružio/la", "Inviter quelqu'un": "Pozovi nekoga", "Rejoins le carnet de {n} : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.": "Pridruži se dnevniku za {n}: otvori ovu poveznicu, odaberi svoje ime i označi šetnje i obroke kad ih obaviš.", "notre chien": "našeg psa", "Touchez « Partager » en haut de cette page": "Dodirnite „Podijeli” na vrhu stranice", "Ajoutez son adresse e-mail.": "Dodajte njegovu ili njezinu e-adresu.", "Choisissez son rôle": "Odaberite ulogu", "Éditeur pour la famille (peut tout modifier). Contributeur pour la personne qui garde le chien (peut seulement cocher).": "Urednik za obitelj (može sve mijenjati). Suradnik za osobu koja čuva psa (može samo označavati zadatke).", "À sa première visite": "Pri prvom posjetu", "Le carnet lui demande son prénom et l'ajoute à la famille.": "Dnevnik pita za ime i dodaje osobu u obitelj.", "Copier le message d'invitation": "Kopiraj poruku pozivnice", "Balade du matin": "Jutarnja šetnja", "Sortie de midi": "Podnevni izlazak", "Balade du soir": "Večernja šetnja", "Dernière sortie": "Posljednji izlazak", "Petit-déjeuner": "Doručak", "Dîner": "Večera", "Déjeuner": "Ručak", "Goûter": "Užina", "Jeu et éducation": "Igra i dresura", "Brossage": "Četkanje", "Brossage des dents": "Pranje zubi", "Bienvenue dans le carnet de votre chien": "Dobro došli u dnevnik vašeg psa", "En quelques étapes : son profil, sa journée type, son vétérinaire et la famille. Tout pourra être modifié ensuite.": "U nekoliko koraka: profil, uobičajeni dan, veterinar i obitelj. Sve se kasnije može promijeniti.", "Voir d'abord un exemple": "Najprije pogledaj primjer", "Comment s'appelle votre chien ?": "Kako se zove vaš pas?", "Son nom": "Ime", "Quelle est la race de {n} ?": "Koje je pasmine {n}?", "Autre race": "Druga pasmina", "Tapez la race": "Upišite pasminu", "Parlez-nous de {n}": "Recite nam nešto o psu {n}", "Date de naissance": "Datum rođenja", "Que mange {n} ?": "Što jede {n}?", "La journée type de {n}": "Uobičajeni dan – {n}", "Gardez ce qui correspond et ajustez les heures. Vous pourrez tout changer dans Routine.": "Zadržite ono što odgovara i prilagodite vrijeme. Sve možete promijeniti u Rutini.", "Son vétérinaire": "Veterinar", "Utile en cas d'urgence et pour la personne qui le garde.": "Korisno u hitnim slučajevima i osobi koja čuva psa.", "Qui s'occupe de {n} ?": "Tko se brine za psa {n}?", "Chacun pourra cocher les tâches avec son prénom et recevoir les siennes.": "Svatko može označavati zadatke pod svojim imenom i primati svoje podsjetnike.", "Votre prénom": "Vaše ime", "Les autres membres": "Ostali članovi", "Pour qu'ils aient accès au carnet : touchez Partager en haut de la page et invitez-les par e-mail. À leur première visite, ils choisissent leur prénom et rejoignent la famille.": "Da bi dobili pristup: dodirnite Podijeli na vrhu stranice i pozovite ih e-poštom. Pri prvom posjetu odaberu svoje ime i pridruže se obitelji.", "Configuration": "Postavljanje", "Retour": "Natrag", "Passer": "Preskoči", "Création du carnet…": "Stvaranje dnevnika…", "Commencer": "Započni", "Terminer": "Završi", "Continuer": "Nastavi", "Rejoindre la famille": "Pridruži se obitelji", "Rejoindre la famille de {n}": "Pridružite se obitelji psa {n}", "Dites-nous qui vous êtes : les tâches que vous cochez seront signées à votre nom, et vous verrez les vôtres.": "Recite nam tko ste: zadaci koje označite nosit će vaše ime, a vidjet ćete i svoje.", "Vous êtes dans la liste ?": "Jeste li na popisu?", "Sinon, votre prénom": "Ako niste, vaše ime", "Vous êtes": "Vi ste", "Rejoindre": "Pridruži se", "Plus tard": "Kasnije", "Tutoriel": "Vodič", "C'est parti !": "Krenimo!", "Suivant": "Dalje", "Bienvenue, {n} !": "Dobro došli, {n}!", "Indiquez votre prénom.": "Upišite svoje ime.", "Toucher encore pour confirmer": "Dodirnite ponovno za potvrdu", "Message copié": "Poruka kopirana", "Changer la photo": "Promijeni fotografiju", "Ajouter une photo": "Dodaj fotografiju", "Oui, m'alerter": "Da, obavijesti me", "À l'heure de chaque balade, repas ou médicament.": "U vrijeme svake šetnje, obroka ili lijeka.", "Non merci": "Ne, hvala", "Vous pourrez les activer dans Réglages.": "Možete ih uključiti u Postavkama.", "Recevoir des alertes ?": "Primati podsjetnike?", "Une bannière, une vibration et un petit son à l'heure de chaque tâche, tant que le carnet est ouvert.": "Obavijest, vibracija i kratak zvuk u vrijeme svakog zadatka, dok je dnevnik otvoren.", "De la famille": "Član obitelji", "La personne qui le garde": "Osoba koja čuva psa", "Votre journée": "Vaš dan", "L'anneau se remplit à chaque tâche cochée. Juste à côté : la prochaine tâche et le temps qu'il reste.": "Krug se puni sa svakim označenim zadatkom. Odmah pokraj: sljedeći zadatak i koliko je vremena preostalo.", "Tableau de bord": "Pregled", "Médicaments, croquettes, rendez-vous : touchez une tuile pour aller au bon endroit.": "Lijekovi, granule, termini: dodirnite pločicu da odete na pravo mjesto.", "Cocher une tâche": "Označite zadatak", "Touchez le rond à droite quand c'est fait. La famille le voit tout de suite, signé à votre nom.": "Dodirnite krug desno kad je gotovo. Obitelj to odmah vidi, potpisano vašim imenom.", "Le soir, notez l'appétit, l'énergie et les selles. Le bilan vous donne des conseils adaptés à sa race.": "Navečer zabilježite apetit, energiju i stolicu. Pregled vam daje savjete prilagođene pasmini.", "Le planning de la semaine. Ajoutez une activité et choisissez qui s'en occupe.": "Tjedni raspored. Dodajte aktivnost i odaberite tko je zadužen.", "Traitements, stock de croquettes, rendez-vous, poids et résumé pour le vétérinaire.": "Terapije, zalihe granula, termini, težina i sažetak za veterinara.", "Son double en 3D : il est en forme quand vous vous occupez bien de lui, et il évolue.": "Njegov 3D dvojnik: u formi je kad se dobro brinete o psu i razvija se.", "Profil et réglages": "Profil i postavke", "La fiche du chien. Dans Réglages : la famille, le mode garde, les alertes et la langue.": "Profil psa. U Postavkama: obitelj, način čuvanja, podsjetnici i jezik."});
+Object.assign(EN, {"Traitements":"Treatments","Nourriture":"Food","Rendez-vous":"Appointments","Suivi":"Tracking","Ajouter un médicament":"Add a medication","Ajouter un rendez-vous":"Add an appointment","Ajouter la première activité":"Add the first activity","Indiquez la taille du sac et le jour où vous l'avez ouvert : le carnet calcule ce qu'il reste et vous prévient avant la fin.":"Enter the bag size and the day you opened it: the log works out what's left and warns you before it runs out.","Suivre le stock de croquettes":"Track the kibble stock","Indiquez la ration quotidienne en grammes pour calculer le stock.":"Enter the daily ration in grams to work out the stock.","Compléter":"Complete","Stock de croquettes":"Kibble stock","jours":"days","Fin prévue le {d}":"Runs out around {d}","Ouvert le {d}":"Opened {d}","{g} g par jour":"{g} g a day","J'ai ouvert un nouveau sac":"I opened a new bag","Le calcul suit la ration et les repas cochés aujourd'hui. Pensez à racheter quand il reste une semaine.":"Based on the ration and today's ticked meals. Buy more when a week is left.","Taille du sac":"Bag size","Autre taille en kg":"Other size in kg","Ouvert le":"Opened on","Ration par jour (g)":"Daily ration (g)","La ration du profil est reprise si vous la laissez telle quelle.":"The profile ration is used if you leave it as is.","Indiquez la taille du sac, la date d'ouverture et la ration.":"Enter the bag size, opening date and ration.","Tâches":"Tasks","Tout est fait":"All done","{n} restante(s)":"{n} left","Médicaments":"Medication","prises aujourd'hui":"doses today","Aucun en cours":"None ongoing","Croquettes":"Kibble","j":"d","de stock":"in stock","À configurer":"Set up","Aucun prévu":"None planned","Fin de journée":"End of day","Journal et bilan, à remplir le soir":"Log and summary, to fill in the evening","Croquettes : plus que ~{n} jours":"Kibble: only ~{n} days left","Réglages":"Settings","Famille, chien sous garde, notifications, langue":"Family, pet sitting, notifications, language","Confirmer : nouveau sac aujourd'hui":"Confirm: new bag today","Nouveau sac enregistré":"New bag recorded"});
+Object.assign(HR, {"Traitements":"Terapije","Nourriture":"Hrana","Rendez-vous":"Termini","Suivi":"Praćenje","Ajouter un médicament":"Dodaj lijek","Ajouter un rendez-vous":"Dodaj termin","Ajouter la première activité":"Dodaj prvu aktivnost","Indiquez la taille du sac et le jour où vous l'avez ouvert : le carnet calcule ce qu'il reste et vous prévient avant la fin.":"Unesite veličinu vreće i dan otvaranja: dnevnik izračuna koliko je ostalo i upozori vas prije kraja.","Suivre le stock de croquettes":"Prati zalihu granula","Indiquez la ration quotidienne en grammes pour calculer le stock.":"Unesite dnevni obrok u gramima za izračun zalihe.","Compléter":"Dopuni","Stock de croquettes":"Zaliha granula","jours":"dana","Fin prévue le {d}":"Kraj oko {d}","Ouvert le {d}":"Otvoreno {d}","{g} g par jour":"{g} g dnevno","J'ai ouvert un nouveau sac":"Otvorio/la sam novu vreću","Le calcul suit la ration et les repas cochés aujourd'hui. Pensez à racheter quand il reste une semaine.":"Izračun prati obrok i današnje označene obroke. Kupite novu kad ostane tjedan dana.","Taille du sac":"Veličina vreće","Autre taille en kg":"Druga veličina u kg","Ouvert le":"Otvoreno","Ration par jour (g)":"Dnevni obrok (g)","La ration du profil est reprise si vous la laissez telle quelle.":"Koristi se obrok iz profila ako ga ne promijenite.","Indiquez la taille du sac, la date d'ouverture et la ration.":"Unesite veličinu vreće, datum otvaranja i obrok.","Tâches":"Zadaci","Tout est fait":"Sve obavljeno","{n} restante(s)":"preostalo: {n}","Médicaments":"Lijekovi","prises aujourd'hui":"doza danas","Aucun en cours":"Nema u tijeku","Croquettes":"Granule","j":"d.","de stock":"zalihe","À configurer":"Postavite","Aucun prévu":"Nema zakazanih","Fin de journée":"Kraj dana","Journal et bilan, à remplir le soir":"Dnevnik i pregled, ispuniti navečer","Croquettes : plus que ~{n} jours":"Granule: još samo ~{n} dana","Réglages":"Postavke","Famille, chien sous garde, notifications, langue":"Obitelj, čuvanje, obavijesti, jezik","Confirmer : nouveau sac aujourd'hui":"Potvrdi: nova vreća danas","Nouveau sac enregistré":"Nova vreća spremljena"});
+Object.assign(EN, {"Recevoir des alertes ?":"Get alerts?","Une bannière, une vibration et un petit son à l'heure de chaque tâche, tant que le carnet est ouvert.":"A banner, a vibration and a little sound when each task is due, while the log is open.","Non merci":"No thanks","Activer":"Turn on","Alertes activées":"Alerts turned on","Vous pourrez les activer dans Profil.":"You can turn them on later in Profile."});
+Object.assign(HR, {"Recevoir des alertes ?":"Primati upozorenja?","Une bannière, une vibration et un petit son à l'heure de chaque tâche, tant que le carnet est ouvert.":"Obavijest, vibracija i kratki zvuk u vrijeme svakog zadatka, dok je dnevnik otvoren.","Non merci":"Ne, hvala","Activer":"Uključi","Alertes activées":"Upozorenja uključena","Vous pourrez les activer dans Profil.":"Možete ih uključiti kasnije u Profilu."});
+Object.assign(EN, {"Résumé pour le vétérinaire":"Vet summary","30 derniers jours : journal, traitements, poids, notes":"Last 30 days: log, treatments, weight, notes","7 derniers jours":"Last 7 days","Part des tâches cochées chaque jour, sans compter aujourd'hui. Touchez une barre pour ouvrir le jour.":"Share of tasks ticked each day, not counting today. Tap a bar to open that day.","Ajoutez les membres de la famille dans Profil pour répartir les tâches.":"Add family members in Profile to share out tasks.","Tout le monde":"Everyone","Qui fait quoi":"Who does what","Ajoutez les membres de la famille pour répartir les tâches et voir qui s'occupe de quoi.":"Add family members to share out tasks and see who takes care of what.","Ajouter la famille":"Add the family","{n} faite(s)":"{n} done","{p} prévue(s)":"{p} planned","Sans nom":"No name","{n} tâche(s) cochée(s) cette semaine. {u} tâche(s) à venir n'ont personne d'attitré.":"{n} task(s) ticked this week. {u} upcoming task(s) have no one assigned.","Famille":"Family","C'est vous sur cet appareil":"That's you on this device","Moi":"Me","C'est moi":"That's me","Retirer":"Remove","Prénom":"First name","Les tâches que vous cochez sont signées « {n} ».":"Tasks you tick are signed “{n}”.","Choisissez « C'est moi » pour signer vos tâches et filtrer les vôtres.":"Choose “That's me” to sign your tasks and filter yours.","Dose":"Dose","Période":"Period","Prises":"Doses given","en cours":"ongoing","Journal rempli {n} jour(s) sur 30.":"Log filled in on {n} of 30 days.","Aucune note.":"No notes.","fait":"done","prévu":"planned","Traitements":"Treatments","Prises oubliées":"Missed doses","Journal (30 jours)":"Log (30 days)","Soins réalisés":"Care completed","Observations":"Observations","Rendez-vous":"Appointments","Télécharger le résumé":"Download the summary","Copier le texte":"Copy the text","À montrer en consultation ou à envoyer au cabinet. Rien n'est partagé sans votre action.":"Show it at the appointment or send it to the practice. Nothing is shared unless you do it.","C'est l'heure":"It's time","+{n} autre(s)":"+{n} more","Fermer":"Close","Notifications":"Notifications","Alertes à l'heure des tâches":"Alerts at task time","Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.":"Banner and vibration when a task is due, while the log is open.","Son":"Sound","Tester une alerte":"Test an alert","Pour être prévenu même carnet fermé, demandez à Claude d'ajouter la routine et les médicaments à l'app Rappels de votre téléphone.":"To be alerted even when the log is closed, ask Claude to add the routine and medication to your phone's Reminders app.","Remplissez le journal du jour (appétit, énergie, selles).":"Fill in today's log (appetite, energy, stools).","Donnez {m} prévu à {t}.":"Give {m}, due at {t}.","Tout est à jour. Continuez à noter le journal chaque jour.":"All up to date. Keep filling in the log every day.","Faites « {m} » ({t}) et cochez-la.":"Do “{m}” ({t}) and tick it.","Ajoutez un moment de jeu ou d'éducation à la routine.":"Add some play or training time to the routine.","Les balades sont à jour. Bravo !":"Walks are up to date. Well done!","Servez « {m} » ({t}) et cochez-le.":"Serve “{m}” ({t}) and tick it.","Ajoutez les repas à la routine.":"Add the meals to the routine.","Les repas sont à jour.":"Meals are up to date.","La santé vient du journal des 3 derniers jours et des médicaments donnés à l'heure.":"Health comes from the last 3 days of the log and medication given on time.","Le bonheur vient des balades et des jeux cochés sur 7 jours.":"Happiness comes from walks and play ticked over 7 days.","Le ventre plein vient des repas cochés sur 7 jours.":"Full tummy comes from meals ticked over 7 days.","Badge obtenu":"Badge earned","Pas encore obtenu":"Not earned yet","Qui s'en occupe ?":"Who takes care of it?","Qui le donne ?":"Who gives it?","Résumé copié":"Summary copied","Copie impossible sur cet appareil.":"Copying isn't possible on this device.","resume-veterinaire":"vet-summary","Résumé téléchargé":"Summary downloaded","Téléchargement impossible ici. Utilisez « Copier le texte ».":"Download isn't available here. Use “Copy the text”.","Enregistré sur cet appareil":"Saved on this device","Confirmer":"Confirm","Exemple d'alerte":"Example alert","Ce prénom est déjà dans la famille.":"That name is already in the family.","Cochez toutes les tâches 3 jours de suite.":"Tick every task 3 days in a row.","Cochez toutes les tâches 7 jours de suite.":"Tick every task 7 days in a row.","Ne manquez aucune balade pendant 7 jours.":"Don't miss a walk for 7 days.","Donnez tous les médicaments à l'heure pendant 7 jours.":"Give every medication on time for 7 days.","Remplissez appétit, énergie et selles 5 jours.":"Fill in appetite, energy and stools on 5 days.","Enregistrez 3 pesées dans Santé.":"Record 3 weigh-ins in Health.","Toutes les tâches":"All tasks","Les miennes":"Mine"});
+Object.assign(HR, {"Résumé pour le vétérinaire":"Sažetak za veterinara","30 derniers jours : journal, traitements, poids, notes":"Zadnjih 30 dana: dnevnik, terapije, težina, bilješke","7 derniers jours":"Zadnjih 7 dana","Part des tâches cochées chaque jour, sans compter aujourd'hui. Touchez une barre pour ouvrir le jour.":"Udio označenih zadataka po danu, bez današnjeg. Dodirnite stupac za otvaranje dana.","Ajoutez les membres de la famille dans Profil pour répartir les tâches.":"Dodajte članove obitelji u Profilu za raspodjelu zadataka.","Tout le monde":"Svi","Qui fait quoi":"Tko što radi","Ajoutez les membres de la famille pour répartir les tâches et voir qui s'occupe de quoi.":"Dodajte članove obitelji za raspodjelu zadataka i pregled tko se o čemu brine.","Ajouter la famille":"Dodaj obitelj","{n} faite(s)":"obavljeno: {n}","{p} prévue(s)":"planirano: {p}","Sans nom":"Bez imena","{n} tâche(s) cochée(s) cette semaine. {u} tâche(s) à venir n'ont personne d'attitré.":"Ovaj tjedan označeno zadataka: {n}. Nadolazećih zadataka bez zaduženog: {u}.","Famille":"Obitelj","C'est vous sur cet appareil":"To ste vi na ovom uređaju","Moi":"Ja","C'est moi":"To sam ja","Retirer":"Ukloni","Prénom":"Ime","Les tâches que vous cochez sont signées « {n} ».":"Zadaci koje označite potpisani su kao „{n}”.","Choisissez « C'est moi » pour signer vos tâches et filtrer les vôtres.":"Odaberite „To sam ja” da potpisujete zadatke i filtrirate svoje.","Dose":"Doza","Période":"Razdoblje","Prises":"Dane doze","en cours":"u tijeku","Journal rempli {n} jour(s) sur 30.":"Dnevnik ispunjen {n} od 30 dana.","Aucune note.":"Nema bilješki.","fait":"obavljeno","prévu":"planirano","Traitements":"Terapije","Prises oubliées":"Propuštene doze","Journal (30 jours)":"Dnevnik (30 dana)","Soins réalisés":"Obavljena njega","Observations":"Zapažanja","Rendez-vous":"Termini","Télécharger le résumé":"Preuzmi sažetak","Copier le texte":"Kopiraj tekst","À montrer en consultation ou à envoyer au cabinet. Rien n'est partagé sans votre action.":"Pokažite ga na pregledu ili pošaljite ambulanti. Ništa se ne dijeli bez vaše radnje.","C'est l'heure":"Vrijeme je","+{n} autre(s)":"+{n} još","Fermer":"Zatvori","Notifications":"Obavijesti","Alertes à l'heure des tâches":"Upozorenja u vrijeme zadatka","Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.":"Obavijest i vibracija kad dođe vrijeme zadatka, dok je dnevnik otvoren.","Son":"Zvuk","Tester une alerte":"Isprobaj upozorenje","Pour être prévenu même carnet fermé, demandez à Claude d'ajouter la routine et les médicaments à l'app Rappels de votre téléphone.":"Za obavijesti i kad je dnevnik zatvoren, zamolite Claudea da doda raspored i lijekove u aplikaciju Podsjetnici na telefonu.","Remplissez le journal du jour (appétit, énergie, selles).":"Ispunite današnji dnevnik (apetit, energija, stolica).","Donnez {m} prévu à {t}.":"Dajte {m} predviđen u {t}.","Tout est à jour. Continuez à noter le journal chaque jour.":"Sve je ažurno. Nastavite svaki dan ispunjavati dnevnik.","Faites « {m} » ({t}) et cochez-la.":"Obavite „{m}” ({t}) i označite.","Ajoutez un moment de jeu ou d'éducation à la routine.":"Dodajte vrijeme za igru ili dresuru u raspored.","Les balades sont à jour. Bravo !":"Šetnje su ažurne. Bravo!","Servez « {m} » ({t}) et cochez-le.":"Poslužite „{m}” ({t}) i označite.","Ajoutez les repas à la routine.":"Dodajte obroke u raspored.","Les repas sont à jour.":"Obroci su ažurni.","La santé vient du journal des 3 derniers jours et des médicaments donnés à l'heure.":"Zdravlje dolazi iz dnevnika zadnja 3 dana i lijekova danih na vrijeme.","Le bonheur vient des balades et des jeux cochés sur 7 jours.":"Sreća dolazi iz šetnji i igre označenih u 7 dana.","Le ventre plein vient des repas cochés sur 7 jours.":"Pun trbuh dolazi iz obroka označenih u 7 dana.","Badge obtenu":"Značka osvojena","Pas encore obtenu":"Još nije osvojena","Qui s'en occupe ?":"Tko je zadužen?","Qui le donne ?":"Tko ga daje?","Résumé copié":"Sažetak kopiran","Copie impossible sur cet appareil.":"Kopiranje nije moguće na ovom uređaju.","resume-veterinaire":"sazetak-veterinar","Résumé téléchargé":"Sažetak preuzet","Téléchargement impossible ici. Utilisez « Copier le texte ».":"Preuzimanje ovdje nije moguće. Koristite „Kopiraj tekst”.","Enregistré sur cet appareil":"Spremljeno na ovom uređaju","Confirmer":"Potvrdi","Exemple d'alerte":"Primjer upozorenja","Ce prénom est déjà dans la famille.":"To ime već postoji u obitelji.","Cochez toutes les tâches 3 jours de suite.":"Označite sve zadatke 3 dana zaredom.","Cochez toutes les tâches 7 jours de suite.":"Označite sve zadatke 7 dana zaredom.","Ne manquez aucune balade pendant 7 jours.":"Ne propustite nijednu šetnju 7 dana.","Donnez tous les médicaments à l'heure pendant 7 jours.":"Dajte sve lijekove na vrijeme 7 dana.","Remplissez appétit, énergie et selles 5 jours.":"Ispunite apetit, energiju i stolicu 5 dana.","Enregistrez 3 pesées dans Santé.":"Unesite 3 vaganja u Zdravlju.","Toutes les tâches":"Svi zadaci","Les miennes":"Moji"});
+
+Object.assign(EN, {"Rejoins le carnet de {n} sur Dogs Life : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.": "Join {n}'s logbook on Dogs Life: open this link, pick your name and tick off walks and meals when you take care of them.",
+  "Le programme de {n}": "{n}'s schedule", "Le {d} de {n}": "{n}'s {d}", "activités": "activities", "À suivre : {t} à {h}": "Up next: {t} at {h}", "À suivre": "Up next", "Maintenant": "Now", "dans {t}": "in {t}",
+  "Plus rien de prévu aujourd'hui. Bonne nuit {n} !": "Nothing else planned today. Good night, {n}!", "Ajouter une activité le {d}": "Add an activity on {d}", "Journée tranquille : aucune activité le {d}.": "A quiet day: no activity on {d}.",
+  "La semaine en un coup d'œil": "The week at a glance", "{n} activités par semaine": "{n} activities a week", "Jour le plus chargé : {d}": "Busiest day: {d}",
+  "Prochain rendez-vous": "Next appointment", "jours": "days", "{n} rendez-vous en retard": "{n} overdue appointment(s)", "le chien": "the dog"});
+Object.assign(HR, {"Rejoins le carnet de {n} sur Dogs Life : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.": "Pridruži se dnevniku za {n} na Dogs Life: otvori ovu poveznicu, odaberi svoje ime i označi šetnje i obroke kad se pobrineš za njih.",
+  "Le programme de {n}": "Raspored za {n}", "Le {d} de {n}": "{n} – {d}", "activités": "aktivnosti", "À suivre : {t} à {h}": "Sljedeće: {t} u {h}", "À suivre": "Sljedeće", "Maintenant": "Sada", "dans {t}": "za {t}",
+  "Plus rien de prévu aujourd'hui. Bonne nuit {n} !": "Danas više ništa nije planirano. Laku noć, {n}!", "Ajouter une activité le {d}": "Dodaj aktivnost ({d})", "Journée tranquille : aucune activité le {d}.": "Miran dan: nema aktivnosti ({d}).",
+  "La semaine en un coup d'œil": "Tjedan na prvi pogled", "{n} activités par semaine": "{n} aktivnosti tjedno", "Jour le plus chargé : {d}": "Najužurbaniji dan: {d}",
+  "Prochain rendez-vous": "Sljedeći termin", "jours": "dana", "{n} rendez-vous en retard": "Zakašnjelih termina: {n}", "le chien": "pas"});
+
+Object.assign(EN, {"Programme":"Program","Commandes":"Commands","commandes":"commands","fiables":"reliable","réussite 7 j":"7-day success","Nouvelle":"New","En apprentissage":"Learning","Fiable":"Reliable",
+  "Apprenez-lui vos commandes":"Teach your commands","Ajoutez une commande comme « Assis », puis notez chaque essai : {n} a obéi ou pas encore. Dogs Life suit ses progrès jusqu'à ce qu'elle soit fiable.":"Add a command like “Sit”, then log every try: {n} obeyed or not yet. Dogs Life tracks the progress until it's reliable.",
+  "Ajouter une commande":"Add a command","{p} % de réussite":"{p}% success","{n} essai(s) aujourd'hui":"{n} tr(ies) today","Pas encore entraînée":"Not trained yet",
+  "Une commande devient fiable avec {a} réussites sur les {b} derniers essais.":"A command becomes reliable with {a} successes in the last {b} tries.",
+  "{a} réussites sur les {b} derniers essais":"{a} successes in the last {b} tries","Bravo ! {n} connaît cette commande.":"Well done! {n} knows this command.","{a} réussi(s) sur {b} derniers essais":"{a} of the last {b} tries succeeded","{a} sur {b} essais, 7 j":"{a} of {b} tries, 7 d","{a}/{b} sur 7 jours":"{a}/{b} in 7 days","Fiable = au moins {a} réussites sur les {b} derniers essais, faits sur {d} jours différents ou plus. Les pourcentages ne s'affichent qu'à partir de {m} essais.":"Reliable = at least {a} successes in the last {b} tries, done over {d} or more different days. Percentages only show from {m} tries.","{a} réussites sur 10, mais sur {d} jour(s) seulement : continuez sur au moins {n} jours.":"{a} successes out of 10, but over only {d} day(s): keep going over at least {n} days.","{a} réussi(s) sur {b} derniers essais · objectif {g} sur 10, sur {d} jours":"{a} of the last {b} tries succeeded · goal {g} of 10, over {d} days","{a} réussites sur les {b} derniers essais · objectif {g}":"{a} successes in the last {b} tries · goal {g}",
+  "A obéi":"Obeyed","Pas encore":"Not yet","Sur 7 jours":"Last 7 days","Jours d'affilée":"Days in a row","Annuler le dernier essai":"Undo last try","Geste":"Hand signal","Comment l'entraîner":"How to train it",
+  "Séances courtes, récompense tout de suite après l'obéissance. Arrêtez sur une réussite.":"Short sessions, reward right after the dog obeys. Stop on a success.","Modifier la commande":"Edit command","Terminé":"Done",
+  "Bravo ! « {c} » est maintenant fiable":"Well done! “{c}” is now reliable","Nouvelle commande":"New command","Commande":"Command","Ex. : Assis":"E.g. Sit","Geste (facultatif)":"Hand signal (optional)","Ex. : main ouverte levée":"E.g. raised open hand",
+  "Comment l'entraîner (facultatif)":"How to train it (optional)","Ce qui marche avec lui, la récompense préférée…":"What works, favourite reward…","Toute la famille utilise le même mot et le même geste : c'est ce qui l'aide le plus.":"Everyone in the family uses the same word and the same signal: that helps most.",
+  "Donnez un nom à la commande.":"Give the command a name.","« {c} » ajoutée. Touchez-la pour l'entraîner.":"“{c}” added. Tap it to train.","Commande supprimée":"Command deleted","{n} commande(s) · {f} fiable(s)":"{n} command(s) · {f} reliable",
+  "Assis":"Sit","Couché":"Down","Pas bouger":"Stay","Viens":"Come","Au pied":"Heel","Donne la patte":"Shake","Lâche":"Drop it","Laisse":"Leave it","Panier":"Bed","Attends":"Wait","Tourne":"Spin","Check":"High five"});
+Object.assign(HR, {"Programme":"Program","Commandes":"Naredbe","commandes":"naredbe","fiables":"pouzdane","réussite 7 j":"uspjeh 7 d","Nouvelle":"Nova","En apprentissage":"U učenju","Fiable":"Pouzdana",
+  "Apprenez-lui vos commandes":"Naučite ga svoje naredbe","Ajoutez une commande comme « Assis », puis notez chaque essai : {n} a obéi ou pas encore. Dogs Life suit ses progrès jusqu'à ce qu'elle soit fiable.":"Dodajte naredbu poput „Sjedni“, zatim bilježite svaki pokušaj: {n} je poslušao ili još ne. Dogs Life prati napredak dok naredba ne postane pouzdana.",
+  "Ajouter une commande":"Dodaj naredbu","{p} % de réussite":"{p} % uspjeha","{n} essai(s) aujourd'hui":"Pokušaja danas: {n}","Pas encore entraînée":"Još nije vježbana",
+  "Une commande devient fiable avec {a} réussites sur les {b} derniers essais.":"Naredba postaje pouzdana s {a} uspjeha u zadnjih {b} pokušaja.",
+  "{a} réussites sur les {b} derniers essais":"{a} uspjeha u zadnjih {b} pokušaja","Bravo ! {n} connaît cette commande.":"Bravo! {n} zna ovu naredbu.","{a} réussi(s) sur {b} derniers essais":"Uspjelo {a} od zadnjih {b} pokušaja","{a} sur {b} essais, 7 j":"{a} od {b} pokušaja, 7 d","{a}/{b} sur 7 jours":"{a}/{b} u 7 dana","Fiable = au moins {a} réussites sur les {b} derniers essais, faits sur {d} jours différents ou plus. Les pourcentages ne s'affichent qu'à partir de {m} essais.":"Pouzdana = najmanje {a} uspjeha u zadnjih {b} pokušaja, kroz {d} ili više različitih dana. Postoci se prikazuju tek od {m} pokušaja.","{a} réussites sur 10, mais sur {d} jour(s) seulement : continuez sur au moins {n} jours.":"{a} uspjeha od 10, ali samo kroz {d} dan(a): nastavite kroz najmanje {n} dana.","{a} réussi(s) sur {b} derniers essais · objectif {g} sur 10, sur {d} jours":"Uspjelo {a} od zadnjih {b} pokušaja · cilj {g} od 10, kroz {d} dana","{a} réussites sur les {b} derniers essais · objectif {g}":"{a} uspjeha u zadnjih {b} pokušaja · cilj {g}",
+  "A obéi":"Poslušao","Pas encore":"Još ne","Sur 7 jours":"Zadnjih 7 dana","Jours d'affilée":"Dana zaredom","Annuler le dernier essai":"Poništi zadnji pokušaj","Geste":"Gesta","Comment l'entraîner":"Kako vježbati",
+  "Séances courtes, récompense tout de suite après l'obéissance. Arrêtez sur une réussite.":"Kratki treninzi, nagrada odmah nakon poslušnosti. Završite na uspjehu.","Modifier la commande":"Uredi naredbu","Terminé":"Gotovo",
+  "Bravo ! « {c} » est maintenant fiable":"Bravo! „{c}“ je sada pouzdana","Nouvelle commande":"Nova naredba","Commande":"Naredba","Ex. : Assis":"Npr. Sjedni","Geste (facultatif)":"Gesta (neobavezno)","Ex. : main ouverte levée":"Npr. podignuta otvorena ruka",
+  "Comment l'entraîner (facultatif)":"Kako vježbati (neobavezno)","Ce qui marche avec lui, la récompense préférée…":"Što djeluje, omiljena nagrada…","Toute la famille utilise le même mot et le même geste : c'est ce qui l'aide le plus.":"Cijela obitelj koristi istu riječ i istu gestu: to mu najviše pomaže.",
+  "Donnez un nom à la commande.":"Dajte naredbi ime.","« {c} » ajoutée. Touchez-la pour l'entraîner.":"„{c}“ dodana. Dodirnite je za vježbu.","Commande supprimée":"Naredba izbrisana","{n} commande(s) · {f} fiable(s)":"Naredbi: {n} · pouzdanih: {f}",
+  "Assis":"Sjedni","Couché":"Lezi","Pas bouger":"Ostani","Viens":"Dođi","Au pied":"Uz nogu","Donne la patte":"Daj šapu","Lâche":"Pusti","Laisse":"Ostavi","Panier":"Mjesto","Attends":"Čekaj","Tourne":"Okreni se","Check":"Daj pet"});
+
+Object.assign(EN, {"Adulte selon la race (estimation)":"Adult for the breed (estimate)"});
+Object.assign(HR, {"Adulte selon la race (estimation)":"Odrasli za pasminu (procjena)"});
+
+Object.assign(EN, {"Créer une famille":"Create a family","Vous créez le carnet de votre chien et invitez vos proches.":"Set up your dog's logbook and invite your people.","Rejoindre une famille":"Join a family","Quelqu'un vous a donné un code.":"Someone gave you a code.",
+  "Profil":"Profile","Votre compte":"Your account","Votre famille":"Your family","Une famille regroupe un chien et les personnes qui s'en occupent. Vous pourrez inviter d'autres personnes ensuite.":"A family brings together a dog and the people who look after it. You can invite others later.",
+  "Bienvenue, {n}":"Welcome, {n}","Bienvenue sur Dogs Life":"Welcome to Dogs Life","Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.":"Your account is ready. To start, create your dog's family or join your people's.",
+  "Repas, balades et soins, cochés par toute la famille.":"Meals, walks and care, ticked off by the whole family.","Vaccins, traitements, poids et rendez-vous.":"Vaccines, treatments, weight and appointments.","Messages et tâches partagées.":"Messages and shared tasks.",
+  "Pas encore de famille":"No family yet","Créez ou rejoignez une famille depuis votre profil pour voir cette page.":"Create or join a family from your profile to see this page.","Aller au profil":"Go to profile",
+  "Code reçu":"Code received","Votre prénom":"Your first name","Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.":"The person inviting you finds the code in Family → Add someone.","Entrez le code.":"Enter the code.","Indiquez votre prénom.":"Enter your first name.","Rejoindre":"Join",
+  "Créons le carnet de votre chien":"Let's set up your dog's logbook","4 étapes rapides. Tout se modifie ensuite.":"4 quick steps. You can change everything later."});
+Object.assign(HR, {"Créer une famille":"Stvori obitelj","Vous créez le carnet de votre chien et invitez vos proches.":"Izradite dnevnik svog psa i pozovite bližnje.","Rejoindre une famille":"Pridruži se obitelji","Quelqu'un vous a donné un code.":"Netko vam je dao kod.",
+  "Profil":"Profil","Votre compte":"Vaš račun","Votre famille":"Vaša obitelj","Une famille regroupe un chien et les personnes qui s'en occupent. Vous pourrez inviter d'autres personnes ensuite.":"Obitelj okuplja psa i ljude koji se brinu o njemu. Kasnije možete pozvati druge.",
+  "Bienvenue, {n}":"Dobro došli, {n}","Bienvenue sur Dogs Life":"Dobro došli u Dogs Life","Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.":"Vaš račun je spreman. Za početak stvorite obitelj svog psa ili se pridružite obitelji bližnjih.",
+  "Repas, balades et soins, cochés par toute la famille.":"Obroci, šetnje i njega, koje označava cijela obitelj.","Vaccins, traitements, poids et rendez-vous.":"Cjepiva, terapije, težina i termini.","Messages et tâches partagées.":"Poruke i zajednički zadaci.",
+  "Pas encore de famille":"Još nema obitelji","Créez ou rejoignez une famille depuis votre profil pour voir cette page.":"Stvorite obitelj ili joj se pridružite u profilu da biste vidjeli ovu stranicu.","Aller au profil":"Idi na profil",
+  "Code reçu":"Primljeni kod","Votre prénom":"Vaše ime","Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.":"Osoba koja vas poziva nalazi kod u Obitelj → Dodaj nekoga.","Entrez le code.":"Unesite kod.","Indiquez votre prénom.":"Upišite svoje ime.","Rejoindre":"Pridruži se",
+  "Créons le carnet de votre chien":"Izradimo dnevnik vašeg psa","4 étapes rapides. Tout se modifie ensuite.":"4 brza koraka. Sve se može kasnije promijeniti."});
+
+Object.assign(EN, {"Quelqu'un":"Someone","Chargement…":"Loading…","Le compagnon 3D ne peut pas s'afficher sur cet appareil.":"The 3D companion can't be shown on this device."});
+Object.assign(HR, {"Quelqu'un":"Netko","Chargement…":"Učitavanje…","Le compagnon 3D ne peut pas s'afficher sur cet appareil.":"3D pratitelj ne može se prikazati na ovom uređaju."});
+
+Object.assign(EN, {"Tout ce que fait Dogs Life":"Everything Dogs Life does","Journal rapide":"Quick log","Pipi, balade, repas : un geste, l'heure et votre prénom sont notés.":"Pee, walk, meal: one tap, the time and your name are saved.",
+  "La routine de la semaine, les rappels à l'heure et qui s'en occupe.":"The weekly routine, on-time reminders and who's on duty.","Vaccins, traitements, poids, croissance et rendez-vous.":"Vaccines, treatments, weight, growth and appointments.",
+  "Pour le vétérinaire":"For the vet","Un résumé des 30 derniers jours, prêt à montrer.":"A 30-day summary, ready to show.","Messages, tâches partagées et activités en direct.":"Messages, shared tasks and live activity.",
+  "Éducation":"Training","Le programme du chiot et vos commandes à entraîner.":"The puppy program and your own commands to train.","Compagnon 3D":"3D companion","Son double en 3D, qui change d'humeur selon sa journée.":"A 3D twin whose mood follows the dog's day.",
+  "Une fiche et un accès dédiés pour la personne qui le garde.":"A dedicated sheet and access for the sitter.","Conseils adaptés à sa race, mode sombre, en français, anglais et croate.":"Breed-specific tips, dark mode, in French, English and Croatian."});
+Object.assign(HR, {"Tout ce que fait Dogs Life":"Sve što Dogs Life radi","Journal rapide":"Brzi dnevnik","Pipi, balade, repas : un geste, l'heure et votre prénom sont notés.":"Piškenje, šetnja, obrok: jedan dodir, bilježi se vrijeme i vaše ime.",
+  "La routine de la semaine, les rappels à l'heure et qui s'en occupe.":"Tjedna rutina, podsjetnici na vrijeme i tko je zadužen.","Vaccins, traitements, poids, croissance et rendez-vous.":"Cjepiva, terapije, težina, rast i termini.",
+  "Pour le vétérinaire":"Za veterinara","Un résumé des 30 derniers jours, prêt à montrer.":"Sažetak zadnjih 30 dana, spreman za pokazati.","Messages, tâches partagées et activités en direct.":"Poruke, zajednički zadaci i aktivnosti uživo.",
+  "Éducation":"Odgoj","Le programme du chiot et vos commandes à entraîner.":"Program za štene i vaše naredbe za vježbu.","Compagnon 3D":"3D pratitelj","Son double en 3D, qui change d'humeur selon sa journée.":"3D dvojnik čije raspoloženje prati dan psa.",
+  "Une fiche et un accès dédiés pour la personne qui le garde.":"Poseban list i pristup za osobu koja ga čuva.","Conseils adaptés à sa race, mode sombre, en français, anglais et croate.":"Savjeti za pasminu, tamni način, na francuskom, engleskom i hrvatskom."});
+
+Object.assign(EN, {"Pipi, balade, repas : un geste et c'est noté.":"Pee, walk, meal: one tap and it's logged.","Ses commandes, entraînées pas à pas.":"Their commands, trained step by step.","Son double, qui vit au rythme de sa journée.":"A twin that lives to the rhythm of their day."});
+Object.assign(HR, {"Pipi, balade, repas : un geste et c'est noté.":"Piškenje, šetnja, obrok: jedan dodir i zabilježeno je.","Ses commandes, entraînées pas à pas.":"Njegove naredbe, uvježbane korak po korak.","Son double, qui vit au rythme de sa journée.":"Dvojnik koji živi u ritmu njegova dana."});
+
+Object.assign(EN, {"Chaque sortie et chaque repas, notés en un geste.":"Every outing and meal, logged in one tap.","Une routine partagée, suivie par toute la famille.":"A shared routine the whole family follows.","Vaccins, traitements, poids et suivi vétérinaire.":"Vaccines, treatments, weight and vet follow-up.","Messagerie et répartition des tâches.":"Messaging and task sharing.","Suivi des apprentissages et des commandes.":"Training and command progress.","Un double 3D qui reflète son bien-être.":"A 3D twin that reflects their wellbeing."});
+Object.assign(HR, {"Chaque sortie et chaque repas, notés en un geste.":"Svaki izlazak i obrok, zabilježen jednim dodirom.","Une routine partagée, suivie par toute la famille.":"Zajednička rutina koju prati cijela obitelj.","Vaccins, traitements, poids et suivi vétérinaire.":"Cjepiva, terapije, težina i veterinarsko praćenje.","Messagerie et répartition des tâches.":"Poruke i raspodjela zadataka.","Suivi des apprentissages et des commandes.":"Praćenje učenja i naredbi.","Un double 3D qui reflète son bien-être.":"3D dvojnik koji odražava njegovu dobrobit."});
+
+Object.assign(EN, {"Voir plus":"See more","Voir moins":"See less","Un résumé de 30 jours, prêt à partager.":"A 30-day summary, ready to share.","Un accès dédié pour la personne qui le garde.":"Dedicated access for the dog-sitter."});
+Object.assign(HR, {"Voir plus":"Prikaži više","Voir moins":"Prikaži manje","Un résumé de 30 jours, prêt à partager.":"Sažetak od 30 dana, spreman za dijeljenje.","Un accès dédié pour la personne qui le garde.":"Poseban pristup za osobu koja ga čuva."});
+
+Object.assign(EN, {"Confirmer la déconnexion":"Confirm sign out"});
+Object.assign(HR, {"Confirmer la déconnexion":"Potvrdi odjavu"});
+
+Object.assign(EN, {"Déconnecté(e) de l'app":"Signed out of the app","{n} s'est déconnecté(e) de l'app. Ses tâches et sa place dans la famille sont gardées ; tout revient dès qu'il ou elle se reconnecte.":"{n} signed out of the app. Their tasks and place in the family are kept; everything comes back as soon as they sign in again."});
+Object.assign(HR, {"Déconnecté(e) de l'app":"Odjavljen(a) iz aplikacije","{n} s'est déconnecté(e) de l'app. Ses tâches et sa place dans la famille sont gardées ; tout revient dès qu'il ou elle se reconnecte.":"{n} se odjavio/la iz aplikacije. Zadaci i mjesto u obitelji su sačuvani; sve se vraća čim se ponovno prijavi."});
+
+Object.assign(EN, {"Météo des balades":"Walk weather","Le bon moment pour sortir, selon la météo et sa race.":"The right time to go out, based on the weather and the breed.","ressenti {t}°":"feels like {t}°","Votre position":"Your location",
+  "Chaud à {h} ({t}°) : sortez-le plutôt tôt le matin ou le soir, et vérifiez le bitume du dos de la main.":"Hot at {h} ({t}°): go out early in the morning or in the evening, and check the tarmac with the back of your hand.",
+  "Museau court : il supporte mal la chaleur.":"Short snout: they cope badly with heat.","Pluie probable à {h} ({p} %).":"Rain likely at {h} ({p}%).","Plus sec vers {h2}.":"Drier around {h2}.","Prévoyez une serviette au retour.":"Keep a towel ready for the way back.",
+  "Froid à {h} ({t}°) : balade plus courte.":"Cold at {h} ({t}°): keep the walk shorter.","Un manteau l'aidera, il a peu de poil.":"A coat will help, they have little fur.","Temps idéal pour la balade de {h}.":"Ideal weather for the {h} walk.","Plus de balade prévue aujourd'hui.":"No more walks planned today.",
+  "Ville":"Town","Ex. : Lausanne":"E.g. Lausanne","Chercher":"Search","Utiliser ma position":"Use my location","Prévisions Open-Meteo, mises à jour toutes les 30 minutes. Toute la famille voit la même ville.":"Open-Meteo forecasts, updated every 30 minutes. The whole family sees the same town.",
+  "Météo activée":"Weather on","Aucune ville trouvée.":"No town found.","Recherche impossible pour l'instant.":"Search unavailable right now.","Position indisponible sur cet appareil.":"Location unavailable on this device.","Position refusée. Cherchez plutôt votre ville.":"Location refused. Search for your town instead.",
+  "Hors ligne · envoi au retour du réseau":"Offline · syncs when back online"});
+Object.assign(HR, {"Météo des balades":"Vrijeme za šetnje","Le bon moment pour sortir, selon la météo et sa race.":"Pravo vrijeme za izlazak, prema vremenu i pasmini.","ressenti {t}°":"osjećaj {t}°","Votre position":"Vaša lokacija",
+  "Chaud à {h} ({t}°) : sortez-le plutôt tôt le matin ou le soir, et vérifiez le bitume du dos de la main.":"Vruće u {h} ({t}°): izvedite ga rano ujutro ili navečer i provjerite asfalt nadlanicom.",
+  "Museau court : il supporte mal la chaleur.":"Kratka njuška: loše podnosi vrućinu.","Pluie probable à {h} ({p} %).":"Moguća kiša u {h} ({p} %).","Plus sec vers {h2}.":"Suše oko {h2}.","Prévoyez une serviette au retour.":"Pripremite ručnik za povratak.",
+  "Froid à {h} ({t}°) : balade plus courte.":"Hladno u {h} ({t}°): kraća šetnja.","Un manteau l'aidera, il a peu de poil.":"Kaputić će mu pomoći, ima malo dlake.","Temps idéal pour la balade de {h}.":"Idealno vrijeme za šetnju u {h}.","Plus de balade prévue aujourd'hui.":"Danas više nema planiranih šetnji.",
+  "Ville":"Grad","Ex. : Lausanne":"Npr. Zagreb","Chercher":"Traži","Utiliser ma position":"Koristi moju lokaciju","Prévisions Open-Meteo, mises à jour toutes les 30 minutes. Toute la famille voit la même ville.":"Prognoza Open-Meteo, osvježava se svakih 30 minuta. Cijela obitelj vidi isti grad.",
+  "Météo activée":"Vrijeme uključeno","Aucune ville trouvée.":"Grad nije pronađen.","Recherche impossible pour l'instant.":"Pretraga trenutno nije moguća.","Position indisponible sur cet appareil.":"Lokacija nije dostupna na ovom uređaju.","Position refusée. Cherchez plutôt votre ville.":"Lokacija odbijena. Potražite svoj grad.",
+  "Hors ligne · envoi au retour du réseau":"Izvan mreže · šalje se kad se veza vrati"});
+
+Object.assign(EN, {"Notifications sur ce téléphone":"Notifications on this phone","Même app fermée : les tâches à l'heure et ce que fait la famille.":"Even with the app closed: tasks on time and what the family does.",
+  "Sur iPhone : ajoutez d'abord Dogs Life à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis activez les notifications depuis l'app.":"On iPhone: first add Dogs Life to the Home Screen (Share → Add to Home Screen), then turn notifications on from the app.",
+  "Chaque personne choisit sur son téléphone. Vous pouvez les couper à tout moment.":"Each person chooses on their own phone. You can turn them off at any time.","Les alertes s'affichent tant que l'app est ouverte.":"Alerts show while the app is open.",
+  "Notifications coupées sur ce téléphone":"Notifications off on this phone","Notifications activées":"Notifications on","Notifications refusées. Autorisez-les dans les réglages du téléphone.":"Notifications blocked. Allow them in the phone's settings.","Impossible pour l'instant. Réessayez.":"Not possible right now. Try again."});
+Object.assign(HR, {"Notifications sur ce téléphone":"Obavijesti na ovom telefonu","Même app fermée : les tâches à l'heure et ce que fait la famille.":"I kad je aplikacija zatvorena: zadaci na vrijeme i što radi obitelj.",
+  "Sur iPhone : ajoutez d'abord Dogs Life à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis activez les notifications depuis l'app.":"Na iPhoneu: najprije dodajte Dogs Life na početni zaslon (Dijeli → Dodaj na početni zaslon), zatim uključite obavijesti u aplikaciji.",
+  "Chaque personne choisit sur son téléphone. Vous pouvez les couper à tout moment.":"Svatko bira na svom telefonu. Možete ih isključiti u bilo kojem trenutku.","Les alertes s'affichent tant que l'app est ouverte.":"Upozorenja se prikazuju dok je aplikacija otvorena.",
+  "Notifications coupées sur ce téléphone":"Obavijesti isključene na ovom telefonu","Notifications activées":"Obavijesti uključene","Notifications refusées. Autorisez-les dans les réglages du téléphone.":"Obavijesti odbijene. Dopustite ih u postavkama telefona.","Impossible pour l'instant. Réessayez.":"Trenutno nije moguće. Pokušajte ponovno."});
+
+Object.assign(EN, {"Tester une notification":"Test a notification","Autorisation":"Permission","app de l'écran d'accueil":"Home Screen app","ouvert dans Safari":"opened in Safari","téléphone enregistré":"phone registered","téléphone pas enregistré":"phone not registered","erreur":"error","Impossible d'afficher la notification : {e}":"Can't show the notification: {e}","Erreur : {e}":"Error: {e}"});
+Object.assign(HR, {"Tester une notification":"Testiraj obavijest","Autorisation":"Dopuštenje","app de l'écran d'accueil":"aplikacija s početnog zaslona","ouvert dans Safari":"otvoreno u Safariju","téléphone enregistré":"telefon registriran","téléphone pas enregistré":"telefon nije registriran","erreur":"greška","Impossible d'afficher la notification : {e}":"Obavijest se ne može prikazati: {e}","Erreur : {e}":"Greška: {e}"});
+
+Object.assign(EN, {"Rappels des tâches":"Task reminders","5 min avant, puis 30 min après si ce n'est pas fait.":"5 min before, then 30 min after if it isn't done.","Activité de la famille":"Family activity","Quand quelqu'un coche, note un pipi ou écrit un message.":"When someone ticks a task, logs a pee or writes a message.",
+  "Beau temps pour sortir":"Good weather to go out","Une fois par jour, si une ville est choisie dans la météo.":"Once a day, if a town is set in the weather card.","Rendez-vous":"Appointments","La veille à 18 h et 1 h avant.":"The evening before at 6 pm and 1 hour before.",
+  "Bilan du soir et croquettes":"Evening recap and food","Mes propres actions":"My own actions","Recevoir aussi ce que je coche, note ou écris.":"Also get what I tick, log or write.","À 20 h 30 s'il reste des tâches, et quand le sac est presque vide.":"At 8:30 pm if tasks are left, and when the food bag is almost empty."});
+Object.assign(HR, {"Rappels des tâches":"Podsjetnici za zadatke","5 min avant, puis 30 min après si ce n'est pas fait.":"5 min prije, zatim 30 min poslije ako nije obavljeno.","Activité de la famille":"Aktivnost obitelji","Quand quelqu'un coche, note un pipi ou écrit un message.":"Kad netko označi zadatak, zabilježi piškenje ili napiše poruku.",
+  "Beau temps pour sortir":"Lijepo vrijeme za izlazak","Une fois par jour, si une ville est choisie dans la météo.":"Jednom dnevno, ako je grad odabran u vremenu.","La veille à 18 h et 1 h avant.":"Večer prije u 18 h i 1 sat prije.",
+  "Bilan du soir et croquettes":"Večernji sažetak i hrana","Mes propres actions":"Moje vlastite radnje","Recevoir aussi ce que je coche, note ou écris.":"Primaj i ono što ja označim, zabilježim ili napišem.","À 20 h 30 s'il reste des tâches, et quand le sac est presque vide.":"U 20:30 ako su ostali zadaci i kad je vreća hrane gotovo prazna."});
+
+Object.assign(EN, {"orage":"storm","pluie {p} %":"rain {p}%","{t}° ressentis":"feels {t}°","{t}°, froid":"{t}°, cold","neige":"snow","vent {w} km/h":"wind {w} km/h","Maint.":"Now","À éviter":"Avoid","Mitigé":"So-so","Idéal":"Ideal",
+  "Mieux vers {h} : {i} {t}°, {p} % de pluie":"Better around {h}: {i} {t}°, {p}% rain","avancez la balade":"go earlier","décalez la balade":"go later","Pas de meilleur créneau proche : balade courte, et une serviette au retour.":"No better slot nearby: keep it short, and have a towel ready.",
+  "La météo se gâte à l'heure d'une balade : regardez le créneau proposé.":"The weather turns bad at walk time: check the suggested slot.","Météo moyenne pour les balades, rien de grave.":"So-so weather for the walks, nothing serious.","Temps idéal pour les balades d'aujourd'hui.":"Ideal weather for today's walks.",
+  "Meilleur moment pour sortir : {a} – {b}.":"Best time to go out: {a} – {b}.","Pas de bon créneau aujourd'hui : préférez des sorties courtes.":"No good slot today: keep outings short.","au mieux {a} – {b}":"best {a} – {b}"});
+Object.assign(HR, {"orage":"oluja","pluie {p} %":"kiša {p} %","{t}° ressentis":"osjećaj {t}°","{t}°, froid":"{t}°, hladno","neige":"snijeg","vent {w} km/h":"vjetar {w} km/h","Maint.":"Sad","À éviter":"Izbjeći","Mitigé":"Osrednje","Idéal":"Idealno",
+  "Mieux vers {h} : {i} {t}°, {p} % de pluie":"Bolje oko {h}: {i} {t}°, {p} % kiše","avancez la balade":"izađite ranije","décalez la balade":"izađite kasnije","Pas de meilleur créneau proche : balade courte, et une serviette au retour.":"Nema boljeg termina blizu: kratka šetnja i ručnik za povratak.",
+  "La météo se gâte à l'heure d'une balade : regardez le créneau proposé.":"Vrijeme se kvari u vrijeme šetnje: pogledajte predloženi termin.","Météo moyenne pour les balades, rien de grave.":"Osrednje vrijeme za šetnje, ništa strašno.","Temps idéal pour les balades d'aujourd'hui.":"Idealno vrijeme za današnje šetnje.",
+  "Meilleur moment pour sortir : {a} – {b}.":"Najbolje vrijeme za izlazak: {a} – {b}.","Pas de bon créneau aujourd'hui : préférez des sorties courtes.":"Danas nema dobrog termina: kratki izlasci.","au mieux {a} – {b}":"najbolje {a} – {b}"});
+
+Object.assign(EN, {"Ensoleillé":"Sunny","Plutôt ensoleillé":"Mostly sunny","Partiellement nuageux":"Partly cloudy","Couvert":"Cloudy","Brouillard":"Fog","Brouillard givrant":"Freezing fog","Bruine":"Drizzle","Bruine verglaçante":"Freezing drizzle","Pluie faible":"Light rain","Pluie":"Rain","Forte pluie":"Heavy rain","Pluie verglaçante":"Freezing rain","Neige faible":"Light snow","Neige":"Snow","Forte neige":"Heavy snow","Grésil":"Sleet","Averses":"Showers","Fortes averses":"Heavy showers","Averses de neige":"Snow showers","Orage":"Thunderstorm","Orage et grêle":"Thunderstorm with hail",
+  "Idéal jusqu'à {h}":"Ideal until {h}","Idéal de {a} à {b}":"Ideal from {a} to {b}","Max.":"H","Min.":"L","Balades d'aujourd'hui":"Today's walks","Plutôt à {h}":"Better at {h}","Gardez-la courte, serviette au retour":"Keep it short, towel ready","Ma position":"My location"});
+Object.assign(HR, {"Ensoleillé":"Sunčano","Plutôt ensoleillé":"Pretežno sunčano","Partiellement nuageux":"Djelomično oblačno","Couvert":"Oblačno","Brouillard":"Magla","Brouillard givrant":"Ledena magla","Bruine":"Rosulja","Bruine verglaçante":"Ledena rosulja","Pluie faible":"Slaba kiša","Pluie":"Kiša","Forte pluie":"Jaka kiša","Pluie verglaçante":"Ledena kiša","Neige faible":"Slab snijeg","Neige":"Snijeg","Forte neige":"Jak snijeg","Grésil":"Susnježica","Averses":"Pljuskovi","Fortes averses":"Jaki pljuskovi","Averses de neige":"Snježni pljuskovi","Orage":"Grmljavina","Orage et grêle":"Grmljavina s tučom",
+  "Idéal jusqu'à {h}":"Idealno do {h}","Idéal de {a} à {b}":"Idealno od {a} do {b}","Max.":"Maks.","Min.":"Min.","Balades d'aujourd'hui":"Današnje šetnje","Plutôt à {h}":"Bolje u {h}","Gardez-la courte, serviette au retour":"Kratko, ručnik za povratak","Ma position":"Moja lokacija"});
+
+/* ---------- options (stored in French, shown translated) ---------- */
+const OPT = {
+  sex:["Mâle","Femelle"], size:["Petit","Moyen","Grand","Géant"], ster:["Oui","Non","Prévu"], meals:["1","2","3","4"],
+  food:["Croquettes","Pâtée","Croquettes + pâtée","BARF (cru)","Ration ménagère"],
+  treats:["Aucune","Seulement pour l'éducation","10 % de la ration au maximum","Une par jour","Sans restriction"],
+  allergies:["Aucune","Poulet","Bœuf","Agneau","Poisson","Céréales / gluten","Produits laitiers","Pollen","Puces"],
+  insurer:["Aucune","Epona","Animalia","Wau-Miau"],
+  units:["comprimés","gélules","gouttes","ml","pipettes","sachets"], doses:["½ comprimé","1 comprimé","2 comprimés","5 gouttes","1 pipette","1 ml"],
+  appetite:["Bon","Moyen","Faible"], energy:["Haute","Normale","Basse"], stool:["Normales","Molles","Aucune"]
+};
+
+/* ---------- state ---------- */
+const COLS = ["config","routine","meds","weights","appts","days","members","notes","dogs","ticks","logs","train","vax","invites","extras"];
+const C = {config:{},routine:{},meds:{},weights:{},appts:{},days:{},members:{},notes:{},dogs:{},ticks:{},logs:{},train:{},vax:{},invites:{},extras:{}};
+const S = { mode:"loading", tab:"aujourdhui", sel: ymd(new Date()), rday: new Date().getDay(), editProfile:false,
+  me:null, names:{}, ready:false, stale:false, readOnly:false, confirmClear:false, sitter:false, preview:false };
+let db = null, user = null, sampler = null, downloader = null;
+
+/* ---------- sample data (only when no shared store is available) ---------- */
+function sampleData(){
+  const t = new Date(), D = n => ymd(addDays(t,n)), all=[0,1,2,3,4,5,6];
+  return {
+    config:{dog:{example:true,name:"Moka",breed:"Berger australien",sex:"Femelle",birth:"2022-03-18",size:"Moyen",sterilized:"Oui",chip:"756 0981 2345 678",
+      food:"Croquettes",ration:"260 g",meals:"2",allergies:["Poulet"],
+      vetName:"Cabinet vétérinaire du Lac",vetPhone:"021 555 12 34",
+      emergency:"021 555 99 00",notes:"Peur des feux d'artifice. Tire en laisse près des chats."}},
+    routine:{
+      r1:{title:"Balade du matin",cat:"balade",time:"07:00",days:all,notes:"30 min"},
+      r2:{title:"Petit-déjeuner",cat:"repas",time:"07:30",days:all,notes:"130 g"},
+      r3:{title:"Sortie de midi",cat:"balade",time:"12:30",days:[1,2,3,4,5],notes:"15 min"},
+      r5:{title:"Balade du soir",cat:"balade",time:"18:00",days:all,notes:"45 min"},
+      r6:{title:"Dîner",cat:"repas",time:"18:45",days:all,notes:"130 g"},
+      r9:{title:"Dernière sortie",cat:"balade",time:"21:30",days:all,notes:"10 min"}
+    },
+    meds:{}, weights:{w1:{date:D(-60),kg:22.0},w2:{date:D(-30),kg:21.6},w3:{date:D(-3),kg:21.9}}, appts:{}, days:{}
+  };
+}
+
+/* ---------- store ---------- */
+const LKEY = "carnet-chien.v1";
+let local = null;
+const SITE = !!window.CARNET_SITE; // the standalone copy hosted outside claude.ai
+function loadLocal(){ try { const raw = localStorage.getItem(LKEY); if (raw) return JSON.parse(raw); } catch(e) {} return SITE ? {} : sampleData(); }
+function saveLocal(){ try { localStorage.setItem(LKEY, JSON.stringify(local)); } catch(e) {} }
+function syncLocal(){ COLS.forEach(c => C[c] = Object.assign({}, local[c] || {})); }
+async function put(col, id, data){
+  if (S.mode === "db") {
+    const copy = JSON.parse(JSON.stringify(data));
+    if (col === "config") C.config = Object.assign({}, C.config, {[id]: copy}); else C[col] = Object.assign({}, C[col], {[id]: copy});
+    render(true);
+    try { await db.collection(col).doc(id).set(data); } catch(e){ handleWriteError(e); }
+  } else { local[col] = local[col] || {}; local[col][id] = JSON.parse(JSON.stringify(data)); saveLocal(); syncLocal(); render(); }
+}
+async function del(col, id){
+  if (S.mode === "db") { const m = Object.assign({}, C[col]); delete m[id]; C[col] = m; render(true);
+    try { await db.collection(col).doc(id).delete(); } catch(e){ handleWriteError(e); } }
+  else { if (local[col]) delete local[col][id]; saveLocal(); syncLocal(); render(); }
+}
+function handleWriteError(e){
+  const c = e && e.code;
+  if (c === "invalid_argument") { S.readOnly = true; toast(T("Vous pouvez consulter ce carnet, mais pas le modifier.")); render(); }
+  else if (c === "quota_exceeded") toast(T("Le carnet est plein. Supprimez d'anciennes entrées."));
+  else toast(T("Modification non enregistrée. Réessayez dans un instant."));
+}
+function startDb(){
+  S.mode = "db";
+  const cutoff = ymd(addDays(new Date(), -60));
+  const pending = new Set(COLS);
+  const timer = setTimeout(() => { if (!S.ready) { S.stale = true; render(); } }, 10000);
+  const done = (col, snap) => { if (!snap.metadata.fromCache) pending.delete(col); if (pending.size === 0 && !S.ready) { S.ready = true; S.stale = false; clearTimeout(timer); } render(); };
+  const onErr = col => e => { pending.delete(col); if (!S.ready && pending.size === 0) { S.ready = true; clearTimeout(timer); } if (e && e.code === "revoked") { S.readOnly = true; if (window.carnetCheckGone) window.carnetCheckGone(); } render(); };
+  const seen = {};
+  ["config","routine","meds","weights","appts","members","notes","dogs","train","vax","invites"].forEach(col => db.collection(col).onSnapshot(q => { const m = {}; q.docs.forEach(d => m[d.id] = d.data());
+    // a new message from someone else while the app is open: show it at once (the phone does not always show its own banner then)
+    if (col === "notes" && seen.notes) Object.entries(m).forEach(([id, x]) => { if (!C.notes[id] && x && !x.kind && !(S.me && x.uid === S.me) && !(x.mid && x.mid === ME) && Date.now() - Date.parse(x.at || 0) < 120000) liveBanner(memberOf(x.mid) || {name: x.name || "?"}, T("Message de {n}", {n: (memberOf(x.mid) || {}).name || x.name || T("Quelqu'un")}), x.text || T("Photo"), "msg"); });
+    seen[col] = true; C[col] = m; done(col, q); }, onErr(col)));
+  ["days","ticks","logs","extras"].forEach(col => { let first = true; db.collection(col).where("date", ">=", cutoff).onSnapshot(q => { const m = {}; q.docs.forEach(d => m[d.id] = d.data());
+    // someone else in the family just logged something: say it right away
+    if (col === "logs" && !first) Object.entries(m).forEach(([id, x]) => { if (!C.logs[id] && x && x.date === ymd(new Date()) && !(S.me && x.by === S.me) && !(x.mid && x.mid === ME)) liveLogNotice(x); });
+    if (col === "ticks" && !first) Object.entries(m).forEach(([id, x]) => { if (!C.ticks[id] && x && x.date === ymd(new Date()) && !(S.me && x.by === S.me) && !(x.mid && x.mid === ME)) {
+      const t = tasksFor(x.date).find(y => y.key === x.key); if (t) liveBanner(memberOf(x.mid) || {name: x.byName || "?"}, T("{n} a fait", {n: (memberOf(x.mid) || {}).name || x.byName || T("Quelqu'un")}), t.title + (x.at ? " · " + x.at : ""), "tick"); } });
+    first = false; C[col] = m; done(col, q); }, onErr(col)); });
+}
+
+/* ---------- derived ---------- */
+// several dogs: the first one lives in config/dog ("main"), the others in the dogs collection;
+// every routine item, treatment, weigh-in, appointment, tick and log names its dog (no name = "main")
+let CUR = "main"; try { CUR = LS.get("carnet-dog") || "main"; } catch(_) {}
+const allDogs = () => { const out = []; if (C.config.dog) out.push(Object.assign({}, C.config.dog, {id:"main"})); Object.entries(C.dogs || {}).forEach(([id, d]) => { if (d && d.name) out.push(Object.assign({}, d, {id})); }); return out; };
+const curDog = () => { const a = allDogs(); return a.find(x => x.id === CUR) || a[0] || null; };
+const dogId = () => (curDog() || {}).id || "main";
+const dog = () => { const c = curDog(); if (!c) return null; const d = Object.assign({}, c); delete d.id; return d; };
+const ofDog = x => (x.dog || "main") === dogId();
+const saveDog = data => { const id = dogId(), d = Object.assign({}, data); delete d.id; return id === "main" ? put("config", "dog", d) : put("dogs", id, d); };
+function switchDog(id){ CUR = id; try { LS.set("carnet-dog", id); } catch(_) {} S.sub = null; S.lastHTML = ""; S.pageAnim = {cls:"enter-u", until: Date.now() + 500}; render(); }
+const routine = () => Object.entries(C.routine).map(([id,r]) => ({id, ...r})).filter(ofDog);
+const meds = () => Object.entries(C.meds).map(([id,m]) => ({id, ...m})).filter(ofDog);
+const weights = () => Object.entries(C.weights).map(([id,w]) => ({id, ...w})).filter(ofDog).filter(w => w.date && +w.kg).sort((a,b) => a.date < b.date ? -1 : 1);
+const appts = () => Object.entries(C.appts).map(([id,a]) => ({id, ...a})).filter(ofDog).sort((a,b) => (a.date+(a.time||"")) < (b.date+(b.time||"")) ? -1 : 1);
+// a day = the journal doc + every tick and quick-log entry stored on its own (so two people can tick at once)
+const dayKey = ds => dogId() === "main" ? ds : ds + "_" + dogId();
+let IDX = {k:null};
+function dayIndex(){
+  const key = [C.days, C.ticks, C.logs, dogId()];
+  if (IDX.k && IDX.k.every((x, i) => x === key[i])) return IDX.v;
+  const v = {}, me = dogId(), slot = ds => v[ds] || (v[ds] = {done:{}, log:{}});
+  Object.entries(C.days).forEach(([id, d]) => { if (!d || !d.date || (d.dog || (id.includes("_") ? id.split("_")[1] : "main")) !== me) return;
+    const x = slot(d.date); Object.assign(x.done, d.done || {}); Object.assign(x.log, d.log || {}); x.raw = d; });
+  Object.values(C.ticks).forEach(t => { if (t && t.date && (t.dog || "main") === me) slot(t.date).done[t.key] = t; });
+  Object.entries(C.logs).forEach(([id, l]) => { if (l && l.date && (l.dog || "main") === me) slot(l.date).log[id] = l; });
+  IDX = {k:key, v}; return v;
+}
+const EMPTY_DAY = Object.freeze({});
+function getDay(ds){ const x = dayIndex()[ds]; if (!x) return EMPTY_DAY; return Object.assign({}, x.raw || {}, {done: x.done, log: x.log}); }
+const knownDates = () => Object.keys(dayIndex()).sort();
+const medActive = (m, ds) => (!m.start || ds >= m.start) && (!m.end || ds <= m.end);
+const listOf = v => Array.isArray(v) ? v : (v ? String(v).split(/\s*,\s*/).filter(Boolean) : []);
+function tasksFor(ds){
+  const wd = parseYmd(ds).getDay(), out = [];
+  routine().forEach(r => { if ((r.days||[]).includes(wd)) out.push({key:"r-"+r.id, time:r.time||"00:00", title:r.title, cat:r.cat||"autre", detail:r.notes||"", who:r.who||""}); });
+  Object.entries(C.extras || {}).forEach(([id, x]) => { if (x && x.date === ds && (x.dog || "main") === dogId()) out.push({key:"x-"+id, xid:id, extra:true, time:x.time||"00:00", title:x.title||T(CATS[x.cat] ? CATS[x.cat].label : "Extra"), cat:x.cat||"autre", detail:x.notes||"", who:x.who||""}); });
+  meds().forEach(m => { if (!medActive(m, ds)) return; (m.times||[]).filter(Boolean).forEach(t => out.push({key:"m-"+m.id+"-"+t.replace(":",""), time:t, title:m.name, cat:"med", who:m.who||"", detail:[m.dose && T(m.dose), m.notes].filter(Boolean).join(" · ")})); });
+  return out.sort((a,b) => toMin(a.time) - toMin(b.time));
+}
+function dayStats(ds){
+  const tasks = tasksFor(ds), done = getDay(ds).done || {};
+  const n = tasks.filter(t => done[t.key]).length;
+  return {tasks, done, n, total: tasks.length, pct: tasks.length ? n / tasks.length : 0};
+}
+function medStock(m){
+  if (m.stock === "" || m.stock == null || isNaN(+m.stock)) return null;
+  const per = +m.perDose || 1, now = new Date(), times = (m.times||[]).filter(Boolean);
+  let used = 0, d = parseYmd(m.stockDate || m.start || ymd(now));
+  for (let i = 0; i < 500 && d <= now; i++, d = addDays(d,1)) {
+    const ds = ymd(d); if (!medActive(m, ds)) continue;
+    times.forEach(t => { const x = new Date(d); x.setHours(...t.split(":").map(Number), 0, 0); if (x <= now) used += per; });
+  }
+  const left = Math.max(0, +m.stock - used), perDay = times.length * per;
+  let needed = null;
+  if (m.end) { needed = Math.max(0, daysBetween(ymd(now), m.end)) * perDay + per * times.filter(t => toMin(t) > toMin(hhmm(now))).length; }
+  return {left, daysLeft: perDay ? left / perDay : null, needed};
+}
+function ageYears(birth){ if (!birth) return null; return (Date.now() - parseYmd(birth).getTime()) / (365.25*864e5); }
+function ageOf(birth){
+  if (!birth) return "";
+  const b = parseYmd(birth), n = new Date();
+  let m = (n.getFullYear()-b.getFullYear())*12 + n.getMonth()-b.getMonth(); if (n.getDate() < b.getDate()) m--;
+  const y = Math.floor(m/12), r = m%12;
+  if (LANG === "en") { if (y <= 0) return r + (r === 1 ? " month" : " months"); return y + (y > 1 ? " years" : " year") + (r ? " and " + r + (r === 1 ? " month" : " months") : ""); }
+  if (LANG === "hr") { const mo = r + " " + hrPl(r,"mjesec","mjeseca","mjeseci"); if (y <= 0) return mo; return y + " " + hrPl(y,"godina","godine","godina") + (r ? " i " + mo : ""); }
+  if (y <= 0) return r + " mois";
+  return y + (y>1?" ans":" an") + (r ? " et " + r + " mois" : "");
+}
+function relDays(ds){
+  const n = daysBetween(ymd(new Date()), ds);
+  if (n === 0) return T("Aujourd'hui"); if (n === 1) return T("Demain"); if (n === -1) return T("Hier");
+  return n > 0 ? T("Dans {n} jours",{n}) : T("En retard de {n} jours",{n:-n});
+}
+const fmtQty = q => { const r = Math.round(q*10)/10; const s = Number.isInteger(r) ? String(r) : (r % 1 === 0.5 ? Math.floor(r) + "½" : nf(r)); return s.replace(/^0½$/,"½"); };
+
+/* ---------- ui bits ---------- */
+const skinPick = () => { const cur = document.documentElement.dataset.skin === "classic" ? "classic" : "aurora";
+  return `<div class="skin-pick">${[["aurora", "a", "Aurora", "Nouveau design lumineux"], ["classic", "c", "Classique", "Le design d'avant"]].map(([k, c, l, sub]) => `<button type="button" class="skin-o" data-act="skin" data-v="${k}" aria-pressed="${cur === k}"><span class="skin-prev ${c}"></span><span><b>${T(l)}</b><small>${T(sub)}</small></span></button>`).join("")}</div>`; };
+const CHECK_ON = '<svg class="ck" viewBox="0 0 26 26" aria-hidden="true"><circle class="ck-c" cx="13" cy="13" r="13"/><path class="ck-p" d="m7.6 13.4 3.6 3.6 7.3-7.6" fill="none" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function ring(pct, size, stroke, color, fromPct){
+  const r = (size - stroke)/2, c = 2*Math.PI*r, off = c*(1-Math.min(1,pct)), h = size/2;
+  const base = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="var(--fill2)" stroke-width="${stroke}"/>`;
+  if (fromPct != null) { const fo = c*(1-Math.min(1,fromPct));
+    return base + `<circle class="ringanim" style="--from:${fo.toFixed(2)};--to:${off.toFixed(2)};${pct<=0?"opacity:0;transition:opacity .4s":""}" cx="${h}" cy="${h}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 ${h} ${h})"/></svg>`; }
+  return base + (pct>0?`<circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 ${h} ${h})"/>`:"") + `</svg>`;
+}
+const live = k => S[k] && Date.now() < S[k].until ? S[k] : null;
+function burstHTML(){ const cols = ["var(--green)","var(--orange)","var(--pink)","var(--teal)","var(--purple)","var(--accent)"]; let h = '<span class="burst" aria-hidden="true">';
+  for (let i = 0; i < 18; i++) h += `<i style="--a:${(i*20 + (i%2?8:0))}deg;background:${cols[i%6]};animation-delay:${(i%3)*0.04}s"></i>`; return h + "</span>"; }
+const ico = (c, svg) => `<span class="ico" style="--c:${c}">${svg}</span>`;
+function avatarHTML(d, cls){ if (d && d.photo) return `<div class="avatar ${cls||""}"><img src="${esc(d.photo)}" alt=""></div>`; return `<div class="avatar dflt ${cls||""}"><img src="${DOG_DEFAULT}" alt=""></div>`; }
+function leave(el, done){ if (!el) { done && done(); return; } el.classList.add("dl-leave"); setTimeout(() => { done ? done() : el.remove(); }, 240); }
+function clearRoot(sel){ const r = $(sel); if (!r) return; [...r.children].forEach(c => leave(c)); }
+function toast(msg, ms){ const r = $("#toast-root"); r.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`; clearTimeout(toast._t); toast._t = setTimeout(() => leave(r.firstElementChild), ms || 2600); }
+const sitterUI = () => S.sitter || S.preview || S.sitterRole;
+const canEdit = () => !S.readOnly && !sitterUI();
+const canTick = () => !S.readOnly;
+function whoName(id){ if (!id) return ""; if (id === S.me) return T("vous"); return S.names[id] || ""; }
+async function resolveNames(){
+  if (!user) return;
+  const ids = new Set(); Object.values(dayIndex()).forEach(d => Object.values(d.done||{}).forEach(x => x && x.by && ids.add(x.by)));
+  if (!ids.size) return;
+  try { const ps = await user.profiles([...ids]); let changed = false; ids.forEach(id => { const n = (ps[id] && ps[id].name) || ""; if (S.names[id] !== n) { S.names[id] = n; changed = true; } }); if (changed) render(true); } catch(e) {}
+}
+const GLOBE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9M12 3C9.5 5.6 8.2 8.6 8.2 12s1.3 6.4 3.8 9"/></svg>';
+const LANG_SUB = {fr:{fr:"Français", en:"French", hr:"Francuski"}, en:{fr:"Anglais", en:"English", hr:"Engleski"}, hr:{fr:"Croate", en:"Croatian", hr:"Hrvatski"}};
+// a single tidy control: "Langue … Français ›" in lists, a pill elsewhere; the choice opens a sheet
+const langSeg = () => { const cur = (LANGS.find(x => x[0] === LANG) || LANGS[0])[1];
+  return `<button type="button" class="lang-btn" data-act="langSheet" aria-label="Langue / Language / Jezik : ${esc(cur)}"><span class="lang-l">${GLOBE}<span class="lang-t">${T("Langue")}</span></span><span class="lang-v">${esc(cur)}${I.chevR}</span></button>`; };
+function langSheet(){
+  openSheet(T("Langue"), `<div class="card list lang-list">${LANGS.map(([k, l]) => `<button type="button" class="row" data-act="lang" data-v="${k}" aria-pressed="${LANG === k}"><span class="lang-code">${k.toUpperCase()}</span><div class="main"><div class="t">${l}</div>${LANG_SUB[k][LANG] !== l ? `<div class="s">${esc(LANG_SUB[k][LANG])}</div>` : ""}</div>${LANG === k ? `<span class="lang-ok">${I.tick}</span>` : ""}</button>`).join("")}</div>`, null);
+  const ok = $("#sheet-root .save"); if (ok) ok.style.visibility = "hidden";
+}
+
+/* ---------- views ---------- */
+function viewToday(){
+  const d = dog(), now = new Date(), today = ymd(now), sel = S.sel, selD = parseYmd(sel), isToday = sel === today;
+  const st = dayStats(sel), wd = WD();
+  const monday = addDays(selD, -((selD.getDay()+6)%7));
+  let strip = "";
+  for (let i=0;i<7;i++){
+    const dd = addDays(monday,i), ds = ymd(dd), s2 = dayStats(ds), past = ds <= today;
+    strip += `<button class="dayb ${ds===today?"today":""} ${ds===sel?"sel":""}" data-act="selday" data-d="${ds}" aria-label="${esc(fmt(dd,{weekday:"long",day:"numeric",month:"long"}))}">
+      <span class="l">${wd[dd.getDay()].slice(0,1)}</span><span class="n num">${ds!==sel && past && s2.total ? ring(s2.pct,34,3,"var(--green)") : ""}<span style="position:relative">${dd.getDate()}</span></span></button>`;
+  }
+  const nm = toMin(hhmm(now));
+  let nextHTML = "";
+  if (isToday) {
+    const nx = st.tasks.find(t => !st.done[t.key] && toMin(t.time) + 30 >= nm) || null;
+    if (nx) { const diff = toMin(nx.time) - nm, h = Math.floor(Math.abs(diff)/60), m = Math.abs(diff)%60, c = CATS[nx.cat] || CATS.autre;
+      const when = diff <= 0 && diff > -30 ? T("maintenant") : T("dans {t}",{t: h ? h + " h" + (m ? " " + String(m).padStart(2, "0") : "") : m + " min"});
+      nextHTML = `<div class="hx-next" style="--c:${c.color}"><span class="hx-ni">${c.icon}</span><div class="main" data-act="jump" data-to="task-${esc(nx.key)}" role="button" tabindex="0" style="cursor:pointer"><div class="hx-nk">${T("Prochain")} · <span class="num">${esc(nx.time)}</span> · ${esc(when)}</div><div class="hx-nt">${esc(nx.title)}</div></div>${canTick() ? `<button class="hx-tick" data-act="toggle" data-k="${esc(nx.key)}" aria-label="${T("Marquer comme fait")} : ${esc(nx.title)}">${I.tick}</button>` : ""}</div>`; }
+    else if (st.total && st.n === st.total) nextHTML = `<div class="hx-next done"><span class="hx-ni" style="--c:var(--green)">${I.tick}</span><div class="main"><div class="hx-nt">${T("Tout est fait pour aujourd'hui.")}</div></div></div>`;
+  }
+  const perCat = {};
+  st.tasks.forEach(t => { perCat[t.cat] = perCat[t.cat] || {n:0,t:0}; perCat[t.cat].t++; if (st.done[t.key]) perCat[t.cat].n++; });
+  const catPills = Object.entries(perCat).map(([k,v]) => `<button class="pill num ${S.catF===k?"pill-on":""}" data-act="catFilter" data-c="${k}" aria-pressed="${S.catF===k}"><i style="background:${CATS[k].color}"></i>${T(CATS[k].label)} ${v.n}/${v.t}</button>`).join("");
+
+  const al = [];
+  if (isToday) {
+    const late = st.tasks.filter(t => !st.done[t.key] && toMin(t.time) + 30 < nm);
+    if (late.length) al.push({c:"var(--red)", i:I.warn, t:T(late.length>1?"{n} tâches en retard":"{n} tâche en retard",{n:late.length}), s: late.slice(0,3).map(t=>t.title).join(", "), act:"alertLate", id:late[0].key});
+    meds().filter(m => medActive(m, today)).forEach(m => { const s = medStock(m); if (!s || s.daysLeft == null) return;
+      const short = s.needed != null ? s.left < s.needed : true;
+      if (s.daysLeft < 4 && short) al.push({c:"var(--pink)", i:I.pill, t:T("Stock bas : {m}",{m:m.name}), s:T("Environ {q} {u} restant(s), ~{d} j",{q:fmtQty(s.left), u:T(m.unit||""), d:Math.floor(s.daysLeft)}), act:canEdit()?"editMed":"", id:m.id}); });
+    const fsA = foodState(); if (fsA && fsA.daily && fsA.daysLeft <= 5) al.push({c:"var(--orange)", i:I.bowl, t:T("Croquettes : plus que ~{n} jours",{n:Math.floor(fsA.daysLeft)}), s:T("Fin prévue le {d}",{d:fmt(parseYmd(fsA.end),{day:"numeric", month:"long"})}), act:"hTabGo", id:"nourriture"});
+    appts().forEach(a => { const n = daysBetween(today, a.date); if (n >= 0 && n <= 3) { const t = ATYPES[a.type]||ATYPES.autre; al.push({c:t.color, i:t.icon, t:a.title, s: relDays(a.date) + (a.time ? " " + T("à") + " " + a.time : ""), act:canEdit()?"editAppt":"", id:a.id}); }
+      else if (n < 0 && a.repeat) al.push({c:"var(--red)", i:I.warn, t:a.title, s: relDays(a.date), act:canEdit()?"editAppt":"", id:a.id, done: canEdit()}); });
+  }
+  if (isToday) vaxItems().filter(v => v.status === "late" || (v.status === "soon" && daysBetween(today, v.due) <= 3)).forEach(v => { const t = ATYPES[v.ty] || ATYPES.autre; al.push({c: v.status === "late" ? "var(--red)" : t.color, i: t.icon, t: T(v.t), s: relDays(v.due), act: "vaxSheet", id: v.code}); });
+  const alerts = al.length ? `<div class="sec-h hx-h"><h2>${T("À surveiller")}</h2><span class="hx-count num">${al.length}</span></div><div class="alerts" id="al-sec" style="margin-top:0;border-radius:16px">${al.map(a => { const inner = `<span class="ic" style="--c:${a.c}">${a.i.replace("<svg","<svg width=\"18\" height=\"18\"")}</span><div class="main">${esc(a.t)}<small>${esc(a.s)}</small></div>`;
+    if (a.done) return `<div class="alert al2"><button class="al-main" data-act="${a.act}" data-id="${esc(a.id||"")}">${inner}</button><button class="al-done" data-act="apptDone" data-id="${esc(a.id||"")}">${I.tick}<span>${T("Fait")}</span></button></div>`;
+    return a.act ? `<button class="alert" data-act="${a.act}" data-id="${esc(a.id||"")}" data-k="${esc(a.id||"")}" data-v="${esc(a.id||"")}">${inner}<span class="chev">${I.chevR}</span></button>` : `<div class="alert">${inner}</div>`; }).join("")}</div>` : "";
+
+  const periods = [["Matin",0,11*60],["Midi",11*60,14*60],["Après-midi",14*60,18*60],["Soir",18*60,24*60]];
+  let tl = "";
+  periods.forEach(([label,a,b]) => {
+    const ts = st.tasks.filter(t => toMin(t.time) >= a && toMin(t.time) < b && (!S.catF || t.cat === S.catF) && (!S.mine || !ME || t.who === ME || !t.who));
+    if (!ts.length) return;
+    tl += `<div class="period">${T(label)}</div><div class="card">` + ts.map(t => {
+      const dn = st.done[t.key], c = CATS[t.cat] || CATS.autre;
+      const late = (!dn && isToday && toMin(t.time) + 30 < nm) || (!dn && sel < today);
+      const who = dn ? (dn.byName || (dn.by ? whoName(dn.by) : "")) : "";
+      const plan = t.extra && C.extras[t.xid] && C.extras[t.xid].planned || t.time, moved = dn && dn.at && dn.at !== plan;
+      const sub = dn ? `<span class="ok" ${canTick() ? `data-act="tickTime" data-k="${esc(t.key)}" role="button" tabindex="0" style="cursor:pointer"` : ""}>${dn.at ? T("Fait à {t}",{t:esc(dn.at)}) : T("Fait")}</span>${who ? " " + T("par {w}",{w:esc(who)}) : ""}${moved ? " · " + T("prévu {t}",{t:esc(plan)}) : ""}${t.detail? " · "+esc(t.detail):""}` : esc(t.detail);
+      const pp = live("pop"), mine = pp && pp.key === t.key && pp.day === sel;
+      return `<div class="task ${dn?"done":""} ${mine&&dn?"flash":""}" id="task-${esc(t.key)}">${dn && canTick() ? `<button class="time num at tt-edit" data-act="tickTime" data-k="${esc(t.key)}" aria-label="${T("Changer l'heure")} : ${esc(t.title)}">${esc(dn.at || t.time)}</button>` : `<span class="time num ${late?"late":""} ${dn&&dn.at?"at":""}">${esc(dn && dn.at ? dn.at : t.time)}</span>`}${ico(c.color,c.icon)}
+        <div class="main" ${t.extra && canEdit() ? `data-act="extraEdit" data-id="${esc(t.xid)}" role="button" tabindex="0" style="cursor:pointer"` : ""}><div class="t">${esc(t.title)}${t.extra ? ` <span class="xtra">${T("Extra")}</span>` : ""}</div>${sub?`<div class="s">${sub}</div>`:""}</div>${mav(memberOf(t.who), 24)}
+        <button class="check ${dn?"on":""} ${mine?(dn?"pop":"unpop"):""}" data-act="toggle" data-k="${esc(t.key)}" aria-pressed="${dn?"true":"false"}" aria-label="${dn?T("Annuler"):T("Marquer comme fait")} : ${esc(t.title)}" ${canTick()?"":"disabled"}><span>${dn?CHECK_ON:""}</span></button></div>`;
+    }).join("") + `</div>`;
+  });
+  if (!st.tasks.length) tl = `<div class="card empty">${T("Rien de prévu ce jour-là.")}${canEdit()?`<br><button class="btn ghost" style="margin-top:12px" data-act="go" data-tab="planning">${T("Organiser la routine")}</button>`:""}</div>`;
+
+
+  const day = getDay(sel);
+  const segf = field => `<div class="seg" role="group">${OPT[field].map(o => `<button class="${day[field]===o?"on":""}" data-act="jset" data-f="${field}" data-v="${esc(o)}" aria-pressed="${day[field]===o}">${T(field === "appetite" && o === "Moyen" ? "Moyen (appétit)" : o)}</button>`).join("")}</div>`;
+  const journal = `<div class="sec" id="jr-sec"><div class="sec-h"><h2>${T("Journal du jour")}</h2></div><div class="card">
+    <div class="jrow"><label>${T("Appétit")}</label>${segf("appetite")}</div>
+    <div class="jrow"><label>${T("Énergie")}</label>${segf("energy")}</div>
+    <div class="jrow"><label>${T("Selles")}</label>${segf("stool")}</div>
+    <textarea class="note" id="day-note" data-day="${sel}" placeholder="${T("Observations, comportement, symptômes…")}" ${canTick()?"":"readonly"}>${esc(day.note||"")}</textarea>
+  </div><div class="foot">${T("Partagé avec toute la famille. Utile pour le vétérinaire.")}</div></div>`;
+
+  const title = isToday ? T("Aujourd'hui") : cap(fmt(selD,{weekday:"long"}));
+  const eyebrow = isToday ? fmt(selD,{weekday:"long",day:"numeric",month:"long"}) : fmt(selD,{day:"numeric",month:"long",year:"numeric"});
+  const ra = live("ringAnim");
+  // dashboard tiles: each one leads somewhere
+  const medT = st.tasks.filter(t => t.cat === "med"), medN = medT.filter(t => st.done[t.key]).length;
+  const nextAp = appts().find(a => a.date >= today), fs = foodState();
+  const tile = (act, attrs, c, icon, label, value, sub) => `<button class="tile" data-act="${act}" ${attrs}><span class="ico" style="--c:${c}">${icon}</span><span class="tile-l">${label}</span><b class="num">${value}</b><small>${sub}</small></button>`;
+  const tiles = `<div class="tiles">
+    ${tile("scrollTimeline", "", "var(--green)", I.paw, T("Tâches"), `${st.n}/${st.total}`, st.total && st.n === st.total ? T("Tout est fait") : T("{n} restante(s)",{n:st.total - st.n}))}
+    ${tile("hTabGo", 'data-v="traitements"', "var(--pink)", I.pill, T("Médicaments"), medT.length ? `${medN}/${medT.length}` : "—", medT.length ? T("prises aujourd'hui") : T("Aucun en cours"))}
+    ${tile("hTabGo", 'data-v="nourriture"', fs && fs.daily && fs.daysLeft <= 5 ? "var(--red)" : "var(--orange)", I.bowl, T("Croquettes"), fs && fs.daily ? "~" + Math.floor(fs.daysLeft) + " " + T("j") : "—", fs && fs.daily ? T("de stock") : T("À configurer"))}
+    ${tile("hTabGo", 'data-v="rdv"', "var(--blue)", I.cal.replace('width="18" height="18"', ''), T("Rendez-vous"), nextAp ? esc(fmt(parseYmd(nextAp.date), {day:"numeric", month:"short"})) : "—", nextAp ? esc(nextAp.title) : T("Aucun prévu"))}
+  </div>`;
+  // end of day: log + summary, open in the evening or once something is filled
+  const filled = day.appetite || day.energy || day.stool || day.note;
+  const eodOpen = S.eod != null ? S.eod : (sel < today || new Date().getHours() >= 17 || !!filled);
+  const eodSum = [day.appetite && T("Appétit") + " " + T(day.appetite === "Moyen" ? "Moyen (appétit)" : day.appetite).toLowerCase(), day.energy && T("Énergie") + " " + T(day.energy).toLowerCase(), day.stool && T("Selles") + " " + T(day.stool).toLowerCase()].filter(Boolean).join(" · ");
+  const eod = `<div class="sec eod ${eodOpen?"open":""}"><button class="eod-h" data-act="eod" aria-expanded="${eodOpen}"><span class="ico" style="--c:var(--purple)"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z"/></svg></span>
+      <div class="main"><div class="t">${T("Fin de journée")}</div><div class="s">${eodSum ? esc(eodSum) : T("Journal et bilan, à remplir le soir")}</div></div><span class="chev">${I.chevR}</span></button>
+    ${eodOpen ? `<div class="eod-b">${journal}${adviceSection(sel)}</div>` : ""}</div>`;
+  return `${banner()}${previewBanner()}
+  <div class="top"><div><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(title)}</h1></div>${isToday?"":`<button class="btn ghost" data-act="selday" data-d="${today}">${T("Aujourd'hui")}</button>`}<button class="dogbtn" data-act="dogMenu" aria-label="${T("Mes chiens")}">${avatarHTML(d)}${allDogs().length > 1 ? `<span class="dogbtn-n">${allDogs().length}</span>` : ""}</button></div>
+  <div class="card" style="padding:6px 4px"><div class="week"><button class="nav" data-act="week" data-n="-7" aria-label="${T("Semaine précédente")}">${I.chevL}</button><div class="days">${strip}</div><button class="nav" data-act="week" data-n="7" aria-label="${T("Semaine suivante")}">${I.chevR2}</button></div></div>
+  ${isToday ? liveWalk() : ""}
+  <div class="card hx">
+    <div class="sum">
+      <div style="position:relative;width:88px;height:88px">${ring(st.pct,88,10,"var(--green)", ra && ra.day === sel ? ra.from : null)}${live("celebrate") && S.celebrate.day === sel ? burstHTML() : ""}<div class="hx-pct num">${st.total ? Math.round(st.pct * 100) + "%" : "—"}</div></div>
+      <div><div class="ring-txt num"><span class="${ra && ra.day === sel ? "bump" : ""}">${st.n}</span><span style="color:var(--fg3)">/${st.total}</span></div><div class="ring-sub">${d&&d.name?T("tâches faites pour {n}",{n:esc(d.name)}):T("tâches faites")}</div></div>
+    </div>${catPills?`<div class="catstats">${catPills}</div>`:""}
+    ${nextHTML}
+  </div>
+  ${isToday ? notifPrompt() : ""}
+  ${isToday && [0, 1].includes(new Date().getDay()) ? `<button class="card wk-cta wk-today" data-act="go" data-tab="sante/semaine"><span class="ico" style="--c:var(--accent)">${I.cal || ""}</span><div class="main"><div class="t">${T(new Date().getDay() === 0 ? "Le bilan de la semaine est prêt" : "Le bilan de la semaine dernière")}</div><div class="s">${T("Moyennes, tendances et un programme adapté pour la semaine prochaine")}</div></div><span class="chev">›</span></button>` : ""}
+  ${isToday ? partyCard(d) : ""}
+  ${quickLog()}
+  ${alerts}
+  ${weatherCard()}
+  <div class="sec-h hx-h" id="prog-h"><h2>${T(isToday ? "Programme du jour" : "Programme")}</h2>${canEdit() ? `<button class="hx-add" data-act="extraAdd" data-d="${sel}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>${T("Extra")}</button>` : ""}</div>
+  ${(ME && meMember()) || S.catF ? `<div class="filters">${ME && meMember() ? `<div class="seg" role="group" style="flex:1">${[[0,"Toutes les tâches"],[1,"Les miennes"]].map(([v,l]) => `<button class="${!!S.mine===!!v?"on":""}" data-act="mineFilter" data-v="${v}">${T(l)}</button>`).join("")}</div>` : ""}${S.catF ? `<button class="pill pill-on" data-act="catFilter" data-c="${S.catF}">${T(CATS[S.catF].label)} ×</button>` : ""}</div>` : ""}
+  <div id="timeline">${tl}</div>
+  ${eod}`;
+}
+
+function daysLabel(days){
+  days = days || []; if (days.length === 7) return T("Tous les jours");
+  const s = [...days].sort((a,b)=>ORDER.indexOf(a)-ORDER.indexOf(b));
+  if (s.length===5 && [1,2,3,4,5].every(x=>days.includes(x))) return T("En semaine");
+  if (s.length===2 && days.includes(6) && days.includes(0)) return T("Le week-end");
+  return s.map(d => WD()[d]).join(", ");
+}
+const PLAN_MOM = [{k:"m", l:"Matin", e:"", from:0, to:12*60}, {k:"a", l:"Après-midi", e:"", from:12*60, to:18*60}, {k:"s", l:"Soir", e:"", from:18*60, to:24*60}];
+const durTxt = m => m < 60 ? m + " min" : Math.floor(m / 60) + " h" + (m % 60 ? " " + String(m % 60).padStart(2, "0") : "");
+function viewRoutineBody(){
+  const wd = S.rday, d = dog() || {}, name = d.name || T("le chien"), now = new Date(), isToday = wd === now.getDay(), nm = now.getHours() * 60 + now.getMinutes();
+  const sortT = (a, b) => toMin(a.time) - toMin(b.time);
+  const items = routine().filter(r => (r.days||[]).includes(wd)).sort(sortT);
+  const medItems = [];
+  meds().filter(m => medActive(m, ymd(new Date()))).forEach(m => (m.times||[]).filter(Boolean).forEach(t => medItems.push({m,t})));
+  medItems.sort((a,b) => toMin(a.t)-toMin(b.t));
+  const byDay = ORDER.map(x => routine().filter(r => (r.days||[]).includes(x)).sort(sortT));
+  const next = isToday ? items.find(r => toMin(r.time) >= nm) : null;
+  // days: weekday, date of this week, and number of activities
+  const mon = addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), -((now.getDay() + 6) % 7));
+  const sun = addDays(mon, 6), mf = d => d.toLocaleDateString(LANG === "en" ? "en-GB" : LANG === "hr" ? "hr" : "fr-CH", {day: "numeric", month: "long"});
+  // week strip like Today, then a 24-hour dial of the day, then the rows
+  const strip = ORDER.map((x, i) => { const its = byDay[i], dd = addDays(mon, (x + 6) % 7), cs = [...new Set(its.map(r => r.cat))].slice(0, 3);
+    return `<button class="dayb ${x === now.getDay() ? "today" : ""} ${x === wd ? "sel" : ""}" data-act="rday" data-d="${x}" role="tab" aria-selected="${x === wd}" aria-label="${esc(cap(WDL()[x]))} · ${esc(T("{n} act.", {n: its.length}))}"><span class="l">${esc(WD()[x]).slice(0, 1)}</span><span class="n num">${dd.getDate()}</span><span class="pl-dots">${cs.map(k => `<i style="background:${(CATS[k] || CATS.autre).color}"></i>`).join("") || "<i class=\"off\"></i>"}</span></button>`; }).join("");
+  const picker = `<div class="card" style="padding:6px 4px"><div class="week"><div class="days">${strip}</div></div></div>`;
+  const cats = {}; items.forEach(r => { cats[r.cat] = (cats[r.cat] || 0) + 1; });
+  const pastN = isToday ? items.filter(r => toMin(r.time) < nm).length : 0;
+  // a 24-hour dial: each activity is a dot at its hour, the hand shows the time now
+  const cx = 70, R = 54, pt = (m, r) => { const t = m / 1440 * Math.PI * 2 - Math.PI / 2; return [(cx + r * Math.cos(t)).toFixed(1), (cx + r * Math.sin(t)).toFixed(1)]; };
+  const arc = (m1, m2, r) => { const [x1, y1] = pt(m1, r), [x2, y2] = pt(m2, r); return `M${x1} ${y1}A${r} ${r} 0 ${m2 - m1 > 720 ? 1 : 0} 1 ${x2} ${y2}`; };
+  const dial = `<svg class="pl-dial" viewBox="0 0 140 140" aria-hidden="true">
+      <circle cx="${cx}" cy="${cx}" r="${R}" fill="none" stroke="var(--fill2)" stroke-width="12"/>
+      <path d="${arc(6 * 60, 21 * 60, R)}" fill="none" stroke="color-mix(in srgb,var(--g2) 22%,transparent)" stroke-width="12"/>
+      ${Array.from({length: 24}, (_, h) => { const [x1, y1] = pt(h * 60, R - 11), [x2, y2] = pt(h * 60, R - (h % 6 ? 14 : 18)); return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--fg3)" stroke-width="${h % 6 ? 1 : 1.6}" stroke-linecap="round" opacity="${h % 6 ? .45 : .9}"/>`; }).join("")}
+      ${[[0, "0"], [360, "6"], [720, "12"], [1080, "18"]].map(([m, l]) => { const [x, y] = pt(m, R - 26); return `<text x="${x}" y="${y}" dy=".35em" text-anchor="middle" class="pl-dl">${l}</text>`; }).join("")}
+      ${isToday ? (() => { const [x, y] = pt(nm, R + 2); return `<line x1="${cx}" y1="${cx}" x2="${x}" y2="${y}" stroke="var(--fg)" stroke-width="2" stroke-linecap="round"/><circle cx="${cx}" cy="${cx}" r="3.5" fill="var(--fg)"/>`; })() : ""}
+      ${items.map(r => { const [x, y] = pt(toMin(r.time), R), c = CATS[r.cat] || CATS.autre, past = isToday && toMin(r.time) < nm, nx = next && r.id === next.id;
+        return `<circle cx="${x}" cy="${y}" r="${nx ? 7.5 : 5.5}" fill="${c.color}" stroke="var(--card)" stroke-width="2" opacity="${past ? .35 : 1}"${nx ? ` class="pl-dn" style="color:${c.color}"` : ""}/>`; }).join("")}
+    </svg>`;
+  let side;
+  if (isToday && next) { const c = CATS[next.cat] || CATS.autre, diff = toMin(next.time) - nm;
+    side = `<button class="pl-nxt" data-act="jump" data-to="pl-${esc(next.id)}" style="--c:${c.color}"><span class="pl-nk">${T("Prochain")}</span><b class="num">${esc(next.time)}</b><span class="pl-nt">${esc(next.title)}</span><small>${diff < 1 ? T("maintenant") : esc(T("dans {t}", {t: durTxt(diff)}))}</small></button>`; }
+  else if (isToday && items.length) side = `<div class="pl-nxt"><span class="pl-nk">${T("Aujourd'hui")}</span><span class="pl-nt">${esc(T("Plus rien de prévu aujourd'hui. Bonne nuit {n} !", {n: name}))}</span></div>`;
+  else side = `<div class="pl-nxt"><span class="pl-nk">${esc(cap(WDL()[wd]))}</span><b class="num">${items.length}</b><span class="pl-nt">${esc(T("{n} activités", {n: items.length}).replace(/^\d+\s*/, ""))}</span>${items.length ? `<small>${esc(T("de {a} à {b}", {a: items[0].time, b: items[items.length - 1].time}))}</small>` : ""}</div>`;
+  const hero = `<div class="card pad pl-hero2">
+      <div class="pl-h2t"><span class="eyebrow" style="margin:0">${isToday ? T("Aujourd'hui") : esc(cap(WDL()[wd]))}</span><span class="pl-h2n num">${esc(T("{n} activités", {n: items.length}))}</span></div>
+      <div class="pl-h2b">${dial}${side}</div>
+      ${items.length ? `<div class="pl-legend">${Object.entries(cats).map(([k, n]) => { const c = CATS[k] || CATS.autre; return `<span><i style="background:${c.color}"></i>${esc(T(c.label))} <b class="num">${n}</b></span>`; }).join("")}</div>` : ""}</div>`;
+  // list, by moment of the day, with the same rows as Today's program
+  const row = r => { const c = CATS[r.cat] || CATS.autre, past = isToday && toMin(r.time) < nm, nx = next && r.id === next.id;
+    return `<button class="task pl-row ${past ? "past" : ""}" id="pl-${esc(r.id)}" data-act="editRoutine" data-id="${esc(r.id)}" ${canEdit() ? "" : "disabled"}><span class="time num">${esc(r.time)}</span>${ico(c.color, c.icon)}<div class="main"><div class="t">${esc(r.title)}${nx ? ` <span class="xtra">${T("À suivre")}</span>` : ""}</div><div class="s">${esc(daysLabel(r.days))}${r.notes ? " · " + esc(r.notes) : ""}</div></div>${mav(memberOf(r.who), 24)}${canEdit() ? `<span class="chev">${I.chevR}</span>` : ""}</button>`; };
+  const periods = [["Matin", 0, 660], ["Midi", 660, 840], ["Après-midi", 840, 1080], ["Soir", 1080, 1440]];
+  const list = items.length ? periods.map(([l, a, b]) => { const its = items.filter(r => { const m = toMin(r.time); return m >= a && m < b; }); return its.length ? `<div class="period">${T(l)}</div><div class="card">${its.map(row).join("")}</div>` : ""; }).join("")
+      + (canEdit() ? `<button class="pl-add" data-act="addRoutine"><span>+</span>${esc(T("Ajouter une activité le {d}", {d: WDL()[wd]}))}</button>` : "")
+    : `<div class="card"><div class="empty pl-empty"><div class="pl-empty-i">${WXG.moon}</div>${esc(T("Journée tranquille : aucune activité le {d}.", {d: WDL()[wd]}))}${canEdit() ? `<br><button class="btn ghost" style="margin-top:12px" data-act="addRoutine">${T("Ajouter la première activité")}</button>` : ""}</div></div>`;
+  // the whole week
+  const wk = {}; let wkN = 0; byDay.forEach(its => its.forEach(r => { wk[r.cat] = (wk[r.cat] || 0) + 1; wkN++; }));
+  const busiest = ORDER.reduce((b, x, i) => byDay[i].length > byDay[b].length ? i : b, 0);
+  const week = wkN ? `<div class="sec"><div class="sec-h"><h2>${T("La semaine en un coup d'œil")}</h2></div><div class="card pad">
+      <div class="pl-week">${ORDER.map((x, i) => { const its = byDay[i], mx = Math.max(1, ...byDay.map(b => b.length));
+        return `<button class="pl-wcol ${x === wd ? "on" : ""}" data-act="rday" data-d="${x}" aria-label="${esc(WDL()[x])}"><span class="pl-stack" style="height:${Math.round(its.length / mx * 100)}%">${its.map(r => `<i style="background:${(CATS[r.cat]||CATS.autre).color}"></i>`).join("")}</span><small>${WD()[x]}</small></button>`; }).join("")}</div>
+      <div class="foot" style="margin:10px 0 0">${esc(T("{n} activités par semaine",{n:wkN}))} · ${esc(T("Jour le plus chargé : {d}",{d:WDL()[ORDER[busiest]]}))}</div>
+      <div class="catstats">${Object.entries(wk).map(([k, n]) => { const c = CATS[k] || CATS.autre; return `<span class="pill num"><i style="background:${c.color}"></i>${esc(T(c.label))} × ${n}</span>`; }).join("")}</div></div></div>` : "";
+  return `${picker}${hero}<div class="sec-h hx-h"><h2>${T(isToday ? "Programme du jour" : "Programme")}</h2>${wd !== now.getDay() ? `<button class="hx-add" data-act="rday" data-d="${now.getDay()}">${T("Aujourd'hui")}</button>` : ""}</div>${list}
+  ${medItems.length ? `<div class="sec"><div class="sec-h"><h2>${T("Médicaments en cours")}</h2><button class="link" data-act="goSub" data-tab="sante" data-sub="traitements">${T("Gérer")}</button></div><div class="card list">${medItems.map(({m,t}) => `<div class="row"><span class="num" style="width:46px;font-weight:600">${esc(t)}</span>${ico(CATS.med.color,CATS.med.icon)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${esc([m.dose && T(m.dose),m.notes].filter(Boolean).join(" · "))}</div></div></div>`).join("")}</div><div class="foot">${T("Les prises s'ajoutent automatiquement chaque jour du traitement.")}</div></div>` : ""}
+  ${week}`;
+}
+// next appointment as a big countdown
+function apptHero(){
+  const today = ymd(new Date()), ap = appts(), late = ap.filter(a => daysBetween(today, a.date) < 0).length;
+  const nx = ap.find(a => daysBetween(today, a.date) >= 0);
+  const lateTxt = late ? `<div class="pl-next late">${esc(T("{n} rendez-vous en retard",{n:late}))}</div>` : "";
+  if (!nx) return lateTxt ? `<div class="sec" style="margin-top:0"><div class="card pad">${lateTxt}</div></div>` : "";
+  const t = ATYPES[nx.type] || ATYPES.autre, n = daysBetween(today, nx.date);
+  return `<div class="sec" style="margin-top:0"><button class="card pad ap-hero" data-act="editAppt" data-id="${esc(nx.id)}" ${canEdit()?"":"disabled"} style="--c:${t.color}">
+    <div class="ap-cd"><b class="num">${n === 0 ? "!" : n}</b><small>${n === 0 ? T("Aujourd'hui") : n === 1 ? T("Demain") : T("jours")}</small></div>
+    <div class="main"><div class="eyebrow" style="margin:0">${T("Prochain rendez-vous")}</div><div class="t">${ico(t.color, t.icon)}<span>${esc(nx.title)}</span></div><div class="s">${esc(cap(fmt(parseYmd(nx.date),{weekday:"long",day:"numeric",month:"long"})))}${nx.time ? " · " + esc(nx.time) : ""}</div></div></button>${lateTxt}</div>`;
+}
+
+function healthParts(){
+  const today = ymd(new Date());
+  const ms = meds(), cur = ms.filter(m => !m.end || m.end >= today), past = ms.filter(m => m.end && m.end < today);
+  const medCard = m => {
+    const s = medStock(m); let prog = "";
+    if (m.start && m.end) { const tot = daysBetween(m.start, m.end)+1, cd = Math.min(tot, Math.max(0, daysBetween(m.start, today)+1));
+      prog = `<div class="bar"><i style="width:${(cd/tot*100).toFixed(1)}%;background:var(--pink)"></i></div><div class="meta num"><span>${T("Jour {a} sur {b}",{a:cd,b:tot})}</span><span>${T("Fin le {d}",{d:esc(fmt(parseYmd(m.end),{day:"numeric",month:"long"}))})}</span></div>`; }
+    else if (m.start) prog = `<div class="meta"><span>${T("Depuis le {d}",{d:esc(fmt(parseYmd(m.start),{day:"numeric",month:"long"}))})}</span><span>${T("Traitement continu")}</span></div>`;
+    let stock = "";
+    if (s) { const low = s.needed != null ? s.left < s.needed : s.daysLeft < 7;
+      stock = `<div class="meta num" style="margin-top:8px"><span style="color:${low?"var(--red)":"var(--fg2)"};font-weight:${low?600:400}">${T("Stock estimé : {q} {u}",{q:fmtQty(s.left),u:esc(T(m.unit||""))})}${s.daysLeft!=null?` (~${Math.floor(s.daysLeft)} ${LANG==="en"?"d":LANG==="hr"?"d.":"j"})`:""}</span>${s.needed!=null?`<span>${T("Besoin jusqu'à la fin : {q}",{q:fmtQty(s.needed)})}</span>`:""}</div>`; }
+    return `<button class="med" style="display:block;width:100%;text-align:left" data-act="editMed" data-id="${esc(m.id)}" ${canEdit()?"":"disabled"}><div class="med-h">${ico(CATS.med.color,CATS.med.icon)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${esc([m.dose && T(m.dose),m.notes].filter(Boolean).join(" · "))}</div></div><span class="chev">${I.chevR}</span></div>
+      <div class="chips">${(m.times||[]).filter(Boolean).map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div>${prog}${stock}</button>`;
+  };
+  const ws = weights(); let wchart = `<div class="empty">${T("Aucune pesée enregistrée.")}</div>`;
+  if (ws.length) {
+    const last = ws[ws.length-1], prev = ws[ws.length-2], diff = prev ? (last.kg - prev.kg) : 0;
+    const W=340,H=120,L=8,R=40,Tp=14,B=22;
+    const kgs = ws.map(w=>+w.kg), mn = Math.min(...kgs), mx = Math.max(...kgs), span = Math.max(0.8, mx-mn), lo = mn - span*0.25, hi = mx + span*0.25;
+    const t0 = parseYmd(ws[0].date).getTime(), t1 = parseYmd(last.date).getTime(), ts = Math.max(1, t1-t0);
+    const X = d => L + (ws.length===1 ? (W-L-R)/2 : (parseYmd(d).getTime()-t0)/ts*(W-L-R));
+    const Y = k => Tp + (1-(k-lo)/(hi-lo))*(H-Tp-B);
+    const pts = ws.map(w => [X(w.date), Y(+w.kg)]);
+    const line = pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+    const area = line + ` L${pts[pts.length-1][0].toFixed(1)} ${H-B} L${pts[0][0].toFixed(1)} ${H-B} Z`;
+    const grid = [mx, mn].map(k => `<line x1="${L}" x2="${W-R}" y1="${Y(k).toFixed(1)}" y2="${Y(k).toFixed(1)}" stroke="var(--sep)" stroke-dasharray="3 3"/><text x="${W-R+6}" y="${(Y(k)+4).toFixed(1)}" font-size="11" fill="var(--fg2)">${nf(k)}</text>`).join("");
+    const lp = pts[pts.length-1];
+    wchart = `<div class="pad" style="padding-bottom:4px"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap"><div><div class="eyebrow" style="text-transform:none;letter-spacing:0">${T("Dernière pesée · {d}",{d:esc(fmt(parseYmd(last.date),{day:"numeric",month:"short"}))})}</div><div class="big num">${nf(last.kg)}<small>kg</small></div></div>${prev?`<span class="pill num">${T("{x} kg depuis le {d}",{x:(diff>0?"+":"")+nf(diff.toFixed(1)), d:esc(fmt(parseYmd(prev.date),{day:"numeric",month:"short"}))})}</span>`:""}</div>
+      <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${T("Évolution du poids")}"><defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+      ${grid}<path d="${area}" fill="url(#wg)"/><path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+      ${pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="var(--card)" stroke="var(--accent)" stroke-width="1.6"/>`).join("")}
+      <circle cx="${lp[0].toFixed(1)}" cy="${lp[1].toFixed(1)}" r="5" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/>
+      <text x="${L}" y="${H-5}" font-size="11" fill="var(--fg2)">${esc(fmt(parseYmd(ws[0].date),{month:"short",year:"2-digit"}))}</text><text x="${W-R}" y="${H-5}" font-size="11" fill="var(--fg2)" text-anchor="end">${esc(fmt(parseYmd(last.date),{month:"short",year:"2-digit"}))}</text></svg></div>`;
+  }
+  const weightForm = canEdit() ? `<form class="inl" data-form="weight"><input class="f num" id="w-kg" type="number" step="0.1" min="0.5" max="120" inputmode="decimal" placeholder="${T("Poids en kg")}" required><input class="f" id="w-date" type="date" value="${today}" required><button class="btn" type="submit">${T("Ajouter")}</button></form>` : "";
+  const ap = appts();
+  const apRows = ap.length ? ap.map(a => { const t = ATYPES[a.type]||ATYPES.autre, n = daysBetween(today, a.date), late = n < 0;
+    return `<div class="row"><button style="display:flex;gap:12px;align-items:center;flex:1;min-width:0;text-align:left" data-act="editAppt" data-id="${esc(a.id)}" ${canEdit()?"":"disabled"}>${ico(t.color,t.icon)}<div class="main"><div class="t">${esc(a.title)}</div><div class="s">${esc(cap(fmt(parseYmd(a.date),{weekday:"short",day:"numeric",month:"long"})))}${a.time?" · "+esc(a.time):""}${a.repeat?" · "+T("tous les {n} mois",{n:a.repeat}):""}${a.notes?" · "+esc(a.notes):""}</div></div>${a.who && memberOf(a.who) ? mav(memberOf(a.who), 24) : ""}</button>
+      <div style="text-align:right;flex:none"><div class="num" style="font-size:13px;font-weight:600;color:${late?"var(--red)":n<=7?"var(--accent)":"var(--fg2)"}">${esc(relDays(a.date))}</div>${canEdit()&&n<=7?`<button class="copy" data-act="apptDone" data-id="${esc(a.id)}">${a.repeat?T("Fait, reprogrammer"):T("Fait")}</button>`:""}</div></div>`; }).join("")
+    : `<div class="empty">${T("Aucun rendez-vous prévu.")}${canEdit()?`<br><button class="btn ghost" style="margin-top:12px" data-act="addAppt">${T("Ajouter un rendez-vous")}</button>`:""}</div>`;
+  const bars = []; let sumN=0,sumT=0; const catAgg = {};
+  for (let i=13;i>=0;i--){ const ds = ymd(addDays(new Date(),-i)), s = dayStats(ds); if (ds===today){ bars.push({ds,pct:s.pct,today:true,total:s.total}); continue; }
+    sumN+=s.n; sumT+=s.total; s.tasks.forEach(t => { catAgg[t.cat]=catAgg[t.cat]||{n:0,t:0}; catAgg[t.cat].t++; if (s.done[t.key]) catAgg[t.cat].n++; }); bars.push({ds,pct:s.pct,total:s.total}); }
+  const BW=340,BH=90,bw=BW/14;
+  const barSvg = `<svg class="chart" viewBox="0 0 ${BW} ${BH+18}" role="img" aria-label="${T("Taux de réalisation sur 14 jours")}"><line x1="0" x2="${BW}" y1="${BH}" y2="${BH}" stroke="var(--sep)"/>${bars.map((b,i)=>{const h=Math.max(b.total?3:0,b.pct*(BH-6)), x=i*bw+bw*0.18, w=bw*0.64;
+    return `<g data-act="openDay" data-d="${b.ds}" style="cursor:pointer"><rect x="${(i*bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${BH+18}" fill="transparent"/><rect x="${x.toFixed(1)}" y="${(BH-h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${b.today?"var(--fg3)":b.pct>=0.9?"var(--green)":b.pct>=0.6?"var(--orange)":"var(--red)"}"/><text x="${(x+w/2).toFixed(1)}" y="${BH+14}" font-size="10" text-anchor="middle" fill="var(--fg2)">${WD()[parseYmd(b.ds).getDay()][0]}</text></g>`;}).join("")}</svg>`;
+  const avg = sumT ? Math.round(sumN/sumT*100) : 0;
+  const secMeds = `  <div class="sec" style="margin-top:8px"><div class="sec-h"><h2>${T("Médicaments")}</h2>${canEdit()?`<button class="link" data-act="addMed">${T("Ajouter")}</button>`:""}</div>
+    <div class="card">${cur.length?cur.map(medCard).join(""):`<div class="empty">${T("Aucun traitement en cours.")}${canEdit()?`<br><button class="btn ghost" style="margin-top:12px" data-act="addMed">${T("Ajouter un médicament")}</button>`:""}</div>`}</div>
+    <div class="foot">${past.length?T("Terminés : {l}",{l:past.map(m=>esc(m.name)).join(", ")}):T("Le stock est estimé à partir des horaires de prise.")}</div></div>${oneOffMeds()}
+`;
+  const secAp = `  <div class="sec"><div class="sec-h"><h2>${T("Rendez-vous et rappels")}</h2>${canEdit()?`<button class="link" data-act="addAppt">${T("Ajouter")}</button>`:""}</div><div class="card list">${apRows}</div><div class="foot">${T("Vaccins, vermifuge, antipuces : les rappels réguliers se reprogramment quand vous les marquez faits.")}</div></div>
+`;
+  const secW = `  <div class="sec"><div class="sec-h"><h2>${T("Poids")}</h2></div><div class="card">${wchart}${weightForm}</div></div>
+`;
+  const secReg = `  <div class="sec"><div class="sec-h"><h2>${T("Régularité sur 14 jours")}</h2></div><div class="card pad">
+    <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px"><div class="big num">${avg}<small>%</small></div><div class="catstats" style="margin:0">${Object.entries(catAgg).map(([k,v])=>`<span class="pill num"><i style="background:${CATS[k].color}"></i>${T(CATS[k].label)} ${Math.round(v.n/v.t*100)} %</span>`).join("")}</div></div>
+    ${barSvg}</div><div class="foot">${T("Part des tâches cochées chaque jour, sans compter aujourd'hui. Touchez une barre pour ouvrir le jour.")}</div></div>`;
+  const secVet = `  <button class="card vet-cta" data-act="vet"><span class="ico" style="--c:var(--blue)">${I.steth.replace("<svg",'<svg width="18" height="18"')}</span><div class="main"><div class="t">${T("Résumé pour le vétérinaire")}</div><div class="s">${T("30 derniers jours : journal, traitements, poids, notes")}</div></div><span class="chev">${I.chevR}</span></button>
+`;
+  return {secMeds, secAp, secReg, secW};
+}
+const viewMedsBody = () => healthParts().secMeds;
+const viewApptList = () => healthParts().secAp;
+const viewRegularity = () => healthParts().secReg;
+
+const PF = [
+  ["Identité",[
+    {k:"breed",l:"Race",t:"pick",opts:BREEDS,search:true},
+    {k:"sex",l:"Sexe",t:"seg",opts:OPT.sex},
+    {k:"birth",l:"Né(e) le",t:"date"},
+    {k:"arrival",l:"Arrivé(e) le",t:"date"},
+    {k:"size",l:"Gabarit",t:"seg",opts:OPT.size,when:d => !breedKey(d.breed)},
+    {k:"sterilized",l:"Stérilisé(e)",t:"seg",opts:OPT.ster},
+    {k:"chip",l:"N° de puce",t:"text",ph:"756 …",copy:true}]],
+  ["Alimentation",[
+    {k:"food",l:"Type",t:"pick",opts:OPT.food},
+    {k:"ration",l:"Ration / jour",t:"text",ph:"260 g"},
+    {k:"meals",l:"Repas / jour",t:"seg",opts:OPT.meals},
+    {k:"allergies",l:"Allergies",t:"multi",opts:OPT.allergies}]],
+  ["Vétérinaire",[
+    {k:"vetName",l:"Cabinet",t:"text",ph:"Nom"},
+    {k:"vetPhone",l:"Téléphone",t:"tel",ph:"021 …",copy:true},
+    {k:"emergency",l:"Urgences 24 h",t:"tel",ph:"Numéro",copy:true}]]
+];
+const allPF = () => PF.flatMap(s => s[1]);
+function pfDisplay(f, d){
+  const v = d[f.k];
+  if (f.t === "date") return v ? fmt(parseYmd(v),{day:"numeric",month:"long",year:"numeric"}) + " · " + ageOf(v) : "";
+  if (f.t === "multi") return listOf(v).map(x => T(x)).join(", ");
+  if (f.k === "meals" && v) return T("{n} repas",{n:v});
+  if (f.t === "seg" || f.t === "pick") return v ? T(v) : "";
+  return v || "";
+}
+function pfEditRow(f, d){
+  const v = d[f.k], lab = T(f.l);
+  if (f.t === "seg") return `<div class="row" style="flex-wrap:wrap"><span class="t" style="flex:none;width:118px">${lab}</span><div class="seg" role="group" aria-label="${esc(lab)}" style="flex:1;min-width:180px">${f.opts.map(o=>`<button type="button" class="${v===o?"on":""}" data-act="pfSeg" data-k="${f.k}" data-v="${esc(o)}" aria-pressed="${v===o}">${esc(T(o))}</button>`).join("")}</div></div>`;
+  if (f.t === "pick") return `<button type="button" class="row" data-act="pfPick" data-k="${f.k}"><span class="t" style="flex:none;width:118px">${lab}</span><span class="main val" style="${v?"color:var(--fg)":"color:var(--fg3)"}">${esc(v?T(v):T("Choisir"))}</span><span class="chev">${I.chevR}</span></button>`;
+  if (f.t === "multi") {
+    const cur = listOf(v), extras = cur.filter(x => !f.opts.includes(x));
+    return `<div class="row" style="flex-direction:column;align-items:stretch;gap:10px"><span class="t">${lab}</span><div class="opts">${f.opts.concat(extras).map(o=>`<label><input type="checkbox" data-act="pfMulti" data-k="${f.k}" data-v="${esc(o)}" ${cur.includes(o)?"checked":""}><span>${esc(T(o))}</span></label>`).join("")}<label><input type="checkbox" data-act="pfMultiOther" data-k="${f.k}" ${S.multiOther===f.k?"checked":""}><span>${T("Autre…")}</span></label></div>
+      ${S.multiOther===f.k?`<div style="display:flex;gap:8px"><input class="f" id="pf-other-${f.k}" placeholder="${T("Précisez")}" style="flex:1;min-width:0"><button type="button" class="btn" data-act="pfMultiAdd" data-k="${f.k}">${T("Ajouter")}</button></div>`:""}</div>`;
+  }
+  return `<label class="row" for="p-${f.k}"><span class="t" style="flex:none;width:118px">${lab}</span><input class="pinput ${f.t==="tel"?"num":""}" id="p-${f.k}" data-pf="${f.k}" type="${f.t==="date"?"date":f.t==="tel"?"tel":"text"}" value="${esc(v||"")}" placeholder="${esc(T(f.ph||""))}"></label>`;
+}
+function viewProfile(){
+  const ed = S.editProfile, d = ed ? (S.draft || {}) : (dog() || {}), ws = weights(), lastW = ws.length ? ws[ws.length-1] : null;
+  const section = ([title, fields]) => `<div class="sec"><div class="sec-h"><h2>${T(title)}</h2></div><div class="card list">${fields.filter(f => !f.when || f.when(d)).map(f => {
+      if (ed) return pfEditRow(f, d);
+      const v = pfDisplay(f, d);
+      const copy = f.copy && d[f.k] ? `<button class="copy" data-act="copy" data-v="${esc(d[f.k])}">${T("Copier")}</button>` : "";
+      return `<div class="row"><span class="t" style="flex:none;width:118px">${T(f.l)}</span><span class="main val ${f.copy?"num":""}" style="${v?"":"color:var(--fg3)"}">${esc(v||"—")}</span>${copy}</div>`; }).join("")}</div></div>`;
+  const btns = `<div style="display:flex;gap:8px;justify-content:center"><button class="btn ghost" data-act="cancelProfile">${T("Annuler")}</button><button class="btn" data-act="saveProfile">${T("Enregistrer")}</button></div>`;
+  return `${ed?"":banner()}<div class="hero">
+    <label style="cursor:${ed?"pointer":"default"};position:relative" ${ed?'for="p-photo"':""}>${avatarHTML(S.pendingPhoto?{photo:S.pendingPhoto}:d,"lg")}${ed?`<span style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;color:var(--accent);background:var(--card);padding:2px 8px;border-radius:999px;white-space:nowrap">${T("Photo")}</span>`:""}</label>
+    ${ed?`<input type="file" id="p-photo" accept="image/*" hidden><input class="f" id="p-name" data-pf="name" value="${esc(d.name||"")}" placeholder="${T("Nom du chien")}" style="max-width:260px;text-align:center;font-size:22px;font-weight:700">`
+      :`<h1>${esc(d.name||T("Votre chien"))}</h1><div class="s">${esc([d.breed && T(d.breed), d.sex && T(d.sex), d.birth?ageOf(d.birth):"", lastW?nf(lastW.kg)+" kg":""].filter(Boolean).join(" · "))}</div>`}
+    ${canEdit()?(ed?btns:`<button class="btn ghost" data-act="editProfile">${T("Modifier la fiche")}</button>`):""}
+  </div>
+  ${ed ? "" : chienCards()}
+  ${PF.map(section).join("")}
+  <div class="sec"><div class="sec-h"><h2>${T("À savoir")}</h2></div><div class="card">${ed?`<textarea class="f" id="p-notes" data-pf="notes" style="border-radius:0;background:transparent;min-height:110px" placeholder="${T("Peurs, habitudes, consignes pour la garde…")}">${esc(d.notes||"")}</textarea>`:`<div class="pad" style="white-space:pre-wrap;font-size:15px;${d.notes?"":"color:var(--fg3)"}">${esc(d.notes||T("Peurs, habitudes, consignes pour la personne qui le garde…"))}</div>`}</div></div>
+  ${ed?`<div style="margin-top:24px">${btns}</div>`:`${dogsSection()}<div class="sec"><div class="card list">
+    <button class="row" data-act="lostOpen"><span class="ico" style="--c:var(--red)">${I.warn}</span><div class="main"><div class="t">${T("Chien perdu")}</div><div class="s">${T("Affiche et annonce prêtes en une minute")}</div></div><span class="chev">${I.chevR}</span></button>
+</div></div>
+`}`;
+}
+const I_OUT = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5h-6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h6"/><path d="M11 12h10M17.5 8.5 21 12l-3.5 3.5"/></svg>';
+const I_PLUS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+const I_GEAR = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" d="M10.6 2h2.8l.5 2.6c.7.2 1.3.5 1.9.9l2.2-1.5 2 2-1.5 2.2c.4.6.7 1.2.9 1.9l2.6.5v2.8l-2.6.5c-.2.7-.5 1.3-.9 1.9l1.5 2.2-2 2-2.2-1.5c-.6.4-1.2.7-1.9.9l-.5 2.6h-2.8l-.5-2.6c-.7-.2-1.3-.5-1.9-.9L6 20l-2-2 1.5-2.2c-.4-.6-.7-1.2-.9-1.9L2 13.4v-2.8l2.6-.5c.2-.7.5-1.3.9-1.9L4 6l2-2 2.2 1.5c.6-.4 1.2-.7 1.9-.9L10.6 2ZM12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2Z"/></svg>';
+
+// ---- iPhone widget (via the free Scriptable app) ----
+const WIDGET_SCRIPT = "// Dogs Life — widget iPhone (app Scriptable)\n// Ce lien est personnel : ne le partagez pas. Pour le couper, Dogs Life → Réglages → Widget iPhone → Désactiver.\nconst DATA = \"@@URL@@\";\nconst APP = \"@@APP@@\";\nconst fm = FileManager.local(), cache = fm.joinPath(fm.documentsDirectory(), \"dogslife-widget.json\");\nlet d = null;\ntry { const r = new Request(DATA); r.timeoutInterval = 12; d = await r.loadJSON(); if (d.error) throw new Error(d.error); fm.writeString(cache, JSON.stringify(d)); }\ncatch (e) { if (fm.fileExists(cache)) { d = JSON.parse(fm.readString(cache)); d.stale = true; } }\nconst fam = config.widgetFamily || \"medium\";\nconst gold = new Color(\"#F1C76A\"), txt = new Color(\"#EEF1EC\"), sub = new Color(\"#9AA29D\"), red = new Color(\"#FF6B5E\");\nconst w = new ListWidget(); w.url = APP; w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000); w.setPadding(14, 15, 14, 15);\nconst g = new LinearGradient(); g.colors = [new Color(\"#231B10\"), new Color(\"#0B0C10\")]; g.locations = [0, 1]; w.backgroundGradient = g;\nconst head = w.addStack(); head.centerAlignContent();\ntry { const ic = await new Request(APP + \"icon-192.png\").loadImage(); const im = head.addImage(ic); im.imageSize = new Size(20, 20); im.cornerRadius = 5; head.addSpacer(6); } catch (e) {}\nconst name = head.addText(d && d.dog ? d.dog : \"Dogs Life\"); name.font = Font.boldSystemFont(13); name.textColor = txt; name.lineLimit = 1; head.addSpacer();\nif (d) { const c = head.addText(d.done + \"/\" + d.total); c.font = Font.boldRoundedSystemFont(13); c.textColor = gold; }\nw.addSpacer(8);\nif (!d) { const t = w.addText(\"Pas de connexion\"); t.font = Font.systemFont(14); t.textColor = sub; }\nelse if (!d.next) { const t = w.addText(d.total ? (d.late ? \"Il reste \" + d.late + \" tâche(s) en retard\" : \"Tout est fait\") : \"Rien de prévu aujourd'hui\"); t.font = Font.boldSystemFont(16); t.textColor = txt; }\nelse {\n  const k = w.addText(\"PROCHAIN · \" + d.next.time); k.font = Font.semiboldSystemFont(11); k.textColor = gold;\n  w.addSpacer(2);\n  const t = w.addText(d.next.title); t.font = Font.boldSystemFont(fam === \"small\" ? 15 : 17); t.textColor = txt; t.lineLimit = 2; t.minimumScaleFactor = 0.8;\n  if (fam !== \"small\") { w.addSpacer(5); (d.upcoming || []).slice(1, fam === \"large\" ? 7 : 3).forEach(u => { const r = w.addText(u.time + \"   \" + u.title); r.font = Font.systemFont(12); r.textColor = sub; r.lineLimit = 1; }); }\n}\nw.addSpacer();\nif (d && d.total) {\n  const W = fam === \"small\" ? 130 : 300, dc = new DrawContext(); dc.size = new Size(W, 6); dc.opaque = false; dc.respectScreenScale = true;\n  const bg = new Path(); bg.addRoundedRect(new Rect(0, 0, W, 6), 3, 3); dc.addPath(bg); dc.setFillColor(new Color(\"#ffffff\", 0.12)); dc.fillPath();\n  const fg = new Path(); fg.addRoundedRect(new Rect(0, 0, Math.max(6, W * d.done / d.total), 6), 3, 3); dc.addPath(fg); dc.setFillColor(gold); dc.fillPath();\n  const im = w.addImage(dc.getImage()); im.imageSize = new Size(W, 6);\n}\nif (d && (d.late || d.stale)) { w.addSpacer(4); const l = w.addText(d.late ? d.late + \" en retard\" : \"Hors ligne · \" + d.now); l.font = Font.semiboldSystemFont(11); l.textColor = d.late ? red : sub; }\nScript.setWidget(w);\nif (config.runsInApp) await (fam === \"small\" ? w.presentSmall() : w.presentMedium());\nScript.complete();\n";
+function widgetScript(){ const i = window.carnetWidget && window.carnetWidget.info(); if (!i || !i.token) return "";
+  return WIDGET_SCRIPT.replace("@@URL@@", i.url.replace(/\/$/, "") + "/widget?f=" + encodeURIComponent(i.fid) + "&t=" + i.token).replace("@@APP@@", location.origin + location.pathname.replace(/[^/]*$/, "")); }
+function widgetSection(){
+  if (!SITE || !window.carnetWidget) return "";
+  const i = window.carnetWidget.info(), on = !!(i && i.token);
+  const steps = ["Installez l'app gratuite « Scriptable » depuis l'App Store.", "Ici, touchez « Copier le script ».", "Dans Scriptable, touchez +, collez, puis appelez le script « Dogs Life ».", "Sur l'écran d'accueil : appui long → + → Scriptable → choisissez une taille → Ajouter.", "Appui long sur le widget → Modifier → Script : « Dogs Life »."];
+  return `<div class="sec"><div class="sec-h"><h2>${T("Widget iPhone")}</h2></div><div class="card"><div class="wg">
+    <div class="wg-prev" aria-hidden="true"><div class="wg-h"><span class="wg-ic">${logoImg ? logoImg(18, "sm") : ""}</span><b>${esc((dog() || {}).name || "Dogs Life")}</b><i class="num">3/5</i></div><small>${T("PROCHAIN · 18:30")}</small><div class="wg-t">${T("Balade du soir")}</div><div class="wg-bar"><span></span></div></div>
+    <p class="wg-p">${T("La prochaine tâche et l'avancement du jour sur l'écran d'accueil, mis à jour environ toutes les 15 minutes. Toucher le widget ouvre Dogs Life.")}</p>
+    ${on ? `<div class="wg-btns"><button class="btn" data-act="widgetCopy">${T("Copier le script")}</button><button class="btn ghost" data-act="widgetOff">${T("Désactiver")}</button></div>`
+         : `<button class="btn" style="width:100%" data-act="widgetOn">${T("Créer mon widget")}</button>`}
+    <ol class="wg-steps">${steps.map(x => `<li>${esc(T(x))}</li>`).join("")}</ol>
+  </div></div><div class="foot">${T("Le script contient une clé personnelle qui ne permet que de lire les tâches du jour. « Désactiver » la coupe aussitôt.")}</div></div>`;
+}
+function viewSettings(){
+  return `${subBar(T("Famille"))}
+  <div class="top" style="padding-top:4px"><div><div class="eyebrow">Dogs Life · ${T("version")} ${APP_RELEASE}</div><h1>${T("Réglages")}</h1></div></div>
+  <div class="brand-tag">${logoImg(26, "sm")} Dogs Life</div>
+  ${notifSection()}
+  ${SITE && window.carnetAccount ? `<div class="sec"><div class="sec-h"><h2>${T("Compte")}</h2></div><div class="card list">
+    <div class="row"><span class="ico" style="--c:var(--blue)">${I_FAM}</span><div class="main"><div class="t">${esc(window.carnetAccount.email || "")}</div><div class="s">${T("Connecté sur cet appareil")}</div></div></div>
+    <button class="row" data-act="signOut"><span class="main t" style="color:var(--red)">${T("Se déconnecter")}</span></button></div></div>` : ""}
+  <div class="sec"><div class="sec-h"><h2>${T("Langue")}</h2></div><div class="card"><div class="row">${langSeg()}</div></div></div>
+  ${widgetSection()}
+  <div class="sec"><div class="sec-h"><h2>${T("Apparence")}</h2></div><div class="card">${skinPick()}</div><div class="foot">${T("Le mode clair ou sombre suit les réglages de votre téléphone.")}</div></div>
+  <div class="sec"><div class="sec-h"><h2>${T("Aide")}</h2></div><div class="card list">
+    <button class="row" data-act="tutoAgain"><span class="ico" style="--c:var(--purple)">${I.dot}</span><span class="main t">${T("Revoir le tutoriel")}</span><span class="chev">${I.chevR}</span></button>
+    ${canEdit() ? `<button class="row" data-act="wizAgain"><span class="ico" style="--c:var(--orange)">${I.paw}</span><div class="main"><div class="t">${T("Relancer l'assistant de départ")}</div><div class="s">${T("Pour un nouveau chien : remplace la fiche actuelle.")}</div></div><span class="chev">${I.chevR}</span></button>` : ""}
+  </div></div>`;
+}
+function redrawEdit(){ const y = window.scrollY; S.lastHTML = ""; $("#view").innerHTML = viewProfile(); window.scrollTo(0, y); }
+function startEdit(){ S.lastHTML = ""; S.draft = JSON.parse(JSON.stringify(dog() || {})); S.editProfile = true; S.tab = "chien"; S.sub = null; S.multiOther = null; S.pendingPhoto = null; $("#view").innerHTML = `<div class="page enter-u">${viewProfile()}</div>`; renderTabs(); window.scrollTo(0,0); }
+function pickSheet(k){
+  const f = allPF().find(x => x.k === k), cur = S.draft[k] || "", custom = cur && !f.opts.includes(cur);
+  const opts = f.opts.slice().sort((a,b) => f.search ? (a === BREEDS[0] ? -1 : b === BREEDS[0] ? 1 : T(a).localeCompare(T(b), LOC())) : 0);
+  openSheet(T(f.l), `
+    ${f.search?`<div class="fg"><input class="f" id="pick-q" type="search" placeholder="${T("Rechercher")}" autocomplete="off"></div>`:""}
+    <div class="card list" id="pick-list">${opts.map(o=>`<button type="button" class="row" data-act="pickOpt" data-k="${k}" data-v="${esc(o)}" data-s="${esc((T(o)+" "+o).toLowerCase())}"><span class="main t">${esc(T(o))}</span>${cur===o?`<span style="color:var(--accent)">${I.tick}</span>`:""}</button>`).join("")}
+      <button type="button" class="row" data-act="pickOther" data-s=""><span class="main t" style="color:var(--accent)">${T("Autre…")}</span>${custom?`<span class="val">${esc(cur)}</span>`:""}</button></div>
+    <div class="fg" id="pick-other" style="margin-top:14px" ${custom?"":"hidden"}><label for="pick-txt">${T("Autre : précisez")}</label><input class="f" id="pick-txt" value="${esc(custom?cur:"")}" placeholder="${T("Tapez la réponse")}"></div>
+    ${cur?`<button type="button" class="btn danger" data-act="pickOpt" data-k="${k}" data-v="" style="width:100%;margin-top:6px">${T("Effacer la réponse")}</button>`:""}`,
+  () => { const t = val("pick-txt"); if (!t) { const o = $("#pick-other"); if (o && o.hidden) return true; toast(T("Tapez une réponse ou choisissez dans la liste.")); return false; } S.draft[k] = t; redrawEdit(); });
+  const q = $("#pick-q"); if (q) setTimeout(() => q.focus(), 60);
+}
+function banner(){
+  const d = dog();
+  if (S.mode === "local") return `<div class="banner" style="margin-top:16px"><p>${T("Ce carnet est enregistré uniquement sur cet appareil.")}</p></div>` + (d && d.example ? exampleBanner() : "");
+  if (S.stale) return `<div class="banner"><p>${T("Les données ne sont pas encore accessibles. Vérifiez la connexion.")}</p></div>`;
+  if (d && d.example && canEdit()) return exampleBanner();
+  return "";
+}
+function exampleBanner(){
+  return `<div class="banner"><p><b>${T("Données d'exemple.")}</b> ${T("Remplacez-les par celles de votre chien, ou repartez de zéro.")}</p>${S.confirmClear?`<button data-act="clearAll" style="color:var(--red)">${T("Confirmer l'effacement")}</button><button data-act="clearCancel">${T("Annuler")}</button>`:`<button data-act="clearAsk">${T("Tout effacer")}</button><button data-act="keepExample">${T("Garder comme base")}</button>`}</div>`;
+}
+const noAccess = () => S.mode === "db" && !S.isOwner && (S.viewOnly || S.noWrite || (S.platEdit === false && S.canWrite !== true));
+function viewLocked(){
+  const signedOut = S.mode === "locked";
+  return `<div class="lock"><div class="lock-ic"><svg viewBox="0 0 24 24" width="42" height="42" fill="currentColor"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Zm3 4a2 2 0 0 1 1 3.7V19h-2v-1.3A2 2 0 0 1 12 14Z"/></svg></div>
+    <h1>${T("Ce carnet est privé")}</h1>
+    <p>${T(signedOut ? "Connectez-vous avec le compte que la famille a invité pour l'ouvrir." : "Votre compte peut seulement voir ce carnet (« Peut voir »), il ne peut pas encore rejoindre la famille. Le propriétaire doit vous ajouter avec votre adresse e-mail en « Éditeur ».")}</p>
+    <div class="lock-steps"><div><b>1</b>${T("Le propriétaire touche « Partager » en haut de la page")}</div><div><b>2</b>${T("Il ajoute votre adresse e-mail en « Éditeur »")}</div><div><b>3</b>${T("Vous rouvrez le carnet et vous entrez le code qu'il vous a donné")}</div></div>
+    <div style="margin-top:22px;display:flex;justify-content:center">${langSeg()}</div></div>`;
+}
+function viewNotMember(){
+  return `<div class="lock"><div class="join-ic" style="margin-bottom:18px">${I_FAM}</div>
+    <h1>${T("Rejoignez la famille")}</h1>
+    <p>${T("Le carnet s'affiche une fois que vous avez rejoint la famille avec son code.")}</p>
+    <button class="btn" style="min-width:220px" data-act="openJoin">${T("Entrer le code de la famille")}</button>
+    <div style="margin-top:22px;display:flex;justify-content:center">${langSeg()}</div></div>`;
+}
+function viewFresh(){
+  const acc = window.carnetAccount || {}, first = (acc.name || "").split(" ")[0];
+  const choose = `<div class="fresh-choices">
+      <button class="card fresh-card" data-act="startBlank"><span class="fresh-ic" style="--c:var(--accent)">${I.paw}</span><div class="main"><b>${T("Créer une famille")}</b><span>${T("Vous créez le carnet de votre chien et invitez vos proches.")}</span></div><span class="chev">${I.chevR}</span></button>
+      <button class="card fresh-card" data-act="joinCode"><span class="fresh-ic" style="--c:var(--purple)">${I_FAM}</span><div class="main"><b>${T("Rejoindre une famille")}</b><span>${T("Quelqu'un vous a donné un code.")}</span></div><span class="chev">${I.chevR}</span></button></div>`;
+  if (S.tab === "chien") return `${pageHead(T("Profil"), "")}
+    <div class="card fresh-acc">${mav({name: first || "?", color: MCOL[1]}, 56)}<div class="main"><div class="t">${esc(acc.name || T("Votre compte"))}</div><div class="s">${esc(acc.email || "")}</div></div></div>
+    <div class="sec"><div class="sec-h"><h2>${T("Votre famille")}</h2></div>${choose}<div class="foot">${T("Une famille regroupe un chien et les personnes qui s'en occupent. Vous pourrez inviter d'autres personnes ensuite.")}</div></div>
+    <div class="sec"><div class="card list"><div class="row">${langSeg()}</div>${acc.signOut ? `<button class="row" data-act="signOut"><span class="main t" style="color:var(--red)">${T("Se déconnecter")}</span></button>` : ""}</div></div>`;
+  if (S.tab === "aujourdhui") return `<div class="fresh-hero">${logoImg(72)}
+      <h1>${esc(first ? T("Bienvenue, {n}", {n: first}) : T("Bienvenue sur Dogs Life"))}</h1>
+      <p>${T("Votre compte est prêt. Pour commencer, créez la famille de votre chien ou rejoignez celle de vos proches.")}</p></div>
+    ${choose}
+    ${(() => { const all = [["var(--accent)", I.paw, "Journal rapide", "Chaque sortie et chaque repas, notés en un geste."], ["var(--green)", I.tRoutine, "Planning", "Une routine partagée, suivie par toute la famille."], ["var(--pink)", I.tHealth, "Santé", "Vaccins, traitements, poids et suivi vétérinaire."],
+        ["var(--purple)", I_FAM, "Famille", "Messagerie et répartition des tâches."], ["var(--teal)", I.ball, "Éducation", "Suivi des apprentissages et des commandes."], ["var(--orange)", I_BUDDY, "Compagnon 3D", "Un double 3D qui reflète son bien-être."],
+        ["var(--blue)", I.steth, "Pour le vétérinaire", "Un résumé de 30 jours, prêt à partager."], ["var(--gray)", I_GARDE, "Garde", "Un accès dédié pour la personne qui le garde."]];
+      const list = S.freshMore ? all : all.slice(0, 3);
+      return `<div class="fresh-what">${list.map(([c, ic, t, x]) => `<div class="fresh-row"><span class="fresh-ic sm" style="--c:${c}">${ic}</span><div><b>${T(t)}</b><span>${T(x)}</span></div></div>`).join("")}</div>
+        <button class="fresh-more" data-act="freshMore">${S.freshMore ? T("Voir moins") : T("Voir plus")}<span class="${S.freshMore ? "up" : ""}">${I.chevR}</span></button>`; })()}`;
+  const tl = (tabList().find(x => x[0] === S.tab) || [, ""])[1];
+  return `${pageHead(T(tl), "")}<div class="card fresh-empty"><div class="fresh-empty-i">${logoImg(56)}</div><div class="t">${T("Pas encore de famille")}</div><div class="s">${T("Créez ou rejoignez une famille depuis votre profil pour voir cette page.")}</div><button class="btn" data-act="go" data-tab="chien" style="margin-top:14px">${T("Aller au profil")}</button></div>`;
+}
+function joinCodeSheet(){
+  const acc = window.carnetAccount || {};
+  openSheet(T("Rejoindre une famille"), `<div class="fg"><label for="jc-code">${T("Code reçu")}</label><input class="f jc-code" id="jc-code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABCD 2345" maxlength="11"></div>
+    <div class="fg"><label for="jc-name">${T("Votre prénom")}</label><input class="f" id="jc-name" autocomplete="given-name" maxlength="24" value="${esc((acc.name || "").split(" ")[0])}"></div>
+    <div class="hint">${T("Le code se trouve chez la personne qui vous invite, dans Famille → Ajouter quelqu'un.")}</div>`,
+    () => { const code = ($("#jc-code").value || "").trim(), name = ($("#jc-name").value || "").trim();
+      if (!code) { toast(T("Entrez le code.")); return false; } if (!name) { toast(T("Indiquez votre prénom.")); return false; }
+      if (!window.carnetJoinCode) { toast(T("Les données ne sont pas encore accessibles. Vérifiez la connexion.")); return false; }
+      const ok = $("#sheet-root .save"); if (ok) { ok.disabled = true; ok.textContent = "…"; }
+      window.carnetJoinCode(code, name).then(err => { if (err) { toast(err); if (ok) { ok.disabled = false; ok.textContent = T("OK"); } } });
+      return false; });
+  const ok = $("#sheet-root .save"); if (ok) ok.textContent = T("Rejoindre");
+}
+function viewOnboarding(){
+  if (SITE && canEdit()) return viewFresh();
+  return `<div class="hero" style="padding-top:60px">${logoImg(104)}<div class="eyebrow" style="color:var(--accent)">${T("Le carnet de votre chien")}</div><h1 class="brand">Dogs Life</h1>
+  <div class="s" style="max-width:34ch">${T("Routine du jour, médicaments, rendez-vous et poids, partagés avec toute la famille.")}</div>
+  ${meMember() ? `<div class="wz-note" style="max-width:36ch">${T("Vous avez rejoint la famille. Le carnet du chien n'est pas encore créé : la personne qui vous a invité(e) va le remplir, ou créez-le vous-même.")}</div>` : ""}
+  ${canEdit()?`<button class="btn" data-act="startBlank" style="margin-top:8px">${T("Créer le carnet de mon chien")}</button>${meMember() ? "" : `<button class="btn ghost" data-act="openJoin">${T("Rejoindre une famille")}</button>`}<button class="wz-later" data-act="loadSample">${T("Partir d'un exemple")}</button>`:`<div class="s">${T("Le carnet n'a pas encore été rempli.")}</div>`}
+  <div style="margin-top:16px;width:100%;display:flex;justify-content:center">${langSeg()}</div></div>`;
+}
+
+/* ---------- end-of-day advice ---------- */
+const LV = {
+  bravo:{c:"var(--green)", i:I.tick.replace('width="16" height="16"','width="18" height="18"')},
+  info:{c:"var(--blue)", i:'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11 10h2v8h-2zM11 6h2v2h-2z"/></svg>'},
+  race:{c:"var(--accent)", i:I.dna},
+  attention:{c:"var(--orange)", i:I.warn},
+  veterinaire:{c:"var(--red)", i:I.steth.replace("<svg",'<svg width="18" height="18"')}
+};
+function dayContext(ds){
+  const d = dog() || {}, st = dayStats(ds), day = getDay(ds);
+  const today = ymd(new Date()), nowM = toMin(hhmm(new Date()));
+  const past = t => ds < today || toMin(t.time) + 60 < nowM;
+  const m = parseYmd(ds).getMonth();
+  const walks = st.tasks.filter(t => t.cat === "balade"), meals = st.tasks.filter(t => t.cat === "repas");
+  let walkAfterMeal = null;
+  meals.forEach(me => walks.forEach(w => { const gap = toMin(w.time) - toMin(me.time); if (gap >= 0 && gap < 60 && !walkAfterMeal) walkAfterMeal = {walk:w, meal:me}; }));
+  const ws = weights(), lastW = ws[ws.length-1], prevW = ws[ws.length-2];
+  const rt = routine().map(r => (r.title + " " + (r.notes||"")).toLowerCase());
+  return { d, st, day, past, m, walks,
+    walksDone: walks.filter(t => st.done[t.key]).length, walksMissed: walks.filter(t => !st.done[t.key] && past(t)).length,
+    energy: day.energy, walkAfterMeal,
+    weightUp: lastW && prevW ? (lastW.kg - prevW.kg) / prevW.kg > 0.02 : false,
+    noRecentWeight: !lastW || daysBetween(lastW.date, ds) > 45,
+    summer: m >= 5 && m <= 7, winter: m >= 10 || m <= 1, moult: (m >= 2 && m <= 4) || (m >= 8 && m <= 10), wet: m >= 9 || m <= 3 || /pluie|mouill|baign|nag|rain|wet|swim/.test(String(day.note||"").toLowerCase()),
+    hasBrush: rt.some(x => /bross|brush/.test(x)), hasTeeth: rt.some(x => /dent|teeth|tooth/.test(x)),
+    hasGroomAppt: appts().some(a => a.type === "toilettage" && daysBetween(ds, a.date) >= -60),
+    age: ageYears(d.birth) ?? 4
+  };
+}
+const normB = x => String(x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"");
+function lev(a, b){ const m = a.length, n = b.length; if (!m || !n) return m + n; let prev = Array.from({length:n+1}, (_, j) => j);
+  for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1)); prev = cur; } return prev[n]; }
+function breedKey(name){
+  if (!name) return null; if (BREED_TRAITS[name]) return name;
+  const q = normB(name); let best = null, bd = 99;
+  BREEDS.forEach(k => [k, BREED_EN[k], HR[k]].filter(Boolean).forEach(v => { const t = normB(v); const dd = t === q ? 0 : (t.includes(q) || q.includes(t)) && Math.min(t.length, q.length) >= 5 ? 1 : lev(t, q); if (dd < bd) { bd = dd; best = k; } }));
+  return bd <= Math.max(2, Math.floor(q.length / 6)) ? best : null;
+}
+function breedTips(ctx){
+  const d = ctx.d, bk = breedKey(d.breed), traits = (BREED_TRAITS[bk] || []).slice(), out = [];
+  const giant = traits.includes("giant") || d.size === "Géant";
+  if (d.birth) { if (ctx.age < 1) traits.push("puppy"); else if (ctx.age >= (giant ? 6 : d.size === "Petit" ? 10 : 8)) traits.push("senior"); }
+  if (!bk && (d.size === "Grand" || d.size === "Géant")) traits.push("bloat", "joints");
+  if (!bk && d.size === "Petit") traits.push("teeth");
+  traits.forEach(k => { const tr = TRAITS[k]; if (!tr) return; const sc = tr.score(ctx); if (sc <= 0) return;
+    const [titre, texte] = tr[LANG] || tr.en; let x = texte;
+    if (k === "bloat" && ctx.walkAfterMeal) x += LANG === "hr" ? ` Danas: „${ctx.walkAfterMeal.walk.title}” u ${ctx.walkAfterMeal.walk.time} dolazi odmah nakon „${ctx.walkAfterMeal.meal.title}” u ${ctx.walkAfterMeal.meal.time}.` : LANG === "en" ? ` Today: “${ctx.walkAfterMeal.walk.title}” at ${ctx.walkAfterMeal.walk.time} comes right after “${ctx.walkAfterMeal.meal.title}” at ${ctx.walkAfterMeal.meal.time}.` : ` Aujourd'hui : « ${ctx.walkAfterMeal.walk.title} » à ${ctx.walkAfterMeal.walk.time} suit de près « ${ctx.walkAfterMeal.meal.title} » à ${ctx.walkAfterMeal.meal.time}.`;
+    out.push({niveau:"race", titre, texte:x, tag: (k === "puppy" || k === "senior") ? T("Âge") : (bk ? T(bk) : d.breed || T(d.size || "")), sc}); });
+  return out.sort((a,b) => b.sc - a.sc).slice(0, 2);
+}
+// the advice is written for a male dog: for a female, the same sentences in the feminine (French)
+const FEM = {"Gardez-le au calme et vérifiez qu'il boit. Si ça dure plus de 24 h, ou en cas de vomissements, de fièvre ou de ventre gonflé, appelez le vétérinaire.": "Gardez-la au calme et vérifiez qu'elle boit. Si ça dure plus de 24 h, ou en cas de vomissements, de fièvre ou de ventre gonflé, appelez le vétérinaire.", "Deux jours de suite, ça mérite un appel au vétérinaire, surtout s'il maigrit ou semble abattu.": "Deux jours de suite, ça mérite un appel au vétérinaire, surtout si elle maigrit ou semble abattue.", "Laissez-le se reposer et vérifiez qu'il boit et mange. Si la fatigue dure plus de 24 h ou s'accompagne d'autres signes, appelez le vétérinaire.": "Laissez-la se reposer et vérifiez qu'elle boit et mange. Si la fatigue dure plus de 24 h ou s'accompagne d'autres signes, appelez le vétérinaire.", "Si ça continue, s'il y a du sang ou s'il est abattu, consultez.": "Si ça continue, s'il y a du sang ou si elle est abattue, consultez.", "S'il force sans résultat ou semble avoir mal au ventre, appelez le vétérinaire.": "Si elle force sans résultat ou semble avoir mal au ventre, appelez le vétérinaire.", "Un épisode isolé n'est souvent pas grave. S'il se répète, s'il ne garde pas l'eau ou semble abattu, consultez.": "Un épisode isolé n'est souvent pas grave. S'il se répète, si elle ne garde pas l'eau ou semble abattue, consultez.", "Notez les zones et les moments où il se gratte : c'est précieux pour le vétérinaire.": "Notez les zones et les moments où elle se gratte : c'est précieux pour le vétérinaire.", "Une séance de flair de 10 minutes (friandises cachées dans l'appartement) le fatigue autant qu'une balade.": "Une séance de flair de 10 minutes (friandises cachées dans l'appartement) la fatigue autant qu'une balade.", "Il a eu moins de sorties que prévu. Demain, reprenez simplement le rythme habituel, sans rallonger les balades : 10 minutes de jeux de flair aident à se dépenser sans forcer.": "Elle a eu moins de sorties que prévu. Demain, reprenez simplement le rythme habituel, sans rallonger les balades : 10 minutes de jeux de flair aident à se dépenser sans forcer.", "Les journées sont courtes : un collier ou un harnais lumineux le rend visible dans le noir.": "Les journées sont courtes : un collier ou un harnais lumineux la rend visible dans le noir.", "Sortez-le aux heures fraîches et emportez de l'eau lors des longues balades.": "Sortez-la aux heures fraîches et emportez de l'eau lors des longues balades.", "10 minutes de jeux de recherche ou de nouveaux tours le fatiguent autant qu'une longue balade, et l'empêchent de s'inventer des occupations.": "10 minutes de jeux de recherche ou de nouveaux tours la fatiguent autant qu'une longue balade, et l'empêchent de s'inventer des occupations.", "Brossez-le 2 à 3 fois par semaine, et chaque jour pendant la mue du printemps et de l'automne.": "Brossez-la 2 à 3 fois par semaine, et chaque jour pendant la mue du printemps et de l'automne.", "Évitez les sauts du canapé et les escaliers, et portez-le en soutenant le dos et l'arrière-train. Un poids stable protège son dos.": "Évitez les sauts du canapé et les escaliers, et portez-la en soutenant le dos et l'arrière-train. Un poids stable protège son dos.", "Le rappel est difficile quand il suit une piste : longe en forêt, et jeux de flair pour le satisfaire.": "Le rappel est difficile quand elle suit une piste : longe en forêt, et jeux de flair pour la satisfaire.", "Endurant et fugueur": "Endurante et fugueuse", "Il lui faut de longues sorties (canicross, vélo par temps frais) et un jardin bien clôturé.": "Il lui faut de longues sorties (canicross, vélo par temps frais) et un jardin bien clôturé.", "Indépendant": "Indépendante", "Rappel peu fiable : gardez-le en laisse ou à la longe hors des zones fermées.": "Rappel peu fiable : gardez-la en laisse ou à la longe hors des zones fermées.", "Jeux de tir, de recherche et un coin où creuser canalisent son énergie, sinon il trouvera ses propres jeux.": "Jeux de tir, de recherche et un coin où creuser canalisent son énergie, sinon elle trouvera ses propres jeux.", "Lâchez-le seulement en zone fermée, car il part sur ce qui bouge, et vérifiez sa peau après les courses.": "Lâchez-la seulement en zone fermée, car elle part sur ce qui bouge, et vérifiez sa peau après les courses.", "Sorties tôt le matin et tard le soir en été, de l'eau à chaque balade, jamais seul en voiture.": "Sorties tôt le matin et tard le soir en été, de l'eau à chaque balade, jamais seule en voiture.", "Frileux": "Frileuse", "En hiver, un manteau pour les sorties et une serviette pour le sécher au retour.": "En hiver, un manteau pour les sorties et une serviette pour la sécher au retour.", "Chien senior": "Chienne senior", "Plusieurs vomissements dans la journée : retirez la nourriture quelques heures, laissez de l'eau en petite quantité et appelez le vétérinaire si ça continue ou s'il est abattu.": "Plusieurs vomissements dans la journée : retirez la nourriture quelques heures, laissez de l'eau en petite quantité et appelez le vétérinaire si ça continue ou si elle est abattue.", "Eau fraîche à volonté, repas léger et pas de friandises. Au-delà de 48 h, avec du sang ou s'il est abattu, consultez.": "Eau fraîche à volonté, repas léger et pas de friandises. Au-delà de 48 h, avec du sang ou si elle est abattue, consultez.", "Notez quand il tousse (effort, nuit, après avoir bu). Si la toux dure plus de 2 jours, s'accompagne de fièvre ou d'essoufflement, consultez.": "Notez quand elle tousse (effort, nuit, après avoir bu). Si la toux dure plus de 2 jours, s'accompagne de fièvre ou d'essoufflement, consultez.", "Rincez à l'eau claire et surveillez. Une plaie profonde, qui saigne encore après 10 minutes de pression ou qu'il lèche sans arrêt : vétérinaire.": "Rincez à l'eau claire et surveillez. Une plaie profonde, qui saigne encore après 10 minutes de pression ou qu'elle lèche sans arrêt : vétérinaire.", "Un repas sauté n'est pas grave chez un chien en forme. S'il refuse aussi le suivant, ou s'il vomit ou semble abattu, appelez le vétérinaire.": "Un repas sauté n'est pas grave chez une chienne en forme. Si elle refuse aussi le suivant, ou si elle vomit ou semble abattue, appelez le vétérinaire."};
+const isFem = () => /^f(e|é)melle|^female|^ženka|^f$/i.test(String((dog() || {}).sex || ""));
+const sx = t => LANG === "fr" && isFem() && FEM[t] ? FEM[t] : t;
+function todayMessages(ds){ return notes().filter(n => !n.kind && n.text && n.at && ymd(new Date(n.at)) === ds).sort((a, b) => a.at.localeCompare(b.at)); }
+
+// ---- the daily report: a professional, factual write-up of the day, built only from what was recorded ----
+// "Effectué" = ticked or logged · "Non effectué" = the family wrote it was not done · "Non enregistré" = planned, time passed, nothing recorded · "À venir" = not due yet · nothing planned = not a miss
+function dayReport(ds){
+  const ctx = dayContext(ds), {d, st, day} = ctx, logs = dayLog(ds), fem = isFem(), name = d.name || T(fem ? "votre chienne" : "votre chien");
+  const g = (m, f) => fem ? f : m, today = ymd(new Date()), isToday = ds === today, nowM = toMin(hhmm(new Date()));
+  const who = x => { const m = doneBy(x); return (m && m.name) || x.byName || ""; };
+  const by = x => who(x) ? " · " + esc(T("par {n}", {n: who(x)})) : "";
+  const msgs = todayMessages(ds), said = [{t: String(day.note || ""), who: ""}].concat(msgs.map(m => ({t: String(m.text || ""), who: m.name || ""})), logs.filter(x => x.note && x.k !== "photo").map(x => ({t: String(x.note), who: who(x)})));
+  const saidBy = re => said.find(x => re.test(x.t.toLowerCase()));
+  const notDone = {repas: saidBy(/(pas|rien|n'a pas|refus\w*( de)?) ?(mang|touch)|pas faim|saut\w* (le |son )?repas/), balade: saidBy(/(pas|aucune?) (pu |eu )?(sorti|sortie|balade|promen)|pas de (sortie|balade|promenade)/), med: saidBy(/(oubli\w*|pas (pris|donn\w*)) (le |son |la |ses )?(médic|medic|traitement|cachet|comprim|pilule)/)};
+  const due = t => !isToday || ds < today || toMin(t.time) <= nowM;
+  const lateT = t => ds < today || toMin(t.time) + 60 < nowM;
+  const status = t => { const k = st.done[t.key];
+    if (k) return {s: "ok", h: `<span class="rp-ok">${esc(T("Effectué"))}</span>${k.at ? " " + esc(T("à {t}", {t: k.at})) : ""}${by(k)}`};
+    const nd = notDone[t.cat]; if (nd && due(t)) return {s: "no", h: `<span class="rp-no">${esc(T("Non effectué"))}</span>${nd.who ? " · " + esc(T("signalé par {n}", {n: nd.who})) : ""}`};
+    if (lateT(t)) return {s: "miss", h: `<span class="rp-miss">${esc(T("Non enregistré"))}</span> · ${esc(T("à vérifier"))}`};
+    return {s: "soon", h: `<span class="rp-soon">${esc(T("À venir"))}</span>`}; };
+  const J = to => to && ds === S.sel ? ` class="rp-jump" data-act="jump" data-to="${esc(to)}" role="button" tabindex="0"` : "";
+  const line = (time, title, rest, x, to) => `<li${J(to)}><b class="num">${esc(time || "")}</b><div class="rp-li"><span class="rp-lt">${esc(title)}${x ? ` <span class="xtra">${esc(T("Extra"))}</span>` : ""}</span>${rest ? `<span class="rp-lr">${String(rest).replace(/^ · /, "")}</span>` : ""}</div></li>`;
+  const list = items => items.length ? `<ul class="rp-l">${items.join("")}</ul>` : "";
+  const none = txt => `<p class="rp-none">${esc(txt)}</p>`;
+  const RPI = {1: ["var(--accent)", I.cal || CATS.autre.icon], 2: [CATS.balade.color, CATS.balade.icon], 3: [QL.pipi.c, QL.pipi.i], 4: [CATS.repas.color, CATS.repas.icon], 5: [CATS.jeu.color, CATS.jeu.icon], 6: [QL.sieste.c, QL.sieste.i], 7: [CATS.med.color, CATS.med.icon], 8: ["var(--orange)", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3 1.8"/></svg>'], 9: ["var(--red)", I.warn], 10: ["var(--teal)", '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Zm-2.5 18h5v.5A1.5 1.5 0 0 1 13 22h-2a1.5 1.5 0 0 1-1.5-1.5V20Z"/></svg>'], 11: ["var(--pink)", '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.1 0 3.7 1.2 5.2 3 1.5-1.8 3.1-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21Z"/></svg>']};
+  const SECTO = {}; const S2 = [], sec = (n, t, html) => { const [c, ic] = RPI[n] || ["var(--gray)", ""], to = SECTO[n]; S2.push(`<section class="rp-s" id="rp-s-${n}" style="--c:${c}"><h3${to && ds === S.sel ? ` class="rp-jump" data-act="jump" data-to="${esc(to)}" role="button" tabindex="0"` : ""}><span class="rp-ic">${ic}</span>${esc(t)}</h3><div class="rp-b">${html}</div></section>`); };
+  const of = c => st.tasks.filter(t => t.cat === c);
+  const planned = st.tasks.map(t => Object.assign({}, t, status(t)));
+  const P = c => planned.filter(t => t.cat === c);
+  const cnt = (arr, s) => arr.filter(t => t.s === s).length;
+  const L = k => logs.filter(x => x.k === k);
+  const walksL = L("balade"), peeL = logs.filter(x => x.k === "pipi" || (x.k === "balade" && x.pee)), pooL = logs.filter(x => x.k === "caca" || (x.k === "balade" && x.poo)), accL = L("accident");
+  const waterL = L("eau"), treatL = L("friandise"), playL = L("jeu"), napL = L("sieste"), vomL = L("vomi");
+  const trains = Object.values(C.train || {}).filter(x => x && (x.dog || "main") === dogId() && (x.date === ds || (x.tries || []).some(y => String(y.at || y.date || "").startsWith(ds))));
+  const tips = tipsFor(ds), warn = tips.filter(c => (c.niveau === "veterinaire" || c.niveau === "attention") && c.titre !== T("Prise non confirmée"));
+  const minW = walksL.reduce((a, x) => a + (+x.dur || 0), 0), kmW = walksL.reduce((a, x) => a + (+x.dist || 0), 0) / 1000;
+  const walkPl = P("balade"), mealPl = P("repas"), medPl = P("med"), carePl = P("soin"), playPl = P("jeu"), otherPl = P("autre");
+  const missing = planned.filter(t => t.s === "miss" || t.s === "no");
+  const firstOpen = arr => { const t = arr.find(t => t.s !== "ok"); return t ? "task-" + t.key : arr[0] ? "task-" + arr[0].key : ""; };
+  Object.assign(SECTO, {1: "prog-h", 2: firstOpen(walkPl) || "ql-balade", 3: "ql-pipi", 4: firstOpen(mealPl) || "jr-sec", 5: firstOpen(playPl) || "ql-plus", 6: "jr-sec", 7: firstOpen(medPl.concat(carePl)) || "", 8: missing[0] ? "task-" + missing[0].key : "prog-h", 9: "al-sec"});
+  const jr = [day.appetite && T("appétit {v}", {v: T(day.appetite).toLowerCase()}), day.energy && T("énergie {v}", {v: T(day.energy).toLowerCase()}), day.stool && T("selles {v}", {v: T(day.stool).toLowerCase()})].filter(Boolean);
+  const people = [...new Set(Object.values(st.done).map(who).concat(logs.map(who), msgs.map(m => m.name || "")).filter(Boolean))];
+
+  // 1. summary
+  const sum = [];
+  const pl = (n, a, b) => T(n > 1 ? b : a, {n});
+  if (st.total) sum.push(T("Tâches enregistrées : {a} sur {b}", {a: st.n, b: st.total}) + (cnt(planned, "soon") ? " (" + pl(cnt(planned, "soon"), "une encore à venir", "{n} encore à venir") + ")" : "") + ".");
+  else sum.push(T("Aucune routine n'était prévue ce jour-là."));
+  if (walksL.length) sum.push(pl(walksL.length, "Une balade suivie", "{n} balades suivies") + (minW ? ", " + T("{m} min au total", {m: minW}) : "") + (kmW >= .05 ? ", " + num1(kmW) + " km" : "") + ".");
+  if (jr.length) sum.push(T("Journal : {j}.", {j: jr.join(", ")}));
+  sum.push("@@ATT@@");
+  if (false) {}
+  else if (st.total && st.n === st.total) sum.push(T("Tout ce qui était prévu pour {n} a été fait.", {n: name}));
+  if (people.length) sum.push(T("Ont participé : {p}.", {p: people.join(", ")}));
+  let sumH = `<p>${esc(sum.join(" "))}</p>`;
+  if (msgs.length) sumH += `<div class="rp-q rp-jump" data-act="go" data-tab="famille" role="button" tabindex="0">${msgs.slice(-6).map(m => `<div>«&nbsp;${esc(String(m.text).slice(0, 200))}&nbsp;»<span>${esc(m.name || "")}${m.name ? ", " : ""}${esc(hhmm(new Date(m.at)))}</span></div>`).join("")}</div>`;
+  if (day.note) sumH += `<div class="rp-q"><div>«&nbsp;${esc(String(day.note).slice(0, 240))}&nbsp;»<span>${esc(T("note du jour"))}</span></div></div>`;
+  sec(1, T("Résumé de la journée"), sumH);
+
+  // 2. walks
+  const wItems = walksL.map(x => line(x.at, T("Balade"), [x.dur && x.dur + " min", x.dist && fmtKm(x.dist), x.pee && T("pipi"), x.poo && T("caca")].filter(Boolean).map(esc).join(" · ") + by(x), 0, "ql-balade"));
+  const wPlan = walkPl.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key));
+  sec(2, T("Promenades et sorties"), (wItems.length ? list(wItems) : "") + (wPlan.length ? `<div class="rp-sub">${esc(T("Prévu dans la routine"))}</div>` + list(wPlan) : "") + (!wItems.length && !wPlan.length ? none(T("Aucune sortie prévue ni enregistrée.")) : !wItems.length && !walkPl.some(t => t.s === "ok") ? none(T("Aucune balade enregistrée pour l'instant.")) : ""));
+
+  // 3. toilet
+  const tItems = [].concat(L("pipi").map(x => line(x.at, T("Pipi"), by(x).replace(/^ · /, ""), 0, "ql-pipi")), L("caca").map(x => line(x.at, T("Caca"), [x.q && esc(T(x.q))].filter(Boolean).join("") + by(x), 0, "ql-caca")), walksL.filter(x => x.pee || x.poo).map(x => line(x.at, [x.pee && T("Pipi"), x.poo && T("Caca")].filter(Boolean).join(" + "), esc(T("pendant la balade")), 0, "ql-balade")), accL.map(x => line(x.at, T("Accident"), by(x).replace(/^ · /, ""), 0, "ql-accident"))).sort();
+  let tH = tItems.length ? `<p>${esc(T("Pipi : {a} · Caca : {b}", {a: peeL.length, b: pooL.length}) + (accL.length ? " · " + T("Accident : {n}", {n: accL.length}) : ""))}</p>` + list(tItems) : none(T("Aucun besoin enregistré aujourd'hui : cela ne veut pas dire qu'il n'y en a pas eu."));
+  if (day.stool) tH += `<p>${esc(T("Selles notées dans le journal : {v}.", {v: T(day.stool).toLowerCase()}))}</p>`;
+  sec(3, T("Besoins naturels"), tH);
+
+  // 4. food & water
+  const daily = dailyG(), per = daily && of("repas").length ? Math.round(daily / of("repas").length) : 0;
+  let fH = mealPl.length ? list(mealPl.map(t => line(t.time, t.title, (per && !t.extra ? esc(T("{g} g prévus", {g: per})) + " · " : "") + t.h, t.extra, "task-" + t.key))) : none(T("Aucun repas n'est prévu dans la routine."));
+  if (day.appetite) fH += `<p>${esc(T("Appétit noté : {v}.", {v: T(day.appetite).toLowerCase()}))}</p>`;
+  if (treatL.length) fH += `<p>${esc(T(treatL.length > 1 ? "{n} friandises" : "Une friandise", {n: treatL.length}))} (${esc(treatL.map(x => x.at).join(", "))}).</p>`;
+  fH += waterL.length ? `<p>${esc(T("Eau notée à {t}.", {t: waterL.map(x => x.at).join(", ")}))}</p>` : `<p class="rp-none">${esc(T("Hydratation non enregistrée."))}</p>`;
+  sec(4, T("Alimentation et hydratation"), fH);
+
+  // 5. play
+  const pItems = playL.map(x => line(x.at, T("Jeu"), by(x).replace(/^ · /, ""), 0, "ql-plus")).concat(playPl.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key)), trains.map(x => line("", T("Éducation : {s}", {s: x.name || x.skill || ""}), x.status ? esc(T(x.status)) : "")));
+  sec(5, T("Jeux et stimulation mentale"), pItems.length ? list(pItems) : none(T("Aucun jeu ni exercice enregistré.")));
+
+  // 6. rest
+  let rH = napL.length ? `<p>${esc(T(napL.length > 1 ? "Siestes notées à {t}." : "Sieste notée à {t}.", {t: napL.map(x => x.at).join(", ")}))}</p>` : "";
+  if (day.energy) rH += `<p>${esc(T("Énergie notée : {v}.", {v: T(day.energy).toLowerCase()}))}</p>`;
+  sec(6, T("Repos et sommeil"), rH || none(T("Repos non enregistré.")));
+
+  // 7. health & care
+  const hItems = medPl.map(t => line(t.time, t.title + (t.detail ? " (" + t.detail + ")" : ""), t.h, t.extra, "task-" + t.key)).concat(carePl.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key)), otherPl.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key)), vomL.map(x => line(x.at, T("Vomissement"), by(x).replace(/^ · /, ""), 0, "ql-plus")));
+  const w = weights().filter(x => x.date === ds); w.forEach(x => hItems.push(line("", T("Pesée"), esc(nf(x.kg) + " kg"))));
+  const ap = appts().filter(a => { const n = daysBetween(ds, a.date); return n >= 0 && n <= 7; });
+  let hH = hItems.length ? list(hItems) : none(T("Aucun soin, traitement ou symptôme enregistré."));
+  if (ap.length) hH += `<div class="rp-sub">${esc(T("Rendez-vous à venir"))}</div>` + list(ap.slice(0, 3).map(a => line(a.time || "", a.title, esc(fmt(parseYmd(a.date), {weekday: "long", day: "numeric", month: "long"})))));
+  sec(7, T("Santé et soins"), hH);
+
+  // 8. not done / not recorded
+  sec(8, T("Activités non réalisées ou non enregistrées"), !st.total ? none(T("Rien n'était prévu : aucun oubli à signaler.")) : missing.length ? list(missing.map(t => line(t.time, t.title, t.h, t.extra, "task-" + t.key))) : none(cnt(planned, "soon") ? T("Rien de manquant pour l'instant ; le reste est à venir.") : T("Tout ce qui était prévu a été enregistré.")));
+
+  // 9. attention
+  const att = warn.map(c => `<li style="--lv:${c.niveau === "veterinaire" ? "var(--red)" : "var(--orange)"}"${c.tag ? J("") : ""}><b>${esc(c.titre)}${c.tag ? ` <span class="rp-tag">${esc(c.tag)}</span>` : ""}</b>${esc(c.texte)}</li>`);
+  const mMiss = medPl.filter(t => t.s === "miss"); if (mMiss.length) att.push(`<li${J("task-" + mMiss[0].key)}><b>${esc(T("Traitement non confirmé"))}</b>${esc(T("{t} : vérifiez qu'il a bien été donné avant d'en redonner.", {t: mMiss.map(t => t.title + " " + t.time).join(", ")}))}</li>`);
+  const fMiss = mealPl.filter(t => t.s === "miss"); if (fMiss.length && !notDone.repas) att.push(`<li${J("task-" + fMiss[0].key)}><b>${esc(T("Repas non enregistré"))}</b>${esc(T("{t} : il a peut-être été donné sans être coché, à confirmer.", {t: fMiss.map(t => t.time).join(", ")}))}</li>`);
+  if (!jr.length && (!isToday || nowM > 17 * 60)) att.push(`<li${J("jr-sec")}><b>${esc(T("Journal incomplet"))}</b>${esc(T("Appétit, énergie et selles ne sont pas remplis : le suivi est plus fiable avec."))}</li>`);
+  const attTxt = att.length ? pl(att.length, "Un point est à surveiller, détaillé plus bas.", "{n} points sont à surveiller, détaillés plus bas.") : "";
+  S2[0] = S2[0].replace(esc(" @@ATT@@"), attTxt ? " " + esc(attTxt) : "").replace(esc("@@ATT@@"), esc(attTxt));
+  sec(9, T("Points d'attention"), att.length ? `<ul class="rp-l rp-att">${att.join("")}</ul>` : none(T("Rien de particulier à signaler.")));
+
+  // 10. tomorrow
+  const adv = tips.filter(c => !(c.niveau === "veterinaire" || c.niveau === "attention") && c.niveau !== "bravo" && !/^(Complétez le journal|Fill in the log)/.test(c.titre)).slice(0, 4);
+  if (adv.length < 2 && walkPl.some(t => t.s === "miss")) adv.push({titre: T("Gardez le rythme"), texte: T("Une sortie manquée ne se rattrape pas en forçant : demain, les balades habituelles suffisent.")});
+  if (adv.length < 2) adv.push({titre: T("Même routine demain"), texte: T("Cochez chaque tâche au moment où elle est faite : le bilan sera plus précis et toute la famille sera à jour.")});
+  sec(10, T("Conseils pour demain"), `<ul class="rp-l rp-att">${adv.slice(0, 5).map(c => `<li style="--lv:var(--teal)"><b>${esc(c.titre)}${c.tag ? ` <span class="rp-tag">${esc(c.tag)}</span>` : ""}</b>${esc(c.texte)}</li>`).join("")}</ul>`);
+
+  // 11. a short word, from the facts only
+  let word;
+  if (warn.some(c => c.niveau === "veterinaire")) word = T("Aujourd'hui, un point demande l'avis du vétérinaire : mieux vaut appeler pour rien que d'attendre. Pour le reste, {n} est bien entouré{e} par la famille.", {n: name, e: g("", "e")});
+  else if (st.total && st.n === st.total) word = T("Journée complète pour {n} : tout ce qui était prévu a été fait. Merci à {p} pour ce suivi.", {n: name, p: people.length ? people.join(", ") : T("toute la famille")});
+  else if (missing.length) word = T("Quelques éléments ne sont pas encore enregistrés. Pensez à les cocher s'ils ont été faits : le suivi de {n} n'en sera que meilleur.", {n: name});
+  else if (isToday && cnt(planned, "soon")) word = T("La journée de {n} se déroule comme prévu ; le bilan se complétera au fil des tâches.", {n: name});
+  else word = T("Merci de prendre le temps de noter la journée de {n} : ce suivi régulier est précieux, pour vous comme pour le vétérinaire.", {n: name});
+  sec(11, T("Le petit mot"), `<p class="rp-word">${esc(word)}</p>`);
+  const tile = (v, l, c, to) => `<button type="button" class="rp-k" style="--c:${c}" data-act="jump" data-to="${to}"><b class="num">${v}</b><span>${esc(l)}</span></button>`;
+  const kpis = `<div class="rp-kpis">${tile(st.total ? st.n + "/" + st.total : "—", T("tâches"), "var(--green)", (planned.find(t => t.s !== "ok") ? "task-" + planned.find(t => t.s !== "ok").key : "prog-h"))}${(minW ? tile(minW, T("min de balade"), CATS.balade.color, walkPl.find(t => t.s !== "ok") ? "task-" + walkPl.find(t => t.s !== "ok").key : "ql-balade") : tile(walksL.length, T(walksL.length > 1 ? "balades" : "balade"), CATS.balade.color, walkPl.find(t => t.s !== "ok") ? "task-" + walkPl.find(t => t.s !== "ok").key : "ql-balade"))}${tile(peeL.length + pooL.length, T("besoins notés"), QL.pipi.c, "ql-pipi")}${tile(att.length, T(att.length > 1 ? "points d'attention" : "point d'attention"), att.length ? "var(--red)" : "var(--gray)", "al-sec")}</div>`;
+  return `<div class="rp">${kpis}${S2.join("")}</div>`;
+}
+function tipsFor(ds){ return tipsForRaw(ds).map(c => Object.assign({}, c, {titre: sx(c.titre), texte: sx(c.texte)})); }
+function tipsForRaw(ds){
+  const ctx = dayContext(ds), {d, st, day} = ctx, out = [];
+  const prev = getDay(ymd(addDays(parseYmd(ds), -1)));
+  // what the family wrote today counts too: the day's note, the family chat and the notes of the quick log
+  const msgs = todayMessages(ds), said = [{t: String(day.note || ""), who: ""}].concat(msgs.map(m => ({t: m.text || "", who: m.name || "", at: m.at})), dayLog(ds).filter(x => x.note).map(x => ({t: x.note, who: x.byName || "", at: ""})));
+  const note = said.map(x => x.t).join(" \n ").toLowerCase();
+  const src = re => { const m = said.find(x => x.who && re.test(x.t.toLowerCase())); return m ? T("d'après {n}", {n: m.who}) : ""; };
+  const vet = d.vetPhone ? T(" Vétérinaire : {p}.",{p:d.vetPhone}) : "";
+  const add = (niveau, titre, texte) => out.push({niveau, titre, texte});
+  if (day.appetite === "Faible" && day.energy === "Basse") add("veterinaire",T("Appétit et énergie en baisse"),T("Gardez-le au calme et vérifiez qu'il boit. Si ça dure plus de 24 h, ou en cas de vomissements, de fièvre ou de ventre gonflé, appelez le vétérinaire.") + vet);
+  else if (day.appetite === "Faible") { const two = prev.appetite === "Faible"; add(two ? "veterinaire" : "attention", T(two ? "Peu d'appétit depuis 2 jours" : "Appétit faible"), two ? T("Deux jours de suite, ça mérite un appel au vétérinaire, surtout s'il maigrit ou semble abattu.") + vet : T("Proposez sa ration à heure fixe et retirez la gamelle après 20 minutes. Évitez de compenser avec des friandises.")); }
+  else if (day.energy === "Basse") add("info",T("Énergie basse aujourd'hui"),T("Laissez-le se reposer et vérifiez qu'il boit et mange. Si la fatigue dure plus de 24 h ou s'accompagne d'autres signes, appelez le vétérinaire."));
+  if (day.stool === "Molles") { const two = prev.stool === "Molles"; add(two ? "veterinaire" : "attention", T(two ? "Selles molles depuis 2 jours" : "Selles molles"), two ? T("Si ça continue, s'il y a du sang ou s'il est abattu, consultez.") + vet : T("Eau fraîche à volonté, pas de friandises ni de restes de table demain. Au-delà de 48 h ou avec du sang, consultez.")); }
+  if (day.stool === "Aucune" && prev.stool === "Aucune") add("attention",T("Pas de selles depuis 2 jours"),T("S'il force sans résultat ou semble avoir mal au ventre, appelez le vétérinaire.") + vet);
+  const vomLogs = dayLog(ds).filter(x => x.k === "vomi").length;
+  if (/(chocolat|raisin|xylitol|oignon|\bail\b|avocat|mort-aux-rats|antigel|m[ée]dicament|ibuprof|parac[ée]tamol)/.test(note) && /(mang|aval|bouff|croqu|léch|lech|trouv)/.test(note)) out.unshift({niveau:"veterinaire", titre:T("Peut-être une intoxication"), texte:T("Chocolat, raisin, xylitol, oignon, ail ou médicaments humains peuvent être toxiques, même en petite quantité. Appelez tout de suite le vétérinaire en indiquant quoi, combien et à quelle heure.") + vet, tag: src(/(chocolat|raisin|xylitol|oignon|ail|médicament|medicament)/)});
+  if (vomLogs >= 2) add("veterinaire", T("{n} vomissements aujourd'hui", {n: vomLogs}), T("Plusieurs vomissements dans la journée : retirez la nourriture quelques heures, laissez de l'eau en petite quantité et appelez le vétérinaire si ça continue ou s'il est abattu.") + vet);
+  else if (vomLogs === 1 && !/vomi/.test(note)) add("attention", T("Vomissement noté"), T("Un épisode isolé n'est souvent pas grave. S'il se répète, s'il ne garde pas l'eau ou semble abattu, consultez."));
+  if (/diarr/.test(note) && day.stool !== "Molles") add("attention", T("Diarrhée signalée"), T("Eau fraîche à volonté, repas léger et pas de friandises. Au-delà de 48 h, avec du sang ou s'il est abattu, consultez.") + vet);
+  if (/(tique|tick)/.test(note)) add("info", T("Tique trouvée"), T("Retirez-la avec un tire-tique en tournant, désinfectez et notez la date. Fièvre, fatigue ou boiterie dans les semaines suivantes : vétérinaire."));
+  if (/(tousse|toux|cough)/.test(note)) add("attention", T("Toux signalée"), T("Notez quand il tousse (effort, nuit, après avoir bu). Si la toux dure plus de 2 jours, s'accompagne de fièvre ou d'essoufflement, consultez."));
+  if (/(saign|\bsang\b|bless|coupure|plaie)/.test(note) && day.stool !== "Molles") add("attention", T("Blessure signalée"), T("Rincez à l'eau claire et surveillez. Une plaie profonde, qui saigne encore après 10 minutes de pression ou qu'il lèche sans arrêt : vétérinaire."));
+  if (/((pas|rien) mang|refus\w* (de )?mang|pas faim|n'a pas touch)/.test(note) && day.appetite !== "Faible") add("attention", T("Repas refusé"), T("Un repas sauté n'est pas grave chez un chien en forme. S'il refuse aussi le suivant, ou s'il vomit ou semble abattu, appelez le vétérinaire."));
+  if (/(boit beaucoup|beaucoup bu|très soif|tres soif)/.test(note)) add("info", T("Boit beaucoup"), T("Après l'effort ou la chaleur c'est normal. Si ça dure plusieurs jours sans raison, parlez-en au vétérinaire : c'est un signe à vérifier."));
+  if (/vomi/.test(note)) add("attention",T("Vomissement noté"),T("Un épisode isolé n'est souvent pas grave. S'il se répète, s'il ne garde pas l'eau ou semble abattu, consultez."));
+  if (/boit(e|ille)|boîte|boiter|patte|limp|paw/.test(note)) add("attention",T("Patte ou boiterie notée"),T("Limitez les sauts et les escaliers, balades courtes en laisse. Sans amélioration en 48 h, faites contrôler."));
+  if (/gratt|démang|demang|léch|lech|itch|scratch|lick/.test(note)) add("info",T("Démangeaisons"),T("Notez les zones et les moments où il se gratte : c'est précieux pour le vétérinaire."));
+  const missedMeds = st.tasks.filter(t => t.cat === "med" && !st.done[t.key] && ctx.past(t));
+  if (missedMeds.length) add("attention", T("Prise non confirmée"), T("{l} : vérifiez qu'elle a bien été donnée. En cas de doute, ne doublez pas la prise suivante sans l'avis du vétérinaire.",{l:missedMeds.map(t => `${t.title} ${T("à")} ${t.time}`).join(", ")}));
+  const bt = breedTips(ctx), hasActivityBreedTip = bt.some(b => b.sc >= 5);
+  if (ctx.walksMissed && ctx.energy === "Haute" && !hasActivityBreedTip) add("info",T("Beaucoup d'énergie, peu de sorties"),T("Une séance de flair de 10 minutes (friandises cachées dans l'appartement) le fatigue autant qu'une balade."));
+  else if (ctx.walksMissed && !hasActivityBreedTip) add("info", T("{a} sortie(s) sur {b}",{a:ctx.walksDone,b:ctx.walks.length}), T("Il a eu moins de sorties que prévu. Demain, reprenez simplement le rythme habituel, sans rallonger les balades : 10 minutes de jeux de flair aident à se dépenser sans forcer."));
+  else if (ctx.energy === "Haute" && ctx.walks.length && !ctx.walksMissed && !hasActivityBreedTip) add("info",T("Encore de l'énergie"),T("Toutes les sorties sont faites : ajoutez plutôt un jeu de réflexion (tapis de fouille, jouet à remplir) qu'une sortie de plus."));
+  const ws = weights();
+  if (ws.length >= 2) { const a = +ws[ws.length-2].kg, b = +ws[ws.length-1].kg, ch = (b - a) / a;
+    if (Math.abs(ch) >= 0.05) add("attention", T(ch > 0 ? "Prise de poids" : "Perte de poids"), T("{a} → {b} kg depuis la pesée précédente. Parlez-en au vétérinaire et ajustez la ration avec lui.",{a:nf(a),b:nf(b)})); }
+  appts().forEach(a => { const n = daysBetween(ds, a.date); if (n === 1 || n === 2) add("info", T(n === 1 ? "Demain : {t}" : "Après-demain : {t}",{t:a.title}), (a.time ? T("À {t}. ",{t:a.time}) : "") + (a.notes || T("Pensez à préparer le carnet de santé."))); });
+  const serious = out.some(t => t.niveau === "attention" || t.niveau === "veterinaire");
+  if (st.total && st.n === st.total && !serious && (day.appetite || day.energy)) out.unshift({niveau:"bravo", titre:T("Belle journée"), texte: d.name ? T("Routine complète pour {n} et tout semble normal.",{n:d.name}) : T("Routine complète et tout semble normal.")});
+  // breed / age pointers: always at least one when a breed or age is known
+  const keep = serious ? bt.slice(0,1) : bt;
+  const res = out.concat(keep);
+  if (!day.appetite && !day.energy && !day.stool) res.push({niveau:"info", titre:T("Complétez le journal"), texte:T("Indiquez l'appétit, l'énergie et les selles pour des conseils plus précis.")});
+  if (res.length < 2) { res.push(ctx.winter || ctx.m >= 9 ? {niveau:"info", titre:T("Sorties du soir"), texte:T("Les journées sont courtes : un collier ou un harnais lumineux le rend visible dans le noir.")} : {niveau:"info", titre:T("Chaleur"), texte:T("Sortez-le aux heures fraîches et emportez de l'eau lors des longues balades.")}); }
+  return res.slice(0, 6);
+}
+function adviceInput(ds, chat){
+  const ctx = dayContext(ds), {d, st, day} = ctx, L = [];
+  const lang = LANG === "en" ? "English" : LANG === "hr" ? "Croatian (standard Croatian, polite \"vi\" form)" : "French (vouvoiement, Swiss French usage)";
+  const bk = breedKey(d.breed), traits = (BREED_TRAITS[bk] || []).map(k => TRAITS[k] && TRAITS[k].en[0]).filter(Boolean);
+  L.push(`You help a family in Switzerland look after their dog. Write the answer in ${lang}. Short, concrete sentences.`);
+  L.push("Rules: never give medication doses or treatment changes. If a sign could be serious, recommend the vet. Use only the data below; don't invent facts about the day.");
+  L.push("Fields marked \"?\" or \"not filled\" are unknown: never guess or state them (no assumed age, size, sex, weight, appetite, energy or stools). Don't describe this particular dog's health, weight or behaviour unless the data below says so; breed points are general tendencies, so phrase them as such (\"Golden Retrievers often…\"), not as facts about this dog.");
+  L.push("The advice MUST be tailored to the breed: at least 2 of the tips have to rely on what is typical for this breed (energy and exercise needs, coat, known predispositions, temperament), and say so explicitly (e.g. \"As a Border Collie…\"). If the breed is mixed or unknown, use the size and age instead.");
+  L.push("\n## Dog");
+  L.push(`Name: ${d.name||"?"} · Breed: ${bk ? BREED_EN[bk] || bk : d.breed || "unknown"} · Sex: ${d.sex ? EN[d.sex] || d.sex : "?"} · Age: ${d.birth ? ctx.age.toFixed(1) + " years" : "?"} · Size: ${d.size ? EN[d.size] || d.size : "?"} · Neutered: ${d.sterilized ? EN[d.sterilized] || d.sterilized : "?"}`);
+  if (traits.length) L.push("Known breed points to consider: " + traits.join("; "));
+  L.push(`Food: ${[d.food && (EN[d.food]||d.food), d.foodBrand, d.ration, d.meals ? d.meals + " meals/day" : ""].filter(Boolean).join(", ") || "?"} · Treats: ${d.treats ? EN[d.treats] || d.treats : "?"} · Allergies: ${listOf(d.allergies).map(x => EN[x]||x).join(", ") || "none stated"}`);
+  if (d.notes) L.push("Owner notes: " + d.notes);
+  const ws = weights().slice(-3); if (ws.length) L.push("Weight: " + ws.map(w => `${w.date} ${w.kg} kg`).join("; "));
+  L.push(`\n## Day ${ds}${ds === ymd(new Date()) ? " (today, current time " + hhmm(new Date()) + ")" : ""} · month ${ctx.m + 1}`);
+  st.tasks.forEach(t => L.push(`- ${t.time} ${EN[CATS[t.cat].label] || t.cat} "${t.title}": ${st.done[t.key] ? "done" : "not done"}`));
+  L.push(`Log: appetite ${day.appetite ? EN[day.appetite] : "not filled"}, energy ${day.energy ? EN[day.energy] : "not filled"}, stools ${day.stool ? EN[day.stool] : "not filled"}. Note: ${day.note || "none"}`);
+  if (ctx.walkAfterMeal) L.push(`Note: the walk "${ctx.walkAfterMeal.walk.title}" (${ctx.walkAfterMeal.walk.time}) starts less than an hour after the meal "${ctx.walkAfterMeal.meal.title}" (${ctx.walkAfterMeal.meal.time}).`);
+  L.push("\n## Previous 3 days");
+  for (let i = 1; i <= 3; i++) { const p = ymd(addDays(parseYmd(ds), -i)), pd = getDay(p), ps = dayStats(p);
+    L.push(`- ${p}: ${ps.n}/${ps.total} tasks, appetite ${pd.appetite ? EN[pd.appetite] : "?"}, energy ${pd.energy ? EN[pd.energy] : "?"}, stools ${pd.stool ? EN[pd.stool] : "?"}${pd.note ? ", note: " + pd.note : ""}`); }
+  const ms = meds().filter(m => medActive(m, ds)); if (ms.length) L.push("\nCurrent treatments: " + ms.map(m => `${m.name} (${m.dose ? EN[m.dose] || m.dose : ""}${m.end ? ", until " + m.end : ""})`).join("; "));
+  const ap = appts().filter(a => { const n = daysBetween(ds, a.date); return n >= 0 && n <= 14; }); if (ap.length) L.push("Upcoming appointments: " + ap.map(a => `${a.title} on ${a.date}`).join("; "));
+  if (chat) { L.push("\nAnswer as a short, friendly message for the family: 1-2 sentences on how the dog is doing today, then 3 to 5 tips (one concrete action each for tonight or tomorrow), at least 2 of them breed-specific."); return L.join("\n"); }
+  L.push(`\nAnswer ONLY with JSON: {"resume": "1-2 sentences on how the dog is doing today", "conseils": [{"titre": "4 to 6 words", "texte": "1-2 sentences, one concrete action for tonight or tomorrow", "niveau": "bravo" | "info" | "race" | "attention" | "veterinaire"}]} with 3 to 5 tips. Use "race" for the breed-specific tips.`);
+  return L.join("\n");
+}
+// progress while the on-device AI downloads or wakes up (first time only)
+window.onAIProgress = (p, text) => { const e = document.getElementById("ai-prog"); if (e) e.textContent = p < 1 ? T("Téléchargement de l'IA… {p} %", {p: Math.round((p || 0) * 100)}) : T("Analyse de la journée…"); };
+/* ---------- the on-device "dog specialist": the expert rules decide WHAT to advise (vet-checked rules, breed and age knowledge),
+   the small AI only writes it warmly for this dog and sums up the day. If it stumbles, the expert advice is shown as is: always a result. ---------- */
+function expertBrief(ds){
+  const ctx = dayContext(ds), {d, st, day} = ctx, bk = breedKey(d.breed), F = [];
+  F.push(T("Chien") + " : " + (d.name || "?") + (bk ? " · " + T(bk) : d.breed ? " · " + d.breed : "") + (d.birth ? " · " + T("{n} ans", {n: ctx.age.toFixed(1)}) : "") + (d.sex ? " · " + T(d.sex) : ""));
+  F.push(T("Tâches") + " : " + st.n + "/" + st.total + (st.tasks.length ? " (" + st.tasks.map(t => t.title + (st.done[t.key] ? " (fait)" : " (pas fait)")).slice(0, 8).join(", ") + ")" : ""));
+  F.push(T("Journal") + " : " + ([day.appetite && T("appétit") + " " + T(day.appetite).toLowerCase(), day.energy && T("énergie") + " " + T(day.energy).toLowerCase(), day.stool && T("selles") + " " + T(day.stool).toLowerCase()].filter(Boolean).join(", ") || T("non rempli")));
+  if (day.note) F.push(T("Note") + " : " + String(day.note).slice(0, 200));
+  return F.join("\n");
+}
+function parseLocal(txt, tips){
+  const lines = String(txt || "").split(/\n+/).map(l => l.trim()).filter(Boolean);
+  let resume = ""; const out = tips.map(t => Object.assign({}, t));
+  for (const l of lines) {
+    const r = /^(?:\*\*)?(?:r[ée]sum[ée]|summary|sažetak)(?:\*\*)?\s*[:：]\s*(.+)$/i.exec(l); if (r) { resume = r[1]; continue; }
+    const m = /^(\d+)[.)]\s*(?:\*\*)?(.+?)(?:\*\*)?\s*(?:::|—|–|:)\s+(.+)$/.exec(l); if (!m) continue;
+    const i = +m[1] - 1, t = out[i]; if (!t) continue;
+    const titre = m[2].replace(/\*+/g, "").trim(), texte = m[3].replace(/\*+/g, "").trim();
+    // keep the expert wording if the rewrite is suspicious (too short/long, or adds numbers the expert text didn't have)
+    const nums = x => (x.match(/\d+/g) || []).join(",");
+    // and keep the meaning: enough of the expert's key words must still be there
+    const words = x => new Set(x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").match(/[a-z]{5,}/g) || []);
+    const kw = [...words(tips[i].texte)], have = words(texte), overlap = kw.length ? kw.filter(w => have.has(w)).length / kw.length : 1;
+    if (overlap < .3) continue;
+    if (texte.length >= 20 && texte.length <= 420 && nums(texte).split(",").every(n => !n || nums(tips[i].texte + tips[i].titre).split(",").includes(n))) { t.texte = texte; if (titre.length >= 3 && titre.length <= 70) t.titre = titre; }
+  }
+  return {resume: resume.slice(0, 400), conseils: out};
+}
+async function askAdviceLocal(ds){
+  const tips = tipsFor(ds).slice(0, 5), d = dog() || {}, name = d.name || T("le chien");
+  const lang = LANG === "en" ? "English" : LANG === "hr" ? "Croatian" : "French (vouvoiement)";
+  const sys = `You are a friendly dog-care specialist writing for a family, in ${lang}. You never add medical facts, doses or numbers that are not given. Keep each advice's meaning exactly.`;
+  const prompt = `${expertBrief(ds)}\n\n${T("Conseils de l'expert")} :\n${tips.map((t, i) => `${i + 1}. ${t.titre} :: ${t.texte}`).join("\n")}\n\n`
+    + `Task: 1) write one line "RESUME: " with 1-2 warm sentences about how ${name}'s day went, using only the facts above. `
+    + `2) then rewrite each numbered advice on its own line, same number and same meaning, addressed to ${name}'s family, format "N. title :: text". Nothing else.`;
+  let r = {resume: "", conseils: tips};
+  try { r = parseLocal(await sampler.text(sys, prompt, 650), tips); } catch(e) { console.warn(e); }
+  if (!r.resume) { const st = dayStats(ds); r.resume = st.total ? T("{n} : {a} tâche(s) sur {b} faites aujourd'hui.", {n: name, a: st.n, b: st.total}) : ""; }
+  return r;
+}
+async function askAdvice(ds){
+  if (!sampler || S.adviceLoading) return;
+  if (sampler.local && sampler.text) { S.adviceLoading = ds; render(true);
+    try { const r = await askAdviceLocal(ds); S.adviceLoading = null;
+      await setDay(ds, {advice: {at: new Date().toISOString(), lang: LANG, breed: (dog() || {}).breed || "", resume: r.resume, conseils: r.conseils.map(c => ({titre: String(c.titre).slice(0, 80), texte: String(c.texte).slice(0, 400), niveau: LV[c.niveau] ? c.niveau : "info"}))}});
+    } catch(e) { console.warn(e); S.adviceLoading = null; toast(T("L'IA n'a pas pu se lancer sur ce téléphone : {e}", {e: String((e && (e.message || e.code)) || e).slice(0, 80)})); }
+    render(true); return; }
+  S.adviceLoading = ds; render(true);
+  try {
+    const r = await sampler.json(adviceInput(ds), {modelTier:"default", cache:false});
+    const conseils = (Array.isArray(r && r.conseils) ? r.conseils : []).slice(0,6).map(c => ({titre:String(c.titre||"").slice(0,80), texte:String(c.texte||"").slice(0,400), niveau: LV[c.niveau] ? c.niveau : "info"})).filter(c => c.titre || c.texte);
+    if (!conseils.length) throw {code:"empty"};
+    S.adviceLoading = null;
+    await setDay(ds, {advice:{at:new Date().toISOString(), lang:LANG, breed:(dog()||{}).breed||"", resume:String(r.resume||"").slice(0,400), conseils}});
+  } catch(e) {
+    S.adviceLoading = null;
+    const c = e && e.code;
+    if (c === "not_granted") { sampler = null; toast(T("Conseils personnalisés non autorisés pour cette page.")); }
+    else if (c === "rate_limited") toast(T("Trop de demandes pour l'instant. Réessayez plus tard."));
+    else toast(T("Les conseils n'ont pas pu être générés. Réessayez."));
+    render(true);
+  }
+}
+/* ---------- facts only: the day measured from the app's own data, and a reference sheet for the breed (no AI, nothing invented) ---------- */
+// general reference values for each breed (adult weight, life expectancy, daily exercise, grooming, health watch-points): [fr, en]
+const BREED_FACTS = {"Labrador Retriever":{"kg":[25,36],"life":[10,12],"ex":[60,90],"groom":["Brossage 1 fois par semaine, tous les jours pendant les 2 mues par an","Brush weekly, daily during the 2 yearly moults"],"health":[["Dysplasie de la hanche et du coude","Surpoids (très gourmand)","Otites"],["Hip and elbow dysplasia","Weight gain (very food-driven)","Ear infections"]],"note":["Gourmand et sociable : la nourriture est sa meilleure récompense, à compter dans la ration.","Food-driven and sociable: food is the best reward, count it in the ration."]},"Golden Retriever":{"kg":[25,34],"life":[10,12],"ex":[60,90],"groom":["Brossage 2 à 3 fois par semaine, chaque jour pendant la mue","Brush 2-3 times a week, daily during the moult"],"health":[["Dysplasie de la hanche et du coude","Cancers (lymphome, hémangiosarcome)","Otites et problèmes de peau","Surpoids"],["Hip and elbow dysplasia","Cancers (lymphoma, haemangiosarcoma)","Ear and skin problems","Weight gain"]],"note":["Doux, très attaché à sa famille, aime porter des objets et l'eau.","Gentle, very attached to the family, loves carrying things and water."]},"Berger australien":{"kg":[16,32],"life":[12,15],"ex":[90,120],"groom":["Brossage 1 fois par semaine, quotidien pendant la mue","Brush weekly, daily during the moult"],"health":[["Épilepsie","Dysplasie de la hanche","Sensibilité MDR1 à certains médicaments (à signaler au vétérinaire)","Maladies des yeux"],["Epilepsy","Hip dysplasia","MDR1 drug sensitivity (tell the vet)","Eye diseases"]],"note":["Chien de travail : il a besoin d'occuper sa tête autant que ses pattes.","A working dog: needs to use its brain as much as its legs."]},"Berger allemand":{"kg":[22,40],"life":[9,13],"ex":[90,120],"groom":["Brossage 2 à 3 fois par semaine, quotidien pendant la mue","Brush 2-3 times a week, daily during the moult"],"health":[["Dysplasie de la hanche et du coude","Myélopathie dégénérative","Torsion d'estomac"],["Hip and elbow dysplasia","Degenerative myelopathy","Bloat (gastric torsion)"]],"note":["Intelligent et protecteur : apprend vite, a besoin d'un cadre clair.","Smart and protective: learns fast, needs clear rules."]},"Berger blanc suisse":{"kg":[25,40],"life":[12,14],"ex":[90,120],"groom":["Brossage 2 fois par semaine, quotidien pendant la mue","Brush twice a week, daily during the moult"],"health":[["Dysplasie de la hanche et du coude","Sensibilité MDR1 possible","Peau sensible"],["Hip and elbow dysplasia","Possible MDR1 sensitivity","Sensitive skin"]],"note":["Sensible et proche de sa famille, il supporte mal la solitude.","Sensitive and close to the family, dislikes being alone."]},"Bouvier bernois":{"kg":[35,55],"life":[7,10],"ex":[60,90],"groom":["Brossage 2 à 3 fois par semaine","Brush 2-3 times a week"],"health":[["Cancers (histiocytose)","Dysplasie de la hanche et du coude","Torsion d'estomac","Supporte mal la chaleur"],["Cancers (histiocytosis)","Hip and elbow dysplasia","Bloat","Heat-sensitive"]],"note":["Calme et affectueux ; croissance à ménager (pas d'efforts intenses avant 18 mois).","Calm and affectionate; protect its growth (no hard exercise before 18 months)."]},"Bouvier de l'Entlebuch":{"kg":[20,30],"life":[11,15],"ex":[60,90],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Dysplasie de la hanche","Atrophie progressive de la rétine (APR)"],["Hip dysplasia","Progressive retinal atrophy (PRA)"]],"note":["Vif et endurant, aime avoir une mission.","Lively and tireless, likes having a job."]},"Bouvier appenzellois":{"kg":[22,32],"life":[12,14],"ex":[90,120],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Dysplasie de la hanche","Problèmes oculaires"],["Hip dysplasia","Eye problems"]],"note":["Énergique et vigilant, aboie volontiers pour prévenir.","Energetic and alert, a keen barker."]},"Grand bouvier suisse":{"kg":[45,70],"life":[8,11],"ex":[60,90],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Torsion d'estomac","Dysplasie de la hanche et du coude","Épilepsie"],["Bloat","Hip and elbow dysplasia","Epilepsy"]],"note":["Grande race à croissance lente : pas d'escaliers ni de sauts répétés jeune.","Slow-growing giant: no stairs or repeated jumping while young."]},"Saint-Bernard":{"kg":[55,90],"life":[8,10],"ex":[45,60],"groom":["Brossage 2 à 3 fois par semaine, yeux et babines à nettoyer","Brush 2-3 times a week, clean eyes and jowls"],"health":[["Dysplasie de la hanche","Torsion d'estomac","Cardiomyopathie","Problèmes de paupières (ectropion)","Supporte mal la chaleur"],["Hip dysplasia","Bloat","Cardiomyopathy","Eyelid problems (ectropion)","Heat-sensitive"]],"note":["Placide et doux ; croissance très rapide à surveiller.","Placid and gentle; very fast growth to watch."]},"Border Collie":{"kg":[14,20],"life":[12,15],"ex":[120,150],"groom":["Brossage 1 à 2 fois par semaine","Brush 1-2 times a week"],"health":[["Épilepsie","Anomalie de l'œil du colley","Dysplasie de la hanche"],["Epilepsy","Collie eye anomaly","Hip dysplasia"]],"note":["Le plus travailleur des chiens : sans activité mentale, il s'invente des occupations.","The ultimate worker: without mental work it invents its own jobs."]},"Malinois":{"kg":[20,30],"life":[12,14],"ex":[120,150],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Dysplasie de la hanche et du coude","Épilepsie"],["Hip and elbow dysplasia","Epilepsy"]],"note":["Très énergique et intense : besoin d'éducation et de travail quotidiens.","Very energetic and intense: needs daily training and work."]},"Jack Russell Terrier":{"kg":[5,8],"life":[13,16],"ex":[60,90],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Luxation de la rotule","Luxation du cristallin","Surdité"],["Kneecap luxation","Lens luxation","Deafness"]],"note":["Petit mais infatigable, grand chasseur : rappel à travailler.","Small but tireless, a keen hunter: work on recall."]},"Yorkshire Terrier":{"kg":[2,3.2],"life":[13,16],"ex":[30,45],"groom":["Brossage quotidien (poil long) ou coupe régulière","Daily brushing (long coat) or regular trims"],"health":[["Tartre et dents","Luxation de la rotule","Collapsus de la trachée","Hypoglycémie chez le chiot"],["Tartar and teeth","Kneecap luxation","Tracheal collapse","Low blood sugar in puppies"]],"note":["Vif et courageux ; un harnais ménage mieux sa trachée qu'un collier.","Lively and bold; a harness is kinder to its trachea than a collar."]},"Chihuahua":{"kg":[1.5,3],"life":[14,17],"ex":[30,45],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Problèmes dentaires","Luxation de la rotule","Collapsus de la trachée","Sensible au froid"],["Dental problems","Kneecap luxation","Tracheal collapse","Feels the cold"]],"note":["Très attaché à une personne ; un manteau aide en hiver.","Very attached to one person; a coat helps in winter."]},"Bouledogue français":{"kg":[8,14],"life":[10,12],"ex":[30,45],"groom":["Brossage 1 fois par semaine, plis du visage à nettoyer et sécher","Brush weekly, clean and dry face folds"],"health":[["Syndrome brachycéphale (respiration)","Coup de chaleur","Hernie discale","Dermatites des plis"],["Brachycephalic airway syndrome","Heatstroke","Disc herniation","Skin-fold dermatitis"]],"note":["Respire mal à l'effort et à la chaleur : sorties aux heures fraîches.","Struggles to breathe with effort and heat: go out in the cool hours."]},"Carlin":{"kg":[6,9],"life":[12,15],"ex":[30,45],"groom":["Brossage 1 à 2 fois par semaine (perd beaucoup), plis à nettoyer","Brush 1-2 times a week (sheds a lot), clean the folds"],"health":[["Syndrome brachycéphale","Ulcères des yeux","Surpoids","Coup de chaleur"],["Brachycephalic airway syndrome","Eye ulcers","Weight gain","Heatstroke"]],"note":["Joyeux et gourmand ; ses grands yeux sont fragiles.","Cheerful and greedy; its big eyes are fragile."]},"Cavalier King Charles":{"kg":[5.5,8],"life":[9,14],"ex":[45,60],"groom":["Brossage 2 à 3 fois par semaine, oreilles à surveiller","Brush 2-3 times a week, watch the ears"],"health":[["Maladie de la valve mitrale (cœur)","Syringomyélie","Otites"],["Mitral valve disease (heart)","Syringomyelia","Ear infections"]],"note":["Très doux et câlin ; un contrôle du cœur chaque année est conseillé.","Very gentle and cuddly; a yearly heart check is advised."]},"Teckel":{"kg":[4,12],"life":[12,16],"ex":[45,60],"groom":["Brossage 1 fois par semaine (selon le poil)","Brush weekly (depending on coat)"],"health":[["Hernie discale (dos)","Surpoids","Problèmes dentaires"],["Disc herniation (back)","Weight gain","Dental problems"]],"note":["Dos long et fragile : limitez sauts et escaliers, gardez-le mince.","Long, fragile back: limit jumping and stairs, keep it slim."]},"Beagle":{"kg":[9,14],"life":[12,15],"ex":[60,90],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Surpoids","Otites","Épilepsie","Hypothyroïdie"],["Weight gain","Ear infections","Epilepsy","Hypothyroidism"]],"note":["Le nez avant tout : un rappel solide et une laisse en forêt.","Nose first: a solid recall, and a lead in the woods."]},"Caniche":{"kg":[2,30],"life":[12,15],"ex":[45,90],"groom":["Brossage quotidien, toilettage toutes les 6 à 8 semaines (ne mue pas)","Daily brushing, grooming every 6-8 weeks (doesn't shed)"],"health":[["Luxation de la rotule (petits formats)","Atrophie de la rétine (APR)","Maladie d'Addison (grands)","Problèmes dentaires"],["Kneecap luxation (small sizes)","Progressive retinal atrophy","Addison's disease (standard)","Dental problems"]],"note":["Très intelligent : adore apprendre de nouveaux tours.","Very clever: loves learning new tricks."]},"Bichon frisé":{"kg":[3,6],"life":[14,16],"ex":[30,45],"groom":["Brossage quotidien, toilettage toutes les 6 semaines","Daily brushing, grooming every 6 weeks"],"health":[["Allergies de peau","Calculs urinaires","Luxation de la rotule","Problèmes dentaires"],["Skin allergies","Bladder stones","Kneecap luxation","Dental problems"]],"note":["Gai et sociable, supporte mal la solitude.","Cheerful and sociable, dislikes being alone."]},"Bichon maltais":{"kg":[2,4],"life":[12,15],"ex":[30,45],"groom":["Brossage quotidien, yeux à nettoyer (larmes)","Daily brushing, clean the eyes (tear stains)"],"health":[["Problèmes dentaires","Luxation de la rotule","Larmoiement"],["Dental problems","Kneecap luxation","Tear staining"]],"note":["Affectueux et vif, très proche de ses maîtres.","Affectionate and lively, very close to its people."]},"Shih Tzu":{"kg":[4,7.5],"life":[10,16],"ex":[30,45],"groom":["Brossage quotidien ou coupe courte régulière, yeux à nettoyer","Daily brushing or a short trim, clean the eyes"],"health":[["Syndrome brachycéphale","Problèmes oculaires","Problèmes dentaires","Otites"],["Brachycephalic airway syndrome","Eye problems","Dental problems","Ear infections"]],"note":["Calme et câlin ; attention à la chaleur.","Calm and cuddly; careful in the heat."]},"Spitz nain (Poméranien)":{"kg":[1.5,3.5],"life":[12,16],"ex":[30,45],"groom":["Brossage 2 à 3 fois par semaine","Brush 2-3 times a week"],"health":[["Luxation de la rotule","Collapsus de la trachée","Problèmes dentaires","Perte de poils (alopécie X)"],["Kneecap luxation","Tracheal collapse","Dental problems","Coat loss (alopecia X)"]],"note":["Petit chien vif et bavard ; harnais plutôt que collier.","Lively, vocal little dog; harness rather than collar."]},"Cocker anglais":{"kg":[12,15],"life":[12,15],"ex":[60,90],"groom":["Brossage 2 à 3 fois par semaine, oreilles à nettoyer chaque semaine","Brush 2-3 times a week, clean the ears weekly"],"health":[["Otites","Maladies des yeux (APR)","Surdité (robes particolores)"],["Ear infections","Eye diseases (PRA)","Deafness (parti-colours)"]],"note":["Joyeux et gourmand ; ses longues oreilles aiment l'humidité : séchez-les.","Merry and greedy; its long ears like moisture: dry them."]},"Husky sibérien":{"kg":[16,27],"life":[12,15],"ex":[120,150],"groom":["Brossage 2 fois par semaine, quotidien pendant la mue","Brush twice a week, daily during the moult"],"health":[["Maladies des yeux (cataracte, APR)","Hypothyroïdie","Supporte mal la chaleur"],["Eye diseases (cataract, PRA)","Hypothyroidism","Heat-sensitive"]],"note":["Endurant et indépendant, grand fugueur : clôture et rappel solides.","Tireless and independent, an escape artist: secure fence and recall."]},"Shiba Inu":{"kg":[7,11],"life":[13,16],"ex":[60,90],"groom":["Brossage 1 fois par semaine, quotidien pendant la mue","Brush weekly, daily during the moult"],"health":[["Allergies","Luxation de la rotule","Glaucome"],["Allergies","Kneecap luxation","Glaucoma"]],"note":["Indépendant et propre, comme un chat ; rappel souvent difficile.","Independent and clean, cat-like; recall is often hard."]},"Boxer":{"kg":[25,32],"life":[10,12],"ex":[60,90],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Maladies du cœur (cardiomyopathie)","Cancers","Supporte mal la chaleur"],["Heart disease (cardiomyopathy)","Cancers","Heat-sensitive"]],"note":["Joueur et clownesque, reste chiot longtemps.","Playful clown, stays puppy-like for a long time."]},"Dalmatien":{"kg":[20,32],"life":[11,13],"ex":[90,120],"groom":["Brossage 2 fois par semaine (perd beaucoup)","Brush twice a week (sheds a lot)"],"health":[["Surdité","Calculs urinaires (urates)","Allergies de peau"],["Deafness","Urinary stones (urates)","Skin allergies"]],"note":["Très endurant ; de l'eau toujours à volonté pour ses voies urinaires.","Very tireless; always plenty of water for its urinary tract."]},"Rottweiler":{"kg":[35,60],"life":[9,10],"ex":[60,90],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Dysplasie de la hanche et du coude","Cancer des os (ostéosarcome)","Maladie du cœur (sténose aortique)"],["Hip and elbow dysplasia","Bone cancer (osteosarcoma)","Heart disease (aortic stenosis)"]],"note":["Calme et sûr de lui, très protecteur : socialisation tôt.","Calm, confident and protective: socialise early."]},"Lagotto Romagnolo":{"kg":[11,16],"life":[15,17],"ex":[60,90],"groom":["Coupe régulière, brossage hebdomadaire (ne mue pas)","Regular trims, weekly brushing (doesn't shed)"],"health":[["Épilepsie juvénile","Dysplasie de la hanche"],["Juvenile epilepsy","Hip dysplasia"]],"note":["Chien de truffe : les jeux de flair le comblent.","A truffle dog: scent games make it happy."]},"Bouledogue anglais":{"kg":[18,25],"life":[8,10],"ex":[30,45],"groom":["Brossage 1 fois par semaine, plis à nettoyer et sécher chaque jour","Brush weekly, clean and dry the folds daily"],"health":[["Syndrome brachycéphale","Coup de chaleur","Problèmes de peau","Dysplasie de la hanche"],["Brachycephalic airway syndrome","Heatstroke","Skin problems","Hip dysplasia"]],"note":["Calme et têtu ; efforts courts, jamais en pleine chaleur.","Calm and stubborn; short efforts, never in the heat."]},"Whippet":{"kg":[9,20],"life":[12,15],"ex":[60,90],"groom":["Très peu d'entretien","Very low maintenance"],"health":[["Peau fine (petites blessures)","Sensible au froid"],["Thin skin (small injuries)","Feels the cold"]],"note":["Sprinteur doux et calme à la maison ; un manteau en hiver.","A gentle sprinter, calm at home; a coat in winter."]},"Vizsla":{"kg":[18,29],"life":[12,14],"ex":[90,120],"groom":["Brossage 1 fois par semaine","Brush weekly"],"health":[["Épilepsie","Dysplasie de la hanche","Sensible au froid"],["Epilepsy","Hip dysplasia","Feels the cold"]],"note":["Très proche de son humain (« chien velcro »), grand besoin d'activité.","Very attached (a 'velcro dog'), needs lots of activity."]}};
+const bf = x => Array.isArray(x) ? (LANG === "fr" ? x[0] : x[1]) : x;
+const num1 = x => (Math.round(x * 10) / 10).toLocaleString(LANG === "en" ? "en" : "fr-CH");
+function dayFacts(ds){
+  const ctx = dayContext(ds), {d, st, day} = ctx, logs = dayLog(ds), R = [];
+  if (st.total) { const left = st.tasks.filter(t => !st.done[t.key]);
+    R.push([T("Tâches"), `<b class="num">${st.n}/${st.total}</b>` + (left.length ? " · " + esc(T("reste")) + " : " + left.slice(0, 3).map(t => esc(t.title) + " " + esc(t.time)).join(", ") + (left.length > 3 ? "…" : "") : " · " + esc(T("tout est fait")))]); }
+  const walks = logs.filter(x => x.k === "balade"), wt = ctx.walks.filter(t => st.done[t.key]).length;
+  if (walks.length || wt) { const min = walks.reduce((a, x) => a + (+x.dur || 0), 0), km = walks.reduce((a, x) => a + (+x.dist || 0), 0) / 1000;
+    R.push([T("Balades"), `<b class="num">${Math.max(walks.length, wt)}</b>` + (min ? ` · ${min} min` : "") + (km >= .05 ? ` · ${num1(km)} km` : "")]); }
+  const pee = logs.filter(x => x.k === "pipi" || (x.k === "balade" && x.pee)).length, poo = logs.filter(x => x.k === "caca" || (x.k === "balade" && x.poo)).length, acc = logs.filter(x => x.k === "accident").length;
+  if (pee || poo || acc) R.push([T("Besoins"), [pee && `${T("Pipi")} <b class="num">${pee}</b>`, poo && `${T("Caca")} <b class="num">${poo}</b>`, acc && `${T("Accident")} <b class="num">${acc}</b>`].filter(Boolean).join(" · ")]);
+  const meals = st.tasks.filter(t => t.cat === "repas"); if (meals.length) R.push([T("Repas"), `<b class="num">${meals.filter(t => st.done[t.key]).length}/${meals.length}</b>`]);
+  const j = [day.appetite && T("Appétit") + " : " + T(day.appetite).toLowerCase(), day.energy && T("Énergie") + " : " + T(day.energy).toLowerCase(), day.stool && T("Selles") + " : " + T(day.stool).toLowerCase()].filter(Boolean);
+  R.push([T("Journal"), j.length ? esc(j.join(" · ")) : `<span style="color:var(--fg3)">${T("pas encore rempli")}</span>`]);
+  if (day.note) R.push([T("Note"), "« " + esc(String(day.note).slice(0, 220)) + " »"]);
+  const meds = st.tasks.filter(t => t.cat === "med"); if (meds.length) R.push([T("Traitements"), `<b class="num">${meds.filter(t => st.done[t.key]).length}/${meds.length}</b> ${esc(T("prise(s)"))}` + (meds.some(t => !st.done[t.key]) ? " · " + esc(T("reste")) + " : " + meds.filter(t => !st.done[t.key]).map(t => esc(t.title + " " + t.time)).join(", ") : "")]);
+  const vom = logs.filter(x => x.k === "vomi").length, treat = logs.filter(x => x.k === "friandise").length, water = logs.filter(x => x.k === "eau").length, play = logs.filter(x => x.k === "jeu").length, nap = logs.filter(x => x.k === "sieste").length;
+  const other = [vom && `${T("Vomissement")} <b class="num">${vom}</b>`, treat && `${T("Friandise")} <b class="num">${treat}</b>`, water && `${T("Eau")} <b class="num">${water}</b>`, play && `${T("Jeu")} <b class="num">${play}</b>`, nap && `${T("Sieste")} <b class="num">${nap}</b>`].filter(Boolean);
+  if (other.length) R.push([T("Autres notes"), other.join(" · ")]);
+  // the family chat of the day, word for word
+  const msgs = todayMessages(ds);
+  if (msgs.length) R.push([T("Famille"), `<b class="num">${msgs.length}</b> ${esc(T(msgs.length > 1 ? "messages aujourd'hui" : "message aujourd'hui"))}<div class="fact-msgs">${msgs.slice(-6).map(m => `<div>« ${esc(String(m.text).slice(0, 180))} » <span>${esc(m.name || "")}${m.name ? ", " : ""}${esc(hhmm(new Date(m.at)))}</span></div>`).join("")}${msgs.length > 6 ? `<button type="button" class="link" data-act="go" data-tab="famille">${T("Tout voir")}</button>` : ""}</div>`]);
+  const ap = appts().filter(a => { const n = daysBetween(ds, a.date); return n >= 0 && n <= 7; }).sort((a, b) => a.date.localeCompare(b.date));
+  if (ap.length) R.push([T("À venir"), ap.slice(0, 3).map(a => esc(a.title) + " · " + esc(fmt(parseYmd(a.date), {weekday: "short", day: "numeric", month: "short"})) + (a.time ? " " + esc(a.time) : "")).join("<br>")]);
+  const ws = weights(), lw = ws[ws.length - 1], f = BREED_FACTS[breedKey(d.breed)];
+  if (lw) { let cmp = ""; if (f && d.birth && ctx.age >= 1.5) { const k = +lw.kg; cmp = k < f.kg[0] ? T("sous le repère de la race ({a}–{b} kg)", {a: num1(f.kg[0]), b: num1(f.kg[1])}) : k > f.kg[1] ? T("au-dessus du repère de la race ({a}–{b} kg)", {a: num1(f.kg[0]), b: num1(f.kg[1])}) : T("dans le repère de la race ({a}–{b} kg)", {a: num1(f.kg[0]), b: num1(f.kg[1])}); }
+    R.push([T("Poids"), `<b class="num">${num1(+lw.kg)} kg</b> · ${esc(fmt(parseYmd(lw.date), {day: "numeric", month: "short"}))}` + (cmp ? " · " + esc(cmp) : "")]); }
+  if (d.birth) { const a = ctx.age, giant = f && f.kg[1] >= 45, small = f && f.kg[1] <= 10, senior = a >= (giant ? 6 : small ? 10 : 8);
+    const txt = a < 1 ? T("{m} mois", {m: Math.max(0, Math.floor(a * 12))}) : T("{n} ans", {n: num1(a)}); R.push([T("Âge"), `<b class="num">${esc(txt)}</b> · ${esc(T(a < 1 ? "chiot" : a < 2 ? (isFem() ? "jeune adulte" : "jeune adulte") : senior ? "senior" : "adulte"))}`]); }
+  return `<div class="facts">${R.map(([k, v]) => `<div class="fact"><span class="k">${esc(k)}</span><span class="v">${v}</span></div>`).join("")}</div>`;
+}
+function breedSheet(){
+  const d = dog() || {}, bk = breedKey(d.breed), f = BREED_FACTS[bk]; if (!f) return "";
+  const row = (k, v) => `<div class="fact"><span class="k">${esc(k)}</span><span class="v">${v}</span></div>`;
+  return `<div class="sec"><div class="sec-h"><h2>${esc(T("Fiche {b}", {b: T(bk)}))}</h2></div><div class="card"><div class="facts">
+    ${row(T("Poids adulte"), `<b class="num">${num1(f.kg[0])}–${num1(f.kg[1])} kg</b>`)}${row(T("Espérance de vie"), `<b class="num">${f.life[0]}–${f.life[1]}</b> ${esc(T("ans"))}`)}
+    ${row(T("Exercice"), `<b class="num">${f.ex[0]}–${f.ex[1]} min</b> ${esc(T("par jour (adulte)"))}`)}${row(T("Entretien"), esc(bf(f.groom)))}
+    ${row(T("À surveiller"), `<ul class="fact-l">${bf(f.health).map(h => `<li>${esc(h)}</li>`).join("")}</ul>`)}${row(T("Caractère"), esc(bf(f.note)))}
+  </div></div><div class="foot">${T("Repères généraux de la race, pas un diagnostic : chaque chien est différent. Votre vétérinaire reste la référence.")}</div></div>`;
+}
+function adviceSection(ds){
+  const today = ymd(new Date()), day = getDay(ds), early = ds === today && new Date().getHours() < 17;
+  if (ds > today) return "";
+  const adv = day.advice, loading = S.adviceLoading === ds, d = dog() || {};
+  const row = c => { const l = LV[c.niveau] || LV.info; return `<div class="row" style="align-items:flex-start"><span class="ico" style="--c:${l.c}">${l.i}</span><div class="main"><div class="t">${esc(c.titre)}${c.tag?` <span class="pill" style="font-size:11px;padding:2px 8px;vertical-align:2px;margin-left:4px">${esc(c.tag)}</span>`:""}</div><div class="s" style="font-size:14px;color:var(--fg2);line-height:1.4">${esc(c.texte)}</div></div></div>`; };
+  let body, foot;
+  const factsOnly = !!(sampler && sampler.local) || (SITE && !sampler);
+  const useAdv = !factsOnly && adv && (adv.lang || "fr") === LANG;
+  if (useAdv) {
+    const tag = c => c.niveau === "race" ? Object.assign({tag: d.breed ? T(d.breed) : ""}, c) : c;
+    body = `${adv.resume?`<div class="pad" style="font-size:15px;line-height:1.45;border-bottom:.5px solid var(--sep)">${esc(adv.resume)}</div>`:""}<div class="list">${adv.conseils.map(c => row(tag(c))).join("")}</div>`;
+    foot = T("Conseils générés le {d} à {t}. Ils ne remplacent pas l'avis du vétérinaire.",{d:esc(fmt(new Date(adv.at),{day:"numeric",month:"short"})), t:esc(hhmm(new Date(adv.at)))});
+  } else {
+    body = factsOnly ? dayReport(ds) : `<div class="list">${tipsFor(ds).map(row).join("")}</div>`;
+    foot = early ? T("Bilan provisoire : il se précise au fil de la journée et du journal.") : T("Repères selon la race, l'âge, la journée et le journal. Ils ne remplacent pas l'avis du vétérinaire.");
+  }
+  const askUrl = () => "https://claude.ai/new?q=" + encodeURIComponent(adviceInput(ds, true));
+  const btn = !sampler && SITE && canTick() ? `<a class="btn ghost ai-btn" href="${askUrl()}" target="_blank" rel="noopener" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;text-decoration:none">${T("Demander à Claude pour {n}",{n:esc(d.name || T("le chien"))})}</a>` : sampler && canTick() ? `<button class="btn ${useAdv?"ghost":""} ai-btn" data-act="advice" data-d="${ds}" ${loading?"disabled":""} style="width:100%;margin-top:10px">${loading?`<span class="spin"></span><span id="ai-prog">${sampler.local && !sampler.ready() ? T("Préparation de l'IA…") : T("Analyse de la journée…")}</span>`:useAdv?T("Actualiser les conseils"):T("Conseils personnalisés pour {n}",{n:esc(d.name || T("le chien"))})}</button>` : "";
+  if (sampler && sampler.local) foot += " " + (sampler.ready() ? T("Analysé par l'IA de ce téléphone : rien ne sort de l'appareil.") : T("L'IA tourne sur ce téléphone : la première fois, elle se télécharge (environ {s}, en Wi-Fi de préférence), ensuite elle marche même hors ligne.", {s: sampler.mode && sampler.mode() === "cpu" ? "400 Mo" : "1 Go"}));
+  if (!sampler && SITE && btn) foot += " " + T("Ouvre Claude avec le résumé du jour. Gratuit avec un compte Claude.");
+  const busy = S.factsBusy === ds;
+  const regen = `<button class="btn ghost ai-btn" data-act="factsRefresh" data-d="${ds}" ${busy ? "disabled" : ""} style="width:100%;margin-top:10px">${busy ? `<span class="spin"></span>${T("Mise à jour…")}` : T("Régénérer le bilan")}</button>`;
+  const when = S.factsAt && S.factsAt[ds] ? T("Mis à jour à {t}.", {t: hhmm(new Date(S.factsAt[ds]))}) + " " : "";
+  if (factsOnly) return `<div class="sec"><div class="sec-h"><h2>${early?T("Bilan provisoire"):T("Bilan du jour")}</h2></div><div class="card ${busy ? "thinking" : ""}">${body}</div>${regen}<div class="foot">${when}${T("Compte rendu établi uniquement à partir de ce qui a été enregistré dans l'app ; « Non enregistré » ne veut pas dire « non fait ». Conseils selon des règles vétérinaires, la race et l'âge. Ils ne remplacent pas l'avis du vétérinaire.")}</div></div>`;
+  return `<div class="sec"><div class="sec-h"><h2>${early?T("Bilan provisoire"):T("Bilan et conseils")}</h2></div><div class="card ${loading?"thinking":""}">${body}</div>${btn}<div class="foot">${foot}</div></div>`;
+}
+
+/* ---------- dog-sitting ---------- */
+const garde = () => C.config.garde || {};
+function gardeRange(g){
+  if (!g.from && !g.to) return "";
+  const f = g.from ? fmt(parseYmd(g.from),{day:"numeric",month:"long"}) : "…", t = g.to ? fmt(parseYmd(g.to),{day:"numeric",month:"long"}) : "…";
+  return T("Du {a} au {b}",{a:f,b:t});
+}
+function viewGarde(){
+  const d = dog() || {}, g = garde(), today = ymd(new Date());
+  const name = d.name || T("le chien");
+  const row = (l, v, copy) => v ? `<div class="row"><span class="t" style="flex:none;width:118px">${esc(l)}</span><span class="main val ${copy?"num":""}">${esc(v)}</span>${copy?`<button class="copy" data-act="copy" data-v="${esc(v)}">${T("Copier")}</button>`:""}</div>` : "";
+  let when = gardeRange(g), left = "";
+  if (g.to && g.to >= today) { const n = daysBetween(today, g.to); left = n === 0 ? T("Dernier jour de garde") : T("Encore {n} jour(s)",{n}); }
+  const allergies = listOf(d.allergies).filter(x => x !== "Aucune");
+  const ms = meds().filter(m => medActive(m, today));
+  const tasks = tasksFor(today);
+  const contacts = [row(T("Propriétaire"), g.ownerName), row(T("Téléphone"), g.ownerPhone, true), row(T("Vétérinaire"), d.vetName), row(T("Téléphone"), d.vetPhone, true), row(T("Urgences 24 h"), d.emergency, true)].join("");
+  const food = [row(T("Type"), d.food && T(d.food)), row(T("Ration / jour"), d.ration), row(T("Repas / jour"), d.meals)].join("");
+  return `${previewBanner()}
+  <div class="top"><div><div class="eyebrow">${esc(T("Garde de {n}",{n:name}))}</div><h1>${T("Consignes")}</h1></div>${avatarHTML(d)}</div>
+  ${when ? `<div class="card pad" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><div class="t" style="font-weight:600;font-size:17px">${esc(when)}</div>${g.sitterName?`<div class="s" style="color:var(--fg2);font-size:14px">${esc(T("Gardé par {n}",{n:g.sitterName}))}</div>`:""}</div>${left?`<span class="pill">${esc(left)}</span>`:""}</div>` : ""}
+  ${g.instructions ? `<div class="sec"><div class="sec-h"><h2>${T("Consignes")}</h2></div><div class="card pad" style="white-space:pre-wrap;font-size:15px;line-height:1.45">${esc(g.instructions)}</div></div>` : ""}
+  ${allergies.length ? `<div class="alert" style="margin-top:16px"><span class="ic" style="--c:var(--red)">${I.warn}</span><div class="main">${T("Allergies")} : ${esc(allergies.map(x => T(x)).join(", "))}<small>${T("Ne donnez rien qui en contient, friandises comprises.")}</small></div></div>` : ""}
+  ${contacts ? `<div class="sec"><div class="sec-h"><h2>${T("Contacts")}</h2></div><div class="card list">${contacts}</div></div>` : ""}
+  <div class="sec"><div class="sec-h"><h2>${T("Programme de la journée")}</h2><button class="link" data-act="go" data-tab="aujourdhui">${T("Cocher")}</button></div><div class="card list">${tasks.length ? tasks.map(t => { const c = CATS[t.cat]||CATS.autre; return `<div class="row"><span class="num" style="width:46px;font-weight:600">${esc(t.time)}</span>${ico(c.color,c.icon)}<div class="main"><div class="t">${esc(t.title)}</div>${t.detail?`<div class="s">${esc(t.detail)}</div>`:""}</div></div>`; }).join("") : `<div class="empty">${T("Rien de prévu ce jour-là.")}</div>`}</div><div class="foot">${T("Cochez chaque tâche dans l'onglet Aujourd'hui : la famille voit ce qui est fait.")}</div></div>
+  ${food ? `<div class="sec"><div class="sec-h"><h2>${T("Alimentation")}</h2></div><div class="card list">${food}</div></div>` : ""}
+  ${ms.length ? `<div class="sec"><div class="sec-h"><h2>${T("Médicaments")}</h2></div><div class="card list">${ms.map(m => `<div class="row">${ico(CATS.med.color,CATS.med.icon)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${esc([m.dose && T(m.dose), (m.times||[]).filter(Boolean).join(", "), m.notes].filter(Boolean).join(" · "))}</div></div></div>`).join("")}</div></div>` : ""}
+  ${d.notes ? `<div class="sec"><div class="sec-h"><h2>${T("À savoir")}</h2></div><div class="card pad" style="white-space:pre-wrap;font-size:15px">${esc(d.notes)}</div></div>` : ""}
+  <div class="sec"><div class="sec-h"><h2>${T("Langue")}</h2></div><div class="card"><div class="row">${langSeg()}</div></div></div>
+  <div class="sec"><div class="sec-h"><h2>${T("Apparence")}</h2></div><div class="card">${skinPick()}</div></div>`;
+}
+function previewBanner(){
+  if (!S.preview) return "";
+  return `<div class="banner" style="margin-top:16px"><p><b>${T("Aperçu du mode garde.")}</b> ${T("Voici ce que voit la personne qui garde le chien.")}</p><button data-act="previewOff">${T("Quitter l'aperçu")}</button></div>`;
+}
+function gardeSection(){
+  const g = garde(), when = gardeRange(g);
+  return `<div class="sec"><div class="sec-h"><h2>${T("Chien sous garde")}</h2>${canEdit()?`<button class="link" data-act="editGarde">${T("Modifier")}</button>`:""}</div>
+  <div class="card list">
+    <div class="row"><span class="t" style="flex:none;width:118px">${T("Dates")}</span><span class="main val" style="${when?"":"color:var(--fg3)"}">${esc(when || "—")}</span></div>
+    <div class="row"><span class="t" style="flex:none;width:118px">${T("Gardé par")}</span><span class="main val" style="${g.sitterName?"":"color:var(--fg3)"}">${g.sitterId && (C.members || {})[g.sitterId] ? mav((C.members || {})[g.sitterId], 20) + " " : ""}${esc(g.sitterName ? g.sitterName + (g.ended ? " · " + T("garde terminée") : "") : "—")}</span></div>
+    <div class="row"><span class="t" style="flex:none;width:118px">${T("Consignes")}</span><span class="main val" style="${g.instructions?"":"color:var(--fg3)"};white-space:pre-wrap;text-align:left">${esc(g.instructions || "—")}</span></div>
+    <button class="row" data-act="previewOn"><span class="main t" style="color:var(--accent)">${T("Voir comme la personne qui garde")}</span><span class="chev">${I.chevR}</span></button>
+  </div>
+  <div class="foot">${T("Invitez-la depuis Famille avec le rôle « Garde » : elle pourra cocher les tâches et remplir le journal, mais pas modifier la fiche, la routine ni les traitements.")}</div></div>`;
+}
+function gardeSheet(){
+  const g = garde(), sit = family().filter(m => m.role === "garde"), me = meMember() || {};
+  const pick = sit.length ? `<div class="opts">${sit.map(m => `<label><input type="radio" name="g-sit" value="${esc(m.id)}" ${g.sitterId === m.id || sit.length === 1 ? "checked" : ""}><span>${mav(m, 18)}${esc(m.name)}</span></label>`).join("")}</div>`
+    : `<div class="hint" style="margin-top:0">${T("Personne n'a le rôle « Garde » dans la famille. Invitez la personne qui garde le chien avec ce rôle, puis choisissez-la ici.")}</div><button type="button" class="btn ghost" style="width:100%" data-act="inviteGarde">${T("Inviter une personne en garde")}</button>`;
+  openSheet(T("Chien sous garde"), `
+    <div class="fg"><span class="lab">${T("Gardé par")}</span>${pick}</div>
+    <div class="two"><div class="fg"><label for="g-from">${T("Du")}</label><input class="f" type="date" id="g-from" value="${esc(g.ended ? "" : g.from || "")}"></div><div class="fg"><label for="g-to">${T("Au")}</label><input class="f" type="date" id="g-to" value="${esc(g.ended ? "" : g.to || "")}"></div></div>
+    <div class="fg"><label for="g-instr">${T("Consignes")}</label><textarea class="f" id="g-instr" placeholder="${T("Clés, codes, où est la nourriture, ce qu'il n'a pas le droit de faire…")}">${esc(g.instructions||"")}</textarea></div>
+    <div class="hint">${T("Le dernier jour passé, la personne qui garde perd l'accès à la famille. Votre nom et votre téléphone (fiche « Vous ») lui sont donnés comme contact.")}</div>`,
+  () => {
+    const sid = (document.querySelector('input[name="g-sit"]:checked') || {}).value || "", m = family().find(x => x.id === sid);
+    const from = val("g-from"), to = val("g-to");
+    if (!m) { toast(T("Choisissez la personne qui garde le chien.")); return false; }
+    if (!from || !to) { toast(T("Indiquez les dates de garde.")); return false; }
+    if (to < from) { toast(T("La date de fin précède la date de début.")); return false; }
+    if (to < ymd(new Date())) { toast(T("La date de fin est déjà passée.")); return false; }
+    put("config","garde",{from, to, sitterId: m.id, sitterName: m.name, ownerName: me.name || "", ownerPhone: me.phone || "", instructions: (document.getElementById("g-instr")||{}).value || "", ended: false});
+  });
+}
+// once the last day of the garde is over, the sitter loses access to the family
+const gardeOver = () => { const g = garde(); return !!(g.to && g.to < ymd(new Date())); };
+let gardeDone = false;
+function gardeExpiry(){
+  if (gardeDone || S.mode !== "db" || !S.ready || S.preview || !gardeOver()) return;
+  const g = garde();
+  if (S.sitterRole && (!g.sitterId || g.sitterId === ME)) { gardeDone = true; const m = meMember(); if (window.carnetLeave) window.carnetLeave(m ? m.name : "", "garde"); return; }
+  if (canEdit() && g.sitterId && !g.ended) { gardeDone = true; const m = (C.members || {})[g.sitterId];
+    (async () => { try { if (m && m.role === "garde") { if (m.uid) await del("access", m.uid); await removeMember(g.sitterId); }
+      await put("config", "garde", Object.assign({}, g, {ended: true})); } catch(e) { console.warn(e); } })(); }
+}
+function viewGardeEnded(){
+  return `<div class="lock"><div class="join-ic" style="margin-bottom:18px">${I.cal}</div><h1>${T("Garde terminée")}</h1>
+    <p>${T("Date de garde terminée : accès à la famille retiré.")}</p><p style="color:var(--fg2)">${T("Merci d'avoir gardé {n} !", {n: esc((dog() || {}).name || T("le chien"))})}</p></div>`;
+}
+
+/* ---------- buddy: a little dog that mirrors the real one ---------- */
+const STAGES = [[0,"Chiot"],[30,"Explorateur"],[90,"Compagnon"],[180,"Héros"],[320,"Légende"]];
+function buddyStats(){
+  const today = ymd(new Date()), nowM = toMin(hhmm(new Date()));
+  const cat = {}; let n = 0, t = 0;
+  for (let i = 6; i >= 0; i--) {
+    const ds = ymd(addDays(new Date(), -i)), st = dayStats(ds);
+    st.tasks.forEach(k => { if (ds === today && toMin(k.time) > nowM) return; const c = k.cat === "jeu" ? "balade" : k.cat === "soin" ? "autre" : k.cat;
+      cat[c] = cat[c] || {n:0,t:0}; cat[c].t++; t++; if (st.done[k.key]) { cat[c].n++; n++; } });
+  }
+  const rate = c => cat[c] && cat[c].t ? cat[c].n / cat[c].t : 1;
+  const jv = {Bon:1,Moyen:.6,Faible:.2,Haute:1,Normale:.9,Basse:.45,Normales:1,Molles:.45,Aucune:.6};
+  let js = [], bad = 0;
+  for (let i = 0; i < 3; i++) { const dd = getDay(ymd(addDays(new Date(), -i)));
+    ["appetite","energy","stool"].forEach(f => { if (dd[f]) js.push(jv[dd[f]] ?? .8); });
+    if (/vomi|boit(e|ille)|boîte|boiter|limp|povra|šep/.test(String(dd.note||"").toLowerCase())) bad++; }
+  const journal = js.length ? js.reduce((a,b)=>a+b,0) / js.length : .85;
+  // how he is *now*: today's ticks and quick logs weigh most, the past week only a little
+  const stT = dayStats(today), logT = dayLog(today), nowMin = toMin(hhmm(new Date()));
+  const dueT = c => stT.tasks.filter(k => (k.cat === c || (c === "balade" && k.cat === "jeu")) && toMin(k.time) + 30 <= nowMin);
+  const rateT = c => { const d = dueT(c); return d.length ? d.filter(k => stT.done[k.key]).length / d.length : null; };
+  const blend = (todayR, weekR) => todayR == null ? weekR : todayR * .75 + weekR * .25;
+  const ago = k => { const l = logT.filter(x => x.k === k).pop(); return l ? nowMin - toMin(l.at) : 1e9; };
+  const lastDone = c => { let m = -1e9; stT.tasks.forEach(k => { if ((k.cat === c || (c === "balade" && k.cat === "jeu")) && stT.done[k.key]) m = Math.max(m, toMin((stT.done[k.key].at || k.time))); }); return nowMin - m; };
+  const dT = getDay(today), jT = ["appetite","energy","stool"].filter(f => dT[f]).map(f => jv[dT[f]] ?? .8);
+  const journalNow = jT.length ? (jT.reduce((a,b)=>a+b,0) / jT.length) * .7 + journal * .3 : journal;
+  const sick = logT.filter(x => x.k === "vomi").length * .3 + logT.filter(x => x.k === "accident").length * .08;
+  const health = Math.max(0, Math.min(1, journalNow * .75 + blend(rateT("med"), rate("med")) * .25 - bad * .15 - sick));
+  const walkedRecently = Math.min(ago("balade"), lastDone("balade")) < 60, playedRecently = ago("jeu") < 45;
+  const happy = Math.max(0, Math.min(1, blend(rateT("balade"), rate("balade")) * .8 + (dT.energy === "Haute" ? .2 : dT.energy === "Basse" ? 0 : .12) + (walkedRecently || playedRecently ? .25 : 0)));
+  const fed = Math.max(0, Math.min(1, blend(rateT("repas"), rate("repas")) + (lastDone("repas") < 90 ? .15 : 0)));
+  const napping = ago("sieste") < 40;
+  // xp across loaded history
+  let xp = 0, streak = 0, perfect = 0, journalDays = 0, medMiss = 0, walkAll = true;
+  const keys = knownDates();
+  keys.forEach(ds => { if (ds > today) return; const st = dayStats(ds); xp += st.n; if (st.total && st.n === st.total) { xp += 5; perfect++; } const dd = getDay(ds); if (dd.appetite && dd.energy && dd.stool) journalDays++; });
+  for (let i = 0; i < 60; i++) { const ds = ymd(addDays(new Date(), -i)), st = dayStats(ds);
+    if (i === 0 && st.n < st.total) continue; if (st.total && st.n === st.total) streak++; else break; }
+  for (let i = 1; i <= 7; i++) { const st = dayStats(ymd(addDays(new Date(), -i))); st.tasks.forEach(k => { if (!st.done[k.key]) { if (k.cat === "med") medMiss++; if (k.cat === "balade") walkAll = false; } }); }
+  let stage = 0; STAGES.forEach(([x], i) => { if (xp >= x) stage = i; });
+  const next = STAGES[stage+1], prog = next ? (xp - STAGES[stage][0]) / (next[0] - STAGES[stage][0]) : 1;
+  const hr = new Date().getHours();
+  let mood = "content";
+  if (health < .5) mood = "malade"; else if (hr >= 22 || hr < 6 || napping) mood = "dort"; else if (happy < .45 || fed < .5) mood = "triste";
+  else if ((health > .85 && happy > .85) || walkedRecently || playedRecently) mood = "ravi";
+  const badges = [
+    {k:"streak3", ok: streak >= 3, l:"3 jours parfaits"}, {k:"streak7", ok: streak >= 7, l:"7 jours parfaits"},
+    {k:"walks", ok: walkAll && keys.length > 0, l:"Toutes les balades de la semaine"}, {k:"meds", ok: medMiss === 0 && meds().length > 0, l:"Aucun médicament oublié"},
+    {k:"log", ok: journalDays >= 5, l:"Journal rempli 5 jours"}, {k:"weigh", ok: weights().length >= 3, l:"3 pesées enregistrées"}
+  ];
+  return {health, happy, fed, xp, stage, next, prog, mood, streak, perfect, badges};
+}
+function buddySay(b){
+  const today = ymd(new Date()), st = dayStats(today), nowM = toMin(hhmm(new Date()));
+  const late = st.tasks.filter(t => !st.done[t.key] && toMin(t.time) + 15 < nowM);
+  if (b.mood === "dort") return T("Zzz… on se voit demain matin.");
+  if (b.mood === "malade") return T("Je ne me sens pas très bien. Tu peux garder un œil sur moi ?");
+  const lw = late.find(t => t.cat === "balade"), lm = late.find(t => t.cat === "repas"), lmed = late.find(t => t.cat === "med");
+  if (lmed) return T("N'oublie pas mon {m} !",{m:lmed.title});
+  if (lm) return T("Mon ventre gargouille… c'est l'heure du repas ?");
+  if (lw) return T("On sort ? J'ai la laisse dans la gueule !");
+  if (st.total && st.n === st.total) return T("Journée parfaite, merci !");
+  if (b.mood === "ravi") return T("Je suis le chien le plus heureux du monde !");
+  return T("Tout va bien. On joue ?");
+}
+function buddySVG(b){
+  const coat = "var(--accent)", st = b.stage;
+  const acc = [
+    "",
+    `<path d="M70 118 Q100 136 130 118 L124 132 Q100 146 76 132 Z" fill="var(--teal)"/>`,
+    `<path d="M70 118 Q100 136 130 118 L124 132 Q100 146 76 132 Z" fill="var(--teal)"/><circle cx="100" cy="142" r="7" fill="#F5C542" stroke="#C99A1C" stroke-width="2"/>`,
+    `<path d="M66 120 Q100 138 134 120 L160 196 Q100 210 40 196 Z" fill="var(--red)" opacity=".9"/><circle cx="100" cy="134" r="7" fill="#F5C542" stroke="#C99A1C" stroke-width="2"/>`,
+    `<path d="M66 120 Q100 138 134 120 L160 196 Q100 210 40 196 Z" fill="var(--purple)" opacity=".9"/><path d="M78 36 L84 16 L94 30 L100 10 L106 30 L116 16 L122 36 Z" fill="#F5C542" stroke="#C99A1C" stroke-width="2" stroke-linejoin="round"/><circle cx="100" cy="134" r="7" fill="#F5C542" stroke="#C99A1C" stroke-width="2"/>`
+  ][st];
+  const eyes = b.mood === "dort" ? `<path d="M76 84 q8 6 16 0 M108 84 q8 6 16 0" stroke="#2A1D12" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+    : b.mood === "triste" || b.mood === "malade" ? `<g class="blink"><ellipse cx="84" cy="84" rx="6" ry="7" fill="#2A1D12"/><ellipse cx="116" cy="84" rx="6" ry="7" fill="#2A1D12"/></g><path d="M74 74 l14 4 M126 74 l-14 4" stroke="#2A1D12" stroke-width="3" stroke-linecap="round"/>`
+    : `<g class="blink"><ellipse cx="80" cy="86" rx="9" ry="11" fill="#22160F"/><ellipse cx="120" cy="86" rx="9" ry="11" fill="#22160F"/><circle cx="83" cy="81" r="3.6" fill="#fff"/><circle cx="123" cy="81" r="3.6" fill="#fff"/><circle cx="77" cy="91" r="1.6" fill="#fff"/><circle cx="117" cy="91" r="1.6" fill="#fff"/><ellipse cx="66" cy="100" rx="7" ry="4" fill="#FF8FA3" opacity=".55"/><ellipse cx="134" cy="100" rx="7" ry="4" fill="#FF8FA3" opacity=".55"/></g>`;
+  const mouth = b.mood === "ravi" ? `<path d="M88 104 Q100 120 112 104 Z" fill="#7A2E2E"/><path d="M95 110 Q100 118 105 110" fill="#FF7B8A"/>`
+    : b.mood === "triste" || b.mood === "malade" ? `<path d="M90 110 Q100 102 110 110" stroke="#2A1D12" stroke-width="3" fill="none" stroke-linecap="round"/>`
+    : b.mood === "dort" ? `<path d="M94 106 Q100 110 106 106" stroke="#2A1D12" stroke-width="3" fill="none" stroke-linecap="round"/>`
+    : `<path d="M90 104 Q100 112 100 104 Q100 112 110 104" stroke="#2A1D12" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  const extra = b.mood === "dort" ? `<g class="zzz" fill="var(--fg2)" font-weight="700" font-family="var(--font-r)"><text x="140" y="56" font-size="16">z</text><text x="152" y="40" font-size="20">z</text><text x="166" y="22" font-size="24">Z</text></g>`
+    : b.mood === "malade" ? `<g transform="translate(118 100) rotate(-25)"><rect x="0" y="-3" width="30" height="6" rx="3" fill="#fff" stroke="var(--fg3)"/><circle cx="2" cy="0" r="4" fill="var(--red)"/></g><path d="M134 66 q4 8 0 12 q-4 -4 0 -12" fill="var(--teal)" opacity=".8"/>`
+    : b.mood === "ravi" ? `<g class="hearts" fill="var(--pink)"><path d="M150 50 c-4-6-12-2-10 4 l10 9 l10-9 c2-6-6-10-10-4z"/><path d="M42 60 c-3-4-9-1-7 3 l7 6 l7-6 c2-4-4-7-7-3z" opacity=".8"/></g>` : "";
+  const earRot = b.mood === "triste" || b.mood === "malade" ? 18 : 0;
+  const scale = [.78,.86,.92,.97,1][st];
+  return `<svg viewBox="0 0 200 220" class="buddy mood-${b.mood}" role="img" aria-label="${esc(T(STAGES[st][1]))}">
+    <ellipse cx="100" cy="208" rx="${54*scale}" ry="7" fill="var(--fill2)"/>
+    <g class="bd-all" style="transform-origin:100px 205px;transform:scale(${scale})">
+      <g class="bd-body">
+        <path class="tail" d="M146 168 Q176 150 170 124" stroke="${coat}" stroke-width="12" fill="none" stroke-linecap="round" style="transform-origin:146px 168px"/>
+        <ellipse cx="100" cy="166" rx="50" ry="40" fill="${coat}"/>
+        <ellipse cx="100" cy="176" rx="28" ry="24" fill="#FFF3E2" opacity=".9"/>
+        <ellipse cx="74" cy="202" rx="13" ry="8" fill="${coat}"/><ellipse cx="126" cy="202" rx="13" ry="8" fill="${coat}"/>
+        ${st >= 3 ? acc : ""}
+        <g class="bd-head">
+          <g style="transform-origin:62px 62px;transform:rotate(${earRot}deg)"><path d="M66 56 Q40 50 44 96 Q52 104 64 92 Z" fill="#8A4A16" class="ear-l"/></g>
+          <g style="transform-origin:138px 62px;transform:rotate(${-earRot}deg)"><path d="M134 56 Q160 50 156 96 Q148 104 136 92 Z" fill="#8A4A16" class="ear-r"/></g>
+          <circle cx="100" cy="86" r="44" fill="${coat}"/>
+          <ellipse cx="100" cy="102" rx="24" ry="18" fill="#FFF3E2"/>
+          ${eyes}
+          <ellipse cx="100" cy="96" rx="8" ry="6" fill="#2A1D12"/>
+          ${mouth}
+          ${b.mood === "ravi" || b.mood === "content" ? `<circle cx="70" cy="98" r="6" fill="var(--pink)" opacity=".25"/><circle cx="130" cy="98" r="6" fill="var(--pink)" opacity=".25"/>` : ""}
+          ${st < 3 ? acc : st === 4 ? `<path d="M78 36 L84 16 L94 30 L100 10 L106 30 L116 16 L122 36 Z" fill="#F5C542" stroke="#C99A1C" stroke-width="2" stroke-linejoin="round"/>` : ""}
+        </g>
+      </g>
+    </g>${extra}</svg>`;
+}
+function activityRings(vals){
+  const R = [[46,"var(--green)"],[34,"var(--orange)"],[22,"var(--teal)"]], sw = 10;
+  return `<svg viewBox="0 0 112 112" width="112" height="112" aria-hidden="true" class="rings">${R.map(([r,c],i) => { const C = 2*Math.PI*r, v = Math.max(0, Math.min(1, vals[i]));
+    return `<circle cx="56" cy="56" r="${r}" fill="none" stroke="${c}" stroke-opacity=".18" stroke-width="${sw}"/><circle cx="56" cy="56" r="${r}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-v)).toFixed(1)}" transform="rotate(-90 56 56)" class="ring-arc" style="--c:${C.toFixed(1)}"/>`; }).join("")}</svg>`;
+}
+function viewBuddy(){
+  const d = dog() || {}, b = buddyStats(), name = T("Mini {n}",{n: d.name || T("le chien")});
+  const moodTxt = {ravi:"En pleine forme",content:"Content",triste:"Un peu triste",malade:"Pas en forme",dort:"Endormi"}[b.mood];
+  const moodCol = {ravi:"var(--green)",content:"var(--teal)",triste:"var(--orange)",malade:"var(--red)",dort:"var(--purple)"}[b.mood];
+  const jump = live("buddyJump");
+  const cfg = {breed: breedKey(d.breed) || "", size: d.size || "", age: ageYears(d.birth), mood: b.mood, stage: b.stage, seed: [...(d.name||"x")].reduce((a,c) => a*31 + c.charCodeAt(0), 7) >>> 0, label: name + " · " + T(moodTxt)};
+  const leg = (c, l, v, k) => `<button class="leg" data-act="buddyHelp" data-k="${k}"><i style="background:${c}"></i><span>${l}</span><b class="num">${Math.round(v*100)} %</b><span class="chev">${I.chevR}</span></button>`;
+  return `${previewBanner()}<div class="top"><div><div class="eyebrow">${T("Le double de {n}",{n:esc(d.name || T("votre chien"))})}</div><h1>${T("Compagnon")}</h1></div></div>
+  <div class="card buddy-card">
+    <div class="buddy-stage">
+      <button class="bubble" data-act="go" data-tab="aujourdhui">${esc(buddySay(b))}</button>
+      <div id="buddy3d" class="buddy3d mood-${b.mood}" data-cfg="${esc(JSON.stringify(cfg))}">
+        <div class="b3-load" role="status"><span class="b3-spin"></span><small>${T("Chargement…")}</small><small class="b3-err">${T("Le compagnon 3D ne peut pas s'afficher sur cet appareil.")}</small></div>
+        ${b.mood === "dort" ? `<div class="zz" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div>` : ""}
+      </div>
+      <div class="b3-hint">${T("Glissez pour le faire tourner, touchez-le pour le caresser.")}</div>
+    </div>
+    <div class="plate">
+      <div class="plate-h"><div><div class="plate-name">${esc(name)}</div><div class="plate-sub"><span class="chip-s" style="--c:${moodCol}"><i></i>${T(moodTxt)}</span><span class="chip-s" style="--c:var(--accent)"><i></i>${T(STAGES[b.stage][1])}</span></div></div>${b.streak?`<span class="pill num">${T(b.streak > 1 ? "{n} jours parfaits d'affilée" : "{n} jour parfait",{n:b.streak})}</span>`:""}</div>
+      <div class="vitals">${activityRings([b.health, b.happy, b.fed])}<div class="legend">${leg("var(--green)", T("Santé"), b.health, "health")}${leg("var(--orange)", T("Bonheur"), b.happy, "happy")}${leg("var(--teal)", T("Ventre plein"), b.fed, "fed")}</div></div>
+      <div class="lvl"><div class="stat-h"><span>${b.next ? T("Évolution vers {s}",{s:T(b.next[1])}) : T("Niveau maximum atteint")}</span><span class="num">${b.xp}${b.next?` / ${b.next[0]}`:""} ${T("pts")}</span></div><div class="bar xp"><i style="width:${Math.round(b.prog*100)}%"></i></div></div>
+    </div>
+  </div>
+  <div class="foot">${T("Il reflète l'état réel de {n} : le journal et les médicaments font sa santé, les balades son bonheur, les repas son ventre. Chaque tâche cochée lui donne des points pour évoluer.",{n:esc(d.name || T("votre chien"))})}</div>
+  <div class="sec"><div class="sec-h"><h2>${T("Évolutions")}</h2></div><div class="card list">${STAGES.map(([x,l],i) => `<div class="row"><span class="ico" style="--c:${i<=b.stage?"var(--accent)":"var(--fill2)"};color:${i<=b.stage?"#fff":"var(--fg3)"};font-weight:700;font-size:14px">${i+1}</span><div class="main"><div class="t" style="${i<=b.stage?"":"color:var(--fg3)"}">${T(l)}</div><div class="s">${T("{n} pts",{n:x})} · ${T(["Tout petit","Un bandana","Une médaille","Une cape de héros","Une couronne"][i])}</div></div>${i===b.stage?`<span class="pill">${T("Actuel")}</span>`:""}</div>`).join("")}</div></div>
+  <div class="sec"><div class="sec-h"><h2>${T("Badges")}</h2></div><div class="badges">${b.badges.map(x => `<button class="badge ${x.ok?"ok":""}" data-act="badgeHelp" data-k="${x.k}"><span>${x.ok?I.tick.replace('width="16" height="16"','width="20" height="20"'):"?"}</span><small>${T(x.l)}</small></button>`).join("")}</div></div>`;
+}
+
+
+/* ---------- kibble stock ---------- */
+const BAGS = [2, 4, 6, 8, 10, 12, 15];
+function dailyG(){ const f = C.config.food || {}; if (+f.daily) return +f.daily; const m = String((dog() || {}).ration || "").match(/(\d+(?:[.,]\d+)?)\s*g/i); return m ? +m[1].replace(",", ".") : 0; }
+function foodState(){
+  const f = C.config.food; if (!f || !+f.bagKg || !f.opened) return null;
+  const daily = dailyG(); if (!daily) return {f, daily:0};
+  const today = ymd(new Date()), st = dayStats(today), meals = st.tasks.filter(t => t.cat === "repas");
+  const todayPart = meals.length ? meals.filter(t => st.done[t.key]).length / meals.length : .5;
+  const used = (Math.max(0, daysBetween(f.opened, today)) + todayPart) * daily;
+  const total = +f.bagKg * 1000, left = Math.max(0, total - used), daysLeft = left / daily;
+  return {f, daily, total, left, daysLeft, end: ymd(addDays(new Date(), Math.floor(daysLeft)))};
+}
+function foodSection(){
+  const fs = foodState(), d = dog() || {};
+  const typeLine = [d.food && T(d.food), d.foodBrand].filter(Boolean).join(" · ");
+  if (!fs) return `<div class="sec" style="margin-top:8px"><div class="card empty">${T("Indiquez la taille du sac et le jour où vous l'avez ouvert : le carnet calcule ce qu'il reste et vous prévient avant la fin.")}${canEdit()?`<br><button class="btn" style="margin-top:12px" data-act="editFood">${T("Suivre le stock de croquettes")}</button>`:""}</div></div>`;
+  if (!fs.daily) return `<div class="sec" style="margin-top:8px"><div class="card empty">${T("Indiquez la ration quotidienne en grammes pour calculer le stock.")}${canEdit()?`<br><button class="btn" style="margin-top:12px" data-act="editFood">${T("Compléter")}</button>`:""}</div></div>`;
+  const pctLeft = fs.left / fs.total, low = fs.daysLeft <= 5, col = low ? "var(--red)" : fs.daysLeft <= 10 ? "var(--orange)" : "var(--green)";
+  return `<div class="sec" style="margin-top:8px"><div class="sec-h"><h2>${T("Stock de croquettes")}</h2>${canEdit()?`<button class="link" data-act="editFood">${T("Modifier")}</button>`:""}</div>
+    <div class="card pad food">
+      <div class="food-top"><div><div class="big num" style="color:${col}">~${Math.floor(fs.daysLeft)}<small>${T("jours")}</small></div><div class="s">${T("Fin prévue le {d}",{d:esc(fmt(parseYmd(fs.end),{weekday:"short", day:"numeric", month:"long"}))})}</div></div>
+        <div class="food-kg num"><b>${nf((fs.left/1000).toFixed(1))}</b> / ${nf(fs.f.bagKg)} kg</div></div>
+      <div class="bar" style="height:10px;border-radius:5px;margin-top:12px"><i style="width:${(pctLeft*100).toFixed(1)}%;background:${col}"></i></div>
+      <div class="meta"><span>${T("Ouvert le {d}",{d:esc(fmt(parseYmd(fs.f.opened),{day:"numeric", month:"long"}))})}</span><span class="num">${T("{g} g par jour",{g:fs.daily})}</span></div>
+      ${canEdit()?`<button class="btn ${low?"":"ghost"}" style="width:100%;margin-top:14px" data-act="newBag">${T("J'ai ouvert un nouveau sac")}</button>`:""}
+    </div>
+    <div class="foot">${typeLine ? esc(typeLine) + " · " : ""}${T("Le calcul suit la ration et les repas cochés aujourd'hui. Pensez à racheter quand il reste une semaine.")}</div></div>`;
+}
+function foodSheet(){
+  const f = C.config.food || {}, cur = +f.bagKg || 12, today = ymd(new Date());
+  openSheet(T("Stock de croquettes"), `
+    <div class="fg"><span class="lab">${T("Taille du sac")}</span><div class="opts">${BAGS.map(k => `<label><input type="radio" name="f-bag" value="${k}" ${cur===k?"checked":""}><span>${nf(k)} kg</span></label>`).join("")}</div>
+      <input class="f num" id="f-bag-other" type="number" step="0.5" min="0.5" inputmode="decimal" placeholder="${T("Autre taille en kg")}" value="${BAGS.includes(cur)?"":esc(cur)}"></div>
+    <div class="two"><div class="fg"><label for="f-open">${T("Ouvert le")}</label><input class="f" type="date" id="f-open" value="${esc(f.opened || today)}" max="${today}"></div>
+      <div class="fg"><label for="f-daily">${T("Ration par jour (g)")}</label><input class="f num" type="number" min="10" step="5" inputmode="numeric" id="f-daily" value="${esc(f.daily || dailyG() || "")}" placeholder="260"></div></div>
+    <div class="hint">${T("La ration du profil est reprise si vous la laissez telle quelle.")}</div>`,
+  () => { const other = parseFloat(String(val("f-bag-other")).replace(",", ".")), radio = +((document.querySelector('input[name="f-bag"]:checked') || {}).value || 0);
+    const bagKg = other > 0 ? other : radio, opened = val("f-open"), daily = +val("f-daily");
+    if (!bagKg || !opened || !daily) { toast(T("Indiquez la taille du sac, la date d'ouverture et la ration.")); return false; }
+    put("config", "food", {bagKg, opened, daily}); });
+}
+
+/* ---------- family: who does what ---------- */
+const MCOL = ["#E07A5F","#3D8BD9","#5FA86B","#B57EDC","#E6A23C","#2BB0A5","#D9668F","#5E6AD2","#C9A227","#E5484D","#3FA7D6","#8B5E3C","#7B9E2F","#A35BB5"];
+// each person gets a colour nobody else in the family has
+function memberColors(){ const used = [], map = {}; family().forEach(x => { let c = x.color; if (!c || used.includes(c)) c = MCOL.find(k => !used.includes(k)) || c || MCOL[0]; used.push(c); map[x.id] = c; }); return map; }
+const freeColor = () => { const used = Object.values(memberColors()); return MCOL.find(c => !used.includes(c)) || MCOL[family().length % MCOL.length]; };
+const MARK = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAbXElEQVR42u19e5hkVXXv77fO6ce8us6pngejAyPKYwKooIB8iAFiUCA8fAWMBnwR4sfFXO4wqNwYIlfNTSAwJlHQoIK8PvHBFZCAXpCICirGGJ4xCgZEZobprnOqH0x19zl75Y/Zp7P7TFV1d3VVdzVd+/vqg4+mHmevtdda+7fW+i2gszqrszqrszqrszqrszqrs5bW4iL5nWJfCiDN/c0LgmCDqr6c5EEAXkZyP1Xdi2Q/gEBVe0guB+A779ulqmUAZZIxgO2q+ksA/6mqj4nIk1EU/RaAyX+f3bfU/p6OArRY6FM2ulAoBCJyEICjVPUIAIeQ3BtAgZz6OKozk0+N90Wq+luSD6vqj40xP+rr63vk2Wef3ZVTBlgl0Y4CNOf3iP33yZO+atWq/T3PO4Hkm1X1KBFZW0Vg6rxY5fmqPatW+Sezl6sY9jueBvB9AHdOTEzcOzIystP5LN8qgukoQOOCnxR6EAQbAZxO8m0AjiLZkxN26lgKtuBZMmUyrunPlEJVB0jeB+CW5cuX/5NjGbzc+zoKMM33ewASx5+fLCJnGWNOFJFVjtDzAl+I5Zp6z1GGJwHcqKrXxnH89GJShIVUAC8Tan9//ypjzB8DOJfkoY7QE8c6tJu7yoRLkmJ/cxnADZ7n/cPAwMB/OM/ZtjECF1LwxWKxT1XPAXAeyVfYTcw2SxbRLSXz/T5JqOoogGuNMVvL5fJT+edeqgqQ+WkDwAvD8H0ALib5civ4NBcELsaVxSY+SRhjhkhuFZErBgcHh9vRGnC+T30QBKeQ/EuSh7+IBF9XEVT1F6r6kTiOb2s3a0DMU3RfLBY3GGMuF5F3vogFX1URSPr2mW/0ff+inTt3brfXxgUHk7wWf7YBoEEQvBvAN0TkKCt4F1GbL0HksQLNbT5beAAMAEPyUGPMO3t6en49Njb2uPN3fbFZAB9A0tfXV/Q8byvJs52rnDdP0bnmEMU9EL8cWui+jy2yTklmDYwxfxPH8UcX2iWwVSY/DMPXA7jO4vJpi6P6LAqnez93hJyqaonkqKruIpmoqpBcoaq9AFaSXFkF+ct8uTRRGQwAJekZY+5OkuRsiyj6Dh6yKBVgMsoPw/CDAP6eZJeqJrkkTNPv4QDEAWViAI8C+BmAJ1T1cc/zdiRJsqNcLo/k/G7XmjVretI0DdI0XQNgX5KHkDxcVQ8TkQ2OQmTf1yxFTkj6qvpLY8wZ5XL55wuhBGxi4katv79MRC6yG6YtMKNTImwrnF+p6j0A7p6YmPjR6Ojojrl+yZo1a1ZOTEy8huSJqnqaiBycQyWboQiZEgyRfHupVLpnvpWATRK+2bhxY+/Q0NANJN9hT32zg7zsBHr2alUBcKeqXhfH8T0AKlUgZtQI+LRGoiizYvm0s18sFo83xpxD8q3WsjUrpklJeqo6pqpnxHF8+3wqAZsh/DAMCwC+QfKNqjoBoKvJvzN1BD9A8joAXyqVSk/kAk9tItDiQtCTwgjD8JUALgBwllWEZliDzLUkqvoOixfMixJwrsK3kf7dJI9ogfCNjd5FVUdJfg7A1lKp9Nt5zsfvkaYuFAqHicjlVuldIc7lWQlgnORppVLpO/OhBGzCyf82yde1INhzr0xf8zzvksHBwX9vg9y7OBVBCMNwM4C/ItljrYHXBEswkqbpG4eGhn7S6isiG3wPN27c2D00NPQdkm9osvDVgiaeqj5ljNlSLpf/nyP4dinFyk67KRaLR6rqjST3b8JeZEqwXVWPsullaZWyS6PI1tDQ0E1W+BNNFH5q06ueMebaJEmOtML3Mh/ZRomUyQxgqVT6ycTExNGq+l1rtZI5yiQluRfJWzds2LCsRQUvDUHBPoC0UCh8WkTe12Sfn5n8AQB/EsfxJ8fHx3c5JlDbOBXsjY+Pj1Yqla/09vYeRPIQqwQyByVISL50fHx870qlcqvj9hZMAXwASRiG54jIp6yp62qiyfdV9Z/TND2tXC7fnwvwsAiSPgIgrVQqX+/p6TlCRA508IK5KMFhvb292yuVykNOldG8xwACwBQKhdeKyAOOSWYTTo/Y693WKIq2ZGa1jhmVNlYMAaDr1q1bPj4+/gOSh84xMMyutROq+ro4jh9udjwgM1WS/v7+VSJyE8nuJvmkxJZSvWCMOTuKos3OSUqmyTC2q1UwAGTHjh2jxpi3q+qgrSI1czmgJHtJXnvsscf6zY4HvJn6/d7e3mvsnTdpAvrl4uCnlMvlux0gR+v9jjAMD162bNnxlUrlsYVOpdY5tf7Y2Nhgb2/vEyTf5dzxOZd4YPv27ROVSuV7zXQF3gz+ngZBcLqI/N8mXHEmCyRsJuzU4eHhX83A5NMK/yQAd6lqUqlUbnMsQjtaAr9Sqfx7b2/vWpKvmyNQRBsnHbNixYqv79q1a6BZyi/TfKn29fUVAVxlkzvSBFTPV9WtcRyfZNOg3kxMfhiGnwDwTyLSJyIDmN+ydT/3mkmeIwXgichHVfXX1t3N1RX0pGl6ZZVcRksUQAAYEfkrEXnJHDU4tcGeMcacb/295JtBqpn8lStXrg7D8HaSHwMwrruXj9YHc76TFEpyr+xa6tXZEwWAwcHBYWPMFifJ1LC1VtVURE4qFotvalZxjV/P9BcKhcNInuMkPObi73eQfHccx/dOg+hlYFOSKypJWtgFVK2A1WzcuLF3eHj41QAOMcass38fVtVHjTEPDw8PD05T0ZMC8Mrl8q1hGH6P5LFNgItVVS8DcF8GnM1Fsfx62kvycgvJpg1ueib8n6VpemYURTPx92rjjvMBXEGy24k9klyNXyvK1tMwDPdR1fOGhobeTnI/ABCZqv8i8nwYhncA+Lsoih5x9kdrSO0Skt+bo/J6qpqSfHUQBH8Ux/H1c00YSS2/G4bhySLyxgY1djLYU9VbReS4oaGh6YSfIV3dQRB8TkT+AUCXbRTxaxR5NhsPMUEQnAfgX0XkIwD2sy4nVdXEeRkAa0l+AMBPwzD8eJXG1CnuL47j+40x37WxQDrH36oALrZAXNrsGCAL9i6dY7DnGWP+Noqit9umCJlG+EmhUHhZEAT3isif2lNfT0mbffIZhuG1IvJZAEX7/aZGICjWFCcAukTkL8Mw/AaAnhouKgviLmmCAouqGhHZVCgUTsuunc1SAN+e/pNsXdxsT3+aabiqfjCO44scv23qNYeGYXiiiDwgIq93TH4tc9nX5IDPhGF4Dcn32vyGuoJ2wCf3lQWBMMZMkHxbEAQ31wiWUwBeFEU/TNP072zOY2KueAPJzXX2tiEFyD7ooga0NLHxwiDJk6Io+vw04M6kvw/D8MMk7wKw3iqdP42pXtMkONiz37+F5PudzKZxMo9Z0emUVw4Kp6ruEpG3BUFwcY0I3diA8EJjzF0kuwCMN2gNPFVVETk6CIJjss+eay7Asx08r1PVB2aZLp5E9gC8NYqix6x/mqhn8m1X8NUk32396nTfmVrX8mAcx0fPMQIWi3O83PO8R5wrnVtsClUdA/A8gNFMmW0p2AoARQvTusHeuDFmU7lc/nUV3J624HRFmqa3ADjZ6YKebel5tuc3RlF0VqOFI3ucNGPM/xIRca5dM/0h3x8fH/9DW5Hrz0D4m4wxN5M8bBZFpNnfC47wG1UCAjCe511McpkjwLKq/gDAfar6U1V9Zvny5Tu2bdv2gvve/v7+lWmaFkVkraq+0hhzJMnDSR4qIpcCeE8VBVAA3Llz5wiAU4IguITkZpJ9TlmZmeF117PvOXXt2rXrnn/++R2N7AVzfnAfVX3C2RDOMNK/OYqi9wMYq6OJk00jhULhrSLyRZLhLOFlteb2t11dXZvsRjaiAFk94yt83/+VjfTvAnCz7/vfHRgY2NaoT+nv7z8wSZKDyuXyHXWC3skrY6FQ2FdEzgFwZtYinys/n0Jbk5NJZhHPj+P4s41cCZnL9W8hefkMhJKZQjHGXBHH8RZ3Y2ttOAAEQfAxEflEg2XVmQKM+r6/vxVUIwqQ3To+7nneEWma/kW5XP5ZDVayen2EeaEkjXZNb9iwYdno6OixAE4BcAyAA1zLlGtjS50D6KnqD6MoOq6RVPEUMqUgCB4SkddOE/1PVuqmabq5XC5vnabv3QeQrFu3bsXY2NgXReRM6+8bQfQmTb6IHGSLRBvG2IvF4kudCmP3tqLNKhqdBRvaFOUJw3AfAIeo6uEicoiqHghgg4079viQiYmJTcPDw7+Y7X7QKfY4VET+ZRrBZP7JqOrZcRzfNA2s6wNIVq9efUCapjeTfG2TMopU1ePiOP5eE6pmOderVJNLz1nLkqxcuXJ1V1fXXsaYAwDsIyL7qWrRkmxsjaLoltnuR3bXNSRPs/X3tQSUmZtRVX2X7WCpFelP3u/7+vpOSNP0JpJrmlQ9bEh6JNc2obeB09QgYAFIJVCF/UwBpCMjIwPYXTP5aB1wLJ11kac16afU2dBM+AMATo/j+IE6kX7mO5MgCP4nySutYqVNqh5W6w9XN5E3AG1aU1DLWkmVsrG00WSQFgqFfQEcaoMMr4bwt6vqiXEc/1udk5+ZHy8Igs+IyAdthG1awAuwD5be0mZTz/n29L/e6XPz8uZWVXcAOCGO40frnHwfQLJixYq13d3dN+fKx1pBA7MOnVUzoK9iyavdZiZN8u9WMYnGmu6Sqr7JEX5Sp2T8lQC+RvLAFvIC0LqAdYuobBzz1ao2A7c2JVbwLc59eA6GzfzshKq+1ZYjVxP+ZLAXBMGpAK4nGbRQ+G5mba+OAkx5flm5cmW/53krAYQAgixm8DxvREQG0zR9PoqisovN+MVicb2qvtz6f+YKN98bx/H9dYQvVvj/g+RnbH1/2kLhI5cR9JpRFbOIT76xVVMfVdWXWdb05QC68nQ3aZomAHaGYfhjAF+IouhOABSSB2I3tp6BLJnwL4nj+AYb8CV1qmc+JSKfsdiAmQcSKNokTaGvr6+w1H2+qn5IRE4RkUOsHLsyxtXs5aS315N8C8lvBUFwGQD1kyR5led5GUVrVrV7exzHn6hz8rPqmc+TPLdFjCDTcfwXSBYAlJaoBchcYcmpUuqqwmeQvz6nACgiFxUKhV8IyU0uyqeqz6Rp+j4HUtQa1TM3ici5MyjeaFW0202yD531g1ypOqdBPH2nz2Bz5gLcdPB7h4aGSlXg0UlSwyAIbiT5ria3hs8WDYSIrFtko2/QZNocArjTGLN9ljkAsTR5m0RV16sqLA5wTblcvs9FCHPRfhoEwT+KyB+1iAtoVgieMWbNElYAtWVmZQCfbLAHUcReF1RVB5Ik+VgNTcrq9i4VkXMWWPhu2fpSdwGJrTi+SlXvaYCcQsUOW6KqXmpbtfKalAn/DJKXtPiOP9sOiWInBNi9xsfH321b0PxZ5AUoItJjjPmPOI4/X+X0C4C0r69vPwBfsJFm2wxysGPh0AGCwNHR0edJnqKq20nOKCWsqiNiteAy7Mb33Y7TLGr0ROTLJFe1iPlzLqtjAZyK41Kp9DiAE+y4u3qd08YCRQ+LMeY3AL5WpYolI32+UESObhIvQLNdwKqO7KfcCvwoih4l+SZjzLN1OpKzGOo+AXBNqVQayp1+sfRnL1XVj80TwjdrLEBEVnTyAXsEhX6pVHqc5EmqWqto1rN5nq9KkiRX17jzqy0RX+W0SKHNLEB3R+ZVlaAriqJHVfVqez1Mc/UdAPDtOI4fFltmpDnfn65bt24tyQ9YYggP7Z0D147cq9Zu3lGn2eaqWkMYPXutOJtk4CBO7Sj4ZR0FqEu9V7JZXjfN76lqZIx5EDV4ZrKqoD9uJhVJi1ZPR9aoA/NJ/oAYm7J/vFwuxxkSuEdBZxiGBwF4ZY0awXaLfDurRpVQmqabrL83uej/Zy4UvEe3sKoe1wQig/mYArZrCecCMIPOreNz+5Xt0wO12sOz//ENi+RBxzoKUL3ptb+/f5WqnuxY8cz/j6nqg5lLqEZk4JN8VYNs4vO9XugoAKoVfaqqniEiezlBfOb//y2O42ey/yb5yHr16tVrVHVvp0awnV3AcEcBqnY6dVlqOq1yVb7NZTfZQwHGx8c32K5UXQQb+3RH5lUZT/5MRDY5ybsM/UtE5JsuerqHAnieV5wjwfF8rt90ZL5H2v5gAP8nJ/wM/XvQJoykpgI0qeduvsa1/GcHCPrv3M369euXq+pXSC6v4hppjLk2H9tJFXy9C4tgOIPl4vlFRwEmwTypVCpfsVwCaW6ughhjtovIrXn8RKoUWSTtrgA2mn26XC4/s8SzgRmjmR+G4ddJnlolbW+4e11r6wd998D4VerGR7A4Eh3/ajNf3hJEBCdZRVavXr0+TdMbSf5elXI9BeAZY4ZF5KpqRBjVLMDgYrhakbxvCV4BxeUxDILglCRJfmyFX60lL7Wn/4ZSqfRstYLfPSxAmqbbrRvw2/Qq6KvqRJIk9zbR/DOXGVVMbal2Gy5YpeUaLWIacQkh0oxGrq+v7xWe5/1vS26JGpxOWay0yxhzRa3uqT0UoLe3d9vExMSA033bTiu1zGQ/HR4e/uUcByiJ8/7pGDa0gc9FDUWp9pl51jGXMmaSEKJQKLxGRD6gqmeRXOVMaPdq7JWvql8ql8tP1XKVfjUSwyAIniK5VxuWgmWn8ZZpaOmmhUrd4VOFQiHwfX//JEkOtsRL+9ty+WUOKVaF5AsAnlPVbSQH0jR9iuSAiOzs7e0dtGSSjQy1qqVgXrFYPMAYcwLJtwE41mExTev0Y2ZtfqWxsbFP1uud9KuBCQAeBnB0m12vsoBmxPf9rzaQDs5OQArsJnQ0xvyBqr6Z5GHGmDWe52XxRbWYY49/930/o5Md3bVr11AYhgO2IrcE4GlV3QYg8jxvW5IkJWPMiIgkvu+P+b6fjIyMYNmyZd74+Phyz/N6jTFrAWwUkZep6kEAXqWq+4mI51DXZlc8b5rWOd8Yc+kLL7ywvV6gzBqTQt7hed7XmjDdAs0eJq2qn42i6PxZRP8u4aMUCoXTSP4pyeNJ9jgEjO7oec7wtE6hdK2mODmSR2NHxI9l121V9Sxw41d7v0OoiRn2ZGTMLg9HUXR4jt18WgtgACBJkvtJDtnWq3YIBNWCGSMi8tezaAefVJJisfgOVf0wySOc05TkAkBvjsxltVhF3WCu285e3MOyWJdrqiiY18BvOR+7ez3qjpirFqyI7TK5n6S2yR07tTTtV9a6ztTizSkUCq8Nw/D/Yzd30RGWNCF1SBOawWvgCtirMmFMcpyE1V7uNc8dTMFZ7pNnjPlcHMffn4mVlDr/7YZ5GNA001ZwX1Wf7O7uvmwGws86YhiG4cdF5Ickf9+OfTGOkBbiuVjn1RSAzBjzG1W9eKYBsl+r77y7u/vO8fHxZwDsPceRcXOubrWJjHN27NgxOs2wyIytbG8AXyZ5fJ17Ml6EVcA+dk9ej2c6VLPWzCBvx44do6p65QKnhhMbzf5FuVz+52mo6P0MHQPwkBV+Uuee/GJaGa/Tp6Mo+nYVfodZTw8nAKxfv35ZpVJ5nOQ+TZgcOts1YUkrro+i6D11OAonkbJisXgBgK25ezKWgPA9VX0kiqIjbeA3Y8bzelMvxQIbH14ANu1M+HdEUfS+OhNGJ9nKisXiFQC2OsxY3hKp/qWqjpJ8J4DKbCFpmW72bRRFXzXGfKUB9olGHyixwv9WX1/fGahBcerSvAdB8EUAm3PXOiyR0y8AzrWVPn6jAyPqRq1hGK4C8OMWU8CmADySMMZcE8fxec4wJVNL+GEYXk/yrDagrVmo+OjKOI4vbHSCKGdablQsFn9HVe8nubrJSuDOHqqo6hY7/6ZW4ycd7oJrnVl/S0741kWeXoPSb84uIM8+8YQx5s2q+qzjDnSO99ZkNxhGX1UfMsa83grfqyP8jK0sG/SYLFHh/7y3t/edzl7qXOcGYiawahAEG0leR/K43My7mQAa6o6WtdH6AIDLoyj6NHYPUqwX7WfE1FtF5IIlePIzpO9ZAMfEcfz0XCui2OCUKy8Mw80ALiD5kipjzmq9l04680lV/bLv+19wxrTVQ6+6AEwUi8VLAFzaTmxl83zdGwRwrB3OOedyODZaggxMDjF6D4AzAbwmO9W1smGq+hyAH4jILT09PXc7wxi9acxYF4CJMAwvJPm3C8FNjIWHw0VVR0ieUCqVfjTXsfFoQj3dFO0rFou/Y4x5DYB9SG5Q1V4A4yKyzRZQPELyMTtJHLmZRfX8VxeAiSAIPiQif+/kw5ea8EdV9eQ69P3zrgBT/PIsFWemgUsG7y5V4Wdmf8QYc5pD45s0m2oFTSxVni4A1FkUaaaFQuECz/O2LmHhx6p6mk3vNh2MYxu3fZkwDC+19LRLTfjZVe85Y8ypdqxtS5BYvx27WwEgCIKrSX5wCQZ8WR7kEWPMW2xFb8tg+Hba1C4AE4VCIRSR6y3v7VK66rmI6L1Jkpw5PDw82Erht4sCTJr8vr6+IzzPu57kpiUm/Mk8iKpeHUXRn81X25ssMJtFlr0yhUJhs+d59y9B4ScWP6mkafonURSdZ4U+LyRdXOhBh3bY5JW2bg8LWH62IPP+bKfTY8aY9w8NDf1kBqDYog8CDQD09/e/RFUvVNXzSXY7kb4slSjfIqRXe573kTiOh1vt79vBAnT39/fva4w5G8C5NrXsspMuJV//pDFmS7lc/mY1ZPXFpgBip5QfKiJ3icg6YwywO/vXtQSueJPm3s74+wzJj1vChnk1+bVg2XmpXRsbG9vW1dV1ux36+Gob/OgiYSRrVPCGpEeSxpi7PM87K4qiL1UqlbF2ILcgFobHDoVC4XgR+XOSb3Taol4sJdypTX1n1Lv/oqqfiOP4thlmP1+0CrDHLSAIgtNJbiF5jFNXsBjRP3V8fMa49nNV3RrH8U3O1a6tOI24wLDv5CkIw/BEVf0QyZNtkDTbrlgsYOcSsuDOCv4eY8xV5XL5ducZ2pLLiG2C/08qQrFYPFJV3wPgLVWqjdAGZd+1hL5DVW8jeV0URQ/Wer6OAsyMuQM2J3ASgDMAvIFkMdfLn1br0W8F7bor8FxZWwzgfmPMN9M0/ZYdvOkqqWl3DsN2TQdPGXS0YsWKdd3d3b8H4GQAv4vdVUd5EgXUIHjgDAgfXKKnKVYmT9pgjNlO8oeqeofv+99x6hn3UGIslhn0bfzbJL+hGzZsWDY0NHSwiBxJ8nAABwPYF8CavLAcxZgJ7Vy190YAfqOqj4nIQ6r6E5KP2DF7eYU1i5GxlIvod3o50w/HQqzt7u4+AMDBqrofyf0BrLeDJVeTLNQAnCYAjFgunyGSz6nqU9jN7/OY53m/LJVKz9UYps0GCaE6q7M6q7M6q7M6q7M6q7M6q7M6q7MWav0XRGbjLOAiaRcAAAAASUVORK5CYII=";
+const DOG_DEFAULT = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAQDAwQDAwQEBAQFBQQFBwsHBwYGBw4KCggLEA4RERAOEA8SFBoWEhMYEw8QFh8XGBsbHR0dERYgIh8cIhocHRz/2wBDAQUFBQcGBw0HBw0cEhASHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBz/wAARCAFAAUADASIAAhEBAxEB/8QAHQABAQACAwEBAQAAAAAAAAAAAAEICQIGBwUEA//EAEwQAAEDAwIEAgcFBAYIAwkAAAEAAgMEBREGBwgSITFBURMiMkJhcYEUUmJykSOCobEJFRYkM1MXNGOSorLBwkNzgzU3RGV1k6PR8P/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDPRERAREQEREBERAREQERCcICLjzKZz3QcshOZcUCC5KmSfFEQERVBETCIGT5q5I7oiBzK5CiiDmi49kDkHJEzlEBERAREQEREBERAREQEREBERAREQEREBOyhKiASoiICIiAERVAU7JhVBERVBEREFRFEBVEQRERAVyoiDnnKLh2XIOygqIiAiIgIiICIiAiIgIiICIiAuJKEqICd0RAREQEVRAUVUQEVUQETKICIiAiIgqJlRAKIqgiJlEBMKqIKDjuuS4Kg4QckREBERAREQEREBERAXEnKE5UQEREBERARVEBFEQEREDwRCiAiIgIiICIiAqoiCqIqgiIiAqiiCooqgA4XJcVQUFREQEREBERAUJV7LggIiICIiAiqiCooiAiIgJhEQEX5LndaCy0Utdcq2moqKIZfUVMrY42/NziAvAda8ae2OlnSwW2rrNRVjMjltkWIc/8AnPw0/u8yDIlFgHqLj+1RWzGLTmkrVQsf0Ya2WSqlP7reQZ/VfLj304ntRM9PbrTdhTydWOotNYbj4F7D/NBsQTxWt24cQnEhpEGS9sulPGOvNcdPNbH9XejA/iu06N4+9Q0skUeq9NW65U/Z1RbHup5R8eVxcx3yy1Bnyi832v320Pu7CRpy7A3GNvNLbapvoqqMefIfaH4mkj4r0hAREQFVEQERPBBVEVQRVRUICIog5AqriFyQEREBEQ9EHFxRREBEwiAiIgIERA7IiICIvkap1TadF2Cvv19rY6K1UMZlmnk7AeAA7lxOAAOpJACD99fX0lqoqitrqmGlo6dhklnneGRxtHdznHoB8SsO93+Oeitz6i1bc0cdfO3LTea1h9AD5xRdC/8AM7A+BWPG/nEXft6LrJTMfLb9I0780tra7HpMdpJ8e2/yHst7DrknxUklB2XWm4Wp9w7ga/VF8rbpMCS37RJ+zi/JGMNYPkAvf9iuDm8bhU1LqDWM1RZNOTASQU7BisrGHs71hiJh8CQXHwAHVfS4OeHqDWVYNe6npBLYqCYtttJK3LKydh6yOB9qNh6AdnOHk3rsHQdL0NtHonbemZFpnTdBQyAYdUiPnqH/ABdK7Lyfqu6kkjBJPzKiIB6tLT1aRgg9ivEN1+FjQe59PUTx2+KxageMtudtiawud/tYxhsg8+zvIr0nWO4uk9vqaOo1RqC32pkv+G2plAfJ58rBlzvoF+PRO7OiNxnyx6W1NbrpPEMvghk5ZWjzMbgHY+OMINXG4e3OsdhtYwU1x9NR1sT/AE1vutE9zY5w0+3FIMEEeLehHiMd8xeHTi9odWU0Ondwq6moNQMwynuchEUFcPAPPsxy/o13hg9Fkvq/Rlg15Y57JqO109yts/UxTN9l3g5rh1a4eDgQVh/rf+j+bLUTT6N1Y2KB5y2ivMJfyDyE0fUj5tz8UGbgc1zWuBBa4ZBByCPMeaqwk0Tw4cQmhZG09i3Httut7BhsIrppoR8oXxED6YXvOl9A7tQxsOpd3hOfejtlhpYz/wDcka7/AJUHsQ69B1K+RqPVNk0fbnXHUF2obXRN/wDHrJ2xNJ8hnufgMlePb7a1g2O0DJfZ7hdb5fqqYUlvguFY4QvmILud8cXI0ta0FxGOvQdM5WtnV+ttQa+vMt41LdKi5XCQ/wCJM7pGPusb2Y34NACDY5eONHaO11Ahiu9wuPXBkobfI5n+87lz9F3jbnf3b/dOpNFp2/RvuYaXfYKqN0FQQO5ax3t/ukrUaT1X96KtqLbWU9ZR1EtPWU8jZYZ4XFr4ng5DmuHUEHxQbtUXnmxeuqvcnabS+pbg1ouNZTFlUWjAdNG90b3Y8OYt5sfFeiIIiIgqiIgKjp0UVKDkiDqiAuJK5Lj3QEUKqAiIgiKqICIiAiLyvfG5avp9Nzw6cudt01bmwumumqblLgUEA6EQxty50p8D0DemCXEYD5e8fE3ovZ/0lDUSvu2owOlqoXAujPh6V/aIfA5d+FYA7xcQmsN6JmQ3iaGkscEvpae1UYIiY7GA5zj60jgCep6DJwAvPtSi1tvNWLNW3CvoOckVlwYGTVLs+tIWAnlyeuCXO8znt8lBF9rR+mKzWuq7Lp23/wCuXarjpI3eDOZ2C4/Boy76L4xWRfBHYo7vvpT1krQ4Wi21NWwHweQ2IH/8jkGwWyPsGhHaY0DbWCNwopPslPGBltPAGh0jvm57Bnxc8/FduwsU9Ia8F643dW2+qkzDRWV9poWk9jEYpZMfNxefosrMoC6Lu/uVQ7S6AuuqKxgmkpmiOlpc4NTUO6Rxj4E9SfBoJ8F3pdA3A2isW6F3sdTqczV1psxfLFaOblp5p3YHpJcdX4aMBvQdXZznCDWjbtKbm8Ruqq+/0dtrb3cKqT+8Vz/2dLD5MEjsMa1o6BgJwB2Xv+iOBTWFuqaO61uu6SxXancJYpLVDJPLA4eIkJYM/IEfNZzUVDS2ykhpKGmhpaSBvJFBAwMjjHk1o6AfJf3QfOsFJcbfZqKlu1yZc7lDGGTVzKcQCdw9/wBGCQ0nxAOM5xjsvooiAiIg8Z4ltlJd7NCRUFvqY6a+Wuo+2ULpjiKV3KWujefAOaejvAgeGVrT1dtnrDQVXJTak03cra9hI9JLATE/4tkbljh8QVuSRzQ5pY4Zae4PY/RBpCBDvZIOO+DlcgMnotue4GxGgdyaKaG9adomVb2kMuFHE2CqiPmHtHX5OyD5LV3uhoCs2v15etK10zJ5bdKAydgwJonND4348CWuGR4HIQbKOFK2S2nh+0THNn0lRTyVeD4CWZ72/wDCQvZFjjwSardqHZOC3yvzNYK6ahwe4jOJY/piQj6LI5AREQEVTxQERPBBQVVw7Lmgh7KKuUQREVQEURAREQEREHCaaOnikmmkZHFG0ue97g1rWgZJJPYAdcrWZxRcRE+7V+fY7JUPZom2y/sQMj7fKOnp3D7o9wHw9buenq3GbxBl7qnbTTVV6o9W91UTu/j9lBH6v+jfvLCPugiKogiyg4DqxlNvJcoHY5qqyTtZnzbLE7+WVjAvTeHfWTNCb0aRu87+SkdVijqST0EU4MRJ+ALmn6IO57paiuG03FtftSxMdJNQXltcIgcemhkjaXM/eY9wWyjTeo7Zq6wW6+2apbU2y4wtnp5W+80jx8iOoI8CCFglx7aHfbdZ2DV0MYbT3alNFUOH+fCctz843f8AAuXBBvK+xagdt1dJibZd3umtrnnpBVYy6MeTZACcfeb+JBn+iIgIiICIiAiIgIiIHh8Fq04v6xtbxB6r5HAiBtLASPvNp2Z/mtnd9vdDpqy3C83OZsFut8D6mokcejY2Ak/wH6rThrXU1RrXV191HVAtnu1ZLVuYfc53Ehv0bgfRBl//AEfF3PpNe2gn1cUlY0fH9ow/9qzgWAP9H4T/AG21oBnl/quDPz9Mcf8AVZ/ICIiCooqgIiICo7KKt8UEPdRPEp3QETCICIiAiIgqx84pd/49otM/1TZp2HWV3iIpgOv2OLsahw8+4YD3d17NK9e3A1lR7e6KvmqK9pfTWqmdOYwcGV3ZrB8XOLW/Vahda6xu+4GqLlqO+1Bnudwk9JIfdYOzWNHg1ow0DyCD4csr55XyyvdJLI4ve97i5znE5JJPck9crigRAREQFx6+BIPmO4+K5KFBsA3AuEe+/BnFqN/7e9WWCOrmx1c2opj6Of8A3mFzv3gsC7XdauxXSiutFI6KsoJmVML2nBa9jg5p/UBZVcHGq21unNy9vK2XNPcrVPX0sZPveiMUwHzDoz+6ViIHl9OHEe5k/og3ZWC7xagsVru0IxDcKWKqYPISMDh/zL6C6jtVRS2zbHRdHOHCans9HG/m7giFuQu3eKCqIiCoiiCqIiAi6fr7dPSG2FvNZqm+UtBkZjp3O555vgyJuXO/THxWC+8nFbqjeKqOj9DW+ut1nuDvs7Y4AX19xz05TyZ5GnxY3JI7uxkIPt8X3ENFrWodt1o+d1Vaopmi41VL64rpg71YI8e0xrsZI9pwAHQdfN95tjztDtbt5VXGLl1NeKirkuQJz6HLI3Rw/uAEH8TnfBZMcMnCg3byal1drWKGfVDBzUdC0h8Vu6e0SOjpceI6M8MnqPNOP7WNPWam0rpWGRrnWumlrqnlOeR0xa1jT8eRhOPJw80H3f6PmxvbFru+PaRG91LQxu8CWh8jv+Zn6rNteO8MG3c22uzljt9bGY7pcOa5VjHDBZJLgtYfi1gY35gr2JATsiICqIgiqKIKg7qKjuEERFUBCUUQFVFSgiIiDwjjGoqut4f9SfZM/wB3lpZ5gPGJs7eb6DIP0Wrs9+vdbrrzaaO/2iutVxgbUUFdA+nnhd2fG9pDh+hWpnerZ28bMayntFwD5rbM50ltryPVqoc9Pk9vQOb4Hr2IQecywvgcGyMc1xaHAEeBAIP1BBXHK9H3I04YNI7baphZ/dr3ZRSSub2FVSSOheD8SwRH9V5ugIgRAUVUQd92Y1izQe4lsvUr+WBsNVTyn8ElPI3/AJi39FNkduqrdbcbTunY43fZZZGT1zwOkVNHh0pPzHqj4uC6GOq2QcFW0zdGbfu1bXw8t51O1skYeMOhowf2bfhzn1z8C3yQZONa1jWtY0Na0ANaOwHgFURAVRY/8RXE5bNmqf8Aqe1xw3PWU8Ye2le79lRsPsyTY69e4YME9yQOpD3itraa20slVW1ENNTRjL5p5AxjR8XEgBeQ6p4qdp9KmSObVlPcKiPoYbVG6qOfzMHL/wAS1p663N1XuVXurdVXyquL85ZFK/lgiz4MiGGNHyH1XdNtuGfcbc1kVTb7K632iTGLjdSaeEjza0jnf+63HxQZJao/pAbPD6SPTGj66rd7s1zqGwM/3GcxP6heM3nik3o3YrzaNNyzUUkxwKLTdG4zEfGT1nj55ashtv8AgV0ZYGw1GrLhV6jrRgugYTTUgPlytPO4fNw+SyU05pSx6QoG2/T9nobXRNGPQ0UDYmn54HU/E5QYC6E4KdwNaVoumurm2yQTnnlE8v2y4S58+pa0/mcSPJZl7XbGaK2gpSzTdrArpG8s1yqj6WqlHkXkeqPwtAHwXdr3frXpm2VFzvNwpbfbqcZkqaqURxs+ZPj8O5WOF64idX7nV1TYdj9Mz18bHejn1TcY/RUdOfNgf0J/Nk/gKD0nfDffT+ymnn1FY+OrvtRGTQWlr8STn77vuRg93H5DJWL/AA7bHX7d/W0m7G4cb5LXPU/boIahmDcZ85a4MPaBmBge9ytA9UEn1/bzhDtlFezqvcq7S6z1XK8TP+05NIx47Za7rLjw5sNHgxZLNa1jQ1oDWgYAAwAEF6oiICIiAiqICKIgqhRCgIhQIKgRRARFUEREQF1nXu32ndy9PT2LU1ujraCU8zc+rJC/wkjeOrHDzHyOR0XZkQYsXPhRq4tmNT6CgukVz9BXuu2mqmZno5oJS31oJfdw7BbzDofSZwMLXhWUdRbquekq4JIKune6KaGVvK+N7ThzXDwIIIK3bLFjid4V2bjvn1do+OKHVYbmqoyQxlyAGAQezZQBjJ6OGAcHBQa6kX6rjbayz19Tb7hST0lfSvMc1NUMLJInDu1zT1BX5UBRVEH7LNRR3K8W6imJbBVVUMEhHflfI1px9CVurpaWGhpoaSmjbFT07BDGxvQNY0YAHyAC0z6EoJLrrjTFDEC6WpulJE0DxJmYtzzvad8ygIomfNB57vZujSbQ7e3PUc4ZJWNAgoKd56T1L88jfkMFzvwtK1taA2o1/wARGqK+4UrHzvqKgy3G912W07HuOTl3vO8mNyQMDoFnBudtFXb/AO5tHS319RRbd6UGOVjuSS6VjwDIGH3Y2N5WF/fPOG9cke8WSyW7TlqpLVaaGnobdSMEcNNTsDGRt8gB/PufFB4ztJwoaE2vbBWz0jb/AKhZhxuFxjDmxu84ourWfM5d8V7t/wD3VREFXg2+/FFpzZxklrpGsvOri3LbfG/EdNkdHTvHs+fIPWPwHVfL4reIJ+0thhsVgmaNX3eMujkwD9hgzgzEfeJyGA+IJ93B1qT1M1ZUS1FTNJNUTPMkksri58jiclznHqST1JKDJjbS06u4xdyzPrW61MmmrNy1NXDTkxQQgk8kELB0a5+Dl3V3K0nOcLYjZrNb9PWqktVroqeit1GwRwU9OwMZG0eAAXhfBlpGDTex1puDGAVeoJpbhM/HUjmMcY+QYwfqVkEgIiYQERVBEVUQEyiICKqICKqIB7lVHd1EBEKIGEREBERAREQEPkid+g7nogxq30p9l9e62/sLrSobZtZfZIpaO9YbESJOblj9KfVdjl9iTA6+qcrFHdThL17tq2evpqb+0VgZ6wrrbGXPYzzkh6ub08W8zfius8SGr4tb716vudPI2WjjqfsNO4dQ6OBojyPgXNcfqv2bWcS+vtqTDTUNy/rKxx9rXciZImj/AGbs80f7px8EHj+c5x4HB+BVWakm6vDtvmGu13px+ldRS/4lfCHMDnef2iEet/6jF2rQXCrsRq6tnrLDqm4alpKMtMtNBc43Rs5s8oeY2Bwzg9Mg9EHj3BXtNVau3Di1lV07m2LTTi+ORzfVnrC0hjG+fICXnyPKPFbH+3RfOsFgtelrPSWiy0FPQWykZyQU1OwMYwfADzPUnuT1K+igJ4IiCnqoiICEgAknDR1J8h5ovxXmKWe0XGKHPpn00rWfmLCB/FBqG3e1xPuNuTqTUcz3PjrKt4pwTnkp2HkiaPgGAfUldJBwRlAx0Yax3tNAB+Y7og2qcJ98p75sFo4wOaX0MD6GZo9ySKRwIP05T9V7QtbPCBvlDtpqqXTV7qBFpnUErR6aR2GUlV0ayQ+TXDDHHww09gVsmQERPFARFUBREQEREBVcVUFUHdFR3QHKLkey4oCJhEDwRAqgiKqICqiZQF4hxQ7yM2l27qG0M4bqa9NfSW5oPrR5H7Sf5MB6fiLQvYrzeKLT9orrrcqllNb6GF9RUTPPqxxtGXE/QLWtqKya94q9c3bWbKI2vSNM1zIrlcnGOjoKOPJxzd3uxl7gwH1ickABBjxnPifmepVX9axkEVXOylmdPSte4RTPZyGRmeji3J5cjrjJxlfxJwMk9B3KD99ks1fqK8UNptVLJVXKvmbT08EftSPccAfD4nwAJ8Ftq2T2podntAW/TtMWS1v+sV9U0f6xUuA5nflGA1v4Wj4rw7g64fX6OtsevdS0pZf7jFi3UsrcOoqdw6vIPaSQfVrendxWWqAiIgKqIgIiFATOMHy6p4Ig1H8QGgZNt92tS2YQmOhkqHVlEcdHU8xL24+RLm/NpXma2VcYmzD9xdDt1Haacyaj02x8rY2D1qmlPWSMeZbjnaPg4e8tavQgEHIPYhB2fQunLVq6+xWS5XmOyy12IqSuqWc1K2Y9mTY6tY7tzjPKcZBBJGxjYa6bj6OZFoPcmx1T2UjfRWvUNM/7TTzsHaGV7erXAey54GR0PUDOsDz8iszuF7ixFmZQ6I15WE0PSC33qZ2TAOzYZ3eLPBrz7PZ3TBAZ3IgIcAQQQeoI65VQRVFMoKoqiCIqiCKoiAq1RUDAQVcD0K5qEdcoOOEVRATKKIKoqogIiIPk6k0xaNX2t9rvtFHXWx72SSUspPo5Sxwc0PaPabkA8p6HAyCsQONXeentNsj2r06+OP0kbH3b7OA1sEIwY6YAdBzdHOA7NDR7xXtPEdv7Q7L6Z9FSPiqNXXKNwt9IeoiHYzyD7jT2HvHp2yRq4uVwq7vcKqvr6mWprquV0088ruZ8r3HLnE+JJKD8h/UrLfhD4cP7YVdLr/VVJnT1K/nttFM3pXStP+K4HvE0jp95w8h16rww8NtTuzdYtRX+GSHRFFJhwOWuuMjT1iYfuA+24flHXJGx+srbRpW0slqqihtVppWBjXSvZBDExowGjOAAAMAIPpIvNbDvXYtdXWW3aFhqdSfZ3BlVcadhit9KfJ1Q4Ye78MYefkOq9KGcDOM+OOyAiIgIiIPk6g1NbdK01PV3eoFLRTTspzVSdIonvOGc7uzA52Ghx6ZIBIyF9ZfivFnoNQWmttV1pIqu3V0LoKinlGWyRuGC0/RYSag13uPwfaois1TLJqjbqreTam3B5544h1MLZupZIwdOU5aRggDJwGdCLyXajiN0Lu4yKntdw+w3twy603DEc+fHk68sg/KSfMBetIC1hcWmzrdrtw3V9tgEWm9Ql9VSNaMNglB/awjyAJDmjydjwWzuTn9G/wBHy+kweXnzy58M/DKxf3YuVn4i9ktYUkFK6j1lo6R9TUWmYgz0dTBzB7QfejewSBrh0ORnBGEGuVM46qAhwDh7JGR8l+20V8NqutDX1FNFVU9JOyaSnmbzMmY1wLmOHiCAR9UGZHB7xHTQVVFtxq2sdJBMRFZa2Z2TG7wpnk92n3Cex9XsW4zoWu7frhWdpa2/2/25kqKnTBjZWyUIcXT0DCA9ssbu74xkH7zMZyQMjMXh/wBx3bp7UWDUNQ8OuRjNLXY8aiI8r3fvYD/3kHpndE+iIKiiBBVFUQQFVRVAXJQKoCHqiIOCqEeKIJlERARVRAXjO/XERYtlbQ6HMdw1XUx5o7W13sg9pZiPYjB+ruw8SPt7r1O6U1E637cW2yRzzMw67XSt5TDn/LhDCC74uOB90rE9vA1r/UV0qLvq3W1njqKtxmqqkumrJnu8XOc4MH8cAfBBizq3Vt41zqGuv9+rZK261z+eWZ/T5NaOzWgdA0dAF/DTs9opbxST32jqq21xP55qSlmEL5wPc9IQeQHsSATjOOvUdl3Ls+itM3U2XSN2rr86keW1V5nDY4JnjpywRtz6g++5xz4dOp6JlBkXfOMzXklvhtGk6Kz6SstNEIKent1OJJI4wMAB8nQY+DQuybKcPmrN/wCtg1luJertJpgu54vtdQ99RccHtHzH9nF+MAZ7N8x83hR4b27n3Aas1PTn+x9BLyxU7wR/WUzT1b/5TT7R94+r95bHoYY6eJkUUbY4o2hrGMGGtaBgAAdgB4IPwWDT9q0taKW0WW309vtlIwMhpqdgYxg+XiT4k9T4r6SKoCiqIIiIgLreu9CWLcfTNbp7UVG2qt1UO3Z8Tx7MjHe69p6g/wDQkLsiINSG9Oy9/wBlNWG33DnmtszzLbLpGC1tQwHv09iRvTmb4dx0IK9w4f8AjJuNgqKPTe4dTJX2VxEUV6k9aopPAemPeSP8XtN/EO2au4u3lj3R0pW6c1BTemoqgczJG4ElPIPZljPg4fx6g5BK1Rbq7aXjaTWlbpu8N5nw4kpqlgwyqgJPJK354II8CCPBBuCp6iGrp4qinmjmp5mCSOSNwc17SMhwI6EEHOVgBxC3is2Q4pYtXW0ZpbzRw1NZSA4ZVwuzDURuHjzCPI8nYK+9wRb3ztrP9Gd7qC+CRr5rLLI7rGRlz6f5EZe0eGHDxC+R/SBQtGtdFS9Od1snafPAmGP5lBiNV+h+11H2Yk0wkeIi4YPJzHlyPPGF/Etz08D0VCo7j5oNumwte68bJ6BqZhzPks1Mx2eueVnJ/wBq/TtptpS7Yy6oo7SWR2G6XL+sqSkb2pHPja2WMfh52czfIOx4L5HDV/7hdvv/AKVH/Ny9UQE7qogiIUQFVFUBEQBByCIiAiIgLiuShGUEUVU8UFRFEEc9sbS9xDWtBJJOAB5rXzxScUj9ZS1mi9F1jmabYTHXXGJ2DcCO8bD4Q+Z9/wDL3+5xfcSbq6Wt250jWEUkZMN5r4XdZXDvTMcPdHvkdz6vYOzhdlAJXddo9uK3dfcCz6Xoy+NlXJz1VQ0Z+z07esknzA6D8TmhdJWfXARoFlv0rftbVEY+1XWf7BSuI6tgiOXkfmkOP/TCDLHT9ht2l7Jb7LaaVlJbLfC2np4GDoxjRgD4nxJ8SSV9JOy61qvcHTGh3UbNQXujoJ62RkNNBI/M073ODWhkYy52SQMgYQdlQp2JCqAiIgKKqIKoqogLwPiz2ij3M20qq+ip2u1Hp5j62jeB60kYGZYf3mjIH3mjzXvihAIIIDh4g9ig0qafv1Vpe+2y/W+Rzay2VEdZA5p95jg4frjHyK9/4z9cUmtNxrAaA/3WmsVNKOvY1GZsf7jmLy3ezRjdAbr6s09FH6OlpK57qZv+wkxJH+jXgfRdKra6puMwnqpnzSiNkQc85IYxgY0fINaB9EH51fELt+3231fr2TUL6YOZRWG01N1q5wOjWxsJYz5vfgD4Bx8F0/8Amg2q8J92hu2wGjDE8OdRwSUUgHuvjle3H6YP1Xs61/cEG8tLpi9Vm393qBFR3qYVFule7DGVeA10RPh6Robj8Tce8FsCwgIoiAiqiAqiIJ3XNQBVAREQEREBERBCFFyXEjCCLHLi231ftbpOOxWSp9Hqu+xubHIw+tR0/Z83wcfZZ8cn3VkFdbpSWS11tzr5hDQ0UL6ieV3ZkbGlzj9ACtP26W4Nbujry86pruZprpf2EJPSCBvSOMfJuM/Ek+KDp5JJJJJJ8yid0wghIaCT2HVbbdjrbRaD2I0dHVzw0tJS2iOsqp53BjIzI30r3OcegGXnqVqQlHNDIB4tI/gsh+IXfmp1pbLDoex1Zbpa0W+kZVGJ3StqWwsznzZGfVA7FwJ8BgPUd6+N+ommqbLto0RUwyx99qI8vf8AGCNww0fjeCfJo7rFjSuoKy4bmadvN6rqiuqXXekmqKmrldJI8CdhJLnHK6igLm9WOLXjq1w90+BQbvXdXO+ZUXSNn9cw7kbaaa1LG8OlraRgqQD7FQz1JWn5Pa79Qu7oPg3XU0Vq1Lp2zSt9e9faWxu8nRRiTH1bzfovvLGji11dLt/cNp9VRucI7TqB8szW93xGEiRv1YXhZJUtVBW0sFTTStlpp2Nlikach7HDLSPmCCg/rlERBVFUQRFUQa3+OyzNt28lFXtHS6WiCR35o3vjP8A1Yw5+f0WZn9INRhmotCVmOslFVxE/lkjP/cV5FwpbX/6S92rcauH0lksWLlW8wy1/K79lGfzSY6eTXIM0eHXY6DQ2zM9ou8PJd9V07pbqSPWibLGWsh/cY7r+JzlrQv8AYqvS16uNkr43MrrZUSUkrXDqHMcWn9cZ+q3Wd8565WAXHVtV/U+o6DcC3w4o7xikuAaOjKpjfUefzsbj5x/FB5bw/wBPoPW12h0JrqidTS3B+LTfqOX0FTTTk9IHvHRzHHq3mB5XdBjmGNluirDdtM2SK13XUM1/dTepDXVUAjqXRjsJS08r3D74AJ8RnqdMrXOY4Oa5zXA5DmnBB8wfArahwu7vO3a20p5rhMH6is7hRXEk9ZXAZZN++3qfxByD2xEV8EEVRRBUAQDK5ICIiAiIgIiICIiAiIgx041tR11i2Sq6SjiqCy8VcVFUzRsJbDB1e7mcPZDiwM69+bC1meK3aXG3Ul3oKmgr6aKqoqqN0U0EzA5kjHDBa4HuCFr74h+EC4aMkq9SaDpqi4abGZZ7a3MlRQDuSzxkiH1c0d8jqgxP8kT5dQiCFFVEFQoiDKvgt3sj0ZqWXQ97qRHZL9MH0csjvVp6zAAafJsgAH5g3zK2ILSJ1HUdFsQ4UOJZmvKKl0VquqA1VSx8tJVyn/2lE0dif85oHX7wGe+UH9OPW3uqdpLPWsbk0V6i5j5Nkikb/PCcFO78eq9Ff2JudSDfNPMxTB59aeiz6pHmYyeQ/AsXofFTp9+o9hdYwwx+kno6dlfGAP8AJka8/wDCHLWLo3WF20Bqi26jsdT6C52+T0kTu7XDs5jh4tcCQR4goNzyLzzZrd6y7zaPgvlrIhqo8RV9A52ZKSbHVp82nu13iPiCB6GgIiqAoiIMH/6Qtrebb1xx2rgT8P2K9l4RtrjtztTSVdZB6K96iLbhVBww5jCP2MZ+TDkjzeV+PfzbEbr7r7T2eohc+0UQrrhcXAdPQRug9Q/ndys+RPkshmgAAAAAdgOwQVed76aJj3B2m1XY3MDp5KN89N0yWzxD0kZH7zcfUr0X59l5TtnvPQ661lrPRVdFHSaj0zcJqcwg+rWUok5WzNB8QC0Ob4Egjo7oGpdp5w1wBAcAcFZG8Fet3aW3mprTJIRRalp30L2k+r6VoMkR+eWub++vA75TNpL5dKYexDVzxADybI4D+AXv9s29m05bNit2bJCY6Wur6OjubGD/AA6plT6MS/ASNYQfDmH4kGy3uqhGHEeRIUQVAMoBlckBERAREQEREBERAREQEREBERBi/vxwe2XcJ9Vf9Imnsmp35klhLeWkrXeJcB/hvP32jB8R4rX/AKv0VqDQV6ms2pLVU2y4xZ/ZTt6PH3mOHR7fxNJC3QLrettAab3Fsz7Rqe0U1yojktErfXid95jx6zHfFpCDTIgWYG7HAte7M6e47fVpvFD1d/VlY9sdVGPJj+jZPryn5rE68WS5aeuM1tu1BVUFwgOJKaqidHI35tIz9UH4UyiiC5X9aWqnoamGppZpIKmB7ZIpYnFr43g5DmkdQQeoK/iqg2J8O3Erbt3LQdDa2fFFqeendTCV2Gx3WNzS12PAS8pOW+93b4gYFa40jWaC1hfNNV4P2m01clMXEY52g+o8fBzS131Xw45HwyMkje5kjHBzXscQ5pByCCOoIPiuy6317ddwquguF9LKi8U1M2kmr8YkrGM/w3S+BkaDy83vANz1GSH19nd17ts9rajv9tc+WmyIq6i5sNq6cn1mH8Q7tPg4eROdtGmtR23V+n7bfrPUtqbZcYG1FPKPea4eI8COxHgQQtLCzX4Ed13RVNx24uM5MUofcLVzH2XD/GiHzGJAPg9BnKqoqgIoiDjyN5+flbz45ebHXHllckTCARzdPE9Fqxv+582i+KO/a3tjjJHR6gqC9jDj00HOY5GfvNB+uFsg3R1zTbbbf6g1RUkYttK58TD/AOJMfViYPm8tC06zzSVE0k8ry+aVxkkcfecTkn6klBamd9XVT1EhzJNI6Rx+LnEn+a2dcOmlKPUnDJoy1XJhdTzxmqGO7XNrHSxuHxBa0rWjY7BdtTXKO22S21VyuUnsUtJEZJHfQdh8T0W37a/TMmkNutKWB8Rgkttsp6eVpwSJAwc/b8RKDtpPMSR4rkG/qgGBhVAREQEREBERAREQEREBERAREQEREBERAXWNa7daV3EoPsWqLFRXSEDDHTx/tIvySDDm/QhdnRBhTuHwD003pqvQeoHQPOS23XfL2fJszRzD95p+axb1xsTuHt26R1+0tXx0rP8A4ymZ9opz8fSMyB9cLb0mMgjwPf4oNIAwc4wceSuFt31jsJtvrwvkvekbbJVPHWqp4/s83z548E/XK8M1PwCaSri5+ntS3a1OPaKqYyqjH19V38Sg19phZU37gM3Bt5c603ew3WMdmmV9M8/RzSP4rzy68KW79oLufRlTUtHvUVRDMD+j8/wQeMr7uidWVmhNXWXUtASKq01TKloB9sNPrM+Tm8zfqvu1+y+41tJ+16F1FFj/AOXyOH8AV8SXQmqYHcsumb2xw8HW+Yf9qDcjarnS3u10VyopBJR10DKiF495j2hzT+hC/WvEeFO91NZsbpulusM9JXWv0tvdHVsMbyyN59GcOAOOQtH0XtH2uD/NafkcoP7Iv4/aGu9lkrvlGf8Aqrzyu9mAj87gP5ZQf1TK/l6Kd3tSsYPwNyf1P/6VFJGeshdKfxuyP07IMPuJm37h756jpdFaIsFXNpe0S89Zcp/2FLUVeMYEj8czYwSPVzlxd5Bfn274B7fSPiq9dX99a8YJt1qzHF8nTO9Y/uhvzWaGMADwHQDyRB1zR+gdM7f2/wCwaZsdDaqY+0KaIB0nxe/2nH4kldjREBERAREQEREBERAREQf/2Q==";
+try { document.head.insertAdjacentHTML("beforeend", `<style>.mav .mk{-webkit-mask-image:url(${MARK});mask-image:url(${MARK})}</style>`); } catch(_){}
+// every member is one claude.ai account (uid); an account can never hold two members, and a member never two accounts
+const family = () => {
+  const seen = new Set(), out = [];
+  Object.entries(C.members || {}).map(([id, m]) => ({id, ...m})).filter(m => m.name && (m.uid || S.mode !== "db")).sort((a, b) => (a.since || 0) - (b.since || 0))
+    .forEach(m => { if (m.uid) { if (seen.has(m.uid)) return; seen.add(m.uid); } out.push(m); });
+  return out;
+};
+const invites = () => Object.entries(C.invites || {}).map(([id, v]) => ({id, ...v})).filter(v => v.hash && (!v.exp || v.exp > Date.now())).sort((a, b) => (a.at || "").localeCompare(b.at || ""));
+const CODE_ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function genCode(){ const a = new Uint32Array(8); try { crypto.getRandomValues(a); } catch(_) { for (let i = 0; i < 8; i++) a[i] = Math.floor(Math.random() * 1e9); } return [...a].map(x => CODE_ABC[x % CODE_ABC.length]).join(""); }
+const fmtCode = c => c.length > 6 ? c.slice(0, 4) + " " + c.slice(4) : c.slice(0, 3) + " " + c.slice(3);
+const daysLeft = v => Math.max(0, Math.ceil(((v.exp || 0) - Date.now()) / 864e5));
+const ROLES = [["famille","Famille","Voit tout, coche les tâches, modifie la routine, la santé et la fiche."],["garde","Garde","Voit les consignes et coche les tâches, sans rien modifier."]];
+const memberDoc = (m, extra) => { const {id, ...rest} = m; return Object.assign(rest, extra || {}); };
+const memberOf = id => family().find(m => m.id === id) || null;
+let ME = null; try { ME = LS.get("carnet-me"); } catch(_) {}
+// who am I: the member linked to my account wins, then this device's choice
+function syncMe(){ const fam = family(), mine = S.me && fam.find(m => m.uid === S.me);
+  if (mine) ME = mine.id;
+  else if (ME) { const m = memberOf(ME); if ((fam.length && !m) || (m && m.uid && m.uid !== S.me)) ME = null; }
+  const mm = memberOf(ME); S.sitterRole = !!(mm && mm.role === "garde" && !S.isOwner); }
+const meMember = () => memberOf(ME);
+const roleLabel = m => m && m.role === "garde" ? T("Garde") : T("Famille");
+// presence: each open app says "I'm here" on its own member card every minute; seen in the last 2.5 min = online
+const ONLINE_MS = 150000;
+const isOnline = m => !!(m && m.seen && Date.now() - m.seen < ONLINE_MS);
+const onlineCount = () => family().filter(isOnline).length;
+function presenceBeat(force, away){
+  if (S.mode !== "db" || !S.ready || S.preview) return; const m = myMember(); if (!m || !(C.members || {})[m.id]) return;
+  if (!away && document.visibilityState !== "visible") return;
+  if (!force && !away && Date.now() - (S.lastBeat || 0) < 60000) return; S.lastBeat = away ? 0 : Date.now();
+  put("members", m.id, Object.assign({}, C.members[m.id], {seen: away ? Date.now() - ONLINE_MS : Date.now()}));
+}
+setInterval(() => { presenceBeat(); if (S.tab === "famille" && !S.sub) render(true); }, 30000);
+document.addEventListener("visibilitychange", () => { presenceBeat(true, document.visibilityState !== "visible"); if (document.visibilityState !== "visible") typingBeat(true); });
+document.addEventListener("focusout", e => { if (e.target && e.target.id === "n-text") setTimeout(() => { if (document.activeElement && document.activeElement.id === "n-text") return; typingBeat(true); }, 400); });
+// ---------- birthday and "arrival day" ----------
+const I_CAKE = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7"/><path d="M5 16.5c1.2 0 1.8-1 3.5-1s2.3 1 3.5 1 1.8-1 3.5-1 2.3 1 3.5 1"/><path d="M12 12V8M8 12V9M16 12V9"/><path d="M12 5.8c.8 0 1.2-.6 1.2-1.3 0-.9-1.2-2-1.2-2s-1.2 1.1-1.2 2c0 .7.4 1.3 1.2 1.3Z" fill="currentColor"/></svg>';
+const I_HOME = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M12 17.3s-3-1.8-3-3.8a1.6 1.6 0 0 1 3-.8 1.6 1.6 0 0 1 3 .8c0 2-3 3.8-3 3.8Z" fill="currentColor" stroke="none"/></svg>';
+const I_MAP = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z"/><path d="M9 4v14M15 6v14"/></svg>';
+function partyDays(d){
+  if (!d) return []; const t = new Date(), md = ymd(t).slice(5), y = t.getFullYear(), out = [];
+  [["birth", I_CAKE], ["arrival", I_HOME]].forEach(([k, ic]) => { const v = d[k]; if (!v || v.slice(5) !== md) return; const n = y - +v.slice(0, 4); if (n >= 1) out.push({k, n, ic}); });
+  return out;
+}
+function partyCard(d){
+  return partyDays(d).map(p => { const nm = esc(d.name || T("votre chien"));
+    const t = p.k === "birth" ? T("Joyeux anniversaire {n} !", {n: nm}) : T("Jour d'arrivée de {n}", {n: nm});
+    const s = p.k === "birth" ? T(p.n > 1 ? "{n} a {y} ans aujourd'hui." : "{n} a {y} an aujourd'hui.", {n: nm, y: p.n}) : T(p.n > 1 ? "Il y a {y} ans, {n} arrivait dans la famille." : "Il y a {y} an, {n} arrivait dans la famille.", {n: nm, y: p.n});
+    return `<div class="party ${p.k}"><span class="party-i">${p.ic}</span><div class="main"><div class="party-t">${t}</div><div class="party-s">${s}</div></div><span class="party-n num">${p.n}</span><i class="party-c" aria-hidden="true">${Array.from({length: 14}, (_, i) => `<b style="--x:${(i * 37) % 100}%;--d:${(i % 7) * .35}s;--h:${(i * 53) % 360}"></b>`).join("")}</i></div>`; }).join("");
+}
+
+// ---------- map of all walks ----------
+function walkLogs(days){
+  const from = days ? ymd(addDays(new Date(), -(days - 1))) : "";
+  return Object.entries(C.logs || {}).map(([id, l]) => Object.assign({id}, l)).filter(l => l.k === "balade" && l.route && (l.dog || "main") === dogId() && (!from || l.date >= from))
+    .sort((a, b) => (b.date + b.at).localeCompare(a.date + a.at));
+}
+function drawRoutes(box, routes, o){
+  o = o || {}; const W = box.clientWidth || 340, H = box.clientHeight || 320, pad = 30;
+  const X = (lon, z) => (lon + 180) / 360 * 256 * 2 ** z;
+  const Y = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 256 * 2 ** z; };
+  const fit = routes.filter(r => !o.sel || r.id === o.sel).flatMap(r => r.pts).concat(o.home ? [o.home] : []);
+  if (!fit.length) { box.innerHTML = ""; return; }
+  let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const p of fit) { la0 = Math.min(la0, p[0]); la1 = Math.max(la1, p[0]); lo0 = Math.min(lo0, p[1]); lo1 = Math.max(lo1, p[1]); }
+  let z = 18; while (z > 3 && (X(lo1, z) - X(lo0, z) > W - 2 * pad || Y(la0, z) - Y(la1, z) > H - 2 * pad)) z--;
+  const cx = (X(lo0, z) + X(lo1, z)) / 2, cy = (Y(la0, z) + Y(la1, z)) / 2, ox = cx - W / 2, oy = cy - H / 2, n = 2 ** z;
+  const style = isDarkUI() ? "dark_all" : "voyager", tiles = [];
+  for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + W) / 256); tx++) for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + H) / 256); ty++) {
+    if (ty < 0 || ty >= n) continue; const sx = ((tx % n) + n) % n, sub = "abcd"[(sx + ty) % 4];
+    tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://tile.openstreetmap.org/${z}/${sx}/${ty}.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
+  const P = p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)];
+  const order = routes.slice().sort((a, b) => (a.id === o.sel) - (b.id === o.sel));
+  const paths = order.map(r => { const d = "M" + smoothPts(r.pts).map(q => P(q).join(" ")).join("L"), on = r.id === o.sel, dim = o.sel && !on;
+    return `<g class="mr ${on ? "on" : ""} ${dim ? "dim" : ""}" data-act="mapRoute" data-id="${esc(r.id)}"><path d="${d}" class="mr-hit"/>${on ? `<path d="${d}" class="rt-halo"/>` : ""}<path d="${d}" class="mr-line"/></g>`; }).join("");
+  const sel = routes.find(r => r.id === o.sel), ends = sel ? (() => { const a = P(sel.pts[0]), b = P(sel.pts[sel.pts.length - 1]); return `<circle cx="${a[0]}" cy="${a[1]}" r="6" class="rt-a"/><circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-b"/>`; })() : "";
+  const hm = o.home ? (() => { const h = P(o.home); return `<g transform="translate(${h[0]} ${h[1]})"><circle r="11" class="mr-home"/><path d="M-5 1 0-4 5 1M-3.5 0v4.5h7V0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`; })() : "";
+  box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}${ends}${hm}</svg><span class="rmap-c">© OpenStreetMap</span>`;
+}
+// real, interactive map (MapLibre + OpenFreeMap: free, no key). Falls back to the static map if it can't start.
+let MLP = null;
+function mapLib(){
+  if (window.maplibregl) return Promise.resolve(window.maplibregl);
+  if (!MLP) MLP = new Promise((res, rej) => {
+    const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "vendor/maplibre-gl.css"; document.head.appendChild(l);
+    const sc = document.createElement("script"); sc.src = "vendor/maplibre-gl.js"; sc.async = true;
+    sc.onload = () => window.maplibregl ? res(window.maplibregl) : rej(new Error("maplibre")); sc.onerror = () => { MLP = null; rej(new Error("maplibre")); };
+    document.head.appendChild(sc); });
+  return MLP;
+}
+const mapStyleURL = () => "liberty-" + (isDarkUI() ? "dark" : "light");
+// GPS points are a few seconds apart: round the corners so the route reads like a real walk
+function smoothPts(pts){
+  if (!pts || pts.length < 3) return pts || []; let p = pts.map(q => [q[0], q[1]]);
+  const it = p.length > 600 ? 1 : p.length > 200 ? 2 : 3;
+  for (let k = 0; k < it; k++) { const o = [p[0]];
+    for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; o.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); }
+    o.push(p[p.length - 1]); p = o; }
+  return p;
+}
+// recolour the OpenFreeMap "Liberty" map with an Apple Maps-like palette (light and dark)
+const MAP_PAL = {
+  light: {land: "#F7F5F1", res: "#F1EEE9", res2: "#F0ECEA", park: "#CFEBC1", wood: "#C3E3B1", sand: "#F4EBCF", ice: "#EEF4F7", water: "#A5D3F7", bld: "#E8E5E0", bldO: "#DCD8D2",
+    minor: "#FFFFFF", major: "#FFFFFF", roadC: "#DEDAD4", hwy: "#F7D36E", hwyC: "#E2B952", path: "#FFFFFF", rail: "#CDCAC4", bound: "#B9B6C2",
+    text: "#6E6E73", place: "#3A3A3C", waterT: "#4A86C0", poi: "#8E8E93", halo: "#FFFFFF", raster: .45},
+  dark: {land: "#232326", res: "#28282B", res2: "#2A2A2D", park: "#213A29", wood: "#1E3626", sand: "#36332B", ice: "#2B3034", water: "#16304A", bld: "#353538", bldO: "#2D2D30",
+    minor: "#3C3C40", major: "#4B4B50", roadC: "#2B2B2E", hwy: "#8A6D2E", hwyC: "#5A4820", path: "#3C3C40", rail: "#47474B", bound: "#5A5A60",
+    text: "#A1A1A6", place: "#D7D7DC", waterT: "#6F9FD0", poi: "#8E8E93", halo: "#1C1C1E", raster: .12}
+};
+function appleMap(st, dark){
+  const P = MAP_PAL[dark ? "dark" : "light"], set = (l, k, v) => { l.paint = l.paint || {}; l.paint[k] = v; };
+  (st.layers || []).forEach(l => { const id = l.id || "", t = l.type;
+    if (t === "background") set(l, "background-color", P.land);
+    else if (t === "raster") set(l, "raster-opacity", P.raster);
+    else if (t === "fill-extrusion") set(l, "fill-extrusion-color", P.bld);
+    else if (t === "fill") { let c = null;
+      if (/water/.test(id)) c = P.water; else if (/building/.test(id)) { c = P.bld; set(l, "fill-outline-color", P.bldO); }
+      else if (/wood/.test(id)) c = P.wood; else if (/park|grass|pitch|cemetery|track|wetland/.test(id)) c = P.park;
+      else if (/sand/.test(id)) c = P.sand; else if (/ice|glacier/.test(id)) c = P.ice;
+      else if (/residential/.test(id)) c = P.res; else if (/hospital|school|aeroway|road_area|pier/.test(id)) c = P.res2;
+      if (c) { set(l, "fill-color", c); if (!/building/.test(id) && l.paint["fill-outline-color"]) set(l, "fill-outline-color", c); } }
+    else if (t === "line") { let c;
+      if (/water/.test(id)) c = P.water; else if (/park/.test(id)) c = P.park; else if (/boundary/.test(id)) c = P.bound;
+      else if (/rail/.test(id)) c = P.rail; else if (/casing/.test(id)) c = /motorway/.test(id) ? P.hwyC : P.roadC;
+      else if (/path|pedestrian/.test(id)) c = P.path; else if (/motorway/.test(id)) c = P.hwy;
+      else if (/trunk|primary|secondary|tertiary|link/.test(id)) c = P.major; else if (/aeroway/.test(id)) c = P.res2; else c = P.minor;
+      set(l, "line-color", c); }
+    else if (t === "symbol" && l.layout && l.layout["text-field"]) {
+      set(l, "text-color", /water/.test(id) ? P.waterT : /poi/.test(id) ? P.poi : /place|state|country|continent/.test(id) ? P.place : P.text);
+      set(l, "text-halo-color", P.halo); if (l.paint["text-halo-width"] == null) set(l, "text-halo-width", 1.2); }
+  });
+  return st;
+}
+let MAP_STYLE = null;
+async function mapStyle(){ if (!MAP_STYLE) MAP_STYLE = fetch("https://tiles.openfreemap.org/styles/liberty").then(r => { if (!r.ok) throw new Error("style"); return r.json(); }).catch(e => { MAP_STYLE = null; throw e; });
+  return appleMap(JSON.parse(JSON.stringify(await MAP_STYLE)), isDarkUI()); }
+const routesGeo = routes => ({type: "FeatureCollection", features: routes.filter(r => r.pts && r.pts.length > 1).map(r => ({type: "Feature", properties: {id: r.id}, geometry: {type: "LineString", coordinates: smoothPts(r.pts).map(q => [q[1], q[0]])}}))});
+function endsGeo(routes, sel, live){ const r = routes.find(x => x.id === sel); if (!r || !r.pts.length) return {type: "FeatureCollection", features: []};
+  const a = r.pts[0], b = r.pts[r.pts.length - 1];
+  return {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [a[1], a[0]]}}, {type: "Feature", properties: {k: live ? "me" : "b"}, geometry: {type: "Point", coordinates: [b[1], b[0]]}}]}; }
+function mapBounds(routes, sel, home){
+  const pts = routes.filter(r => !sel || r.id === sel).flatMap(r => r.pts).concat(home && !sel ? [home] : []); if (!pts.length) return null;
+  let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const q of pts) { la0 = Math.min(la0, q[0]); la1 = Math.max(la1, q[0]); lo0 = Math.min(lo0, q[1]); lo1 = Math.max(lo1, q[1]); }
+  return [[lo0, la0], [lo1, la1]];
+}
+// create (or update) an interactive map in el; o: {sel, home, onPick}
+function liveMapSet(M, routes, o){
+  const map = M.map; M.routes = routes; M.o = o;
+  if (!M.ready) return;
+  const sg = o.sug || null, sel = sg && !o.live ? "" : (o.sel || "");
+  map.getSource("r").setData(routesGeo(routes));
+  map.getSource("e").setData(o.live ? endsGeo(routes, sel, true) : sg ? (sg.one ? endsGeo([{id: "s", pts: sg.pts}], "s") : {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [sg.pts[0][1], sg.pts[0][0]]}}]}) : endsGeo(routes, sel));
+  map.setFilter("r-sel-c", ["==", ["get", "id"], sel]); map.getSource("rs").setData(routesGeo(routes.filter(r => r.id === sel)));
+  map.setPaintProperty("r-line", "line-opacity", sel || sg ? .28 : .9); map.setPaintProperty("r-case", "line-opacity", sel || sg ? .28 : .95);
+  if (map.getSource("sg")) map.getSource("sg").setData(sg ? {type: "FeatureCollection", features: [{type: "Feature", properties: {}, geometry: {type: "LineString", coordinates: smoothPts(sg.pts).map(q => [q[1], q[0]])}}]} : {type: "FeatureCollection", features: []});
+  if (o.home && !M.homeMk) { const e = document.createElement("div"); e.className = "ml-home"; e.innerHTML = I_HOME.replace(/26/g, "16"); M.homeMk = new maplibregl.Marker({element: e}).setLngLat([o.home[1], o.home[0]]).addTo(map); }
+  const sid = sg ? sg.id : "";
+  if (M.poiKey !== sid) { (M.poiMk || []).forEach(m => m.remove()); M.poiMk = []; M.poiKey = sid;
+    if (sg) sg.hl.filter(h => SUG_K[h.k] && h.k !== "trail").slice(0, 14).forEach(h => { const e = document.createElement("div"); e.className = "ml-poi"; e.style.setProperty("--c", SUG_K[h.k][1]); e.innerHTML = SUG_K[h.k][0]; e.title = h.name || T(SUG_K[h.k][2]);
+      M.poiMk.push(new maplibregl.Marker({element: e}).setLngLat([h.p[1], h.p[0]]).addTo(map)); }); }
+  if (o.live) { const pts = routes[0].pts, last = pts[pts.length - 1];
+    if (M.fitKey == null) { const b = mapBounds(sg ? [{id: "s", pts: sg.pts.concat(pts)}] : routes, sg ? "s" : sel); if (b) map.fitBounds(b, {padding: 40, maxZoom: 17, duration: 0}); M.fitKey = "live"; }
+    else if (last) { const q = map.project([last[1], last[0]]), c = map.getContainer(), W = c.clientWidth, H = c.clientHeight;
+      if (q.x < W * .15 || q.x > W * .85 || q.y < H * .15 || q.y > H * .85) map.easeTo({center: [last[1], last[0]], duration: 800}); }
+    return; }
+  const key = (sg ? "sug:" + sg.id : sel) + "|" + routes.length;
+  if (M.fitKey !== key) { const b = sg ? mapBounds([{id: "s", pts: sg.pts}], "s") : mapBounds(routes, sel, o.home); if (b) map.fitBounds(b, {padding: 44, maxZoom: 17, duration: M.fitKey == null ? 0 : 650}); M.fitKey = key; }
+}
+const staticMap = (el, routes, o) => o && o.sug ? drawRoutes(el, routes.concat([{id: "__sug", pts: o.sug.pts}]), Object.assign({}, o, {sel: "__sug"})) : drawRoutes(el, routes, o);
+let ML_FAIL = false;
+async function liveMap(el, routes, o, M){
+  o = o || {}; let gl;
+  M = M || {el, style: mapStyleURL()}; Object.assign(M, {ready: false, fitKey: null}); if (!M.routes) { M.routes = routes; M.o = o; }
+  const static_ = () => { ML_FAIL = true; M.dead = true; el.innerHTML = ""; staticMap(el, M.routes, M.o); };
+  if (ML_FAIL) { static_(); return null; }
+  let style; try { gl = await mapLib(); style = await mapStyle(); } catch(_) { static_(); return null; }
+  el.innerHTML = ""; const box = document.createElement("div"); box.className = "ml-box"; el.appendChild(box);
+  try { M.map = new gl.Map({container: box, style, attributionControl: {compact: true}, dragRotate: false, pitchWithRotate: false, touchPitch: false, fadeDuration: 0}); }
+  catch(_) { static_(); return null; }
+  const map = M.map; map.touchZoomRotate.disableRotation();
+  if (o.locate) { try { map.addControl(new gl.GeolocateControl({positionOptions: {enableHighAccuracy: true}, trackUserLocation: true, showAccuracyCircle: false}), "top-right"); } catch(_) {} }
+  const fail = setTimeout(() => { if (!M.ready && !M.dead) { try { map.remove(); } catch(_) {} static_(); } }, 12000);
+  map.on("load", () => { clearTimeout(fail); if (M.dead) return; M.ready = true; M.fitKey = null;
+    const dark = isDarkUI();
+    map.addSource("r", {type: "geojson", data: routesGeo(M.routes)}); map.addSource("e", {type: "geojson", data: endsGeo(M.routes, M.o.sel)}); map.addSource("rs", {type: "geojson", lineMetrics: true, data: routesGeo(M.routes.filter(r => r.id === M.o.sel))});
+    const lay = {"line-cap": "round", "line-join": "round"};
+    const W = (a, b) => ["interpolate", ["linear"], ["zoom"], 12, a, 17, b];
+    map.addLayer({id: "r-case", type: "line", source: "r", layout: lay, paint: {"line-color": dark ? "#0E3C73" : "#FFFFFF", "line-width": W(6, 11), "line-opacity": .95}});
+    map.addLayer({id: "r-line", type: "line", source: "r", layout: lay, paint: {"line-color": dark ? "#2E8BFF" : "#0A7CFF", "line-width": W(3.5, 7), "line-opacity": .9}});
+    map.addLayer({id: "r-sel-c", type: "line", source: "r", layout: lay, filter: ["==", ["get", "id"], ""], paint: {"line-color": "#FFFFFF", "line-width": W(9, 15), "line-blur": .5}});
+    map.addLayer({id: "r-sel", type: "line", source: "rs", layout: lay, paint: {"line-width": W(5, 9), "line-gradient": ["interpolate", ["linear"], ["line-progress"], 0, "#30D158", .5, "#0A84FF", 1, "#5E5CE6"]}});
+    map.addSource("sg", {type: "geojson", data: {type: "FeatureCollection", features: []}});
+    map.addLayer({id: "sg-c", type: "line", source: "sg", layout: lay, paint: {"line-color": "#FFFFFF", "line-width": W(8, 14)}});
+    map.addLayer({id: "sg", type: "line", source: "sg", layout: lay, paint: {"line-color": "#5E5CE6", "line-width": W(4.5, 8)}});
+    map.addLayer({id: "sg-dir", type: "symbol", source: "sg", layout: {"symbol-placement": "line", "symbol-spacing": 90, "text-field": "›", "text-size": 22, "text-keep-upright": false, "text-font": ["Noto Sans Bold"], "text-allow-overlap": true}, paint: {"text-color": "#FFFFFF"}});
+    map.addLayer({id: "r-hit", type: "line", source: "r", layout: lay, paint: {"line-color": "#000", "line-width": 22, "line-opacity": 0}});
+    map.addLayer({id: "e-halo", type: "circle", source: "e", filter: ["==", ["get", "k"], "me"], paint: {"circle-radius": 18, "circle-color": "#0A84FF", "circle-opacity": .18}});
+    map.addLayer({id: "e-sh", type: "circle", source: "e", paint: {"circle-radius": 11, "circle-color": "#000", "circle-opacity": .18, "circle-blur": .8, "circle-translate": [0, 1.5]}});
+    map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7.5, "circle-color": ["match", ["get", "k"], "a", "#30D158", "me", "#0A84FF", "#5E5CE6"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 3}});
+    const at = el.querySelector(".maplibregl-ctrl-attrib"); if (at) at.classList.remove("maplibregl-compact-show");
+    map.on("click", "r-hit", e => { const f = e.features && e.features[0]; if (f && M.o.onPick) M.o.onPick(f.properties.id); });
+    map.on("mouseenter", "r-hit", () => { map.getCanvas().style.cursor = "pointer"; }); map.on("mouseleave", "r-hit", () => { map.getCanvas().style.cursor = ""; });
+    liveMapSet(M, M.routes, M.o); });
+  map.on("error", () => {}); // a missing tile or icon is not fatal; only a map that never loads falls back (timer above)
+  return M;
+}
+function liveMapDrop(M){ if (M && M.map) { try { M.map.remove(); } catch(_) {} } }
+// ---------- walk ideas: a loop around you, built from OpenStreetMap data ----------
+const I_ROUTE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18.5" r="2.2"/><circle cx="18" cy="5.5" r="2.2"/><path d="M8.2 18.5H16a3.2 3.2 0 0 0 0-6.4H8a3.2 3.2 0 0 1 0-6.4h7.8"/></svg>';
+const I_TREE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2.5c-3 0-5.2 2.4-5.2 5.2 0 .5.1 1 .2 1.4A4.6 4.6 0 0 0 9.5 17.5H11V21a1 1 0 0 0 2 0v-3.5h1.5A4.6 4.6 0 0 0 17 9.1c.1-.4.2-.9.2-1.4 0-2.8-2.2-5.2-5.2-5.2Z"/></svg>';
+const I_BAG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 7V6a5 5 0 0 1 10 0v1h1.2a1 1 0 0 1 1 .9l1 12a1 1 0 0 1-1 1.1H4.8a1 1 0 0 1-1-1.1l1-12a1 1 0 0 1 1-.9H7Zm2 0h6V6a3 3 0 0 0-6 0v1Z"/></svg>';
+const I_WAVE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 9c2 0 2-1.5 4.5-1.5S9.5 9 12 9s2-1.5 4.5-1.5S18.5 9 21 9M3 15c2 0 2-1.5 4.5-1.5S9.5 15 12 15s2-1.5 4.5-1.5S18.5 15 21 15"/></svg>';
+const I_DROP2 = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2.8s-6.5 7-6.5 11.4a6.5 6.5 0 0 0 13 0C18.5 9.8 12 2.8 12 2.8Z"/></svg>';
+const I_PAW2 = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><ellipse cx="5.1" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.2" cy="5.7" rx="2.2" ry="2.8"/><ellipse cx="14.8" cy="5.7" rx="2.2" ry="2.8"/><ellipse cx="18.9" cy="10.4" rx="2.1" ry="2.6"/><path d="M12 11.1c2.4 0 4.7 2.6 5.8 4.8 1 2 .3 4.2-1.9 4.5-1.4.2-2.4-.6-3.9-.6s-2.5.8-3.9.6c-2.2-.3-2.9-2.5-1.9-4.5 1.1-2.2 3.4-4.8 5.8-4.8Z"/></svg>';
+const SUG_K = {trail: [I_TREE, "#A2845E", "Chemin de terre"], dogpark: [I_PAW2, "#FF9F0A", "Parc à chiens"], water: [I_DROP2, "#0A84FF", "Eau potable"], bags: [I_BAG, "#8E8E93", "Sachets pour chien"], park: [I_TREE, "#30D158", "Parc"], wood: [I_TREE, "#248A3D", "Forêt"], lake: [I_WAVE, "#64D2FF", "Eau"]};
+const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
+const SUGC = {};
+function dogWalkAdvice(){
+  const d = dog() || {}, ay = ageYears(d.birth);
+  if (ay != null && ay < 1) { const m = Math.max(2, Math.floor(ay * 12)); return {min: Math.min(30, Math.max(10, 5 * m)), why: T("Chiot de {m} mois : environ 5 minutes par mois d'âge.", {m})}; }
+  if (ay != null && ay >= 9) return {min: 30, why: T("Chien âgé : une balade plus courte et tranquille.")};
+  return {min: 45, why: T("Chien adulte : environ 45 minutes.")};
+}
+const geoMove = (p, m, deg) => { const R = 6371000, b = deg * Math.PI / 180, la = p[0] * Math.PI / 180, lo = p[1] * Math.PI / 180, d = m / R;
+  const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b)), lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+  return [la2 * 180 / Math.PI, lo2 * 180 / Math.PI]; };
+const geoBearing = (a, b) => { const r = Math.PI / 180, y = Math.sin((b[1] - a[1]) * r) * Math.cos(b[0] * r), x = Math.cos(a[0] * r) * Math.sin(b[0] * r) - Math.sin(a[0] * r) * Math.cos(b[0] * r) * Math.cos((b[1] - a[1]) * r); return (Math.atan2(y, x) / r + 360) % 360; };
+async function sugWeather(p){
+  try { const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p[0].toFixed(3)}&longitude=${p[1].toFixed(3)}&current=temperature_2m,precipitation&timezone=auto`); const c = (await r.json()).current || {};
+    return c.temperature_2m == null ? null : {t: Math.round(c.temperature_2m), p: +c.precipitation || 0}; } catch(_) { return null; }
+}
+async function sugPois(start, R){
+  const key = start[0].toFixed(3) + "," + start[1].toFixed(3) + "," + R; if (SUGC[key]) return SUGC[key];
+  const a = `(around:${R},${start[0].toFixed(6)},${start[1].toFixed(6)})`;
+  const q = `[out:json][timeout:25];(nwr["leisure"~"^(park|dog_park|nature_reserve|garden)$"]${a};nwr["landuse"~"^(forest|meadow|recreation_ground)$"]${a};nwr["natural"="wood"]${a};nwr["natural"="water"]["name"]${a};node["amenity"="drinking_water"]${a};node["vending"="excrement_bags"]${a};node["amenity"="dog_toilet"]${a};way["highway"~"^(path|track|bridleway)$"]["surface"!~"^(asphalt|paved|concrete|concrete:plates|paving_stones|sett|metal|wood)$"]${a};);out center tags 700;`;
+  let j = null;
+  for (const u of OVERPASS) { try { const r = await fetch(u, {method: "POST", body: "data=" + encodeURIComponent(q), headers: {"Content-Type": "application/x-www-form-urlencoded"}}); if (r.ok) { j = await r.json(); break; } } catch(_) {} }
+  if (!j) throw new Error("overpass");
+  const out = (j.elements || []).map(e => { const t = e.tags || {}, c = e.center || (e.lat != null ? {lat: e.lat, lon: e.lon} : null); if (!c) return null; let k = null;
+    if (t.leisure === "dog_park") k = "dogpark"; else if (t.amenity === "drinking_water") k = "water"; else if (t.vending === "excrement_bags" || t.amenity === "dog_toilet") k = "bags";
+    else if (/^(park|garden|nature_reserve)$/.test(t.leisure || "") || t.landuse === "recreation_ground") k = "park";
+    else if (t.landuse === "forest" || t.natural === "wood") k = "wood";
+    else if (/^(path|track|bridleway)$/.test(t.highway || "")) k = "trail"; else if (t.landuse === "meadow") k = t.name ? "park" : null; else if (t.natural === "water") k = "lake";
+    return k ? {k, name: t.name || "", p: [c.lat, c.lon], area: e.type !== "node"} : null; }).filter(Boolean);
+  SUGC[key] = out; return out;
+}
+async function footRoute(way){
+  const u = "https://routing.openstreetmap.de/routed-foot/route/v1/driving/" + way.map(p => p[1].toFixed(6) + "," + p[0].toFixed(6)).join(";") + "?overview=full&geometries=geojson";
+  const r = await fetch(u); if (!r.ok) throw new Error("route"); const rt = ((await r.json()).routes || [])[0]; if (!rt) throw new Error("route");
+  return {dist: rt.distance, pts: rt.geometry.coordinates.map(c => [c[1], c[0]])};
+}
+async function planWalk(o){
+  const start = o.start, target = o.min * 70, R = Math.round(Math.min(4000, Math.max(700, target * .6)));
+  const pois = await sugPois(start, R);
+  // terrain: "nature" = forest and dirt paths, "ville" = pavements and paved park paths
+  const w = o.terrain === "nature" ? {dogpark: 1.5, park: 1.2, wood: 4, lake: 2, trail: 3.2} : o.terrain === "ville" ? {dogpark: 3, park: 3, wood: .25, lake: 1.4, trail: .1} : {dogpark: 3, park: 2.2, wood: 2.4, lake: 1.6, trail: .9};
+  const one = o.shape === "oneway"; let r0 = one ? target / 1.3 : target / 3.3, best = null;
+  for (let n = 0; n < 4; n++) {
+    const cand = pois.filter(p => w[p.k]).map(p => { const d = gDist(start, p.p);
+      return {p, d, b: geoBearing(start, p.p), s: w[p.k] * (p.name ? 1.3 : 1) * (o.hot && (p.k === "wood" || p.k === "lake") ? 1.6 : 1) * (o.dogpark && p.k === "dogpark" ? 4 : 1) / (1 + Math.abs(d - r0) / r0 * 2.5)}; })
+      .filter(c => c.d > 120 && c.d < r0 * 1.8).sort((a, b) => b.s - a.s);
+    let way;
+    const A = cand.length ? cand[(o.seed || 0) % Math.min(cand.length, 5)] : null;
+    if (one) way = [start, A ? A.p.p : geoMove(start, r0, ((o.seed || 0) * 73 + 20) % 360)];
+    else if (A) { const B = cand.filter(c => c !== A && gDist(c.p.p, A.p.p) > r0 * .45).map(c => { const da = Math.abs(((c.b - A.b + 540) % 360) - 180); return {c, sc: c.s * (da > 45 && da < 150 ? 1.5 : da >= 150 ? .35 : .2)}; }).sort((x, y) => y.sc - x.sc)[0];
+      way = [start, A.p.p, B ? B.c.p.p : geoMove(start, r0, A.b + ((o.seed || 0) % 2 ? -100 : 100)), start]; }
+    else if (!one) { const b0 = ((o.seed || 0) * 73 + 20) % 360; way = [start, geoMove(start, r0, b0), geoMove(start, r0, b0 + 110), start]; }
+    if (o.water) { const wt = pois.filter(p => p.k === "water").map(p => ({p, d: Math.min(...way.slice(1, -1).map(x => gDist(x, p.p)))})).sort((a, b) => a.d - b.d)[0]; if (wt && wt.d < r0 * .6) way.splice(one ? 1 : 2, 0, wt.p.p); }
+    const rt = await footRoute(way); rt.pen = Math.abs(rt.dist - target) / target + (A ? 0 : .6); rt.dest = one && A ? A.p : null; if (!best || rt.pen < best.pen) best = rt;
+    if (rt.dist > target * (A ? 1.45 : 1.3)) r0 *= .78; else if (rt.dist < target * .65) r0 *= 1.3; else break;
+  }
+  const near = (p, lim) => { for (let i = 0; i < best.pts.length; i += 2) if (gDist(best.pts[i], p) < lim) return true; return false; };
+  const seen = new Set(), hl = pois.filter(p => near(p.p, p.k === "trail" ? 30 : p.area ? 200 : 45)).filter(p => { const k = p.k + "|" + (p.name || p.p.join()); if (seen.has(k)) return false; seen.add(k); return true; });
+  const named = hl.filter(h => h.name && /dogpark|park|wood|lake/.test(h.k)).sort((a, b) => (w[b.k] || 0) - (w[a.k] || 0))[0];
+  const nat = hl.filter(h => h.k === "trail" || h.k === "wood").length;
+  const title = one ? (best.dest && best.dest.name ? T("Vers {p}", {p: best.dest.name}) : named ? T("Aller simple par {p}", {p: named.name}) : T("Aller simple")) : named ? T("Boucle par {p}", {p: named.name}) : T("Boucle autour de vous");
+  return {id: "s" + Date.now(), nature: nat, one, pts: best.pts, dist: Math.round(best.dist), min: Math.max(5, Math.round(best.dist / 70)), hl, title, start};
+}
+async function runSuggest(o){
+  S.sugBusy = true; S.sugErr = ""; S.mapSel = null; render();
+  try {
+    let start = o.from === "home" ? awCfg().home : o.from === "place" && o.place ? o.place.p : null;
+    if (!start && navigator.geolocation) start = await new Promise(res => navigator.geolocation.getCurrentPosition(p => res([p.coords.latitude, p.coords.longitude]), () => res(null), {enableHighAccuracy: true, timeout: 15000, maximumAge: 60000}));
+    start = start || awCfg().home; if (!start) throw new Error(T("Position introuvable : autorisez la localisation pour Dogs Life."));
+    const wx = await sugWeather(start), hot = !!(wx && wx.t >= 26), min = hot ? Math.min(o.min, 30) : o.min;
+    const plan = await planWalk(Object.assign({}, o, {start, min, hot, terrain: o.terrain || (hot ? "nature" : "")}));
+    S.sug = Object.assign(plan, {wx, capped: hot && o.min > 30, opts: o}); S.sugAt = Date.now();
+  } catch(e) { S.sugErr = e && e.message && !/overpass|route|fetch|failed|network|load/i.test(e.message) ? e.message : T("Impossible de préparer une balade pour le moment. Vérifiez la connexion et réessayez."); }
+  S.sugBusy = false; render();
+}
+function sugSheet(){
+  const adv = dogWalkAdvice(), last = (S.sug && S.sug.opts) || {}, cur = last.min || adv.min, d = dog() || {};
+  const mins = [...new Set([15, 20, 30, 45, 60, 90, adv.min])].sort((a, b) => a - b);
+  openSheet(T("Proposer une balade"), `<div class="fg"><span class="lab">${T("Durée")}</span><div class="opts">${mins.map(m => `<label><input type="radio" name="sg-min" value="${m}" ${m === cur ? "checked" : ""}><span>${m} min${m === adv.min ? " · " + T("conseillé") : ""}</span></label>`).join("")}</div><div class="hint">${esc(adv.why)}</div></div>
+    <div class="fg"><span class="lab">${T("Terrain")}</span><div class="opts">${[["", "Peu importe"], ["nature", "Nature : forêt, chemins de terre"], ["ville", "Ville : trottoirs, chemins goudronnés"]].map(([v, l]) => `<label><input type="radio" name="sg-ter" value="${v}" ${(last.terrain || "") === v ? "checked" : ""}><span>${T(l)}</span></label>`).join("")}</div><div class="hint">${T("Sans béton, c'est plus doux pour les pattes et plus frais quand il fait chaud.")}</div></div>
+    <div class="fg"><span class="lab">${T("Le parcours doit passer par")}</span><div class="opts"><label><input type="checkbox" id="sg-dp" ${last.dogpark ? "checked" : ""}><span>${T("Un parc à chiens")}</span></label><label><input type="checkbox" id="sg-w" ${last.water ? "checked" : ""}><span>${T("Un point d'eau potable")}</span></label></div></div>
+    <div class="fg"><span class="lab">${T("Type de balade")}</span><div class="opts"><label><input type="radio" name="sg-shape" value="loop" ${last.shape !== "oneway" ? "checked" : ""}><span>${T("Boucle : retour au départ")}</span></label><label><input type="radio" name="sg-shape" value="oneway" ${last.shape === "oneway" ? "checked" : ""}><span>${T("Aller simple : finir ailleurs")}</span></label></div></div>
+    <div class="fg"><span class="lab">${T("Départ")}</span><div class="opts" id="sg-froms"><label><input type="radio" name="sg-from" value="here" ${!last.from || last.from === "here" ? "checked" : ""}><span>${T("Ma position")}</span></label>${awCfg().home ? `<label><input type="radio" name="sg-from" value="home" ${last.from === "home" ? "checked" : ""}><span>${T("La maison")}</span></label>` : ""}<label><input type="radio" name="sg-from" value="place" ${last.from === "place" ? "checked" : ""}><span>${T("Un autre endroit")}</span></label></div>
+      <div class="sg-search" id="sg-search" ${last.from === "place" ? "" : "hidden"}><div class="sg-q"><input class="f" id="sg-q" placeholder="${T("Adresse, parc, village…")}" value="${esc((last.place || {}).name || "")}" autocomplete="off"><button type="button" class="btn ghost" data-act="sgFind">${T("Chercher")}</button></div><div id="sg-res">${last.place ? `<label class="sg-r"><input type="radio" name="sg-place" value="0" checked><span><b>${esc(last.place.name)}</b></span></label>` : ""}</div></div></div>
+    <div class="hint">${T("L'app cherche les parcs, forêts, parcs à chiens et points d'eau autour de vous (OpenStreetMap), tient compte de la météo et trace une boucle à pied pour {n}.", {n: esc(d.name || T("votre chien"))})}</div>`,
+    () => { const m = +((document.querySelector('input[name="sg-min"]:checked') || {}).value || adv.min), f = (document.querySelector('input[name="sg-from"]:checked') || {}).value || "here";
+      const pi = (document.querySelector('input[name="sg-place"]:checked') || {}).value, place = f === "place" ? (pi != null ? (S.sgFound || [])[+pi] || (pi === "0" && last.place) : null) : null;
+      if (f === "place" && !place) { toast(T("Cherchez et choisissez d'abord le lieu de départ.")); return; }
+      closeSheet(); runSuggest({min: m, shape: (document.querySelector('input[name="sg-shape"]:checked') || {}).value || "loop", place, terrain: (document.querySelector('input[name="sg-ter"]:checked') || {}).value || "", dogpark: !!($("#sg-dp") || {}).checked, water: !!($("#sg-w") || {}).checked, from: f, seed: 0}); });
+}
+async function sgFind(){
+  const q = val("sg-q"), box = document.getElementById("sg-res"); if (!q || !box) return;
+  box.innerHTML = `<div class="hint">${T("Recherche…")}</div>`;
+  try { const near = awCfg().home || null, lang = LANG === "en" ? "en" : LANG === "hr" ? "en" : "fr";
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=${lang}${near ? `&lat=${near[0]}&lon=${near[1]}` : ""}`); const j = await r.json();
+    S.sgFound = (j.features || []).map(f => { const p = f.properties || {}, c = f.geometry && f.geometry.coordinates; if (!c) return null;
+      const name = [p.name, p.street && (p.street + (p.housenumber ? " " + p.housenumber : "")), p.city || p.town || p.village, p.country].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).slice(0, 3).join(", ");
+      return {name: name || q, p: [c[1], c[0]]}; }).filter(Boolean);
+    box.innerHTML = S.sgFound.length ? S.sgFound.map((f, i) => `<label class="sg-r"><input type="radio" name="sg-place" value="${i}" ${i ? "" : "checked"}><span>${esc(f.name)}</span></label>`).join("") : `<div class="hint">${T("Aucun lieu trouvé.")}</div>`;
+  } catch(_) { box.innerHTML = `<div class="hint">${T("Recherche impossible pour le moment.")}</div>`; }
+}
+function sugCard(){
+  const g = S.sug; if (!g) return ""; const wx = g.wx, notes = [];
+  if (wx && wx.t >= 26) notes.push(T("Il fait {t}° : parcours à l'ombre privilégié, évitez le bitume chaud et emportez de l'eau.", {t: wx.t}));
+  else if (wx && wx.t <= 0) notes.push(T("Il fait {t}° : attention au gel et au sel sur les pattes.", {t: wx.t}));
+  if (wx && wx.p > .2) notes.push(T("Il pleut en ce moment."));
+  if (g.capped) notes.push(T("Durée réduite à cause de la chaleur."));
+  const ter = g.opts && g.opts.terrain; if (ter === "nature" && !g.nature) notes.push(T("Peu de chemins de terre ou de forêt autour de vous : cette boucle suit surtout des chemins revêtus."));
+  const kinds = {}; g.hl.forEach(h => { kinds[h.k] = (kinds[h.k] || 0) + 1; });
+  const chips = Object.keys(SUG_K).filter(k => kinds[k]).map(k => `<span class="sug-chip" style="--c:${SUG_K[k][1]}">${SUG_K[k][0]}${T(SUG_K[k][2])}${kinds[k] > 1 ? ` <b class="num">${kinds[k]}</b>` : ""}</span>`).join("");
+  const walking = !!walkNow();
+  return `<div class="card sug-card ${Date.now() - (S.sugAt || 0) < 700 ? "fresh" : ""}"><div class="sug-h"><div><div class="sug-t">${esc(g.title)}</div><div class="sug-m num">${T(g.one ? "Aller simple" : "Boucle")} · ${fmtKm(g.dist)} · ~${g.min} min${wx ? ` · ${wx.t}°` : ""}</div><div class="sug-from">${esc(T("Départ : {p}", {p: g.opts.from === "home" ? T("la maison") : g.opts.from === "place" && g.opts.place ? g.opts.place.name : T("votre position")}))}</div></div><button class="sug-x" data-act="sugX" aria-label="${T("Fermer")}">×</button></div>
+    ${chips ? `<div class="sug-chips">${chips}</div>` : `<div class="sug-n">${T("Pas de parc repéré sur ce trajet : il suit les chemins piétons les plus proches.")}</div>`}
+    ${notes.map(n => `<div class="sug-n">${esc(n)}</div>`).join("")}
+    <div class="sug-b"><button class="btn ghost" data-act="sugAgain">${T("Autre idée")}</button><button class="btn" data-act="sugGo" ${walking ? "disabled" : ""}>${T(walking ? "Balade en cours" : "Démarrer la balade")}</button></div>
+    <div class="sug-src">${T("Données OpenStreetMap · itinéraire FOSSGIS · météo Open-Meteo")}</div></div>`;
+}
+function walksMapView(){
+  const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f), d = dog() || {};
+  if (S.mapSel && !list.some(l => l.id === S.mapSel)) S.mapSel = null;
+  const km = list.reduce((a, l) => a + (+l.dist || 0), 0), min = list.reduce((a, l) => a + (+l.dur || 0), 0);
+  const st = (v, l) => `<div class="wv-s"><b class="num">${v}</b><span>${l}</span></div>`;
+  const seg = `<div class="seg" role="group" style="margin:4px 0 12px">${[[7, "7 jours"], [30, "30 jours"], ["all", "Tout"]].map(([v, l]) => `<button class="${String(f) === String(v) ? "on" : ""}" data-act="mapF" data-v="${v}" aria-pressed="${String(f) === String(v)}">${T(l)}</button>`).join("")}</div>`;
+  const rows = list.slice(0, 80).map(l => { const m = memberOf(l.mid), on = l.id === S.mapSel;
+    return `<button class="row mr-row ${on ? "on" : ""}" data-act="mapPick" data-id="${esc(l.id)}"><span class="ico" style="--c:${on ? "var(--orange)" : "var(--green)"}">${QL.balade ? QL.balade.i : I.paw}</span><div class="main"><div class="t">${esc(cap(fmt(parseYmd(l.date), {weekday: "short", day: "numeric", month: "short"})))} · ${esc(l.at || "")}</div><div class="s">${[fmtKm(l.dist || 0), l.dur ? l.dur + " min" : "", (m && m.name) || l.byName || ""].filter(Boolean).map(esc).join(" · ")}</div></div><span class="chev">${on ? T("Détails") : I.chevR}</span></button>`; }).join("");
+  return subBar(d.name || T("Chien")) + pageHead(T("Carte des balades"), d.name)
+    + `<button class="card sug-cta" data-act="sugOpen" ${S.sugBusy ? "disabled" : ""}><span class="ico" style="--c:#5E5CE6">${I_ROUTE}</span><div class="main"><div class="t">${T("Proposer une balade")}</div><div class="s">${esc(T("Une boucle adaptée à {n}, autour de vous", {n: d.name || T("votre chien")}))}</div></div>${S.sugBusy ? `<span class="sug-spin"></span>` : `<span class="chev">${I.chevR}</span>`}</button>`
+    + (S.sugBusy ? `<div class="sug-busy">${T("Recherche des parcs, chemins et points d'eau autour de vous…")}</div>` : "")
+    + (S.sugErr ? `<div class="sug-err">${esc(S.sugErr)}</div>` : "")
+    + seg
+    + `<div class="rmap wmap" id="wm-map">${list.length || S.sug ? "" : `<div class="wm-empty">${I_MAP}<span>${T("Aucune balade suivie par GPS sur cette période.")}</span></div>`}</div>`
+    + sugCard()
+    + `<div class="wv-g" style="margin-top:12px">${st(list.length, T(list.length > 1 ? "balades" : "balade"))}${st(fmtKm(km), T("Distance"))}${st(min >= 60 ? Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0") : min + " min", T("Durée"))}</div>`
+    + (list.length ? `<div class="sec"><div class="sec-h"><h2>${T("Trajets")}</h2></div><div class="card list">${rows}</div><div class="foot">${T("Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.")}</div></div>` : `<div class="foot" style="margin-top:14px">${T("Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.")}</div>`);
+}
+function paintWalksMap(){
+  const box = document.getElementById("wm-map"); if (!box) return; const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f);
+  if (!list.length && !S.sug) { if (S.wm) { liveMapDrop(S.wm); S.wm = null; } return; }
+  const routes = list.map(l => ({id: l.id, pts: polyDec(l.route)})), o = {sel: S.mapSel, sug: S.sug || null, home: awCfg().home, locate: true, onPick: id => { S.sug = null; S.mapSel = S.mapSel === id ? null : id; render(); }};
+  if (S.wm && S.wm.style === mapStyleURL() && (!S.wm.dead || ML_FAIL)) { if (box !== S.wm.el) box.replaceWith(S.wm.el);
+    if (S.wm.dead) { S.wm.el.innerHTML = ""; staticMap(S.wm.el, routes, o); return; }
+    if (S.wm.ready) { liveMapSet(S.wm, routes, o); S.wm.map.resize(); } else { S.wm.routes = routes; S.wm.o = o; } return; }
+  if (S.wm) liveMapDrop(S.wm);
+  S.wm = {el: box, style: mapStyleURL()}; liveMap(box, routes, o, S.wm);
+}
+
+// ---------- automatic walk detection (asks before doing anything) ----------
+const awCfg = () => { try { return JSON.parse(gLS.g("dl-autowalk") || "{}") || {}; } catch(_) { return {}; } };
+const awSet = c => gLS.s("dl-autowalk", JSON.stringify(c));
+const AW = {watch: null, away: 0, near: 0, first: 0, snooze: 0, asked: "", mine: ""};
+function walkTask(ds, start){
+  const st = dayStats(ds), sm = toMin(hhmm(start));
+  return st.tasks.filter(t => t.cat === "balade" && !st.done[t.key] && Math.abs(toMin(t.time) - sm) <= 120).sort((a, b) => Math.abs(toMin(a.time) - sm) - Math.abs(toMin(b.time) - sm))[0] || null;
+}
+function awTick(){
+  const c = awCfg(), want = !!(c.on && c.home && navigator.geolocation && S.ready && document.visibilityState === "visible");
+  if (want && AW.watch == null) AW.watch = navigator.geolocation.watchPosition(awPos, () => {}, {enableHighAccuracy: true, maximumAge: 5000, timeout: 30000});
+  else if (!want && AW.watch != null) { try { navigator.geolocation.clearWatch(AW.watch); } catch(_) {} AW.watch = null; AW.away = AW.near = 0; }
+}
+function awPos(p){
+  const c = awCfg(), k = p && p.coords; if (!c.on || !c.home || !k || k.accuracy > 70) return;
+  const d = gDist(c.home, [k.latitude, k.longitude]), w = walkNow(), now = Date.now(), here = [k.latitude, k.longitude], ts = p.timestamp || now;
+  // speed between two readings: faster than ~10 km/h means car, bike or bus, not a dog walk
+  const sp = k.speed != null && k.speed >= 0 ? k.speed : AW.lp && ts - AW.lp.t > 4000 ? gDist(AW.lp.p, here) / ((ts - AW.lp.t) / 1000) : null;
+  AW.lp = {p: here, t: ts}; if (sp != null && sp > 2.8) { AW.fast = now; AW.away = 0; }
+  if (!w && now - (AW.fast || 0) < 3 * 60000) return;
+  if (d > 150) { AW.away++; AW.near = 0; if (AW.away === 1) AW.first = p.timestamp || now; }
+  else if (d < 60) { AW.near++; AW.away = 0; if (!w) AW.snooze = 0; }
+  if (now < AW.snooze || document.getElementById("aw-card")) return;
+  if (!w && AW.away >= 2 && AW.asked !== "start") { AW.asked = "start"; awAsk("start"); }
+  else if (w && AW.near >= 2 && AW.asked !== "end" && now - Date.parse(w.start) > 3 * 60000 && (w.mid === (ME || "") || AW.mine === w.start)) { AW.asked = "end"; awAsk("end"); }
+  if (!w && AW.near) AW.asked = AW.asked === "start" ? "" : AW.asked;
+  if (w && AW.away) AW.asked = AW.asked === "end" ? "" : AW.asked;
+}
+function awAsk(kind){
+  let r = document.getElementById("aw-root"); if (!r) { r = document.createElement("div"); r.id = "aw-root"; document.body.appendChild(r); }
+  const d = dog() || {}, nm = esc(d.name || T("votre chien")), w = walkNow();
+  const tsk = kind === "end" && w ? walkTask(ymd(new Date()), new Date(w.start)) : null;
+  const t = kind === "start" ? T("Balade détectée") : T("De retour à la maison");
+  const plan = kind === "start" ? walkTask(ymd(new Date()), new Date()) : null;
+  const s = kind === "start" ? (plan ? T("Vous êtes parti à pied, et c'est l'heure de « {t} ». Démarrer la balade de {n} ?", {t: esc(plan.title), n: nm}) : T("Vous venez de quitter la maison. Démarrer la balade de {n} ?", {n: nm})) : tsk ? T("Terminer la balade et cocher « {t} » ?", {t: esc(tsk.title)}) : T("Terminer la balade de {n} ?", {n: nm});
+  r.innerHTML = `<div class="aw" id="aw-card" role="alertdialog" aria-label="${esc(t)}"><span class="ico" style="--c:var(--green)">${kind === "start" ? (QL.balade ? QL.balade.i : I.paw) : I_HOME.replace(/26/g, "22")}</span><div class="main"><b>${t}</b><span>${s}</span></div>
+    <div class="aw-b"><button class="btn ghost" data-act="awNo">${T("Pas maintenant")}</button><button class="btn" data-act="awYes" data-k="${kind}">${T(kind === "start" ? "Démarrer" : "Terminer")}</button></div></div>`;
+  try { if (navigator.vibrate) navigator.vibrate([12, 60, 12]); } catch(_) {}
+  if (SOUND && typeof chime === "function") { try { chime(); } catch(_) {} }
+}
+function awClose(){ const r = document.getElementById("aw-root"), c = r && r.firstElementChild; if (c) leave(c, () => { r.innerHTML = ""; }); }
+async function awYes(kind){
+  awClose();
+  if (kind === "start") { if (walkNow()) return; const st0 = new Date(Math.min(Date.now(), AW.first || Date.now())).toISOString(); AW.mine = st0;
+    gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}}); toast(T("Balade lancée")); }
+  else if (walkNow()) walkSheet();
+}
+async function awSetHome(){
+  if (!navigator.geolocation) return false;
+  const p = await new Promise(res => navigator.geolocation.getCurrentPosition(res, () => res(null), {enableHighAccuracy: true, timeout: 20000, maximumAge: 0}));
+  if (!p) { toast(T("Position introuvable : autorisez la localisation pour Dogs Life.")); return false; }
+  awSet(Object.assign(awCfg(), {home: [+p.coords.latitude.toFixed(6), +p.coords.longitude.toFixed(6)]})); toast(T("Maison enregistrée à cet endroit")); return true;
+}
+setInterval(awTick, 4000); document.addEventListener("visibilitychange", awTick);
+// ---------- chat: messages with reactions, replies, voice notes and "seen by" ----------
+const REACTS = {"heart": ["#FF4D6D", "<svg viewBox=\"0 0 24 24\"><path fill=\"#FF4D6D\" d=\"M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2Z\"/></svg>"], "like": ["#F1C76A", "<svg viewBox=\"0 0 24 24\"><path fill=\"#F1C76A\" d=\"M7 10v10H4.5A1.5 1.5 0 0 1 3 18.5v-7A1.5 1.5 0 0 1 4.5 10H7Zm2 10V9.6l3.4-6a1.9 1.9 0 0 1 3.5 1.3L15.2 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H9Z\"/></svg>"], "haha": ["#FFC53D", "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"#FFC53D\"/><path d=\"M8 9.5h.01M16 9.5h.01\" stroke=\"#5a3d00\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><path d=\"M6.8 13h10.4a5.2 5.2 0 0 1-10.4 0Z\" fill=\"#5a3d00\"/></svg>"], "wow": ["#FFC53D", "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"#FFC53D\"/><circle cx=\"8.6\" cy=\"9.6\" r=\"1.4\" fill=\"#5a3d00\"/><circle cx=\"15.4\" cy=\"9.6\" r=\"1.4\" fill=\"#5a3d00\"/><ellipse cx=\"12\" cy=\"15.4\" rx=\"2.3\" ry=\"2.9\" fill=\"#5a3d00\"/></svg>"], "paw": ["#30D158", "<svg viewBox=\"0 0 24 24\" fill=\"#30D158\"><ellipse cx=\"5.1\" cy=\"10.4\" rx=\"2.1\" ry=\"2.6\" transform=\"rotate(-20 5.1 10.4)\"/><ellipse cx=\"9.2\" cy=\"5.7\" rx=\"2.2\" ry=\"2.8\" transform=\"rotate(-7 9.2 5.7)\"/><ellipse cx=\"14.8\" cy=\"5.7\" rx=\"2.2\" ry=\"2.8\" transform=\"rotate(7 14.8 5.7)\"/><ellipse cx=\"18.9\" cy=\"10.4\" rx=\"2.1\" ry=\"2.6\" transform=\"rotate(20 18.9 10.4)\"/><path d=\"M12 11.1c2.4 0 4.7 2.6 5.8 4.8 1 2 .3 4.2-1.9 4.5-1.4.2-2.4-.6-3.9-.6s-2.5.8-3.9.6c-2.2-.3-2.9-2.5-1.9-4.5 1.1-2.2 3.4-4.8 5.8-4.8Z\"/></svg>"]};
+const I_MIC = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
+const myUid = () => S.me || ME || "local";
+const fmtSec = s => Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0");
+function msgsHTML(list){
+  const me = myMember(), lastMine = list.find(n => !n.kind && ((n.mid && n.mid === ME) || (S.me && n.uid === S.me)));
+  return list.map(n => {
+    if (n.kind === "join" || n.kind === "leave") return `<div class="msg-sys">${mav(memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, 22)}<span>${esc(T(n.kind === "join" ? "{n} a rejoint la famille" : "{n} a quitté la famille",{n:n.name || "?"}))} · ${esc(relTime(n.at))}</span></div>`;
+    const m = memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, mine = (n.mid && n.mid === ME) || (S.me && n.uid === S.me);
+    const rs = Object.entries(n.reacts || {}).filter(([, k]) => REACTS[k]), cnt = {}; rs.forEach(([, k]) => { cnt[k] = (cnt[k] || 0) + 1; });
+    const myR = (n.reacts || {})[myUid()];
+    const reacts = rs.length ? `<div class="m-reacts">${Object.entries(cnt).map(([k, c]) => `<button class="m-rc ${myR === k ? "mine" : ""}" data-act="msgReact" data-id="${esc(n.id)}" data-k="${k}">${REACTS[k][1]}${c > 1 ? `<b class="num">${c}</b>` : ""}</button>`).join("")}</div>` : "";
+    const q = n.replyTo ? `<button class="m-quote" data-act="msgJump" data-id="${esc(n.replyTo.id || "")}"><b>${esc(n.replyTo.name || "")}</b><span>${esc(n.replyTo.text || T("Message"))}</span></button>` : "";
+    const voice = n.audio ? `<div class="m-voice" data-id="${esc(n.id)}"><button class="m-play" data-act="voicePlay" data-id="${esc(n.id)}" aria-label="${T("Écouter")}"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8.2 4.9c-.9-.5-2 .1-2 1.2v11.8c0 1 1.1 1.7 2 1.2l10-5.9c.9-.5.9-1.8 0-2.4Z"/></svg></button><span class="m-wave">${Array.from({length: 22}, (_, i) => `<i style="height:${30 + Math.round(60 * Math.abs(Math.sin(i * 1.7 + (n.dur || 3))))}%"></i>`).join("")}</span><span class="num m-dur">${fmtSec(n.dur || 0)}</span></div>` : "";
+    let seen = "";
+    if (lastMine && n.id === lastMine.id) { const t = Date.parse(n.at) || 0, by = family().filter(x => (!me || x.id !== me.id) && x.readAt && x.readAt >= t);
+      seen = `<div class="m-seen">${by.length ? `${T("Vu par")} <span class="m-seen-av">${by.slice(0, 5).map(x => mav(x, 16)).join("")}</span>${by.length > 5 ? " +" + (by.length - 5) : ""}` : T("Envoyé")}</div>`; }
+    return `<div class="msg ${mine ? "mine" : ""}" data-mid="${esc(n.id)}" id="msg-${esc(n.id)}">${mav(m, 28)}<div class="m-col"><div class="bub" data-act="msgMenu" data-id="${esc(n.id)}"><div class="msg-h"><b>${esc(m.name)}</b><span>${esc(relTime(n.at))}</span></div>${q}${n.text ? `<div class="msg-t ${n.kind === "report" ? "rep" : ""}">${esc(n.text)}</div>` : ""}${voice}${n.photo ? `<img class="msg-ph" src="${esc(n.photo)}" alt="" data-act="photoView" data-src="${esc(n.photo)}">` : ""}</div>${reacts}${seen}</div></div>`;
+  }).join("");
+}
+// long press / tap on a bubble: react, reply, copy, delete
+function msgMenu(id, at){
+  const n = (C.notes || {})[id]; if (!n) return; const mine = (n.mid && n.mid === ME) || (S.me && n.uid === S.me), myR = (n.reacts || {})[myUid()];
+  let r = document.getElementById("mm-root"); if (!r) { r = document.createElement("div"); r.id = "mm-root"; document.body.appendChild(r); }
+  const y = Math.max(90, Math.min(window.innerHeight - 260, at ? at.top : window.innerHeight / 2));
+  r.innerHTML = `<div class="mm-bg" data-act="mmClose"></div><div class="mm" style="top:${y}px">
+    <div class="mm-r">${Object.entries(REACTS).map(([k, v]) => `<button class="${myR === k ? "on" : ""}" data-act="msgReact" data-id="${esc(id)}" data-k="${k}" aria-label="${k}">${v[1]}</button>`).join("")}</div>
+    <div class="mm-l"><button data-act="msgReply" data-id="${esc(id)}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 6 6v1"/></svg>${T("Répondre")}</button>
+    ${n.text ? `<button data-act="msgCopy" data-id="${esc(id)}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>${T("Copier")}</button>` : ""}
+    ${mine || canEdit() ? `<button class="danger" data-act="msgDel" data-id="${esc(id)}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>${T("Supprimer")}</button>` : ""}</div></div>`;
+  try { if (navigator.vibrate) navigator.vibrate(8); } catch(_) {}
+}
+function mmClose(){ const r = document.getElementById("mm-root"); if (r && r.firstChild) leave(r.querySelector(".mm"), () => { r.innerHTML = ""; }); const bg = r && r.querySelector(".mm-bg"); if (bg) bg.classList.add("dl-leave"); }
+async function msgReact(id, k){
+  const n = (C.notes || {})[id]; if (!n) return; const reacts = Object.assign({}, n.reacts || {}), u = myUid();
+  if (reacts[u] === k) delete reacts[u]; else reacts[u] = k;
+  await put("notes", id, Object.assign({}, n, {reacts}));
+}
+function setReply(id){
+  const n = (C.notes || {})[id]; if (!n) return; const m = memberOf(n.mid) || {name: n.name || ""};
+  S.replyTo = {id, name: m.name || n.name || "", text: (n.text || (n.audio ? T("Message vocal") : n.photo ? T("Photo") : "")).slice(0, 80)};
+  replyBar(); const i = $("#n-text"); if (i) i.focus();
+}
+function replyBar(){
+  const h = S.replyTo ? `<div class="rp-bar"><div><b>${esc(T("Réponse à {n}", {n: S.replyTo.name}))}</b><span>${esc(S.replyTo.text)}</span></div><button type="button" data-act="replyX" aria-label="${T("Annuler")}">×</button></div>` : "";
+  document.querySelectorAll(".rp-slot").forEach(x => { x.innerHTML = h; });
+}
+// seen by: my member card remembers when I last looked at the conversation
+function chatSeen(){
+  if (S.mode !== "db" || !S.ready || document.visibilityState !== "visible") return;
+  if (!(S.chatFull || (S.tab === "famille" && !S.sub))) return;
+  const m = myMember(); if (!m || !(C.members || {})[m.id]) return;
+  const last = Object.values(C.notes || {}).reduce((a, n) => Math.max(a, Date.parse(n.at) || 0), 0);
+  if (!last || (C.members[m.id].readAt || 0) >= last || Date.now() - (S.lastSeenW || 0) < 4000) return;
+  S.lastSeenW = Date.now(); put("members", m.id, Object.assign({}, C.members[m.id], {readAt: Date.now()}));
+}
+// voice notes: recorded on the phone (max 60 s), stored with the message
+const REC = {mr: null, chunks: [], t0: 0, timer: null, stream: null};
+async function recStart(){
+  if (REC.mr) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) { toast(T("Les messages vocaux ne sont pas pris en charge sur cet appareil.")); return; }
+  try { REC.stream = await navigator.mediaDevices.getUserMedia({audio: true}); } catch(_) { toast(T("Autorisez le micro pour envoyer un message vocal.")); return; }
+  const type = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"].find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+  try { REC.mr = new MediaRecorder(REC.stream, Object.assign({audioBitsPerSecond: 24000}, type ? {mimeType: type} : {})); } catch(_) { REC.mr = new MediaRecorder(REC.stream); }
+  REC.chunks = []; REC.t0 = Date.now(); REC.cancel = false;
+  REC.mr.ondataavailable = e => { if (e.data && e.data.size) REC.chunks.push(e.data); };
+  REC.mr.onstop = recDone; REC.mr.start(250);
+  recUI(); REC.timer = setInterval(() => { recUI(); if (Date.now() - REC.t0 > 60000) recStop(false); }, 250);
+}
+function recStop(cancel){ if (!REC.mr) return; REC.cancel = !!cancel; clearInterval(REC.timer); try { REC.mr.stop(); } catch(_) { recDone(); } }
+async function recDone(){
+  const mr = REC.mr, dur = Math.max(1, Math.round((Date.now() - REC.t0) / 1000)), cancel = REC.cancel; REC.mr = null;
+  try { REC.stream.getTracks().forEach(t => t.stop()); } catch(_) {}
+  recUI();
+  if (cancel || !REC.chunks.length) return;
+  const blob = new Blob(REC.chunks, {type: (mr && mr.mimeType) || "audio/mp4"});
+  if (blob.size > 700000) { toast(T("Message vocal trop long.")); return; }
+  const audio = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob); });
+  await sendNote({audio, dur});
+}
+function recUI(){
+  let r = document.getElementById("rec-root"); if (!r) { r = document.createElement("div"); r.id = "rec-root"; document.body.appendChild(r); }
+  if (!REC.mr) { if (r.firstChild) leave(r.firstElementChild, () => { r.innerHTML = ""; }); return; }
+  const sec = (Date.now() - REC.t0) / 1000, h = `<div class="rec"><span class="rec-dot"></span><b class="num">${fmtSec(sec)}</b><span class="rec-h">${T("Enregistrement… 60 s max")}</span><button class="rec-x" data-act="recCancel">${T("Annuler")}</button><button class="rec-s" data-act="recSend" aria-label="${T("Envoyer")}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div>`;
+  if (!r.firstChild) r.innerHTML = h; else { const b = r.querySelector(".rec b"); if (b) b.textContent = fmtSec(sec); }
+}
+const VO = {a: null, id: null};
+function voicePlay(id){
+  const n = (C.notes || {})[id]; if (!n || !n.audio) return;
+  if (VO.id === id && VO.a) { if (VO.a.paused) VO.a.play(); else VO.a.pause(); return; }
+  if (VO.a) { VO.a.pause(); voiceUI(VO.id, 0, false); }
+  VO.a = new Audio(n.audio); VO.id = id;
+  VO.a.ontimeupdate = () => voiceUI(id, VO.a.duration ? VO.a.currentTime / VO.a.duration : 0, !VO.a.paused);
+  VO.a.onpause = () => voiceUI(id, VO.a.duration ? VO.a.currentTime / VO.a.duration : 0, false);
+  VO.a.onplay = () => voiceUI(id, 0, true);
+  VO.a.onended = () => { voiceUI(id, 0, false); VO.a = null; VO.id = null; };
+  VO.a.play().catch(() => toast(T("Lecture impossible.")));
+}
+function voiceUI(id, p, playing){ document.querySelectorAll(`.m-voice[data-id="${CSS.escape(id)}"]`).forEach(v => { v.style.setProperty("--p", Math.round(p * 100) + "%"); v.classList.toggle("playing", playing);
+  const b = v.querySelector(".m-play"); if (b) b.innerHTML = playing ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><rect x="6" y="5" width="4.2" height="14" rx="1.6"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.6"/></svg>' : '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8.2 4.9c-.9-.5-2 .1-2 1.2v11.8c0 1 1.1 1.7 2 1.2l10-5.9c.9-.5.9-1.8 0-2.4Z"/></svg>'; }); }
+// press and hold a bubble (or swipe it to the right to reply)
+document.addEventListener("change", e => { if (e.target && e.target.name === "sg-from") { const b = document.getElementById("sg-search"); if (b) { b.hidden = e.target.value !== "place"; if (!b.hidden) { const i = document.getElementById("sg-q"); if (i) i.focus(); } } } });
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.id === "sg-q") { e.preventDefault(); sgFind(); } });
+(() => { let tm = null, sx = 0, sy = 0, tgt = null, moved = false;
+  document.addEventListener("pointerdown", e => { const b = e.target.closest(".msg .bub"); if (!b || e.target.closest("button,img,a")) return; tgt = b; sx = e.clientX; sy = e.clientY; moved = false;
+    tm = setTimeout(() => { tm = null; if (!moved && tgt) { S.mmLong = Date.now(); msgMenu(tgt.dataset.id, tgt.getBoundingClientRect()); } }, 420); });
+  document.addEventListener("pointermove", e => { if (!tgt) return; const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { moved = true; clearTimeout(tm); tgt.style.transform = ""; tgt = null; return; }
+    if (dx > 6) { moved = true; clearTimeout(tm); tgt.style.transform = `translateX(${Math.min(70, dx * .6)}px)`; tgt.classList.toggle("swipe-ok", dx > 70); } });
+  const end = e => { clearTimeout(tm); if (tgt) { const dx = e.clientX - sx; tgt.style.transform = ""; tgt.classList.remove("swipe-ok"); if (dx > 70) { S.mmLong = Date.now(); setReply(tgt.dataset.id); } } tgt = null; };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
+  document.addEventListener("contextmenu", e => { const b = e.target.closest(".msg .bub"); if (b) { e.preventDefault(); msgMenu(b.dataset.id, b.getBoundingClientRect()); } });
+})();
+// typing bubble: whoever is writing a message shows "…" to the others for a few seconds
+const TYPING_MS = 6000;
+const typers = () => { const me = myMember(); return family().filter(m => m.typing && Date.now() - m.typing < TYPING_MS && (!me || m.id !== me.id)); };
+function typingHTML(){ const ts = typers(); if (!ts.length) return "";
+  const names = ts.map(m => m.name).slice(0, 2).join(", ") + (ts.length > 2 ? " +" + (ts.length - 2) : "");
+  return `<div class="msg typing" aria-live="polite">${ts.length === 1 ? mav(ts[0], 28) : `<span class="typ-av">${ts.slice(0, 2).map(m => mav(m, 22)).join("")}</span>`}<div class="bub"><span class="typ-d"><i></i><i></i><i></i></span><span class="typ-n">${esc(T("{n} écrit…", {n: names}))}</span></div></div>`; }
+function typingBeat(stop){
+  if (S.mode !== "db" || !S.ready) return; const m = myMember(); if (!m || !(C.members || {})[m.id]) return;
+  if (stop) { if (!S.lastTyping) return; S.lastTyping = 0; put("members", m.id, Object.assign({}, C.members[m.id], {typing: 0})); return; }
+  if (Date.now() - (S.lastTyping || 0) < 3000) return; S.lastTyping = Date.now();
+  put("members", m.id, Object.assign({}, C.members[m.id], {typing: Date.now()}));
+}
+setInterval(() => { const k = typers().map(m => m.id).join(","); if (k !== (S.typKey || "")) { S.typKey = k; if (S.tab === "famille") render(true); } }, 1200);
+const presDot = m => isOnline(m) ? '<i class="pdot" aria-hidden="true"></i>' : "";
+const myMember = () => S.me ? family().find(m => m.uid === S.me) || null : meMember();
+S.avatars = S.avatars || {};
+const memberPhoto = m => (m && (m.photo || (m.uid && S.avatars[m.uid]))) || "";
+const mav = (m, sz = 22) => { if (!m) return ""; const ph = memberPhoto(m);
+  const warn = m.signedOut && sz >= 22 && sz < 60 ? `<i class="mav-warn" style="--s:${Math.max(10, Math.round(sz * .38))}px" aria-label="${T("Déconnecté(e) de l'app")}">!</i>` : "";
+  return (warn ? `<span class="mav-w" title="${esc(m.name)} · ${T("Déconnecté(e) de l'app")}">` : "") + `<span class="mav ${ph ? "ph" : ""}" style="--c:${esc((m.id && memberColors()[m.id]) || m.color)};width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.48)}px" title="${esc(m.name)}">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy" draggable="false">` : `<i class="mk" aria-hidden="true"></i>`}</span>` + (warn ? warn + "</span>" : ""); };
+// account photos of linked members (kept in memory only, resolved again on every render)
+async function resolveAvatars(){
+  if (!user || !user.profiles) return; const ids = family().map(m => m.uid).filter(Boolean); if (!ids.length) return;
+  try { const ps = await user.profiles(ids); let ch = false;
+    ids.forEach(id => { const u = ps[id] && ps[id].avatarUrl; const v = u && !/^data:/.test(u) ? u : ""; if ((S.avatars[id] || "") !== v) { S.avatars[id] = v; ch = true; } });
+    if (ch) { S.lastHTML = ""; render(true); } } catch(_) {}
+}
+// only people who joined the family themselves can be given a task or an appointment
+const joinedFamily = () => family().filter(m => m.uid || S.mode !== "db");
+function whoChips(cur){
+  const fam = joinedFamily(), stale = cur && !fam.some(m => m.id === cur) ? memberOf(cur) : null;
+  if (!fam.length) return `<div class="hint" style="margin-top:0">${T("Personne n'a encore rejoint la famille. Invitez quelqu'un : dès qu'il a rejoint, vous pourrez lui confier des tâches.")}</div><button type="button" class="btn ghost" style="width:100%" data-act="invite">${T("Ajouter quelqu'un")}</button>`;
+  if (stale) fam.push(stale);
+  return `<div class="opts"><label><input type="radio" name="s-who" value="" ${!cur?"checked":""}><span>${T("Tout le monde")}</span></label>${fam.map(m => `<label><input type="radio" name="s-who" value="${esc(m.id)}" ${cur===m.id?"checked":""}><span>${mav(m, 18)}${esc(m.name)}</span></label>`).join("")}</div>`;
+}
+const whoVal = () => (document.querySelector('input[name="s-who"]:checked') || {}).value || "";
+function shareStats(){
+  // last 7 days: who ticked what, and what is assigned for the coming week
+  const fam = family(), done = {}, planned = {}; let unassigned = 0, totalDone = 0;
+  for (let i = 0; i < 7; i++) {
+    const ds = ymd(addDays(new Date(), -i)), st = dayStats(ds);
+    st.tasks.forEach(t => { const d = st.done[t.key]; if (!d) return; totalDone++;
+      const m = doneBy(d) || (t.who && memberOf(t.who)); const k = m ? m.id : "_"; done[k] = (done[k] || 0) + 1; });
+    tasksFor(ymd(addDays(new Date(), i))).forEach(t => { if (t.who && memberOf(t.who)) planned[t.who] = (planned[t.who] || 0) + 1; else unassigned++; });
+  }
+  return {fam, done, planned, unassigned, totalDone};
+}
+function shareSection(){
+  const {fam, done, planned, unassigned, totalDone} = shareStats();
+  if (!fam.length) return `<div class="sec"><div class="sec-h"><h2>${T("Qui fait quoi")}</h2></div><div class="card empty">${T("Ajoutez les membres de la famille pour répartir les tâches et voir qui s'occupe de quoi.")}${canEdit()?`<br><button class="btn ghost" style="margin-top:12px" data-act="go" data-tab="profil">${T("Ajouter la famille")}</button>`:""}</div></div>`;
+  const max = Math.max(1, ...fam.map(m => done[m.id] || 0), done._ || 0);
+  const row = (m, label, n, p) => `<div class="share-row">${m ? mav(m, 28) : `<span class="mav" style="--c:var(--gray);width:28px;height:28px">?</span>`}<div class="main"><div class="share-h"><b>${esc(label)}</b><span class="num">${T("{n} faite(s)",{n})}${p != null ? " · " + T("{p} prévue(s)",{p}) : ""}</span></div><div class="bar"><i style="width:${Math.round(n/max*100)}%;background:${m ? esc(m.color) : "var(--gray)"}"></i></div></div></div>`;
+  return `<div class="sec"><div class="sec-h"><h2>${T("Qui fait quoi")}</h2><span class="foot" style="margin:0">${T("7 derniers jours")}</span></div><div class="card pad share">
+    ${fam.map(m => row(m, m.name + (m.id === ME ? " (" + T("vous") + ")" : ""), done[m.id] || 0, planned[m.id] || 0)).join("")}
+    ${done._ ? row(null, T("Sans nom"), done._, null) : ""}
+  </div><div class="foot">${T("{n} tâche(s) cochée(s) cette semaine. {u} tâche(s) à venir n'ont personne d'attitré.",{n:totalDone, u:unassigned})}</div></div>`;
+}
+function familySection(){
+  const fam = family(), me = meMember();
+  return `<div class="sec"><div class="sec-h"><h2>${T("Famille")}</h2></div><div class="card list">
+    ${fam.map(m => `<div class="row">${mav(m, 30)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${esc(roleLabel(m))}${m.id === ME ? " · " + T("C'est vous") : m.uid ? " · " + T("A rejoint") : " · " + T("Pas encore rejoint")}</div></div>
+      ${m.id === ME ? `<span class="pill">${T("Moi")}</span>` : ""}
+      ${canEdit() ? `<button class="copy" style="color:var(--red)" data-act="delMember" data-id="${esc(m.id)}" aria-label="${T("Retirer")} ${esc(m.name)}">${T("Retirer")}</button>` : ""}</div>`).join("")}
+    ${canEdit() ? `<button class="row" data-act="invite"><span class="ico" style="--c:var(--blue)">${I_PLUS}</span><span class="main t" style="color:var(--accent)">${T("Ajouter quelqu'un")}</span><span class="chev">${I.chevR}</span></button>` : ""}
+  </div><div class="foot">${me ? T("Les tâches que vous cochez sont signées « {n} ».",{n:esc(me.name)}) : T("Choisissez « C'est moi » pour signer vos tâches et filtrer les vôtres.")}</div></div>`;
+}
+const ART_URL = SITE ? location.origin + location.pathname : "https://claude.ai/artifact/5WVU6oZS2Gzi53rfMeXpHR";
+const inviteText = () => { const d = dog() || {}; return T("Rejoins le carnet de {n} sur Dogs Life : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.",{n:d.name || T("notre chien")}); };
+const MAX_FAMILY = 100;
+function inviteForm(role){
+  if (family().length + invites().length >= MAX_FAMILY) { toast(T("Une famille compte au maximum {n} membres.", {n: MAX_FAMILY})); return; }
+  S.invRole = role || "famille";
+  openSheet(T("Ajouter quelqu'un"), `<div class="hint" style="margin:0 0 12px">${T("Choisissez son rôle : le carnet crée un code à lui donner. Avec ce code, elle rejoint la famille depuis son propre compte.")}</div>
+    <div class="role-g" id="iv-role">${ROLES.map(([k, l, d]) => `<button type="button" class="role-c ${k === S.invRole ? "on" : ""}" data-act="invRole" data-v="${k}"><i class="wz-radio"></i><div><b>${T(l)}</b><span>${T(d)}</span></div></button>`).join("")}</div>`,
+    () => { newInviteCode(S.invRole); });
+  const ok = document.querySelector("#sheet-root .save"); if (ok) ok.textContent = T("Créer le code");
+}
+async function newInviteCode(role, replace){
+  const code = genCode(), me = meMember(), id = newId();
+  if (replace) await del("invites", replace);
+  await put("invites", id, {role, hash: await hashCode(code), by: ME || "", byName: me ? me.name : "", at: new Date().toISOString(), exp: Date.now() + 7 * 864e5});
+  setTimeout(() => codeShow(code, role), 240);
+}
+function codeShow(code, role){
+  openSheet(T("Code à donner"), `<div class="code-card"><span>${esc(T(role === "garde" ? "Garde" : "Famille"))}</span><b class="num">${esc(fmtCode(code))}</b><small>${T("Valable 7 jours, pour une seule personne")}</small></div>
+    <button type="button" class="btn" style="width:100%;margin-top:14px" data-act="codeCopy" data-v="${esc(code)}">${T("Copier le code")}</button>
+    <div class="inv-s" style="margin-top:16px"><b>1</b><div><div class="t">${T("Donnez-lui ce code")}</div><div class="s">${T("De vive voix ou par message. Il ne sera plus affiché ensuite : si vous le perdez, créez-en un nouveau.")}</div></div></div>
+    <div class="inv-s" style="margin-top:10px"><b>2</b><div><div class="t">${T("Elle ouvre le carnet avec son compte")}</div><div class="s">${T("Elle entre le code, puis son prénom : elle rejoint la famille avec le rôle choisi.")}</div></div></div>
+    ${SITE ? `<div class="sh-link" style="margin-top:14px"><code>${esc(ART_URL.replace(/^https?:\/\//, ""))}</code><button type="button" class="btn ghost" data-act="copyLink">${T("Copier le lien")}</button></div>` : `<div class="hint" style="margin-top:12px">${T("Pour qu'elle puisse ouvrir le carnet, ajoutez aussi son e-mail en « Éditeur » dans « Partager » en haut de la page.")}</div>`}`);
+  const ok = document.querySelector("#sheet-root .save"); if (ok) ok.textContent = T("Terminé");
+}
+const SH_ICONS = {
+  copy:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
+  wa:'<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.6 2 1.1 1 2 1.3 2.3 1.4.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.1.1.7-.1 1.3Z"/></svg>',
+  sms:'<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 3C6.5 3 2 6.8 2 11.5c0 2.6 1.4 5 3.7 6.5L5 21.5l4-2.1c1 .2 2 .4 3 .4 5.5 0 10-3.8 10-8.4S17.5 3 12 3Z"/></svg>',
+  mail:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg>',
+  tg:'<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M21.4 4.3 2.9 11.4c-1.3.5-1.2 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.5c.3-1.3-.5-1.9-1.4-1.5ZM9.2 14l8.6-5.4c.4-.3.8-.1.5.2l-7.1 6.4-.3 3.1L9.2 14Z"/></svg>',
+  more:'<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>'
+};
+async function copyText(txt){
+  try { await navigator.clipboard.writeText(txt); return true; } catch(_) {}
+  try { const ta = document.createElement("textarea"); ta.value = txt; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, txt.length); const ok = document.execCommand("copy"); ta.remove(); return ok; } catch(_) { return false; }
+}
+let qrLib = null;
+function drawQR(url){
+  const box = () => document.getElementById("qr");
+  const go = () => { const b = box(); if (!b || !window.QRCode) return; b.innerHTML = ""; try { new window.QRCode(b, {text:url, width:320, height:320, colorDark:"#1C1C1E", colorLight:"#ffffff", correctLevel: window.QRCode.CorrectLevel.M}); b.parentElement.hidden = false; } catch(_) { b.parentElement.hidden = true; } };
+  if (window.QRCode) return go();
+  if (!qrLib) qrLib = new Promise((ok, ko) => { setTimeout(ko, 8000); const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc); });
+  qrLib.then(go).catch(() => { const b = box(); if (b) b.parentElement.hidden = true; });
+}
+
+/* ---------- setup wizard: one big screen per essential ---------- */
+const WIZ = ["welcome","name","breed","id","food","routine","vet","family","notif"];
+const wizSteps = () => S.wiz && S.wiz.addDog ? ["name","breed","id","food","routine","vet"] : WIZ;
+function wizRoutine(d){
+  const meals = +d.meals || 2, mt = {1:["18:00"], 2:["07:30","18:30"], 3:["07:30","12:30","18:30"], 4:["07:30","12:00","15:30","19:00"]}[meals] || ["07:30","18:30"];
+  const all = [0,1,2,3,4,5,6], r = [
+    {k:"w1", title:T("Balade du matin"), cat:"balade", time:"07:00", days:all, on:true},
+    {k:"w2", title:T("Sortie de midi"), cat:"balade", time:"12:30", days:[1,2,3,4,5], on:true},
+    {k:"w3", title:T("Balade du soir"), cat:"balade", time:"18:00", days:all, on:true},
+    {k:"w4", title:T("Dernière sortie"), cat:"balade", time:"21:30", days:all, on:true}];
+  const mealNames = meals === 1 ? [T("Repas")] : meals === 2 ? [T("Petit-déjeuner"), T("Dîner")] : meals === 3 ? [T("Petit-déjeuner"), T("Déjeuner"), T("Dîner")] : [T("Petit-déjeuner"), T("Déjeuner"), T("Goûter"), T("Dîner")];
+  mt.forEach((t, i) => r.push({k:"m" + i, title:mealNames[i], cat:"repas", time:t, days:all, on:true}));
+  const bk = breedKey(d.breed), tr = BREED_TRAITS[bk] || [];
+  r.push({k:"j1", title:T("Jeu et éducation"), cat:"jeu", time:"17:00", days:all, on: tr.some(x => ["herding","energy","terrier","sled","scent"].includes(x))});
+  r.push({k:"s1", title:T("Brossage"), cat:"soin", time:"19:30", days:[0,3], on: tr.some(x => ["coat","curly"].includes(x))});
+  if (tr.includes("teeth")) r.push({k:"s2", title:T("Brossage des dents"), cat:"soin", time:"20:00", days:[1,3,5], on:true});
+  return r.sort((a, b) => toMin(a.time) - toMin(b.time));
+}
+function wizStart(addDog){
+  S.wiz = {i:0, busy:false, d:{name:"", photo:null, breed:"", sex:"", birth:"", size:"", sterilized:"", food:"", ration:"", meals:"2", allergies:[], vetName:"", vetPhone:"", emergency:"", me:"", others:[], notif:null}, routine:null, dir:1};
+  if (addDog) { const cur = dog() || {}; S.wiz.addDog = true; Object.assign(S.wiz.d, {vetName: cur.vetName || "", vetPhone: cur.vetPhone || "", emergency: cur.emergency || ""}); }
+  renderWiz();
+}
+// the welcome illustration: a clean app-icon style dog
+const WZ_DOG = `<svg class="wz-dog" viewBox="0 0 160 160" aria-hidden="true">
+  <defs><linearGradient id="wzg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6B26B"/><stop offset="1" stop-color="#D9783A"/></linearGradient>
+  <linearGradient id="wzs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+  <rect x="8" y="8" width="144" height="144" rx="38" fill="url(#wzg)"/>
+  <rect x="8" y="8" width="144" height="144" rx="38" fill="url(#wzs)"/>
+  <g class="wz-ears"><path d="M44 52c-13 2-20 20-17 38 2 10 12 12 17 4l8-30c2-8-1-13-8-12Z" fill="#7A4A2A"/><path d="M116 52c13 2 20 20 17 38-2 10-12 12-17 4l-8-30c-2-8 1-13 8-12Z" fill="#7A4A2A"/></g>
+  <path d="M80 44c22 0 38 15 38 37 0 24-17 41-38 41S42 105 42 81c0-22 16-37 38-37Z" fill="#FFF6EC"/>
+  <ellipse cx="80" cy="100" rx="21" ry="16" fill="#F4E1CC"/>
+  <g class="wz-eyes"><ellipse cx="65" cy="80" rx="6" ry="7.5" fill="#2A1C14"/><ellipse cx="95" cy="80" rx="6" ry="7.5" fill="#2A1C14"/><circle cx="67" cy="77" r="2.2" fill="#fff"/><circle cx="97" cy="77" r="2.2" fill="#fff"/></g>
+  <path d="M73 92c0-3 3-5 7-5s7 2 7 5c0 3-4 6-7 6s-7-3-7-6Z" fill="#2A1C14"/>
+  <path d="M80 98v5m0 0c-2 4-7 5-10 2m10-2c2 4 7 5 10 2" stroke="#2A1C14" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="57" cy="94" rx="6" ry="3.5" fill="#FF9AA8" opacity=".55"/><ellipse cx="103" cy="94" rx="6" ry="3.5" fill="#FF9AA8" opacity=".55"/>
+</svg>`;
+function wizBody(k, d){
+  const nm = esc(d.name || T("votre chien"));
+  // single choice (segmented) and chips: plain buttons, patched in place on tap
+  const seg = (f, opts, lab) => `<div class="wz-field"><div class="wz-lab">${lab}</div><div class="seg wz-seg" data-group="${f}">${opts.map(o => `<button type="button" class="${d[f]===o?"on":""}" data-act="wzPick" data-f="${f}" data-v="${esc(o)}" aria-pressed="${d[f]===o}">${esc(T(o))}</button>`).join("")}</div></div>`;
+  const chips = (f, opts, lab, multi) => `<div class="wz-field"><div class="wz-lab">${lab}${multi ? ` <span class="wz-lab-s">${T("plusieurs choix possibles")}</span>` : ""}</div><div class="wz-chips" data-group="${f}">${opts.map(o => { const on = multi ? (d[f] || []).includes(o) : d[f] === o;
+    return `<button type="button" class="wz-chip ${on ? "on" : ""}" data-act="${multi ? "wzMulti" : "wzPick"}" data-f="${f}" data-v="${esc(o)}" aria-pressed="${on}">${multi ? `<i>${I.tick}</i>` : ""}${esc(T(o))}</button>`; }).join("")}</div></div>`;
+  if (k === "welcome") return `<div class="wz-hero">${logoImg(96)}</div>
+    <h1 class="wz-t" style="text-align:center">${T("Créons le carnet de votre chien")}</h1>
+    <p class="wz-s" style="text-align:center">${T("4 étapes rapides. Tout se modifie ensuite.")}</p>
+    <div class="wz-steps">${[["Profil", I.paw, "var(--accent)"], ["Journée", I.tRoutine, "var(--green)"], ["Vétérinaire", I.steth, "var(--blue)"], ["Famille", I_FAM, "var(--purple)"]].map(([l, ic, c]) => `<div><span style="background:${c}">${ic}</span>${T(l)}</div>`).join("")}</div>
+    ${SITE ? "" : `<button class="card wz-joincard" data-act="wzJoin"><span class="ico" style="--c:var(--purple)">${I_FAM}</span><div class="main"><b>${T("Vous avez été invité(e) ?")}</b><span>${T("Rejoignez la famille au lieu de créer un carnet")}</span></div><span class="chev">${I.chevR}</span></button>`}
+    <div class="wz-field" style="margin-top:18px;display:flex;justify-content:center">${langSeg()}</div>
+    <div style="text-align:center"><button class="wz-later" data-act="wzSample">${T("Voir d'abord un exemple")}</button></div>`;
+  if (k === "name") return `<h1 class="wz-t">${T("Comment s'appelle votre chien ?")}</h1>
+    <label class="wz-photo" for="w-photo" id="w-photo-l">${d.photo ? `<img src="${d.photo}" alt="">` : `<span>${QL.photo.i.replace("<svg",'<svg width="34" height="34"')}</span>`}<small>${T(d.photo ? "Changer la photo" : "Ajouter une photo")}</small></label><input type="file" id="w-photo" accept="image/*" hidden>
+    <input class="f wz-big" id="w-name" data-w="name" value="${esc(d.name)}" placeholder="${T("Son nom")}" autocomplete="off" maxlength="30" enterkeyhint="next">`;
+  if (k === "breed") return `<h1 class="wz-t">${T("Quelle est la race de {n} ?",{n:nm})}</h1>
+    <input class="f" id="w-q" type="search" placeholder="${T("Rechercher")}" autocomplete="off" style="margin-bottom:10px">
+    <div class="card list wz-list" id="w-breeds">${BREEDS.slice().sort((a,b) => a === BREEDS[0] ? -1 : b === BREEDS[0] ? 1 : T(a).localeCompare(T(b), LOC())).map(o => `<button type="button" class="row ${d.breed===o?"sel":""}" data-act="wzBreed" data-v="${esc(o)}" data-s="${esc((T(o)+" "+o).toLowerCase())}"><span class="main t">${esc(T(o))}</span><span class="wz-tick">${I.tick}</span></button>`).join("")}</div>
+    <div class="wz-field"><div class="wz-lab">${T("Autre race")}</div><input class="f" id="w-breed-other" data-w="breedOther" value="${esc(BREEDS.includes(d.breed) ? "" : d.breed)}" placeholder="${T("Tapez la race")}"></div>`;
+  if (k === "id") return `<h1 class="wz-t">${T("Parlez-nous de {n}",{n:nm})}</h1>
+    ${seg("sex", OPT.sex, T("Sexe"))}
+    <div class="wz-field"><div class="wz-lab">${T("Date de naissance")}</div><input class="f" type="date" id="w-birth" data-w="birth" value="${esc(d.birth)}" max="${ymd(new Date())}"><div class="wz-hint" id="w-age">${d.birth ? esc(ageOf(d.birth)) : ""}</div></div>
+    ${breedKey(d.breed) ? "" : seg("size", OPT.size, T("Gabarit"))}
+    ${seg("sterilized", OPT.ster, T("Stérilisé(e)"))}`;
+  if (k === "food") return `<h1 class="wz-t">${T("Que mange {n} ?",{n:nm})}</h1>
+    ${chips("food", OPT.food, T("Type"), false)}
+    <div class="wz-field"><div class="wz-lab">${T("Ration par jour (g)")}</div><input class="f num" type="number" inputmode="numeric" id="w-ration" data-w="ration" value="${esc(d.ration)}" placeholder="250"></div>
+    ${seg("meals", OPT.meals, T("Repas / jour"))}
+    ${chips("allergies", OPT.allergies, T("Allergies"), true)}`;
+  if (k === "routine") { const r = S.wiz.routine || (S.wiz.routine = wizRoutine(d));
+    return `<h1 class="wz-t">${T("La journée type de {n}",{n:nm})}</h1><p class="wz-s">${T("Gardez ce qui correspond et ajustez les heures. Vous pourrez tout changer dans Routine.")}</p>
+    <div class="card list">${r.map((x, i) => { const c = CATS[x.cat]; return `<div class="row wz-r ${x.on?"":"off"}" id="wr-${i}">${ico(c.color, c.icon)}<div class="main"><div class="t">${esc(x.title)}</div><div class="s">${esc(daysLabel(x.days))}</div></div>
+      <input class="f num wz-time" type="time" data-wr="${i}" value="${esc(x.time)}" aria-label="${T("Heure")}"><button type="button" class="switch ${x.on?"on":""}" data-act="wzToggle" data-i="${i}" role="switch" aria-checked="${x.on}" aria-label="${esc(x.title)}"><i></i></button></div>`; }).join("")}</div>`; }
+  if (k === "vet") return `<h1 class="wz-t">${T("Son vétérinaire")}</h1><p class="wz-s">${T("Utile en cas d'urgence et pour la personne qui le garde.")}</p>
+    <div class="wz-field"><div class="wz-lab">${T("Cabinet")}</div><input class="f" id="w-vn" data-w="vetName" value="${esc(d.vetName)}" placeholder="${T("Nom")}"></div>
+    <div class="wz-field"><div class="wz-lab">${T("Téléphone")}</div><input class="f num" type="tel" id="w-vp" data-w="vetPhone" value="${esc(d.vetPhone)}" placeholder="021 …"></div>
+    <div class="wz-field"><div class="wz-lab">${T("Urgences 24 h")}</div><input class="f num" type="tel" id="w-ve" data-w="emergency" value="${esc(d.emergency)}" placeholder="${T("Numéro")}"></div>`;
+  if (k === "family") return `<h1 class="wz-t">${T("Qui s'occupe de {n} ?",{n:nm})}</h1><p class="wz-s">${T("Chacun pourra cocher les tâches avec son prénom et recevoir les siennes.")}</p>
+    <div class="wz-field"><div class="wz-lab">${T("Votre prénom")}</div><input class="f" id="w-me" data-w="me" value="${esc(d.me)}" placeholder="${T("Prénom")}" maxlength="24"></div>
+    <div class="wz-note">${T("Les autres rejoignent eux-mêmes : à la fin, touchez « Inviter quelqu'un » dans l'espace Famille et envoyez-leur le lien. Une fois qu'ils ont rejoint, vous pourrez leur confier des tâches.")}</div>`;
+  if (k === "notif") return `<h1 class="wz-t">${T("Recevoir des alertes ?")}</h1><p class="wz-s">${T("Une bannière, une vibration et un petit son à l'heure de chaque tâche, tant que le carnet est ouvert.")}</p>
+    <div class="wz-choice" data-group="notif">${[[1,"Oui, m'alerter","À l'heure de chaque balade, repas ou médicament."],[0,"Non merci","Vous pourrez les activer dans Réglages."]].map(([v,t,s]) => `<button type="button" class="card ${d.notif === !!v ? "on" : ""}" data-act="wzNotif" data-v="${v}" aria-pressed="${d.notif === !!v}"><i class="wz-radio"></i><div><b>${T(t)}</b><span>${T(s)}</span></div></button>`).join("")}</div>`;
+  return "";
+}
+function wizCanNext(k, d){ if (k === "name") return !!d.name.trim(); if (k === "notif") return d.notif !== null; return true; }
+// the shell (top bar, body, footer) is built once; changing step only swaps the body; a tap inside a step patches the buttons in place
+function renderWiz(){
+  const root = $("#wiz-root"); if (!S.wiz) { root.innerHTML = ""; document.body.classList.remove("wiz-open"); return; }
+  document.body.classList.add("wiz-open");
+  if (!root.querySelector(".wiz:not(.join):not(.join-ok)")) root.innerHTML = `<div class="wiz" role="dialog" aria-modal="true" aria-label="${T("Configuration")}"><div class="wz-top"></div><div class="wz-body" id="wz-body"></div><div class="wz-foot"></div></div>`;
+  const w = S.wiz, steps = wizSteps(), k = steps[w.i], d = w.d;
+  const optional = ["breed","id","food","vet","family"].includes(k);
+  root.querySelector(".wz-top").innerHTML = `${w.i ? `<button class="back" data-act="wzBack">${I.chevL}<span>${T("Retour")}</span></button>` : `<button class="wz-skip" style="justify-self:start" data-act="wzClose">${T("Fermer")}</button>`}
+      <div class="wz-prog" aria-hidden="true"><i style="width:${Math.round((w.i + 1) / steps.length * 100)}%"></i></div>
+      ${optional ? `<button class="wz-skip" data-act="wzNext" data-skip="1">${T("Passer")}</button>` : `<span class="wz-skip"></span>`}`;
+  const body = root.querySelector(".wz-body");
+  body.innerHTML = `<div class="wz-in">${wizBody(k, d)}</div>`; if (!w.still) body.scrollTop = 0;
+  body.classList.remove("in-r", "in-l"); if (!w.still) { void body.offsetWidth; body.classList.add(w.dir < 0 ? "in-l" : "in-r"); }
+  wizFoot();
+  const f = body.querySelector("input[data-w]");
+  if (f && ["name","family"].includes(k) && !matchMedia("(pointer:coarse)").matches) setTimeout(() => { try { f.focus({preventScroll:true}); } catch(_){} }, 300);
+}
+function wizFoot(){
+  const w = S.wiz, root = $("#wiz-root"); if (!w || !root) return; const foot = root.querySelector(".wz-foot"); if (!foot) return;
+  const steps = wizSteps(), k = steps[w.i], last = w.i === steps.length - 1, can = wizCanNext(k, w.d);
+  const label = w.busy ? `<span class="spin"></span>${T(w.addDog ? "Ajout du chien…" : "Création du carnet…")}` : k === "welcome" ? T("Commencer") : last ? T("Terminer") : T("Continuer");
+  let b = foot.querySelector(".wz-next");
+  if (!b) { foot.innerHTML = `<button class="btn wz-next" data-act="wzNext"></button>`; b = foot.querySelector(".wz-next"); }
+  if (b.innerHTML !== label) b.innerHTML = label;
+  b.disabled = !can || w.busy;
+}
+function wizGroup(f, isOn){ document.querySelectorAll(`#wiz-root [data-group="${f}"] > button`).forEach(b => { const on = isOn(b.dataset.v); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); }); }
+async function wizFinish(){
+  const w = S.wiz, d = w.d; w.busy = true; renderWiz();
+  try {
+    const doc = {name:d.name.trim(), breed:d.breed, sex:d.sex, birth:d.birth, size:d.size, sterilized:d.sterilized, food:d.food, ration: d.ration ? d.ration + " g" : "", meals:d.meals,
+      allergies:d.allergies, vetName:d.vetName, vetPhone:d.vetPhone, emergency:d.emergency};
+    if (d.photo) doc.photo = d.photo;
+    let newDog = "main";
+    if (w.addDog) { newDog = newId(); await put("dogs", newDog, doc); CUR = newDog; try { LS.set("carnet-dog", newDog); } catch(_){} }
+    else if (w.replace) { newDog = dogId(); await saveDog(doc); for (const r of routine()) await del("routine", r.id); }
+    else await put("config", "dog", doc);
+    for (const r of (w.routine || wizRoutine(d)).filter(x => x.on)) await put("routine", newId(), {title:r.title, cat:r.cat, time:r.time, days:r.days, notes:"", who:"", dog: newDog});
+    const since = Date.now(), has = n => family().some(m => m.name.toLowerCase() === n.trim().toLowerCase());
+    d.others = d.others.filter(o => !has(o));
+    if (d.me.trim() && !myMember() && !has(d.me)) { const id = newId(); await put("members", id, {name:d.me.trim(), color:MCOL[0], uid:S.me || "", role:"famille", since}); ME = id; try { LS.set("carnet-me", id); } catch(_){} }
+    if (d.notif !== null) { NOTIF = !!d.notif; NOTIF_ASKED = true; try { LS.set("carnet-notif", NOTIF ? "1" : "0"); } catch(_){} }
+    const added = w.addDog; S.wiz = null; renderWiz(); S.tab = "aujourdhui"; S.sub = null; S.lastHTML = ""; render();
+    if (added) toast(T("{n} a rejoint le carnet",{n:doc.name})); else setTimeout(tutoStart, 700);
+  } catch(e) { w.busy = false; renderWiz(); toast(T("Modification non enregistrée. Réessayez dans un instant.")); }
+}
+
+/* ---------- join the family (first visit of an invited person) ---------- */
+const JOIN_KEY = "carnet-join-later";
+function needsJoin(){
+  if (S.joinForce && !S.wiz) return true;
+  if (S.wiz || S.mode !== "db" || !S.ready || !S.me || !dog() || !dog().name || S.readOnly) return false;
+  if (family().some(m => m.uid === S.me)) return false;
+  try { if (sessionStorage.getItem(JOIN_KEY)) return false; } catch(_){}
+  return true;
+}
+/* ---------- family code: needed to join; only a hash is stored, never the code itself ---------- */
+const normCode = c => String(c || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+async function hashCode(c){
+  const txt = "carnet-chien|5WVU6oZS2Gzi53rfMeXpHR|" + normCode(c);
+  try { const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt)); return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join(""); }
+  catch(_) { let h = 2166136261; for (const ch of txt) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return "f" + h.toString(16); }
+}
+function renderJoin(){
+  const root = $("#wiz-root");
+  if (S.wiz) return;
+  if (!needsJoin()) { if (root.querySelector(".join")) { root.innerHTML = ""; document.body.classList.remove("wiz-open"); } return; }
+  if (root.querySelector(".join") && !S.joinDirty) return;
+  S.joinDirty = false;
+  const d = dog() || {}, fam = family(), free = S.isOwner || S.mode !== "db" || (!fam.length && S.platEdit === true), inv = S.codeInv, unlocked = free || inv;
+  document.body.classList.add("wiz-open");
+  let body, foot;
+  if (!unlocked) {
+    const wait = Math.max(0, Math.ceil(((+LS.get("carnet-codelock") || 0) - Date.now()) / 1000));
+    body = `<div class="wz-field" style="margin-top:8px"><div class="wz-lab" style="text-align:center">${T("Votre code")}</div>
+      <input class="f wz-big code-in" id="j-code" maxlength="11" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" enterkeyhint="go" placeholder="ABCD 2345" ${wait ? "disabled" : ""}>
+      <div class="wz-hint" id="j-code-msg" style="text-align:center">${wait ? T("Trop d'essais. Réessayez dans {n} s.",{n:wait}) : T("Le code vous est donné par un membre de la famille.")}</div></div>`;
+    foot = `<button class="btn wz-next" data-act="joinCode" ${wait ? "disabled" : ""}>${T("Valider le code")}</button>`;
+    if (wait) setTimeout(() => { S.joinDirty = true; renderJoin(); }, wait * 1000 + 50);
+  } else {
+    body = `${inv ? `<div class="inv-ok" style="margin-bottom:14px">${I.tick}<div><b>${T("Code valide")}</b><span>${esc(T("Vous rejoignez avec le rôle {r}",{r:T(inv.role === "garde" ? "Garde" : "Famille")}))}${inv.byName ? " · " + esc(T("invité(e) par {n}",{n:inv.byName})) : ""}</span></div></div>` : ""}
+      <div class="wz-field"><div class="wz-lab">${T("Votre prénom")}</div><input class="f wz-big" id="j-name" placeholder="${T("Prénom")}" maxlength="24" autocomplete="given-name" style="font-size:20px"></div>`;
+    foot = `<button class="btn wz-next" data-act="joinNew">${T("Rejoindre")}</button>`;
+  }
+  root.innerHTML = `<div class="wiz join" role="dialog" aria-modal="true" aria-label="${T("Rejoindre la famille")}">
+    <div class="wz-body in-r" style="padding-top:calc(40px + env(safe-area-inset-top,0px))"><div class="wz-in">
+      <div style="display:flex;justify-content:center;margin-bottom:12px">${d.name ? avatarHTML(d, "lg") : `<div class="join-ic">${I_FAM}</div>`}</div>
+      <h1 class="wz-t" style="text-align:center">${d.name ? T("Rejoindre la famille de {n}",{n:esc(d.name)}) : T("Rejoindre une famille")}</h1>
+      <p class="wz-s" style="text-align:center">${unlocked ? T("Votre compte devient votre place dans la famille : les tâches que vous cochez sont signées à votre nom.") : T("Entrez le code que la famille vous a donné.")}</p>
+      ${body}
+    </div></div>
+    <div class="wz-foot" style="display:grid;gap:8px">${foot}<button class="wz-later" data-act="joinLater">${T(S.joinForce ? "Annuler" : "Plus tard")}</button></div>
+  </div>`;
+  const ci = root.querySelector("#j-code, #j-name"); if (ci && !ci.disabled && !matchMedia("(pointer:coarse)").matches) setTimeout(() => ci.focus({preventScroll:true}), 200);
+}
+async function checkCode(){
+  const i = $("#j-code"), msg = $("#j-code-msg"); if (!i) return;
+  const c = normCode(i.value); if (!c) { i.focus(); return; }
+  const h = await hashCode(c), hit = invites().find(v => v.hash === h);
+  if (hit) { S.codeInv = hit; LS.del("carnet-codetries"); try { if (navigator.vibrate) navigator.vibrate(15); } catch(_){} S.joinDirty = true; renderJoin(); return; }
+  const n = (+LS.get("carnet-codetries") || 0) + 1; LS.set("carnet-codetries", String(n));
+  if (n >= 5) { LS.set("carnet-codelock", String(Date.now() + 60000)); LS.set("carnet-codetries", "0"); S.joinDirty = true; renderJoin(); return; }
+  i.classList.remove("shake"); void i.offsetWidth; i.classList.add("shake"); i.select();
+  try { if (navigator.vibrate) navigator.vibrate([40, 40, 40]); } catch(_){}
+  if (msg) msg.textContent = T("Code incorrect ou expiré. Encore {n} essai(s).",{n: 5 - n});
+}
+async function joinFamily(name, role, inv){
+  if (S.mode === "db" && !S.me) { toast(T("Connectez-vous pour rejoindre la famille.")); return; }
+  const free = S.isOwner || S.mode !== "db" || (!family().length && S.platEdit === true);
+  if (!free && !(inv && inv.hash && invites().some(v => v.id === inv.id))) { S.codeInv = null; S.joinDirty = true; renderJoin(); toast(T("Ce code n'est plus valable.")); return; }
+  const mine = myMember();
+  if (mine) { ME = mine.id; LS.set("carnet-me", ME); S.joinForce = false; clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); render(); toast(T("Vous faites déjà partie de la famille.")); return; }
+  if (family().length >= MAX_FAMILY) { toast(T("Une famille compte au maximum {n} membres.", {n: MAX_FAMILY})); return; }
+  const fam = family(), id = newId(), doc = {name, color: freeColor(), uid: S.me || "", role: role || "famille", since: Date.now(), invitedBy: inv ? inv.byName || "" : ""};
+  const btn = $("#wiz-root .wz-next"); if (btn) { btn.disabled = true; btn.innerHTML = `<span class="spin"></span>${T("Un instant…")}`; }
+  if (S.mode === "db") {
+    try { await db.collection("members").doc(id).set(doc); }
+    catch(e) { S.noWrite = true; S.joinForce = false; clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); S.lastHTML = ""; render(); toast(T("Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur »."), 5000); return; }
+    C.members = Object.assign({}, C.members, {[id]: doc});
+  } else await put("members", id, doc);
+  if (inv) await del("invites", inv.id); S.codeInv = null;
+  ME = id; LS.set("carnet-me", ME); S.joinForce = false; render(); await joined(name);
+}
+
+/* ---------- guided tour ---------- */
+const TUTO = [
+  {sel:".sum", t:"Votre journée", x:"L'anneau se remplit à chaque tâche cochée. Juste à côté : la prochaine tâche et le temps qu'il reste."},
+  {sel:".ql", t:"Journal rapide", x:"Pipi, caca, balade chronométrée, accident, photo… Un toucher suffit : l'heure et votre prénom sont notés."},
+  {sel:"#timeline", t:"Cocher une tâche", x:"Touchez le rond à droite quand c'est fait. La famille le voit tout de suite, signé à votre nom."},
+  {sel:".eod", t:"Fin de journée", x:"Le soir, notez l'appétit, l'énergie et les selles. Le bilan vous donne des conseils adaptés à sa race."},
+  {sel:'.tabbar [data-tab="planning"]', t:"Planning", x:"La routine de la semaine et les rendez-vous. Choisissez qui s'occupe de quoi."},
+  {sel:'.tabbar [data-tab="sante"]', t:"Santé", x:"Traitements, vaccins, croissance, propreté, croquettes et résumé pour le vétérinaire."},
+  {sel:'.tabbar [data-tab="famille"]', t:"Famille", x:"Qui fait quoi, les messages, les invitations et la garde. C'est aussi ici qu'on rejoint ou quitte la famille."},
+  {sel:'.tabbar [data-tab="chien"]', t:"Votre chien", x:"Sa fiche, son compagnon 3D, l'éducation, vos autres chiens et les réglages."}
+];
+function tutoStart(){ if (!dog()) return; S.tab = "aujourdhui"; S.sub = null; S.lastHTML = ""; render(); S.tuto = 0; window.scrollTo(0,0); setTimeout(renderTuto, 150); }
+function tutoLock(on){
+  document.documentElement.classList.toggle("tuto-lock", !!on);
+  if (on && !window.__tutoGuard) { window.__tutoGuard = true;
+    const stop = e => { if (S.tuto != null) e.preventDefault(); };
+    window.addEventListener("touchmove", stop, {passive:false});
+    window.addEventListener("wheel", stop, {passive:false});
+    window.addEventListener("keydown", e => { if (S.tuto != null && [" ", "PageDown", "PageUp", "ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) e.preventDefault(); }, {passive:false});
+  }
+}
+function tutoEnd(){ S.tuto = null; S.tutoTok = (S.tutoTok || 0) + 1; const t = $("#tuto-root .tuto");
+  if (t) { t.classList.add("leaving"); setTimeout(() => { if (S.tuto == null) $("#tuto-root").innerHTML = ""; }, 260); } else $("#tuto-root").innerHTML = "";
+  tutoLock(false); try { LS.set("carnet-tuto", "1"); } catch(_){} }
+// waits until the page has stopped moving (smooth scroll) before measuring
+function tutoSettle(el, cb, tok){ let last = null, still = 0, n = 0;
+  const f = () => { if (tok !== S.tutoTok) return; const t = el.getBoundingClientRect().top;
+    still = last !== null && Math.abs(t - last) < .5 ? still + 1 : 0; last = t;
+    if (still >= 4 || ++n > 70) cb(); else requestAnimationFrame(f); };
+  requestAnimationFrame(f); }
+function renderTuto(){
+  const root = $("#tuto-root"); if (S.tuto == null) { root.innerHTML = ""; tutoLock(false); return; }
+  const st = TUTO[S.tuto]; let el = document.querySelector(st.sel);
+  if (!el || !el.getBoundingClientRect().height) { if (S.tuto < TUTO.length - 1) { S.tuto++; return renderTuto(); } return tutoEnd(); }
+  tutoLock(true);
+  const tok = S.tutoTok = (S.tutoTok || 0) + 1, inBar = !!el.closest(".tabbar");
+  let wrap = root.querySelector(".tuto");
+  if (!wrap) { root.innerHTML = `<div class="tuto" role="dialog" aria-modal="true" aria-label="${T("Tutoriel")}"><div class="tuto-hole"></div><div class="tuto-card out"></div></div>`; wrap = root.querySelector(".tuto"); }
+  const hole = wrap.querySelector(".tuto-hole"), card = wrap.querySelector(".tuto-card");
+  card.classList.add("out");
+  if (!inBar) { const r0 = el.getBoundingClientRect(), big = el.offsetHeight > innerHeight * .5;
+    const target = big ? r0.top - 70 : r0.top + r0.height / 2 - innerHeight * .4;
+    if (Math.abs(target) > 4) window.scrollBy({top: target, behavior: "smooth"}); }
+  tutoSettle(el, () => {
+    const r = el.getBoundingClientRect(), pad = 8, vh = innerHeight;
+    const top = Math.max(6, r.top - pad), h = Math.min(r.height + pad*2, vh * .55);
+    const below = top + h + 190 < vh;
+    Object.assign(hole.style, {left: Math.max(6, r.left - pad) + "px", top: top + "px", width: Math.min(innerWidth - 12, r.width + pad*2) + "px", height: h + "px"});
+    hole.classList.add("on");
+    setTimeout(() => { if (tok !== S.tutoTok) return;
+      card.style.top = below ? (top + h + 12) + "px" : "auto"; card.style.bottom = below ? "auto" : (vh - top + 12) + "px";
+      card.innerHTML = `<div class="tuto-step">${S.tuto + 1} / ${TUTO.length}</div><div class="tuto-prog">${TUTO.map((_, i) => `<i class="${i <= S.tuto ? "on" : ""}"></i>`).join("")}</div><b>${T(st.t)}</b><p>${T(st.x)}</p>
+        <div class="tuto-b"><button class="wz-later" data-act="tutoSkip">${T("Passer")}</button><button class="btn" data-act="tutoNext">${S.tuto === TUTO.length - 1 ? T("C'est parti !") : T("Suivant")}</button></div>`;
+      card.classList.remove("out"); }, 120);
+  }, tok);
+}
+
+const LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAbfUlEQVR42u2de1RTV9bA7w1JoKAQeQRaKBREZEZFBZmiLqo8REQFZwRrBesstYPFWgXHzlhhbB211sUIUqeiQltQ1I5ixaJClYcux4qgUh/IG+QlUAhPSSCP+/2x15zvNgk0ILnk0rP/cCkrkuTc39nvsw9JURSBBYs64eAlwILhwILhwILhwILhwILhwILhwILhwILhwILhwILhwIIFw4EFw4EFw4EFw4EFw4EFw4EFw4EFw4EFw4EFw4EFC4YDC4YDC4YDC4YDC4YDC4YDC4YDC4YDC4YDC4YDCxYMBxYMBxYMBxYMBxYMB5YxFe54+jIKhUKhUHA4HA7n/6EXi8V1dXWVlZVlZWV1dXW1tbVtbW0ikUgsFovF4oGBAXgZn883NjY2NjY2MTGxsrKys7ObMmWKo6Ojo6Pjq6++Sn8XmUxGkiSHwyFJcnzDQY6DaYIURcnlcj09PfS0Ojo6Hj9+fPfu3aKiovLy8qamJgQB+i+DrgjtkVMUZWxsbGdn5+Li4u7u/oc//GHq1KnoBTKZTAlEDIduqQqKovT09OCfFRUVubm5169ff/DgQUdHB/0Zo40O35f+pxIW6E+KohQKhRIuv/vd77y9vRcvXuzu7s7n81U/A4Zj7EUul6Pn3dLScuXKle+++66goEAmkyEaOBwORZMRLhBJghFBBgV+7ujouHz58uDgYGdnZ3hHhUIxzhBhHxx0LO7evZuSknL16tWuri54QlwuF56TNr4XAkUul8NPeDzeokWL3nvvvbfeemv8aRE2wQFKHjbx9evXv/zyyxs3bgAT8Dy0xIT6MI/D4XA4SJe89dZbH374oZeXlxK+GA4mXE6ktHNycg4dOnTnzh30kJhkQlWXwAeAfy5cuHDHjh0eHh5gg7hcLoZD63YEsCguLj548GB2djbS8Ei9j7no6ekh5yYsLGzXrl2WlpYKhQI+J4ZDiwqjq6vrwIEDycnJcrlc17BQQgS0iFAojImJWbNmDR1uDMdoehjgXly7dm3nzp01NTXgW4wWFuT/RDX/8TLRDUEQXC4XfJGlS5cePHjQysqKpSZGR+GA1ZRIJHv27Dl27BhsSghTX9I/gAQGEKZW4cOCkCRJd3KHu0rw3+VyuZWV1RdffOHt7c1GL1UX4QAySkpKIiIiHj16BAuKnL6RMQHqHT0biqKMjIyEQqFAIDA0NOTxeARBvHjxQiwWd3Z2trW1SSQS+ou5XC7k5oerQoDCTz75ZMuWLQAZizKqugUHcjIyMjK2bNny4sWLl1EYsFMRE4aGhi4uLnPmzJk5c+Ybb7zx+uuvm5iYQJaTLhKJpLOzs66urrS0tKioqKCgoKKiAqVNh+vuAAoURb3zzjtxcXE8Hg+ZSwzH8MiAjRUXF7d3796X8TDQIyEIwtjY2MfHJyAgwMPD47XXXlP7pkr/USlWevr0aXZ29sWLF0tKStDLNP9gyMQsWLAgNTV1woQJbOFDV+BAlj4qKiolJQU8gxF8NtAWoP+nTp26du3aFStWoLIq8jaQ+Vd1AuBNwdVAngf8JD8/PykpCWLp4eZXeDyeTCZzc3P7z3/+IxAIWMGHTsABn0Emk23atOnixYuwz0bgA6J8lJub25YtW/z9/cGZQO7nCJ4HMKpQKFC4cefOnbi4uOvXrw9XtwEfrq6uFy5cmDhxou7zMfZwoNVft25dVlYWl8uVSqUjUBiQcXJwcPjoo49WrlyJSmX0Uv7L+0OIsDNnzuzevbu9vX1YXhG4qPPmzTt//jyPx9PxFNkYwwErzuFw/vznP2dmZo6MDFhxLpe7devWrVu3GhkZabXAAR4uh8Opq6vbunXrzZs3h8UH6I+AgICTJ0/qeHyr98knnxBjmhqHh5qenj4CMpDj6erq+s0336xatYrP58OKa2/R4TfLZLJJkya9/fbbXV1dhYWFmudAFQoFj8crKyvr6upatGgRfFoMh/p8xoEDBxITE0dABipnREZGHj161MbGBjXwEYxUZcHK+Pr6Ghoa5uXlaf6+4MEUFhZCjxl0lGGzokzGhQsX3nvvvREkM8CU2NjYxMfHe3l5jVV+CcIfLpd75MiR3bt3a/5FAGIej3ft2rVp06bppnM6NnDAWpSWlvr4+PT39w8rakVRibe397///W+hUKjqdTLZl0VRlEwm4/F4u3btSkxM1JwPqNJNmTIlLy+Pz+froPPBGavwRCKRbNy4EbLUmpMBnX8KhWLbtm3nzp0TCoWwcenLCtoejA4zLR1Qadu3b5+Xl5fmNVh4ZUVFxZ49e0axoMhuOGBRPv7446dPnw5rUaAFcMKECUlJSTExMVDsUHoSYL+7urp27tzZ1tY2dKP56Lb8UBSVmJgIbRwa2gjwRo8dO3b79m1UiPntwgEbPS8vLyUlZQQZgilTply+fPmPf/yj6rEAUO9cLre4uNjf3//YsWOQARtFbTeE+YOEurm5eXx8/GD13sF+LUmS27dv7+/vH5YSHW9wwEL09vZGRkaiJLfmtQlfX9+srKwZM2aotkeAKeFyuampqQEBAeXl5RYWFqPlT6AOIxD4oeqHB+Pi5+cXHBysuccDrywvL09OTqZ3HP7m4AB9+69//au+vl7DhQDdoFAoIiIizp49KxAIQPeomhKJRPLXv/41MjIStqDSKaYRJ7u4XK6ent7AwEBra2tLS0tnZyf8UG1tBYzLp59+OnHiRNgJGi4LSZJxcXFtbW06xQeHYTKqqqoSExM1LHyDU8nj8eLj4//5z3/SG82VQuLy8vJly5Z9/fXX9MLbqLQnnjp1KiwszMPDw9XV1dXVdc6cOT4+PtHR0Q8fPlR9LzAuVlZW4eHhmofWsDIikSg2NvblPzwrQ1nwQ9etW5eZmalJyRucDEtLyxMnTsyfP181XkUnFS5fvvzhhx92dnaCEwOaXyAQ3L9/XyAQaL6D6baPIIjU1NTY2NjGxkYlrxaVc4ODg/fs2QMRE714S5JkR0eHu7t7V1eXhlE6GCx9ff2CggJra2sd6QniMEnG/fv3MzMzNVEbQMasWbOysrKADKV4FeXIP//883fffbezsxNOkYxKfRjC7MjIyMbGRj09PZSMRwIq7dy5c4sWLfrpp5/oMRdwb2pq+v7770MLmYbvC5YR1KqOuKUcxs53EAQRGxurtqFGrfu5YsWK77//3tbWVtX9BC3S1ta2du3agwcPwi9XAk4ikYjF4hFYE7lcvn79+u+++w5wRL4n538Cmh88j4aGhpUrV5aVlaG+c5Td+uCDD6ZPn655azF8/jNnzrS3t+uI58FhRm2QJPnkyZNr167Bo/1V93P79u3JycmGhob0Rgp6vHrv3j1/f/8rV67Ak1Ddav39/XCWWvNdCH5GTExMdnY2vZ8PNRUggX9KpVIej9fZ2blhwwYAEbUsEQRhYGCQkpJiYWEhl8uhOv+raOrp6XV2dqalpemI58Gc5jh69OjQAR7oag6HEx8f//HHH0O/D13NwHpxudyTJ08uX768pqZGbaYEnAaKonp6ejSHAwxfYWHh8ePH+Xz+wMAAaBGCIMzMzH7/+9/Pnz/f09PT09Nz7ty506ZNs7Cw4PF4UqmUoqjS0tLDhw/TtzsYlzfeeOPChQv29vbwXSDG+dWhAadOnQLVOP4dUth/jY2Nc+bMgfBS7TuCkyEQCE6cOOHt7a2qjeHhDQwMxMTEJCUlATeDbS9QJ2lpaf7+/hrms+Fzrly58saNGxRFmZiYeHp6+vr6zpo1y87OztjYWOn1L168aGlpKSsrKyoqunPnTlNTU05OjqmpKd3/hbdub2/ft2/f2bNn+/v76ae91WbVIBg+f/78sDLxBEsn+8Cinz17dmBgYLCUKJDh4OBw8uRJZ2dntU4GGPjw8PA7d+6AUzKE4oXH8/PPP2uoOeAx3Lx5Mz8/38PDIywszMfHRygUqh7jRo/QyMjIwcHBwcFhyZIlBEE0NDSoJmSBUTMzs0OHDkVERJw/fz4zM7OkpAS5R2hUBDJe8NXS0tLgTPZ41hzwy+Vy+fz58ysrK9WaUiDD3d395MmTFhYWSmSglMPNmzc3bdrU0tKiSdIdfueuXbuioqI0cQmB4LS0NH19/eDgYKUhUmqb+ehbf+hORHqJWKFQ/PTTT7dv3y4sLHzy5El9fb1SFwusmKmp6b1790xMTIYbh7NJc8CiFBUVVVRUqLUC8BSDgoK+/PJLAwMDpewnqq8mJSXt3LkTHpXm8SoU3jTvKAsNDaV3Lg490kmJmCHOTMNXANS4XO7s2bNnz54Ne6ahoaGysrKmpqasrKy6urq+vv7nn3/u6+vr7Oy8fPnymjVrVNPB4wcO2AeXLl1SGlVAD1nDwsIOHz6MSFJS9TKZbMeOHampqfBfNKxbwvs2NTVpXgOjb/ERWPpfzVnRJw0h6O3s7Ozs7OiEiUSi7u7upqYmU1NTMEzj1ufQ09OTSqU//PCDks1G83GioqJ27dpF7+qmOxmNjY0RERG3bt36VSdDrYhEomHBQT+lor2oDX1TJZ8U6DE3Nzc3N3dwcFCdXjfe4ID0Rk1NDR0OpEX27NmzefNm1Q5sIKOgoGD9+vXNzc0jaCKE5W5tbQUDMbaWW0PDpHTGn7Fm2LHMc/z3v/+lq0dExv79+zdv3gwFVfqRZTDMp0+fDgoKam5uHllSHNa3o6NjuElSXcCFw+GAhwtuilwul8vl0DkA6pOx5LrWnZ3bt2/T40kwEHv37g0PD5dKpfSKCQoN9u7dGxcXNywnQ610d3d3dHTAMRaCVWNV1eqVwabmsRWOvr6+R48eoYGeEJtERka+//77kHtWcj9fvHixefPm77//HrTLiFPIoJb7+/tFIpGNjY1umpWhkzS9vb2tra09PT0dHR09PT2QOhMIBEKh0M7ODpZO299Lu3BUV1c3NzejtKBcLg8JCYmOjlbKPSD389133y0uLn75OS1oibu7u5lpIx3FhGFJSUlUVFR9fX1rayt9pgiKeuzt7YOCgrZt26ZtpahdnwOygWBEIdN15MgRCBfpQ6K5XO6jR4+WLl06WmQgOFpbW9kFB0EQeXl5RUVFz58/R+2J9KSLXC6vqqqKi4sLDAxsb29nMRxPnjxBFTUzM7Pk5GRQGEpk/PjjjytWrKivrx8tMpQy6OwyKJD5AG8MdRGAgB2BboHi4mLojmMrHJWVlcgJOHLkiLW1Nf3oH5CRn58fEhIyWt06xEiTpLogsDJz586dMGHCYJ446hYgSTIjI4PFcMAIQJlMtm7dOj8/P7qrAYnh27dvh4aG9vX1aWl6JHg8LNIcMpnMzMxs3bp1Q6dHAREY6s1WOLq6ujgcjlAo3L17Nz07DrFJSUlJaGioRCLRRuMT+BmdnZ1jnmckhj/JdPv27ba2tr9astf299IuHB0dHRRFRUdH0wuMkCwXiURhYWHd3d1abYmDfh/WxbHGxsZJSUl8Pn/oTmNtO9rahWNgYGDGjBnvvPMO2gToOPymTZuePXumvTOisHCgeNl1Xw5Undzc3I4fP456PtS+Ul9fn8VwUBQVFRUF1Q16Ef/IkSM5OTlwREyrH6C7uxvdwMIiPiBqW758+VdffQWxnmq2gyTJKVOmsBgOJycnf39/1KEPOY/S0tK9e/dqIzZRLa/09vaOYI6ULgjsnMDAwK+//prP5ytl0+Hvnp6eLIZj06ZNfD6fXo8lSTImJgYeGAO7WSqVsqv2psSHVCpdunRpQkIC3bhATY7D4aCmNVbCsXr1ahSSgdooLCzMzc1l7NoD1EHOUoHpciEhIbNnz0bhHlCyYMEC6ChjKxyqHtMXX3zBZPgAlW7W+RyqJnLu3LlK6wa5EHY7pHQ/tKamRrUrjNDyeSqJREKwXEiSNDQ0RH+Xy+V8Pt/V1ZXdcNB7NQiCuHTpklQqZWwgE+ogJ9gvKNULfputra2VlRW78xxKVYOcnByGNTyHw1G9F4FdAnvpwYMH9AuKZs2aRT+dy2I4wNNub29/+PAhavxhzKGDvhiWXrQGDlNZWVlpaSndHM+fP5/1GVK6TXn69GlPTw89IcaA6OvrGxgYsNoVJUkSBmFDqALHaOfNm8dA5pfDWFNkWVkZk5lsUBV8Pp+9cIARaW1tPX36NKpWkiQ5c+bMyZMnMzDghbmiQ3V1NfOd3FZWVhBOs9GsABz79u2D8iRKogcFBTGTKGIOjjFpyrK0tFSd68IKgd6XrKysU6dOQSkOuj34fH5QUBAzOpjDWKgCrRWMORywyezt7dmYAQMyampqPvjgAzQFCoptvr6+r7/+OjOz0jkMd88yLNOnT2epznj+/Pnbb78Nw4lg6QCRjRs3MoY7cw7pKM4T1jwInDFjBov6OdBQq+rq6qCgoKqqKtQJBaGKi4uLp6cnYzP/mYMDhuMw4xiC+2Ztbe3o6MgKbxSwgLby7OzsgIAAIIPuLVEUtXXrViZnyXEZ9g0JZtu4YebHcPfZEJPO6RfMvjx2KCWop6fH5XLb29tjY2OPHz8OYSp9fCVFUU5OTsuWLVOaoDdO4ADfkMlbOwICAjQ3z/Cc0JgezSfb0082K6Ez2AdD2S00C6S1tfXbb79NTExsbm5WvYEbGjj+9re/QQcQY1aSy1jgMHnyZGbcUsgBmJmZLVy4UJP5J4gJ9Mqurq66urpnz541NTWJxWIYpv7KK68YGBgIhUK45NzS0tLIyIjP5w9LLSlB09vbW1hYmJGRcfnyZZFIpPYuUqihuLq6BgYGMqk2GIXDyclJX19/uLfvECOqVMnl8uXLl5uYmAxtUxAWBEGIxeIff/wxNze3qKioqqqqvb19aOUhEAgmTpxoaWlpbm5uY2NjYWFhaWlpbW1tYmIyadIkY2NjAwMDGKoPv0cmkw0MDPT09LS0tDQ1NZWWlhYXFz948ACdJQYI1KZkSJL87LPPhnUNNptmn4MW9ff3Lyws1OqXROOnb9y44ezsPFg+gD7ErbKyMjU1NTMz89mzZ3QPWu0YODS3aTCHAyb5Q02Hx+MZGhrCy/r6+sRicV9fH+ghpWmCg12yDMSEhoYmJCQwP3mSy+QdPF5eXoWFhVqNHcCZX7VqlbOz82CrCT+HK7QSEhLS09Phnjk0tgs0yhAEq3VLkT8hlUqlUmlvby8dILpfAuks+mDkIWIuc3NzOBLGfMzFkOaAHfz48eOFCxeO7JJ6zdWGgYFBQUHBa6+9prY0BYmEvr6+Q4cOHT16VCKRQHP8KLYFoac42FSnYV1Odfz48ZUrV47JwFrmmn0UCsW0adNmz56tvblsMBk4Ojra2tpa1aCgmVK3bt3y8fGJi4sTi8XoBuFR9JRRGKz4pQxrV4DntGTJkrEig+n0OUmScEuN9g56eHl5hYeHq64mGliYkJCwYsWK8vJycCkGM/bEWB96oyjKwsIiLi5uDMcSMXe1B7yRTCZbsGBBeXn56BadwXGztbW9fv06DCCnqw1gpbu7OyIi4urVqyhzQOjwiRW5XH769OnFixeP4QR0DpMNFnCN+z/+8Y/R3Q1oxPiZM2fMzMyUDAq0TtXW1i5btuzq1atozLSOkxEeHr548eKxvT6B6UuBYB+sX78+IyNjVOb4wFKamJicP3/e1dVVaZ+B+/nw4cPVq1drODed0IERDB4eHpcuXUJl+t8KHLBlu7u7fXx8amtrXybngQZk29rapqSkuLi4qCXj3r17q1atgslBOt71A267paVlbm4unDwY23oyZ0wmGwkEgpSUFCMjoxHng6FhXy6Xe3t7Z2dnD0FGcHBwR0eH7pOB7gD85ptvXn31VWbaeXTuunJ4TtOnT//2228nTZqk4S1XdG0BO0xfXz8mJgbdaK9KRnFxcUhISHd3t27eFK/2ZoXExMQ333xTR25q4oyVZZXL5XPnzr1y5cqsWbNkMhlkoga7uATWDtIYkDDw8/P74Ycftm3bpnqjPWRjy8rKQkJCYO6U7veQgue0e/fuoKAgze8MHG8+h6pzKpFIEhISkpOTYfIfGFp0MTgqjwE0+vr6fn5+GzZsgNEUqmEe/KS2tjYwMLCxsZFFZMAFErpDxhjDQT/f19ramp6enpGR8fjxY6WJGjDD1MXFxcfHZ8mSJahnWNVfAzKampoCAwNrampYQQYMWQgPD9+/f7/qxcq/aTiIXxZICYJ4/vx5bW1ta2sr+Arm5uYWFhb29vYCgUC1zq5KRmNj45/+9KfKykoW6YyNGzd+/vnnzMy6ZxkcCBF0omuI8/KDXa2FpqezhQwUh4PO0EEydAgOpQYcpQt8h144IKOiomL16tUvmTthMmqlKCoyMjI6Olo3ydBFOEagb+Bap7Vr18JF36zIdJEkuX//fqgR6iYZ7IYDXTF/8eLFzZs3wyRkHScDnAx9ff3ExMTAwECdik10Jc9BjMaxMPA/PvvsM7hKnrEhdC9Jhq2t7aVLl3SfDFZqDqSHq6qqPvroo/z8fNRyp8umBD6en5/f4cOHhUKh7pPBJs0B7gUKer/66itfX9/8/HzIOusyGZDYJUlyx44dZ86cgWS/7pPBSs2Rm5t74MCBe/fuqT3lQehe/Z0gCEdHx9jYWDjmyqKzuyyAAz5hW1vbrVu3Tp06lZ+fj3x+nf3wYPhQZ+Tf//73iRMnssKUjM1xyJc88wLX4sE9iXw+XyqV6iYZKLtFUZS7u/unn3765ptvonIgu5Q0O8wK8CESieLj45OSkuCYia55GxA9wWF5e3v7qKioNWvWoD5FNs6dItl1rSZBEOXl5YcPHz537hzsztE9cjJi3wLlXaysrP7yl79s2LBhwoQJaquDGA6tl+gePnx44sSJCxcuwKkk9HgYnoCLVAVBEA4ODmvXrg0LCzM1NVXbToDhYKj4AuteVVWVlpaWnp7e0NCAjiNrlRJ00Ss9Spo3b15oaGhQUNArr7zC2F3iGA6NEOnt7c3JyUlPT7958yZc6oamXwwxhmUEQIADgU7GTp482d/fPzg4eObMmQTtGMQ4wGI8FN7A20BRQHNzc15eXlZW1t27d+Euaro/C08XlXzVfnHVs9FKB+opipo6deqiRYv8/f3d3NxgyCm8bHxoi/EDB90XQY8fdMmjR48KCwvv379fUVFRW1sLxRcN71VUeuWkSZPs7OymT5/u7u7u5ubm7OyM3gjGg7LX5Rz/cCgpEqWD2jKZrKGhoaKi4unTp9XV1TU1NSKRqLu7u729XSKR0MMcLpdrZGRkYWFhbGxsbW1tY2Pj5OTk5OQ0efJkoVBI/LLshyYpEONXxhUcWHDJHguGAwuGAwuGAwuGAwuGAwuGAwuGAwsWDAcWDAcWDAcWDAcWDAcWDAcWDAcWDAcWDAcWDAcWLBgOLBgOLBgOLBgOLBgOLBgOLBgOLBgOLBgOLBgOLFgwHFgwHFgwHFgwHFgwHFgwHFgwHFgwHFgwHFh+E/J/g2D35zlgViwAAAAASUVORK5CYII=";
+const logoImg = (sz, cls) => `<img class="brand-logo ${cls || ""}" src="${LOGO}" width="${sz}" height="${sz}" alt="Dogs Life">`;
+
+/* ---------- weather for walks (Open-Meteo: free, no key) ---------- */
+const I_PIN = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>';
+const WXG = {"sun": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"4.6\" fill=\"#FFC53D\"/><g stroke=\"#FFC53D\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4\"/></g></svg>", "moon": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><path d=\"M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1Z\" fill=\"#C9D3F2\"/></svg>", "sunCloud": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><g transform=\"translate(-3 -3) scale(.8)\"><circle cx=\"12\" cy=\"12\" r=\"4.6\" fill=\"#FFC53D\"/><g stroke=\"#FFC53D\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4\"/></g></g><path d=\"M9 20.5h9a3.6 3.6 0 0 0 .5-7.2 5.4 5.4 0 0 0-10.3 1.5A2.9 2.9 0 0 0 9 20.5Z\" fill=\"currentColor\"/></svg>", "moonCloud": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><g transform=\"translate(-2.5 -3) scale(.8)\"><path d=\"M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1Z\" fill=\"#C9D3F2\"/></g><path d=\"M9 20.5h9a3.6 3.6 0 0 0 .5-7.2 5.4 5.4 0 0 0-10.3 1.5A2.9 2.9 0 0 0 9 20.5Z\" fill=\"currentColor\"/></svg>", "cloud": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><path d=\"M7.5 19.5h10a4 4 0 0 0 .6-8 6 6 0 0 0-11.5 1.7A3.2 3.2 0 0 0 7.5 19.5Z\" fill=\"currentColor\"/></svg>", "fog": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><path d=\"M7.5 14h10a4 4 0 0 0 .6-8 6 6 0 0 0-11.5 1.7A3.2 3.2 0 0 0 7.5 14Z\" fill=\"currentColor\"/><path d=\"M4 17.5h16M6 21h12\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\".7\"/></svg>", "snow": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><path d=\"M7.5 14.5h10a4 4 0 0 0 .6-8 6 6 0 0 0-11.5 1.7A3.2 3.2 0 0 0 7.5 14.5Z\" fill=\"currentColor\"/><g fill=\"#8EC5FF\"><circle cx=\"8\" cy=\"18\" r=\"1.3\"/><circle cx=\"12\" cy=\"20.5\" r=\"1.3\"/><circle cx=\"16\" cy=\"18\" r=\"1.3\"/></g></svg>", "storm": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><path d=\"M7.5 14.5h10a4 4 0 0 0 .6-8 6 6 0 0 0-11.5 1.7A3.2 3.2 0 0 0 7.5 14.5Z\" fill=\"currentColor\"/><path d=\"M12.8 14 9.6 18.6h2.6l-1.1 4.4 4.1-5.9h-2.7l1.3-3.1Z\" fill=\"#FFC53D\"/></svg>", "rain": "<svg class=\"wxg\" viewBox=\"0 0 24 24\"><path d=\"M7.5 14.5h10a4 4 0 0 0 .6-8 6 6 0 0 0-11.5 1.7A3.2 3.2 0 0 0 7.5 14.5Z\" fill=\"currentColor\"/><path d=\"M8.5 17l-1 3M12.5 17l-1 3M16.5 17l-1 3\" stroke=\"#5AB0FF\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>"};
+const wxIcon = (c, day) => WXG[c === 0 ? (day === 0 ? "moon" : "sun") : c === 1 && day === 0 ? "moon" : c <= 2 ? (day === 0 ? "moonCloud" : "sunCloud") : c === 3 ? "cloud" : c === 45 || c === 48 ? "fog" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "snow" : c >= 95 ? "storm" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "rain" : "sunCloud"];
+let WX = null, wxBusy = false;
+const wxCfg = () => (C.config && C.config.weather && C.config.weather.lat != null) ? C.config.weather : null;
+const wxKey = w => "dl-wx:" + (+w.lat).toFixed(2) + "," + (+w.lon).toFixed(2);
+function wxLoad(force){
+  const w = wxCfg(); if (!w) return; const key = wxKey(w);
+  if (!WX || WX.key !== key) { WX = null; try { const c = JSON.parse(localStorage.getItem(key) || "null"); if (c && c.j) WX = c; } catch(_){} }
+  if (wxBusy || !navigator.onLine || (!force && WX && WX.j && Date.now() - WX.at < 30 * 60000)) return;
+  wxBusy = true;
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${+w.lat}&longitude=${+w.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&timezone=auto&forecast_days=2`)
+    .then(r => r.ok ? r.json() : Promise.reject()).then(j => { WX = {key, at: Date.now(), j}; try { localStorage.setItem(key, JSON.stringify(WX)); } catch(_){} wxBusy = false; render(true); })
+    .catch(() => { wxBusy = false; if (!WX) { WX = {key, at: Date.now(), err: true}; render(true); } });
+}
+function wxAt(ds, hm){ const j = WX && WX.j; if (!j || !j.hourly) return null; const i = j.hourly.time.indexOf(ds + "T" + String(hm).slice(0, 2) + ":00"); if (i < 0) return null;
+  return {t: j.hourly.temperature_2m[i], f: j.hourly.apparent_temperature[i], p: j.hourly.precipitation_probability[i] || 0, c: j.hourly.weather_code[i], w: (j.hourly.wind_speed_10m || [])[i] || 0}; }
+function wxLimits(){ const d = dog() || {}, co = (typeof COATS !== "undefined" && COATS[breedKey(d.breed)]) || {};
+  const small = d.size === "Petit" || (co.size && co.size < .7) || co.slim;
+  return {heat: co.flat ? 24 : co.fluffy ? 26 : 28, cold: co.fluffy || co.curly ? -8 : small ? 4 : 0, flat: !!co.flat, thin: small && !co.fluffy}; }
+// how good an hour is for a walk: 0 = perfect, the higher the worse (breed-aware heat and cold)
+function wxScore(x, lim){ if (!x) return 99; let s = 0;
+  if (x.p >= 30) s += (x.p - 30) * .9;
+  if (x.c >= 95) s += 90; else if ([63, 65, 66, 67, 81, 82].includes(x.c)) s += 35; else if ((x.c >= 71 && x.c <= 77) || x.c === 85 || x.c === 86) s += 30; else if ((x.c >= 51 && x.c <= 61) || x.c === 80) s += 16;
+  if (x.f > lim.heat) s += (x.f - lim.heat) * 12; if (x.t < lim.cold) s += (lim.cold - x.t) * 7;
+  if (x.w > 35) s += (x.w - 35) * 1.5; return s; }
+function wxWhy(x, lim){ return !x ? "" : x.c >= 95 ? T("orage") : x.p >= 50 ? T("pluie {p} %", {p: x.p}) : x.f > lim.heat ? T("{t}° ressentis", {t: Math.round(x.f)}) : x.t < lim.cold ? T("{t}°, froid", {t: Math.round(x.t)}) : (x.c >= 71 && x.c <= 77) ? T("neige") : x.w > 35 ? T("vent {w} km/h", {w: Math.round(x.w)}) : ""; }
+const hh = H => String(H).padStart(2, "0") + ":00";
+// best hour to go out instead of a bad one: today, from the next hour to 21:00, within 3 hours of the plan
+function wxBetter(ds, T, lim, nm){ const H0 = Math.floor(T / 60), cur = wxScore(wxAt(ds, hh(H0)), lim); let best = null;
+  for (let H = Math.max(7, Math.ceil((nm + 10) / 60)); H <= 21; H++) { if (H === H0 || Math.abs(H - H0) > 3) continue;
+    const x = wxAt(ds, hh(H)), sc = wxScore(x, lim); if (sc < cur - 20 && sc < 25 && (!best || sc < best.sc || (sc === best.sc && Math.abs(H - H0) < Math.abs(best.H - H0)))) best = {H, sc, x}; }
+  return best; }
+const WX_TXT = {0:"Ensoleillé",1:"Plutôt ensoleillé",2:"Partiellement nuageux",3:"Couvert",45:"Brouillard",48:"Brouillard givrant",51:"Bruine",53:"Bruine",55:"Bruine",56:"Bruine verglaçante",57:"Bruine verglaçante",61:"Pluie faible",63:"Pluie",65:"Forte pluie",66:"Pluie verglaçante",67:"Pluie verglaçante",71:"Neige faible",73:"Neige",75:"Forte neige",77:"Grésil",80:"Averses",81:"Averses",82:"Fortes averses",85:"Averses de neige",86:"Averses de neige",95:"Orage",96:"Orage et grêle",99:"Orage et grêle"};
+const wxRainy = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95;
+const NO_PLACE = ["Votre position", "Your location", "Vaša lokacija", "Ma position"];
+let wxNaming = false;
+// gives the saved spot a real town name (free reverse geocoding, no key)
+function wxNamePlace(w){ if (wxNaming || !canEdit() || !navigator.onLine) return; wxNaming = true;
+  fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${+w.lat}&longitude=${+w.lon}&localityLanguage=${LANG}`).then(r => r.ok ? r.json() : null)
+    .then(j => { const n = j && (j.city || j.locality || j.principalSubdivision); if (n) put("config", "weather", Object.assign({}, w, {name: n, region: j.principalSubdivision || "", auto: true})); }).catch(() => {}); }
+function weatherCard(){
+  const today = ymd(new Date()); if (S.sel !== today) return "";
+  const w = wxCfg();
+  if (!w) return canEdit() ? `<button class="card wx-cta" data-act="wxSheet"><span class="wx-ic">${WXG.sunCloud}</span><div class="main"><div class="t">${T("Météo des balades")}</div><div class="s">${T("Le bon moment pour sortir, selon la météo et sa race.")}</div></div><span class="chev">${I.chevR}</span></button>` : "";
+  if (!w.name || NO_PLACE.includes(w.name)) wxNamePlace(w);
+  wxLoad();
+  if (!WX || (!WX.j && !WX.err)) return `<div class="card pad wx"><div class="skel" style="width:60%"></div><div class="skel" style="width:85%"></div></div>`;
+  if (!WX.j) return "";
+  const cur = WX.j.current || {}, now = new Date(), nm = toMin(hhmm(now)), lim = wxLimits(), st = dayStats(today), Hn = now.getHours(), tmr = ymd(addDays(now, 1));
+  const walks = st.tasks.filter(t => t.cat === "balade" && !st.done[t.key] && toMin(t.time) >= nm - 30);
+  const walkH = new Set(walks.map(t => Math.floor(toMin(t.time) / 60)));
+  // the next 12 hours, across midnight
+  const hours = []; for (let k = 0; k < 12; k++) { const H = (Hn + k) % 24, ds = Hn + k >= 24 ? tmr : today, x = wxAt(ds, hh(H)); if (x) hours.push({H, k, ds, x, sc: wxScore(x, lim)}); }
+  // best stretch to go out today (from now, 7:00–22:00)
+  let win = null; const day = hours.filter(h => h.ds === today && h.H >= 7 && h.H <= 21);
+  for (let a = 0; a < day.length; a++) { if (day[a].sc >= 12) continue; let b = a; while (b + 1 < day.length && day[b + 1].sc < 12) b++;
+    const len = b - a + 1, avg = day.slice(a, b + 1).reduce((t, h) => t + h.sc, 0) / len; if (!win || len > win.len || (len === win.len && avg < win.avg)) win = {a: day[a].H, b: day[b].H, len, avg}; a = b; }
+  const todayH = WX.j.hourly.time.map((t, i) => t.startsWith(today) ? WX.j.hourly.temperature_2m[i] : null).filter(v => v != null);
+  const hi = todayH.length ? Math.round(Math.max(...todayH)) : null, lo = todayH.length ? Math.round(Math.min(...todayH)) : null;
+  const place = w.name && !NO_PLACE.includes(w.name) ? w.name : T("Votre position");
+  const winTxt = !win ? "" : win.a <= Hn ? T("Idéal jusqu'à {h}", {h: hh(win.b + 1)}) : T("Idéal de {a} à {b}", {a: hh(win.a), b: hh(win.b + 1)});
+  const strip = hours.map(h => { const best = win && h.ds === today && h.H >= win.a && h.H <= win.b, rp = h.x.p >= 10 || wxRainy(h.x.c);
+    return `<div class="wx-hr ${best ? "best" : ""} ${h.sc >= 45 ? "bad" : ""}"><small class="num">${h.k === 0 ? T("Maint.") : String(h.H).padStart(2, "0")}</small><span>${wxIcon(h.x.c, h.H >= 7 && h.H < 19 ? 1 : 0)}</span><i class="num">${rp ? h.x.p + " %" : ""}</i><b class="num">${Math.round(h.x.t)}°</b><u>${walkH.has(h.H) && h.ds === today ? I.paw : ""}</u></div>`; }).join("");
+  let worst = 0, warn = null;
+  const rows = walks.slice(0, 4).map(t => { const T0 = toMin(t.time), x = wxAt(today, hh(Math.floor(T0 / 60))); if (!x) return "";
+    const sc = wxScore(x, lim), bad = sc >= 45, meh = !bad && sc >= 20, alt = bad || meh ? wxBetter(today, T0, lim, nm) : null, why = wxWhy(x, lim); worst = Math.max(worst, sc); if ((bad || meh) && !warn) warn = {time: t.time, alt: alt ? hh(alt.H) : "", bad};
+    const tone = bad ? "bad" : meh ? "meh" : "ok";
+    return `<div class="wx-walk"><span class="wx-wtime num">${esc(t.time)}</span><div class="main"><div class="t">${esc(t.title)}</div>
+      <div class="s">${wxIcon(x.c, T0 >= 420 && T0 < 1140 ? 1 : 0)} ${Math.round(x.t)}°${(bad || meh) && why ? " · " + esc(why) : x.p >= 20 ? ` · ${x.p} %` : ""}</div>
+      ${alt ? `<div class="wx-alt">${esc(T("Plutôt à {h}", {h: hh(alt.H)}))} · ${wxIcon(alt.x.c, alt.H >= 7 && alt.H < 19 ? 1 : 0)} ${Math.round(alt.x.t)}°${alt.x.p >= 10 ? `, ${alt.x.p} %` : ""}</div>` : bad ? `<div class="wx-alt">${T("Gardez-la courte, serviette au retour")}</div>` : ""}</div>
+      <span class="wx-v ${tone}">${T(bad ? "À éviter" : meh ? "Mitigé" : "Idéal")}</span></div>`; }).join("");
+  let tip = "";
+  if (lim.flat && hours.some(h => h.x.f > lim.heat)) tip = T("Museau court : il supporte mal la chaleur.");
+  else if (!walks.length) tip = win ? "" : T("Pas de bon créneau aujourd'hui : préférez des sorties courtes.");
+  // folded by default: one line, which turns orange/red when a walk falls in bad weather
+  const wxOpen = (() => { try { return localStorage.getItem("dl-wx-open") === "1"; } catch(_) { return false; } })();
+  if (!wxOpen) {
+    const sub = warn ? (warn.alt ? T("Balade de {t} : plutôt à {h}", {t: warn.time, h: warn.alt}) : T("Balade de {t} : météo défavorable", {t: warn.time})) : winTxt || T(WX_TXT[cur.weather_code] || "");
+    return `<button class="card wx-mini ${warn ? (warn.bad ? "bad" : "meh") : ""}" data-act="wxToggle" aria-expanded="false"><span class="wx-mi">${wxIcon(cur.weather_code, cur.is_day)}</span>
+      <div class="main"><div class="t"><b class="num">${Math.round(cur.temperature_2m)}°</b> · ${esc(place)}</div><div class="s">${warn ? "" : `<i class="wx-dot"></i>`}${esc(sub)}</div></div><span class="wx-dn">${I.chevR}</span></button>`;
+  }
+  return `<div class="card wx">
+    <div class="wx-h" ${canEdit() ? `data-act="wxSheet" role="button"` : ""}>
+      <div class="main"><div class="wx-place">${I_PIN}<span>${esc(place)}</span>${canEdit() ? `<em>${I.chevR}</em>` : ""}</div>
+        <div class="wx-t num">${Math.round(cur.temperature_2m)}°</div>
+        <div class="wx-c">${esc(T(WX_TXT[cur.weather_code] || ""))}</div>
+        <div class="wx-hl num">${hi != null ? `${T("Max.")} ${hi}° · ${T("Min.")} ${lo}° · ` : ""}${T("ressenti {t}°", {t: Math.round(cur.apparent_temperature)})}</div></div>
+      <span class="wx-big">${wxIcon(cur.weather_code, cur.is_day)}</span></div>
+    ${winTxt ? `<div class="wx-win"><i></i>${esc(winTxt)}</div>` : ""}
+    ${strip ? `<div class="wx-strip">${strip}</div>` : ""}
+    ${rows ? `<div class="wx-sec">${T("Balades d'aujourd'hui")}</div><div class="wx-walks">${rows}</div>` : ""}
+    ${tip ? `<div class="wx-foot">${esc(tip)}</div>` : ""}
+    <button class="wx-less" data-act="wxToggle" aria-expanded="true">${T("Réduire")}<span>${I.chevR}</span></button></div>`;
+}
+function wxSheet(){
+  const w = wxCfg();
+  openSheet(T("Météo des balades"), `<div class="fg"><label for="wx-q">${T("Ville")}</label><div style="display:flex;gap:8px"><input class="f" id="wx-q" placeholder="${T("Ex. : Lausanne")}" value="${esc(w && w.name && w.name !== T("Votre position") ? w.name : "")}" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn" data-act="wxFind">${T("Chercher")}</button></div></div>
+    <div id="wx-res" class="card list" style="display:none"></div>
+    <button type="button" class="btn ghost" data-act="wxHere" style="width:100%;margin-top:12px">${I_PIN} ${T("Utiliser ma position")}</button>
+    <div class="hint" style="margin-top:12px">${T("Prévisions Open-Meteo, mises à jour toutes les 30 minutes. Toute la famille voit la même ville.")}</div>`, null, w ? () => { put("config", "weather", {}); WX = null; } : null);
+  const ok = $("#sheet-root .save"); if (ok) ok.style.visibility = "hidden";
+}
+function wxSave(lat, lon, name){ const w = {lat: Math.round(lat * 1000) / 1000, lon: Math.round(lon * 1000) / 1000, name}; put("config", "weather", w); WX = null; closeSheet(); toast(T("Météo activée")); if (NO_PLACE.includes(name)) { wxNaming = false; wxNamePlace(w); } }
+// offline: a small pill so everyone knows changes will be sent later
+function netState(){ document.body.classList.toggle("is-offline", !navigator.onLine); if (navigator.onLine) wxLoad(true); }
+window.addEventListener("online", netState); window.addEventListener("offline", netState);
+function addPill(){ if (!document.getElementById("offline-pill")) document.body.insertAdjacentHTML("beforeend", `<div id="offline-pill" role="status">${T("Hors ligne · envoi au retour du réseau")}</div>`); netState(); }
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addPill); else setTimeout(addPill, 0);
+
+/* ---------- quick log: one tap for what isn't on the schedule ---------- */
+const QL = {
+  pipi:{l:"Pipi", c:"#E6B422", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5s7 7.6 7 12.5a7 7 0 0 1-14 0c0-4.9 7-12.5 7-12.5Z"/></svg>'},
+  caca:{l:"Caca", c:"#9A6A45", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.6 3c.6 1.6-.4 2.6-1.6 3.2 2.2 0 3.8 1.3 3.6 3-.1.4-.2.6-.4.8 2 .3 3.4 1.6 3.3 3.2-.1.4-.2.7-.5 1 2.3.3 4 1.8 4 3.6C21 19.6 17 21 12 21s-9-1.4-9-3.2c0-1.8 1.7-3.3 4-3.6-.3-.3-.4-.6-.5-1-.1-1.6 1.3-2.9 3.3-3.2-.4-.4-.6-.9-.6-1.4 0-1.4 1.6-2.4 3.4-3.6Z"/></svg>'},
+  eau:{l:"Eau", c:"#3D8BD9", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4h14l-1.6 15.2A2 2 0 0 1 15.4 21H8.6a2 2 0 0 1-2-1.8L5 4Zm2.3 5 .9 9.5c0 .3.3.5.5.5h6.6c.3 0 .5-.2.5-.5l.9-9.5H7.3Z"/></svg>'},
+  friandise:{l:"Friandise", c:"#D9668F", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.2 3.5a2.6 2.6 0 0 1 2.6 3.3l7.4 7.4a2.6 2.6 0 1 1 3 3 2.6 2.6 0 1 1-3 3 2.6 2.6 0 0 1-.4-3.3L9.4 9.5a2.6 2.6 0 1 1-3-3 2.6 2.6 0 0 1 .8-3Z"/></svg>'},
+  sieste:{l:"Sieste", c:"#8E7CC3", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z"/></svg>'},
+  balade:{l:"Balade", c:"var(--green)", i:I.paw},
+  accident:{l:"Accident", c:"#E5484D", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5s7 7.6 7 12.5a7 7 0 0 1-14 0c0-4.9 7-12.5 7-12.5Zm-1 7v6h2v-6h-2Zm0 7.5V19h2v-2h-2Z"/></svg>'},
+  jeu:{l:"Jeu", c:"#8E6CD9", i:I.ball},
+  vomi:{l:"Vomissement", c:"#7A8B3D", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a8 8 0 0 0-8 8c0 2.7 1.3 5 3.4 6.5L7 21h10l-.4-3.5A8 8 0 0 0 12 3Zm-3 6.5a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Zm6 0a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6ZM9 15h6v1.5H9V15Z"/></svg>'},
+  photo:{l:"Photo", c:"#3D8BD9", i:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 4 7.5 6H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.5L15 4H9Zm3 4.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/></svg>'},
+  plus:{l:"Plus", c:"var(--gray)", i:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>'}
+};
+I.cam = QL.photo.i;
+const STOOL_Q = [["Normales","#5FA86B"],["Molles","#E6A23C"],["Liquides","#E5484D"],["Dures","#9A6A45"]];
+const dayLog = ds => Object.entries(getDay(ds).log || {}).map(([id, x]) => ({id, ...x})).sort((a, b) => (a.at || "").localeCompare(b.at || ""));
+const isPuppy = () => { const d = dog(); return !!(d && d.birth && ageYears(d.birth) < 1); };
+function lastOf(k){
+  for (let i = 0; i < 3; i++) { const ds = ymd(addDays(new Date(), -i)), l = dayLog(ds).filter(x => x.k === k || (k === "pipi" && x.k === "balade" && x.pee)); if (l.length) { const x = l[l.length - 1]; const d = parseYmd(ds); const [h, m] = x.at.split(":").map(Number); d.setHours(h, m, 0, 0); return {x, ds, t: d}; } }
+  return null;
+}
+function agoTxt(t){ const m = Math.max(0, Math.round((Date.now() - t) / 60000)); if (m < 1) return T("à l'instant"); if (m < 60) return T("il y a {n} min",{n:m}); const h = Math.floor(m / 60), r = m % 60; return r ? T("il y a {h} h {m}",{h, m:pad2(r)}) : T("il y a {h} h",{h}); }
+function walkNow(){ const w = getDay(ymd(new Date())).walk; return w && w.start ? w : null; }
+
+// a walk in progress: big and first, so it can't be missed
+const walkBtnOff = () => gLS.g("dl-walkbtn-off") === "1";
+function liveWalk(){
+  const w = walkNow();
+  if (!w) return walkBtnOff() || !canTick() ? "" : `<button class="btn go-walk" data-act="goWalk"><span class="gw-dot">${I_ROUTE}</span><span class="main"><span class="t">${T("Sortir en balade")}</span><span class="s">${esc(T("GPS précis · avec {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></span><span class="gw-go"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.2 4.9c-.9-.5-2 .1-2 1.2v11.8c0 1 1.1 1.7 2 1.2l10-5.9c.9-.5.9-1.8 0-2.4Z"/></svg></span></button>`;
+  const can = canTick(), m = memberOf(w.mid), min = Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000));
+  setTimeout(() => { GPS.painted = 0; gpsPaint(); }, 0);
+  return `<div class="card lw"><div class="lw-top"><span class="ql-pulse"></span><div class="main"><div class="lw-k">${T("Balade en cours")}${m ? " · " + esc(m.name) : ""}</div><div class="lw-t"><b class="num" id="walk-min">${min} min</b><span class="gps" id="walk-gps">${gpsLine(w) ? " · " + gpsLine(w) : ""}</span></div></div></div>
+    <div class="rmap walk-live" id="walk-map" hidden></div>
+    ${can ? `<div class="lw-btns"><button class="btn ghost" data-act="walkCancel">${T("Annuler")}</button><button class="btn" data-act="walkEnd">${T("Terminer la balade")}</button></div>` : ""}</div>`;
+}
+function quickLog(){
+  const today = ymd(new Date()); if (S.sel !== today) return "";
+  const can = canTick(), log = dayLog(today), w = walkNow();
+  const lp = lastOf("pipi"), lc = lastOf("caca");
+  // puppies hold roughly (age in months + 1) hours, capped at 8 h; aim for a bit less
+  let hint = "";
+  if (isPuppy() && lp) { const months = Math.max(2, Math.floor(ageYears(dog().birth) * 12)), hold = Math.min(8, months + 1) * 60 * .75;
+    const by = new Date(lp.t.getTime() + hold * 60000); hint = by < new Date() ? `<span class="ql-hint late">${T("Une sortie pipi est conseillée maintenant")}</span>` : `<span class="ql-hint">${T("Prochaine sortie pipi conseillée vers {h}",{h:hhmm(by)})}</span>`; }
+  const walkCard = "", walkOld = w ? `<div class="ql-walk"><span class="ql-pulse"></span><div class="main"><div class="t">${T("Balade en cours")}</div><div class="s"><b class="num" id="walk-min">${Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000))} min</b>${memberOf(w.mid) ? " · " + esc(memberOf(w.mid).name) : ""}<span class="gps" id="walk-gps">${gpsLine(w) ? " · " + gpsLine(w) : ""}</span></div></div>
+      ${can ? `<button class="btn ghost sm" data-act="walkCancel">${T("Annuler")}</button><button class="btn sm" data-act="walkEnd">${T("Terminer")}</button>` : ""}</div>` : "";
+  const btn = k => { const q = QL[k], on = k === "balade" && w; return `<button class="ql-b ${on ? "on" : ""}" id="ql-${k}" data-act="ql" data-k="${k}" ${can ? "" : "disabled"} style="--c:${q.c}"><i>${q.i}</i><span>${on ? Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000)) + " min" : T(q.l)}</span></button>`; };
+  const items = log.slice(-6).reverse().map(x => { const q = QL[x.k] || QL.pipi, m = memberOf(x.mid);
+    const extra = x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") + (x.pee ? " · " + T("pipi") : "") + (x.poo ? " · " + T("caca") : "") : "";
+    if (x.photo) return `<button class="ql-item ph ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="photoView" data-src="${esc(x.photo)}"><img src="${esc(x.photo)}" alt=""><span class="num">${esc(x.at)}</span>${x.note ? esc(x.note.slice(0, 24)) : ""}${m ? mav(m, 18) : ""}</button>`;
+    return `<button class="ql-item ${live("qlPop") && S.qlPop.id === x.id ? "pop" : ""}" data-act="${x.route ? "walkView" : "qlItem"}" data-id="${esc(x.id)}" style="--c:${q.c}"><i>${q.i}</i><span class="num">${esc(x.at)}</span>${esc((x.k === "photo" && x.note ? x.note.slice(0, 28) : T(q.l)) + extra)}${m || x.byName ? `<span class="ql-who">${m ? mav(m, 18) : ""}${esc(((m && m.name) || x.byName || "").split(" ")[0])}</span>` : ""}</button>`; }).join("");
+  if (w) setTimeout(() => { GPS.painted = 0; gpsPaint(); }, 0);
+  return `<div class="sec ql"><div class="sec-h hx-h"><h2>${T("Journal rapide")}</h2>${log.length > 6 ? `<button class="link" data-act="qlAll">${T("Tout voir")}</button>` : ""}</div><div class="card pad">
+    ${walkCard}
+    <div class="ql-row">${["pipi","caca","balade","accident","plus"].map(btn).join("")}</div>
+    <div class="ql-since">${lp ? `<span>${QL.pipi.i}${T("Pipi")} ${esc(agoTxt(lp.t))}</span>` : ""}${lc ? `<span>${QL.caca.i}${T("Caca")} ${esc(agoTxt(lc.t))}</span>` : ""}${hint}</div>
+    ${items ? `<div class="ql-items">${items}</div>` : `<div class="empty-s" style="margin-top:8px">${T("Touchez un bouton dès que c'est fait : l'heure et votre prénom sont notés, toute la famille le voit.")}</div>`}
+  </div></div>`;
+}
+let liveTok = 0;
+function liveBanner(m, title, text, kind){
+  if (window.carnetPush) return; // website: only real phone notifications
+  const tok = ++liveTok;
+  $("#notif-root").innerHTML = `<div class="notif live" role="status">${m && m.color ? mav(m, 36) : `<span class="ico" style="--c:var(--accent)">${kind === "msg" ? NTYPES.message[0] : NTYPES.activite[0]}</span>`}<div class="main"><div class="t">${esc(title)}</div><div class="s">${esc(String(text).slice(0, 90))}</div></div>
+    ${kind === "msg" ? `<button class="btn" data-act="go" data-tab="famille">${T("Voir")}</button>` : ""}<button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
+  try { if (navigator.vibrate) navigator.vibrate(10); } catch(_){} chime();
+  setTimeout(() => { if (tok === liveTok) { const n = $("#notif-root .notif.live"); if (n) n.remove(); } }, 7000);
+}
+function liveLogNotice(x){
+  if (window.carnetPush) return; // website: only real phone notifications
+  if ((x.dog || "main") !== dogId()) return;
+  const q = QL[x.k] || QL.pipi, m = memberOf(x.mid), who = (m && m.name) || x.byName || T("Quelqu'un"), tok = ++liveTok;
+  const what = x.k === "photo" && x.note ? x.note.slice(0, 40) : T(q.l) + (x.k === "caca" && x.q ? " · " + T(x.q) : x.k === "balade" && x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") : "");
+  $("#notif-root").innerHTML = `<div class="notif live" role="status">${m ? mav(m, 36) : `<span class="ico" style="--c:${q.c}">${q.i}</span>`}<div class="main"><div class="t">${esc(who)}</div><div class="s"><span class="live-k" style="--c:${q.c}">${q.i}</span>${esc(what)} · ${esc(x.at || "")}</div></div><button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
+  try { if (navigator.vibrate) navigator.vibrate(10); } catch(_){}
+  setTimeout(() => { if (tok === liveTok) { const n = $("#notif-root .notif.live"); if (n) n.remove(); } }, 6000);
+}
+async function addLog(k, extra){
+  const ds = ymd(new Date()), m = meMember(), id = newId();
+  const doc = Object.assign({date: ds, dog: dogId(), k, at: hhmm(new Date()), mid: ME || "", by: S.me || null, byName: m ? m.name : ""}, extra || {});
+  try { if (navigator.vibrate) navigator.vibrate(15); } catch(_) {}
+  S.qlPop = {id, until: Date.now() + 800};
+  await put("logs", id, doc);
+  if (window.carnetNotify) window.carnetNotify("log", {k, at: doc.at, who: doc.byName, ev: id});
+  toast(T("{k} noté à {h}",{k:T((QL[k] || QL.pipi).l), h:doc.at}));
+  return id;
+}
+function stoolSheet(){
+  openSheet(T("Caca"), `<div class="hint" style="margin:0 0 12px">${T("Comment étaient les selles ?")}</div><div class="stool-g">${STOOL_Q.map(([q, c]) => `<button type="button" class="stool-b" data-act="qlStool" data-q="${esc(q)}" style="--c:${c}"><i></i>${T(q)}</button>`).join("")}</div>`);
+}
+/* ---------- GPS walks: distance and route, recorded on the phone of the person walking ---------- */
+const GPS = {watch: null, lock: null, start: null, pts: [], state: "", synced: 0, syncedD: 0, painted: 0, rej: 0, t0: 0};
+const gpsKey = s => "dl-gps@" + s;
+const gLS = {g(k){ try { return localStorage.getItem(k); } catch(_) { return null; } }, s(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch(_) {} }};
+const gpsOff = () => gLS.g("dl-gps-off") === "1";
+function gDist(a, b){ const r = Math.PI / 180, dl = (b[0] - a[0]) * r, dn = (b[1] - a[1]) * r;
+  const x = Math.sin(dl / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dn / 2) ** 2; return 2 * 6371000 * Math.asin(Math.min(1, Math.sqrt(x))); }
+const routeLen = p => { let d = 0; for (let i = 1; i < p.length; i++) d += gDist(p[i - 1], p[i]); return d; };
+const fmtKm = m => m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toLocaleString(LANG === "en" ? "en" : LANG === "hr" ? "hr" : "fr-CH", {maximumFractionDigits: m < 10000 ? 2 : 1}) + " km";
+// Google "encoded polyline" (precision 5): about 6 characters per point
+function polyEnc(p){ let o = "", pl = 0, pn = 0; const e = v => { v = v < 0 ? ~(v << 1) : v << 1; let s = ""; while (v >= 0x20) { s += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; } return s + String.fromCharCode(v + 63); };
+  for (const q of p) { const a = Math.round(q[0] * 1e5), b = Math.round(q[1] * 1e5); o += e(a - pl) + e(b - pn); pl = a; pn = b; } return o; }
+function polyDec(s){ const p = []; let i = 0, a = 0, b = 0; const d = () => { let r = 0, sh = 0, c; do { c = s.charCodeAt(i++) - 63; r |= (c & 0x1f) << sh; sh += 5; } while (c >= 0x20 && i <= s.length); return r & 1 ? ~(r >> 1) : r >> 1; };
+  while (i < s.length) { a += d(); b += d(); p.push([a / 1e5, b / 1e5]); } return p; }
+function gpsSave(){ if (GPS.start) gLS.s(gpsKey(GPS.start), JSON.stringify(GPS.pts)); }
+async function gpsLock(){ try { if (navigator.wakeLock && document.visibilityState === "visible" && GPS.watch != null && !GPS.lock) { GPS.lock = await navigator.wakeLock.request("screen"); GPS.lock.addEventListener("release", () => { GPS.lock = null; }); } } catch(_) { GPS.lock = null; } }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") gpsLock(); });
+function gpsBegin(start){
+  if (gpsOff() || !navigator.geolocation) { GPS.state = navigator.geolocation ? "off" : "none"; return; }
+  if (GPS.watch != null && GPS.start === start) return;
+  gpsStop();
+  GPS.start = start; GPS.synced = Date.now(); GPS.syncedD = 0; GPS.t0 = Date.now(); KF.v = -1;
+  try { GPS.pts = JSON.parse(gLS.g(gpsKey(start)) || "[]"); } catch(_) { GPS.pts = []; }
+  gpsSave(); GPS.state = GPS.pts.length ? "ok" : "seek";
+  GPS.watch = navigator.geolocation.watchPosition(gpsPos, e => { GPS.state = e && e.code === 1 ? "denied" : "weak"; if (e && e.code === 1) gpsStop(true); gpsUI(); },
+    {enableHighAccuracy: true, maximumAge: 0, timeout: 30000});
+  gpsLock(); gpsUI();
+}
+// precision: fresh fixes only, a Kalman filter that weighs each fix by its accuracy, and no spikes
+const KF = {la: 0, lo: 0, v: -1, t: 0};
+function kalman(la, lo, acc, tms){
+  if (KF.v < 0 || tms - KF.t > 45000) { Object.assign(KF, {la, lo, v: acc * acc, t: tms}); return [la, lo]; }
+  const dt = Math.max(0, (tms - KF.t) / 1000); KF.v += (dt * 3) * (dt * 3); KF.t = tms;   // a walk moves up to ~3 m/s
+  const k = KF.v / (KF.v + acc * acc); KF.la += k * (la - KF.la); KF.lo += k * (lo - KF.lo); KF.v *= 1 - k; return [KF.la, KF.lo];
+}
+function gpsPos(p){
+  const c = p.coords; if (!c) return; const tms = p.timestamp || Date.now(), last = GPS.pts[GPS.pts.length - 1];
+  const gap = last ? tms / 1000 - last[2] : 0;
+  // wait for a good first fix (up to 20 s), then accept 30 m, or 55 m after a long gap (tunnel, trees)
+  const lim = !GPS.pts.length ? (Date.now() - (GPS.t0 || 0) < 20000 ? 20 : 45) : gap > 25 ? 55 : 30;
+  if (c.accuracy > lim) { if (!GPS.pts.length) GPS.state = c.accuracy > 60 ? "weak" : "seek"; gpsUI(); return; }
+  if (KF.v >= 0) { const dt = Math.max(1, (tms - KF.t) / 1000); if (gDist([KF.la, KF.lo], [c.latitude, c.longitude]) - c.accuracy - Math.sqrt(KF.v) > dt * 7) { if (++GPS.rej > 4) { KF.v = -1; GPS.rej = 0; } return; } }
+  GPS.rej = 0;   // a jump, not a dog walk
+  const f = kalman(c.latitude, c.longitude, Math.max(4, c.accuracy), tms);
+  const pt = [+f[0].toFixed(6), +f[1].toFixed(6), Math.round(tms / 1000), Math.round(c.accuracy)];
+  if (last && gDist(last, pt) < Math.max(3, c.accuracy * .3)) { GPS.state = "ok"; return; }   // standing still: noise
+  GPS.pts.push(pt); GPS.state = "ok"; gpsSave(); if (GPS.pts.length === 1) GPS.painted = 0; gpsUI();
+  // let the family follow the distance (at most every 45 s)
+  const w = walkNow(), dist = Math.round(routeLen(GPS.pts));
+  if (w && w.start === GPS.start && Date.now() - GPS.synced > 45000 && dist - GPS.syncedD >= 50) { GPS.synced = Date.now(); GPS.syncedD = dist;
+    setDay(ymd(new Date()), {walk: Object.assign({}, w, {dist})}).catch(() => {}); }
+}
+function gpsStop(keepState){ if (GPS.watch != null) { try { navigator.geolocation.clearWatch(GPS.watch); } catch(_) {} } GPS.watch = null;
+  if (GPS.lock) { try { GPS.lock.release(); } catch(_) {} GPS.lock = null; } if (!keepState) GPS.state = ""; }
+function gpsDrop(){ const s = GPS.start; gpsStop(); if (s) gLS.s(gpsKey(s), null); GPS.start = null; GPS.pts = []; }
+// at the end of the walk: distance + simplified route for the walk's log entry
+// snap the recorded track onto the real footpaths (OpenStreetMap map matching); keeps the raw track if unsure
+async function gpsMatch(pts){
+  try {
+    let use = pts; if (use.length > 90) { const st = (use.length - 1) / 89; use = Array.from({length: 90}, (_, i) => pts[Math.round(i * st)]); }
+    const u = "https://routing.openstreetmap.de/routed-foot/match/v1/driving/" + use.map(q => q[1].toFixed(6) + "," + q[0].toFixed(6)).join(";")
+      + "?geometries=geojson&overview=full&radiuses=" + use.map(q => Math.min(35, Math.max(10, Math.round((q[3] || 15) * 1.2)))).join(";");
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(u, {signal: ctl.signal}); clearTimeout(tm); if (!r.ok) return null; const j = await r.json();
+    const m = j && j.code === "Ok" ? (j.matchings || []) : []; if (!m.length) return null;
+    const tot = m.reduce((a, x) => a + (x.distance || 0), 0), conf = m.reduce((a, x) => a + (x.confidence || 0) * (x.distance || 0), 0) / Math.max(1, tot);
+    if (conf < .45) return null;
+    const out = m.flatMap(x => x.geometry.coordinates.map(c => [c[1], c[0]])), raw = routeLen(pts), md = routeLen(out);
+    return md > raw * .55 && md < raw * 1.4 && out.length > 1 ? out : null;
+  } catch(_) { return null; }
+}
+async function gpsFinish(w){
+  let pts = GPS.start === w.start ? GPS.pts : null;
+  if (!pts) { try { pts = JSON.parse(gLS.g(gpsKey(w.start)) || "null"); } catch(_) { pts = null; } }
+  gpsStop(); gLS.s(gpsKey(w.start), null); GPS.start = null; GPS.pts = [];
+  if (!pts || pts.length < 2) return {};
+  const snap = navigator.onLine !== false ? await gpsMatch(pts) : null, track = snap || pts;
+  const dist = Math.round(routeLen(track)); let keep = track;
+  if (keep.length > 900) { const step = keep.length / 900; keep = Array.from({length: 900}, (_, i) => keep[Math.floor(i * step)]); keep.push(track[track.length - 1]); }
+  return dist >= 30 ? Object.assign({dist, route: polyEnc(keep)}, snap ? {snap: true} : {}) : {};
+}
+const mineWalk = w => w && GPS.start === w.start && (GPS.watch != null || GPS.pts.length);
+function gpsLine(w){
+  if (mineWalk(w) || (w && GPS.start === w.start)) {
+    const d = GPS.pts.length > 1 ? fmtKm(routeLen(GPS.pts)) : "";
+    if (GPS.state === "denied") return T("GPS refusé : distance non mesurée");
+    if (GPS.state === "seek" && !d) return T("Recherche du GPS…");
+    if (GPS.state === "weak" && !d) return T("Signal GPS faible");
+    return d ? `<b class="num">${d}</b>` : T("GPS actif");
+  }
+  return w && w.dist ? `<b class="num">${fmtKm(w.dist)}</b>` : "";
+}
+function gpsUI(){
+  const e = document.getElementById("walk-gps"), w = walkNow(); if (e) { const l = gpsLine(w); e.innerHTML = l ? " · " + l : ""; }
+  if (Date.now() - GPS.painted > (S.lw && S.lw.ready ? 4000 : 12000)) gpsPaint();
+}
+function gpsPaint(){
+  const box = document.getElementById("walk-map"), w = walkNow();
+  if (!w && S.lw) { liveMapDrop(S.lw); S.lw = null; }
+  if (!box) return;
+  if (!w || GPS.start !== w.start || !GPS.pts.length) { box.hidden = true; return; }
+  GPS.painted = Date.now(); box.hidden = false;
+  const routes = [{id: "w", pts: GPS.pts}], o = {sel: "w", live: true, sug: S.sug || null};
+  if (S.lw && S.lw.style === mapStyleURL() && (!S.lw.dead || ML_FAIL)) { if (box !== S.lw.el) { box.replaceWith(S.lw.el); S.lw.el.hidden = false; }
+    if (S.lw.dead) { S.lw.el.innerHTML = ""; staticMap(S.lw.el, routes, o); return; }
+    if (S.lw.ready) { liveMapSet(S.lw, routes, o); S.lw.map.resize(); } else { S.lw.routes = routes; S.lw.o = o; } return; }
+  if (S.lw) liveMapDrop(S.lw);
+  S.lw = {el: box, style: mapStyleURL()}; liveMap(box, routes, o, S.lw);
+}
+// a clean static map: map tiles + the route drawn on top (no extra library)
+const isDarkUI = () => { const t = document.documentElement.dataset.theme; return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; };
+function drawRoute(box, pts, o){
+  o = o || {}; const W = box.clientWidth || 340, H = box.clientHeight || 200, pad = 26;
+  const X = (lon, z) => (lon + 180) / 360 * 256 * 2 ** z;
+  const Y = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 256 * 2 ** z; };
+  let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const p of pts) { la0 = Math.min(la0, p[0]); la1 = Math.max(la1, p[0]); lo0 = Math.min(lo0, p[1]); lo1 = Math.max(lo1, p[1]); }
+  let z = pts.length < 2 ? 16 : 18; while (z > 3 && (X(lo1, z) - X(lo0, z) > W - 2 * pad || Y(la0, z) - Y(la1, z) > H - 2 * pad)) z--;
+  const cx = (X(lo0, z) + X(lo1, z)) / 2, cy = (Y(la0, z) + Y(la1, z)) / 2, ox = cx - W / 2, oy = cy - H / 2, n = 2 ** z;
+  const style = isDarkUI() ? "dark_all" : "voyager", tiles = [];
+  for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + W) / 256); tx++) for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + H) / 256); ty++) {
+    if (ty < 0 || ty >= n) continue; const sx = ((tx % n) + n) % n, sub = "abcd"[(sx + ty) % 4];
+    tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://tile.openstreetmap.org/${z}/${sx}/${ty}.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
+  const xy = pts.map(p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)]), d = "M" + smoothPts(pts).map(p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)].join(" ")).join("L"), a = xy[0], b = xy[xy.length - 1];
+  box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+    <path d="${d}" class="rt-halo"/><path d="${d}" class="rt-line"/>
+    <circle cx="${a[0]}" cy="${a[1]}" r="6" class="rt-a"/>${o.live ? `<circle cx="${b[0]}" cy="${b[1]}" r="11" class="rt-pulse"/><circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-me"/>` : `<circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-b"/>`}</svg>
+    <span class="rmap-c">© OpenStreetMap</span>`;
+}
+function walkView(id){
+  const x = C.logs[id]; if (!x || !x.route) { logSheet(); return; }
+  const pts = polyDec(x.route), m = memberOf(x.mid), who = (m && m.name) || x.byName || "";
+  const kmh = x.dur && x.dist ? (x.dist / 1000) / (x.dur / 60) : 0;
+  const wk = []; for (let i = 0; i < 7; i++) wk.push(ymd(addDays(new Date(), -i)));
+  const week = Object.values(C.logs).filter(l => l.k === "balade" && l.dist && wk.includes(l.date) && (l.dog || "main") === dogId());
+  const wkKm = week.reduce((s, l) => s + l.dist, 0);
+  const day = parseYmd(x.date), when = cap(fmt(day, {weekday: "long", day: "numeric", month: "long"})) + " · " + esc(x.at);
+  const st = (v, l) => `<div class="wv-s"><b class="num">${v}</b><span>${l}</span></div>`;
+  openSheet(T("Balade"), `<div class="wv-when">${when}${who ? " · " + esc(who) : ""}</div>
+    <div class="rmap big" id="wv-map"></div>
+    <div class="wv-g">${st(fmtKm(x.dist), T("Distance"))}${st((x.dur || "–") + " min", T("Durée"))}${st(kmh ? kmh.toLocaleString(LANG === "en" ? "en" : "fr-CH", {maximumFractionDigits: 1}) + " km/h" : "–", T("Vitesse moy."))}</div>
+    ${x.pee || x.poo ? `<div class="wv-tags">${x.pee ? `<span>${QL.pipi.i}${T("Pipi")}</span>` : ""}${x.poo ? `<span>${QL.caca.i}${T("Caca")}</span>` : ""}</div>` : ""}
+    ${week.length > 1 ? `<div class="wv-week">${T("Ces 7 derniers jours : {k} en {n} balades suivies", {k: fmtKm(wkKm), n: week.length})}</div>` : ""}
+    <div class="foot" style="margin:10px 4px 0">${T("Le trajet n'est visible que par votre famille.")}</div>`, null);
+  liveMapDrop(S.wvMap); S.wvMap = null;
+  requestAnimationFrame(() => { const b = document.getElementById("wv-map"); if (b) liveMap(b, [{id: "w", pts}], {sel: "w"}).then(M => { S.wvMap = M; }); });
+}
+setInterval(() => { const w = walkNow();
+  if (w && GPS.watch == null && GPS.state !== "denied" && gLS.g(gpsKey(w.start)) != null) gpsBegin(w.start);   // app reopened during a walk
+  else if (!w && GPS.start && GPS.watch != null) gpsDrop(); }, 4000);
+async function endWalk(){
+  const w = walkNow(); if (!w) return; const ds = ymd(new Date()), m = meMember();
+  const start = new Date(w.start), dur = Math.max(1, Math.round((Date.now() - start) / 60000));
+  if (GPS.pts.length > 1 || gLS.g(gpsKey(w.start))) toast(T("Enregistrement du trajet…"), 9000);
+  const g = await gpsFinish(w);
+  await put("logs", newId(), Object.assign({date: ds, dog: dogId(), k:"balade", at: hhmm(start), dur, mid: w.mid || ME || "", by: S.me || null, byName: m ? m.name : "", pee: !!S.walkPee, poo: !!S.walkPoo}, g));
+  // tick the scheduled walk closest to when it started
+  const tsk = walkTask(ds, start);
+  if (tsk) await setTick(ds, tsk.key, true, hhmm(start));
+  // the other dogs that came along: same walk, their own walk task ticked
+  const others = (S.walkDogs || []).filter(x => x.id !== dogId()), names = [];
+  for (const x of others) {
+    const job = asDog(x.id, () => { const t = walkTask(ds, start), d = dog() || {}; names.push(d.name || "");
+      return {log: Object.assign({date: ds, dog: x.id, k: "balade", at: hhmm(start), dur, mid: w.mid || ME || "", by: S.me || null, byName: m ? m.name : "", pee: !!x.pee, poo: !!x.poo}, g),
+        tick: t ? [tickId(ds, t.key), tickDoc(ds, t.key, hhmm(start))] : null}; });
+    await put("logs", newId(), job.log); if (job.tick) await put("ticks", job.tick[0], job.tick[1]);
+  }
+  S.walkPee = S.walkPoo = false; S.walkDogs = null;
+  await setDay(ds, {walk: null});
+  const with_ = names.filter(Boolean).length ? " · " + T("aussi pour {n}", {n: names.filter(Boolean).join(", ")}) : "";
+  toast((tsk ? T("Balade de {n} min notée · « {t} » cochée",{n:dur, t:tsk.title}) : T("Balade de {n} min notée",{n:dur})) + (g.dist ? " · " + fmtKm(g.dist) : "") + with_);
+}
+function walkSheet(){
+  S.walkPee = S.walkPoo = false; S.walkDogs = null;
+  const dogs = allDogs();
+  if (dogs.length < 2) return openSheet(T("Terminer la balade"), `<div class="hint" style="margin:0 0 12px">${T("Pendant la balade, il a fait :")}</div>
+    <div class="opts"><label><input type="checkbox" id="wk-pee"><span>${T("Pipi")}</span></label><label><input type="checkbox" id="wk-poo"><span>${T("Caca")}</span></label></div>`,
+    () => { S.walkPee = !!($("#wk-pee") || {}).checked; S.walkPoo = !!($("#wk-poo") || {}).checked; endWalk(); });
+  // several dogs: who came along, and what each one did
+  let last = null; try { last = JSON.parse(gLS.g("dl-walk-dogs") || "null"); } catch(_) {}
+  const cur = dogId(), on = id => id === cur || !last || last.includes(id);
+  openSheet(T("Terminer la balade"), `<div class="hint" style="margin:0 0 12px">${T("Qui était de la balade, et qu'a fait chacun ?")}</div>
+    <div class="wk-dogs">${dogs.map(d => `<div class="wk-dog ${on(d.id) ? "on" : ""}" data-dog="${esc(d.id)}"><label class="wk-who"><input type="checkbox" class="wk-with" value="${esc(d.id)}" ${on(d.id) ? "checked" : ""} ${d.id === cur ? "disabled" : ""}>${avatarHTML(d, "wk-av")}<b>${esc(d.name || T("Chien"))}</b></label>
+      <div class="opts"><label><input type="checkbox" class="wk-pee"><span>${T("Pipi")}</span></label><label><input type="checkbox" class="wk-poo"><span>${T("Caca")}</span></label></div></div>`).join("")}</div>`,
+    () => { const pick = [...document.querySelectorAll(".wk-dog")].filter(x => x.querySelector(".wk-with").checked).map(x => ({id: x.dataset.dog, pee: x.querySelector(".wk-pee").checked, poo: x.querySelector(".wk-poo").checked}));
+      gLS.s("dl-walk-dogs", JSON.stringify(pick.map(x => x.id)));
+      const me = pick.find(x => x.id === cur) || {pee: false, poo: false}; S.walkPee = me.pee; S.walkPoo = me.poo; S.walkDogs = pick.filter(x => x.id !== cur); endWalk(); });
+}
+document.addEventListener("change", e => { const c = e.target; if (c && c.classList && c.classList.contains("wk-with")) { const r = c.closest(".wk-dog"); if (r) r.classList.toggle("on", c.checked); } });
+// work out another dog's walk entries without switching the screen to that dog
+function asDog(id, fn){ const was = CUR; CUR = id; try { return fn(); } finally { CUR = was; } }
+function logSheet(){
+  const log = dayLog(ymd(new Date())).reverse();
+  openSheet(T("Journal rapide"), `<div class="card list" style="box-shadow:none;background:var(--fill)">${log.map(x => { const q = QL[x.k] || QL.pipi, m = memberOf(x.mid);
+    return `<div class="row"><span class="ico" style="--c:${q.c}">${q.i}</span>${x.photo ? `<img class="ql-th" src="${esc(x.photo)}" alt="" data-act="photoView" data-src="${esc(x.photo)}">` : ""}<div class="main"><div class="t">${esc(T(q.l))}${x.q ? " · " + esc(T(x.q)) : ""}${x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") : ""}</div><div class="s">${esc(x.at)}${m ? " · " + esc(m.name) : x.byName ? " · " + esc(x.byName) : ""}${x.note ? " · " + esc(x.note) : ""}</div></div>${x.route ? `<button type="button" class="copy" data-act="walkView" data-id="${esc(x.id)}">${T("Carte")}</button>` : ""}${canTick() ? `<button type="button" class="copy" style="color:var(--red)" data-act="qlDel" data-id="${esc(x.id)}">${T("Supprimer")}</button>` : ""}</div>`; }).join("")}</div>`);
+}
+// 7-day stats for the health tab
+function logStats(){
+  const days = []; for (let i = 6; i >= 0; i--) { const ds = ymd(addDays(new Date(), -i)), l = dayLog(ds), st = dayStats(ds);
+    const walksTicked = st.tasks.filter(t => t.cat === "balade" && st.done[t.key]).length;
+    days.push({ds, pipi: l.filter(x => x.k === "pipi" || (x.k === "balade" && x.pee)).length, caca: l.filter(x => x.k === "caca" || (x.k === "balade" && x.poo)).length,
+      min: l.filter(x => x.k === "balade").reduce((s, x) => s + (+x.dur || 0), 0), walks: Math.max(walksTicked, l.filter(x => x.k === "balade").length),
+      q: l.filter(x => x.k === "caca" && x.q).map(x => x.q), eau: l.filter(x => x.k === "eau").length, fr: l.filter(x => x.k === "friandise").length}); }
+  return days;
+}
+function statsSection(){
+  const ds = logStats(), any = ds.some(d => d.pipi || d.caca || d.min || d.walks);
+  const row = (label, key, color, unit) => { const max = Math.max(1, ...ds.map(d => d[key])), tot = ds.reduce((s, d) => s + d[key], 0);
+    return `<div class="st-row"><div class="st-h"><b>${T(label)}</b><span class="num">${T("{n} en moyenne par jour",{n: nf(Math.round(tot / 7 * 10) / 10) + (unit ? " " + unit : "")})}</span></div>
+      <div class="st-bars">${ds.map(d => `<div class="st-c"><i style="height:${Math.round(d[key] / max * 100)}%;background:${color}" title="${d[key]}"></i><span>${esc(WD()[parseYmd(d.ds).getDay()].slice(0, 2))}</span></div>`).join("")}</div></div>`; };
+  const qs = ds.flatMap(d => d.q), bad = qs.filter(q => q === "Liquides" || q === "Molles").length;
+  return `<div class="sec"><div class="sec-h"><h2>${T("Statistiques 7 jours")}</h2></div><div class="card pad stats">
+    ${any ? row("Sorties pipi", "pipi", QL.pipi.c) + row("Cacas", "caca", QL.caca.c) + row("Minutes de balade", "min", "var(--green)", "min")
+      + (qs.length ? `<div class="st-row"><div class="st-h"><b>${T("Qualité des selles")}</b><span class="num">${bad ? T("{n} sur {t} molles ou liquides",{n:bad, t:qs.length}) : T("Toutes normales")}</span></div><div class="st-q">${ds.map(d => `<div class="st-c">${d.q.map(q => `<i style="background:${(STOOL_Q.find(x => x[0] === q) || [0, "var(--gray)"])[1]}"></i>`).join("") || "<i class=\"none\"></i>"}<span>${esc(WD()[parseYmd(d.ds).getDay()].slice(0, 2))}</span></div>`).join("")}</div></div>` : "")
+      : `<div class="empty-s">${T("Utilisez le journal rapide sur Aujourd'hui (pipi, caca, balade…) : les tendances de la semaine apparaîtront ici.")}</div>`}
+  </div><div class="foot">${T("Pratique pour la propreté d'un chiot, et pour répondre au vétérinaire en cas de souci digestif.")}</div></div>`;
+}
+
+/* ---------- family hub ---------- */
+const I_FAM = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="9" cy="7.5" r="3.6"/><path d="M2 19.2c0-3.5 3.1-6 7-6s7 2.5 7 6c0 .7-.6 1.3-1.3 1.3H3.3c-.7 0-1.3-.6-1.3-1.3Z"/><circle cx="17" cy="8.4" r="2.9"/><path d="M17.6 13.4c2.6.2 4.4 2.2 4.4 4.7 0 .6-.5 1.1-1.1 1.1h-3.7c.1-.3.1-.6.1-.9 0-1.9-.8-3.6-2.1-4.7.7-.2 1.5-.2 2.4-.2Z"/></svg>';
+const I_EXPAND = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/></svg>';
+const I_UP = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+// full-screen conversation, in its own layer so typing is never interrupted when new messages arrive
+function syncChat(){
+  let root = document.getElementById("chat-root");
+  const on = S.chatFull && S.tab === "famille" && !S.sub;
+  if (!on) { if (root && root.querySelector(".cf:not(.out)")) { const tok = syncChat.tok = (syncChat.tok || 0) + 1;
+      root.querySelectorAll(".cf,.cf-back").forEach(x => x.classList.add("out"));
+      document.body.classList.remove("chat-full"); document.documentElement.classList.remove("chat-full");
+      setTimeout(() => { if (syncChat.tok === tok && !S.chatFull) root.innerHTML = ""; }, 300); } return; }
+  if (root && root.querySelector(".cf.out")) { syncChat.tok = (syncChat.tok || 0) + 1; root.innerHTML = ""; }
+  if (!root) { root = document.createElement("div"); root.id = "chat-root"; document.body.appendChild(root); }
+  if (!root.firstChild) {
+    const card = document.querySelector("#view .board"), cr = card ? card.getBoundingClientRect() : null;
+    root.style.setProperty("--oy", cr ? Math.round(cr.top + cr.height / 2) + "px" : "60%");
+    root.innerHTML = `<div class="cf-back" aria-hidden="true"></div><div class="cf" role="dialog" aria-modal="true" aria-label="${T("Messages")}">
+      <div class="cf-h"><button class="cf-x" data-act="chatClose" aria-label="${T("Réduire")}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="cf-t"><b>${T("Messages")}</b><span>${esc(T("La famille de {n}", {n: (dog() || {}).name || T("votre chien")}))} · <span class="online-n"><i></i>${esc(T("{n} en ligne", {n: onlineCount()}))}</span></span></div><span style="width:36px"></span></div>
+      <div class="cf-body"></div>
+      ${S.chatCanWrite ? `<div class="cf-in"><div class="cf-box"><div class="rp-slot"></div><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message à la famille")}" autocomplete="off" enterkeyhint="send"></textarea><div class="cf-row"><label class="cf-plus" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : I_PLUS}</label><input type="file" id="n-photo" accept="image/*" hidden><span style="flex:1"></span><button class="cf-mic" type="button" data-act="recStart" aria-label="${T("Message vocal")}">${I_MIC}</button><button class="cf-send" type="button" data-act="sendNote" aria-label="${T("Envoyer")}">${I_UP}</button></div></div></div>`
+        : `<div class="cf-in s" style="color:var(--fg2);justify-content:center">${T("Rejoignez la famille pour écrire un message.")}</div>`}</div>`;
+    document.body.classList.add("chat-full"); document.documentElement.classList.add("chat-full");
+  }
+  if (!window.__cfVV && window.visualViewport) { window.__cfVV = true;
+    const fit = () => { const cf = document.querySelector("#chat-root .cf"), vv = window.visualViewport; if (!cf) return;
+      cf.style.height = vv.height + "px"; cf.style.top = vv.offsetTop + "px"; cf.classList.toggle("kb", vv.height < window.innerHeight - 120);
+      const b = cf.querySelector(".cf-body"); if (b) b.scrollTop = b.scrollHeight; };
+    visualViewport.addEventListener("resize", fit); visualViewport.addEventListener("scroll", fit); }
+  { const cf = root.querySelector(".cf"), vv = window.visualViewport; if (cf && vv) { cf.style.height = vv.height + "px"; cf.style.top = vv.offsetTop + "px"; } }
+  const body = root.querySelector(".cf-body");
+  if (body.dataset.h !== S.chatList) { body.dataset.h = S.chatList; body.innerHTML = S.chatList; }
+}
+const I_SEND = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3.3 11.1 19.6 3.6c1-.5 2 .5 1.6 1.5L13.8 21.4c-.5 1.1-2 1-2.3-.1l-1.6-6.2a1 1 0 0 0-.7-.7l-6.2-1.6c-1.1-.3-1.2-1.8-.1-2.3Z"/></svg>';
+const I_PHONE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6.7 2.6c.6-.2 1.3 0 1.6.6l1.9 3.6c.3.6.2 1.3-.3 1.8L8.4 10c1.2 2.4 3.2 4.4 5.6 5.6l1.4-1.5c.5-.5 1.2-.6 1.8-.3l3.6 1.9c.6.3.8 1 .6 1.6l-.8 2.4c-.3.9-1.2 1.6-2.2 1.5C10 20.6 3.4 14 2.8 5.6c-.1-1 .6-1.9 1.5-2.2l2.4-.8Z"/></svg>';
+const notes = () => Object.entries(C.notes || {}).map(([id, n]) => ({id, ...n})).filter(n => n.text || n.photo || n.audio || n.kind).sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+// who ticked a done entry
+function doneBy(x){
+  if (!x) return null; const fam = family();
+  return (x.mid && memberOf(x.mid)) || (x.by && fam.find(m => m.uid && m.uid === x.by)) || (x.byName && fam.find(m => m.name === x.byName)) || null;
+}
+function relTime(iso){
+  const t = Date.parse(iso); if (!t) return ""; const s = (Date.now() - t) / 1000;
+  const rtf = new Intl.RelativeTimeFormat(LOC(), {numeric:"auto"});
+  if (s < 60) return T("à l'instant");
+  if (s < 3600) return rtf.format(-Math.round(s / 60), "minute");
+  if (s < 86400 && new Date(t).getDate() === new Date().getDate()) return rtf.format(-Math.round(s / 3600), "hour");
+  return fmt(new Date(t), {weekday:"short", day:"numeric", month:"short"}) + " · " + hhmm(new Date(t));
+}
+function dayWord(ds){ const today = ymd(new Date()); return ds === today ? T("Aujourd'hui") : ds === ymd(addDays(new Date(), -1)) ? T("Hier") : cap(fmt(parseYmd(ds), {weekday:"long"})); }
+function famFeed(limit){
+  const out = [];
+  for (let i = 0; i < 4; i++) { const ds = ymd(addDays(new Date(), -i)), st = dayStats(ds);
+    st.tasks.forEach(t => { const x = st.done[t.key]; if (x) out.push({ds, at:x.at || "", t, m:doneBy(x), name:x.byName || (x.by ? whoName(x.by) : "")}); });
+    dayLog(ds).forEach(x => { const qq = QL[x.k] || QL.pipi; out.push({ds, at:x.at || "", t:{title: T(qq.l) + (x.q ? " (" + T(x.q).toLowerCase() + ")" : "") + (x.dur ? " · " + x.dur + " min" + (x.dist ? " · " + fmtKm(x.dist) : "") : ""), cat:"autre"}, q:qq, m:doneBy(x), name:x.byName || ""}); }); }
+  return out.sort((a, b) => (b.ds + b.at).localeCompare(a.ds + a.at)).slice(0, limit || 8);
+}
+function famToday(){
+  const st = dayStats(ymd(new Date())), nm = toMin(hhmm(new Date())), fam = family();
+  const per = fam.map(m => { const mine = st.tasks.filter(t => t.who === m.id);
+    const did = st.tasks.filter(t => { const b = doneBy(st.done[t.key]); return b && b.id === m.id; }).length;
+    const next = mine.find(t => !st.done[t.key]);
+    return {m, total: mine.length, done: mine.filter(t => st.done[t.key]).length, did, next, late: next && toMin(next.time) < nm - 30}; });
+  const open = st.tasks.filter(t => !t.who || !memberOf(t.who));
+  return {per, open, openDone: open.filter(t => st.done[t.key]).length, st};
+}
+function famStack(fam, sz){ return `<span class="mstack">${fam.slice(0, 5).map(m => mav(m, sz)).join("")}${fam.length > 5 ? `<span class="mav" style="--c:var(--gray);width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.4)}px">+${fam.length - 5}</span>` : ""}</span>`; }
+// little card on Today that leads to the hub
+function famStrip(){
+  const fam = family(), me = meMember();
+  if (!fam.length) return canEdit() || S.mode === "db" ? `<button class="card famstrip" data-act="openFamily"><span class="ico" style="--c:var(--blue)">${I_FAM}</span><div class="main"><div class="t">${T("La famille")}</div><div class="s">${T("Ajoutez qui s'occupe du chien pour partager les tâches")}</div></div><span class="chev">${I.chevR}</span></button>` : "";
+  const {per} = famToday(), nm = toMin(hhmm(new Date()));
+  const nx = per.filter(p => p.next).sort((a, b) => toMin(a.next.time) - toMin(b.next.time))[0];
+  const line = !me ? T("Touchez pour rejoindre la famille") : nx ? T("Prochain : {n} – {t} à {h}",{n:nx.m.name, t:nx.next.title, h:nx.next.time}) : per.some(x => x.total) ? T("{n} membre(s) · tout est à jour",{n:fam.length}) : T("{n} membre(s) · touchez pour répartir les tâches",{n:fam.length});
+  return `<button class="card famstrip ${me ? "" : "join-me"}" data-act="openFamily">${famStack(fam, 30)}<div class="main"><div class="t">${T("La famille")}</div><div class="s">${esc(line)}</div></div>${notes().length && notes()[0].at > notesSeen() ? `<span class="dotnew" aria-label="${T("Nouveau message")}"></span>` : ""}<span class="chev">${I.chevR}</span></button>`;
+}
+function notesSeen(){ try { return LS.get("carnet-notes-seen") || ""; } catch(_) { return ""; } }
+function viewFamily(){
+  const d = dog() || {}, fam = family(), me = meMember(), {per, open, openDone} = famToday();
+  const joined = fam.filter(m => m.uid).length, ns = notes(), feed = famFeed(8);
+  try { if (ns[0]) LS.set("carnet-notes-seen", ns[0].at || ""); } catch(_){}
+  const hero = `<div class="fam-hero">
+      <div class="fam-orbit"><div class="orbit-center">${avatarHTML(d, "lg")}</div>
+        <div class="orbit-ring">${fam.slice(0, 8).map((m, i) => `<button class="orb" data-act="memberSheet" data-id="${esc(m.id)}" style="--a:${(i / Math.min(8, fam.length)) * 360 - 90}deg" aria-label="${esc(m.name)}">${mav(m, 46)}</button>`).join("")}</div></div>
+      <h1>${T("La famille de {n}",{n:esc(d.name || T("votre chien"))})}</h1>
+      <div class="s">${fam.length ? T("{n} membre(s)",{n:fam.length}) + ` · <span class="online-n"><i></i>${esc(T("{n} en ligne",{n:onlineCount()}))}</span>` : T("Personne pour l'instant")}</div></div>`;
+  // me
+  const meCard = me ? `<div class="card pad fam-me"><div class="fam-me-h">${mav(me, 52)}<div class="main"><div class="eyebrow" style="margin:0">${T("Vous")}</div><div class="t">${esc(me.name)}</div><div class="s">${esc(roleLabel(me))}${me.phone ? " · " + esc(me.phone) : ""}</div></div></div>
+      <div class="fam-btns"><button class="btn ghost" data-act="memberSheet" data-id="${esc(me.id)}">${T("Modifier")}</button><button class="btn ghost danger-t" data-act="leaveFam">${T("Quitter")}</button></div></div>`
+    : `<div class="card pad fam-me join-me"><div class="fam-me-h"><span class="mav" style="--c:var(--fill2);color:var(--fg2);width:52px;height:52px;font-size:24px">?</span><div class="main"><div class="t">${T("Vous n'êtes pas encore dans la famille")}</div><div class="s">${T("Rejoignez-la pour signer vos tâches, voir les vôtres et écrire aux autres.")}</div></div></div>
+      <button class="btn" style="width:100%;margin-top:12px" data-act="openJoin">${T("Rejoindre la famille")}</button></div>`;
+  // today, per person
+  const todayRows = per.map(p => `<button class="row" data-act="memberSheet" data-id="${esc(p.m.id)}">${mav(p.m, 34)}<div class="main"><div class="t">${esc(p.m.name)}${p.m.id === ME ? ` <span class="pill">${T("Moi")}</span>` : ""}</div>
+      <div class="s ${p.late ? "late" : ""}">${p.total ? (p.next ? T("Prochain : {t} à {h}",{t:p.next.title, h:p.next.time}) : T("Tout est fait")) : T("Rien d'attribué aujourd'hui")}${p.did ? " · " + T("{n} cochée(s)",{n:p.did}) : ""}</div></div>
+      ${p.total ? `<span class="mini-ring" style="--p:${Math.round(p.done / p.total * 100)};--c:${esc(p.m.color)}"><b class="num">${p.done}/${p.total}</b></span>` : ""}</button>`).join("");
+  const openRow = open.length ? `<div class="row"><span class="mav" style="--c:var(--gray);width:34px;height:34px;font-size:15px">∗</span><div class="main"><div class="t">${T("Tout le monde")}</div><div class="s">${T("Tâches sans personne attitrée")}</div></div><span class="mini-ring" style="--p:${Math.round(openDone / open.length * 100)};--c:var(--gray)"><b class="num">${openDone}/${open.length}</b></span></div>` : "";
+  const today = fam.length ? `<div class="sec"><div class="sec-h"><h2>${T("Aujourd'hui")}</h2>${canEdit() && routine().length ? `<button class="link" data-act="assignAll">${T("Répartir")}</button>` : ""}</div><div class="card list">${todayRows}${openRow}</div></div>` : "";
+  // messages
+  // messages: in the page, or full screen (own layer, see syncChat)
+  const typ = typingHTML();
+  const msgList = ns.length || typ ? `<div class="msg-list" data-first="${esc((ns[0] || {}).id || "")}">` + typ + msgsHTML(ns.slice(0, 60)) + `</div>`
+        : `<div class="empty-s">${T("Pas encore de message. Laissez une consigne, un rappel ou une nouvelle de {n}.",{n:esc(d.name || T("votre chien"))})}</div>`;
+  S.chatList = msgList; S.chatCanWrite = !!(me || S.mode !== "db");
+  const composer = me || S.mode !== "db" ? `<div class="rp-slot"></div><form class="board-in" data-form="note"><button type="button" class="btn ghost round bd-mic" data-act="recStart" aria-label="${T("Message vocal")}">${I_MIC}</button><label class="btn ghost round" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : QL.photo.i}</label><input type="file" id="n-photo" accept="image/*" hidden><input class="f" id="n-text" maxlength="240" placeholder="${T("Un mot pour la famille…")}" autocomplete="off"><button class="btn round" type="submit" aria-label="${T("Envoyer")}">${I_SEND}</button></form>` : `<div class="s" style="color:var(--fg2);font-size:14px">${T("Rejoignez la famille pour écrire un message.")}</div>`;
+  const board = `<div class="sec"><div class="sec-h"><h2>${T("Messages")}</h2><button class="link exp-l" data-act="chatFull">${I_EXPAND}${T("Agrandir")}</button></div><div class="card pad board">
+      ${S.chatFull ? `<div class="empty-s">${T("Conversation ouverte en plein écran.")}</div>` : composer + msgList}
+    </div></div>`;
+  // activity
+  const act = `<div class="sec"><div class="sec-h"><h2>${T("Dernières activités")}</h2></div><div class="card list">${feed.length ? feed.map(f => { const c = f.q ? {color:f.q.c, icon:f.q.i} : (CATS[f.t.cat] || CATS.autre);
+      return `<div class="row feed">${f.m ? mav(f.m, 30) : ico(c.color, c.icon)}<div class="main"><div class="t">${f.m || f.name ? T("{n} : {t}",{n:esc(f.m ? f.m.name : f.name), t:esc(f.t.title)}) : esc(f.t.title)}</div><div class="s">${esc(dayWord(f.ds))}${f.at ? " · " + esc(f.at) : ""}</div></div><span class="ico sm" style="--c:${c.color}">${c.icon}</span></div>`; }).join("")
+      : `<div class="empty-s pad">${T("Les tâches cochées apparaîtront ici, avec le prénom de qui les a faites.")}</div>`}</div></div>`;
+  // members
+  const members = `<div class="sec"><div class="sec-h"><h2>${T("Membres")}</h2></div><div class="card list">
+      ${fam.map(m => `<div class="row"><button class="rowbtn" data-act="memberSheet" data-id="${esc(m.id)}"><span class="pres">${mav(m, 34)}${presDot(m)}</span><div class="main"><div class="t">${esc(m.name)}</div><div class="s">${isOnline(m) ? `<span class="on-t">${T("En ligne")}</span> · ` : m.seen ? esc(T("Vu {t}", {t: relTime(new Date(m.seen).toISOString())})) + " · " : ""}${m.signedOut ? `<span class="warn-t">${T("Déconnecté(e) de l'app")}</span> · ` : ""}${esc(roleLabel(m))} · ${m.id === ME ? T("C'est vous") : m.uid ? (m.since > 1e12 ? T("A rejoint le {d}",{d:fmt(new Date(m.since),{day:"numeric",month:"short"})}) : T("A rejoint")) : T("Pas encore rejoint")}</div></div></button>
+        ${m.phone ? `<a class="callbtn" href="tel:${esc(m.phone.replace(/[^+0-9]/g, ""))}" aria-label="${T("Appeler {n}",{n:esc(m.name)})}">${I_PHONE}</a>` : ""}<span class="chev">${I.chevR}</span></div>`).join("")}
+      ${invites().map(v => `<button class="row inv-row" data-act="${canEdit() ? "inviteMenu" : ""}" data-id="${esc(v.id)}"><span class="mav" style="--c:var(--fill2);color:var(--fg2);width:34px;height:34px;font-size:15px">#</span><div class="main"><div class="t">${esc(T("Code {r} en attente",{r:T(v.role === "garde" ? "Garde" : "Famille")}))}</div><div class="s">${esc(T("Expire dans {n} j",{n:daysLeft(v)}))}${v.byName ? " · " + esc(T("par {n}",{n:v.byName})) : ""}</div></div>
+        ${canEdit() ? `<span class="chev">${I.chevR}</span>` : ""}</button>`).join("")}
+      ${canEdit() || S.mode !== "db" ? `<button class="row" data-act="invite"><span class="ico" style="--c:var(--blue)">${I_PLUS}</span><span class="main t" style="color:var(--accent)">${T("Ajouter quelqu'un")}</span><span class="chev">${I.chevR}</span></button>` : ""}
+    </div><div class="foot">${T("Chaque personne a son propre compte. « Ajouter quelqu'un » crée un code avec le rôle choisi ; la personne l'entre avec son compte et rejoint la famille.") + " " + T("Famille : voit et coche tout. Garde : la personne qui garde le chien, elle voit la fiche de garde et coche les tâches.")}</div></div>`;
+  return `${pageHead(T("Famille"), "", `<button class="gearbtn" data-act="goSub" data-tab="famille" data-sub="reglages" aria-label="${T("Réglages")}">${I_GEAR.replace('width="18" height="18"', 'width="21" height="21"')}</button>`)}
+    ${hero}${board}${today}${shareSection()}${members}<div class="sec">${meCard}</div>`;
+}
+function memberSheet(id){
+  const m = memberOf(id); if (!m) return;
+  const mine = m.id === ME, can = canEdit() || mine || S.mode !== "db";
+  const wk = shareStats(), assigned = routine().filter(r => r.who === m.id).sort((a, b) => toMin(a.time) - toMin(b.time));
+  S.msPhoto = null;
+  const body = `<div class="msheet"><div class="ms-photo">${can ? `<label for="ms-photo" aria-label="${T("Changer la photo")}"><span id="ms-av">${mav(m, 84)}</span><span class="cam"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 4 7.5 6H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.5L15 4H9Zm3 4.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/></svg></span></label><input type="file" id="ms-photo" accept="image/*" hidden>
+      ${m.photo ? `<button type="button" class="link" data-act="msPhotoDel" data-id="${esc(m.id)}">${T("Retirer la photo")}</button>` : `<span class="s" style="font-size:13px;color:var(--fg2)">${T(m.uid && S.avatars[m.uid] ? "Photo du compte · touchez pour en choisir une autre" : "Touchez pour ajouter une photo")}</span>`}` : `<span id="ms-av">${mav(m, 84)}</span>`}</div>
+    ${m.signedOut ? `<div class="ms-warn"><b>!</b><span>${esc(T("{n} s'est déconnecté(e) de l'app. Ses tâches et sa place dans la famille sont gardées ; tout revient dès qu'il ou elle se reconnecte.",{n:m.name}))}</span></div>` : ""}
+    ${can ? `<div class="fg"><label for="ms-name">${T("Prénom")}</label><input class="f" id="ms-name" value="${esc(m.name)}" maxlength="24"></div>
+    <div class="fg"><div class="lab">${T("Couleur")}</div><div class="swatches">${MCOL.map(c => `<label><input type="radio" name="ms-col" value="${c}" ${m.color === c ? "checked" : ""}><span style="background:${c}"></span></label>`).join("")}</div></div>
+    <div class="fg" ${canEdit() ? "" : "hidden"}><div class="lab">${T("Rôle")}</div><div class="seg" id="ms-role">${[["famille","Famille"],["garde","Garde"]].map(([k, l]) => `<button type="button" class="${(m.role || "famille") === k ? "on" : ""}" data-act="msRole" data-v="${k}">${T(l)}</button>`).join("")}</div></div>
+    <div class="fg"><label for="ms-phone">${T("Téléphone")}</label><input class="f num" type="tel" id="ms-phone" value="${esc(m.phone || "")}" placeholder="079 …"></div>`
+      : `<h2 style="text-align:center;margin:0">${esc(m.name)}</h2><div class="s" style="text-align:center;color:var(--fg2)">${esc(roleLabel(m))}</div>${m.phone ? `<a class="btn ghost" style="display:block;text-align:center;margin-top:10px" href="tel:${esc(m.phone.replace(/[^+0-9]/g, ""))}">${T("Appeler")} ${esc(m.phone)}</a>` : ""}`}
+    <div class="mstats"><div><b class="num">${wk.done[m.id] || 0}</b><span>${T("faites en 7 jours")}</span></div><div><b class="num">${wk.planned[m.id] || 0}</b><span>${T("prévues en 7 jours")}</span></div><div><b class="num">${assigned.length}</b><span>${T("dans la routine")}</span></div></div>
+    ${assigned.length ? `<div class="lab" style="margin-top:14px">${T("S'occupe de")}</div><div class="card list" style="box-shadow:none;background:var(--fill)">${assigned.map(r => { const c = CATS[r.cat] || CATS.autre; return `<div class="row">${ico(c.color, c.icon)}<div class="main"><div class="t">${esc(r.title)}</div><div class="s">${esc(r.time)} · ${esc(daysLabel(r.days))}</div></div></div>`; }).join("")}</div>` : ""}
+    ${!m.uid && S.mode === "db" ? `<div class="wz-note" style="margin-top:14px">${T("{n} n'a pas encore rejoint la famille : on ne peut pas encore lui confier de tâches.",{n:esc(m.name)})}</div>` : ""}
+    ${mine ? `<button type="button" class="btn ghost danger-t" style="width:100%;margin-top:14px" data-act="leaveFam">${T("Quitter la famille")}</button>` : ""}</div>`;
+  S.msRole = m.role || "famille";
+  openSheet(m.name, body, can ? () => {
+    const name = val("ms-name").trim(); if (!name) { toast(T("Indiquez un prénom.")); return false; }
+    if (family().some(x => x.id !== m.id && x.name.toLowerCase() === name.toLowerCase())) { toast(T("Ce prénom est déjà dans la famille.")); return false; }
+    const color = (document.querySelector('input[name="ms-col"]:checked') || {}).value || m.color;
+    const extra = {name, color, role: S.msRole, phone: val("ms-phone").trim()}; if (S.msPhoto !== null) extra.photo = S.msPhoto;
+    put("members", m.id, memberDoc(m, extra));
+  } : null, canEdit() && !mine ? () => removeMember(m.id) : null);
+}
+async function removeMember(id){
+  const lg = C.config.family && Array.isArray(C.config.family.members) ? C.config.family.members : [];
+  if (lg.some(m => m.id === id) && canEdit()) await put("config", "family", {members: lg.filter(m => m.id !== id)});
+  if ((C.members || {})[id]) await del("members", id);
+  if (ME === id) { ME = null; try { LS.del("carnet-me"); } catch(_){} }
+}
+function assignSheet(){
+  const fam = joinedFamily(), waiting = family().length - fam.length, rs = routine().sort((a, b) => toMin(a.time) - toMin(b.time));
+  S.assign = Object.fromEntries(rs.map(r => [r.id, r.who || ""]));
+  const chips = r => `<div class="achips">${[{id:"", name:T("Tous"), color:"var(--gray)"}].concat(fam).map(m => `<button type="button" class="achip ${S.assign[r.id] === m.id ? "on" : ""}" data-act="assignPick" data-r="${esc(r.id)}" data-m="${esc(m.id)}" style="--c:${esc(m.color)}">${m.id ? mav(m, 20) : ""}${esc(m.name)}</button>`).join("")}</div>`;
+  openSheet(T("Répartir les tâches"), `<div class="hint" style="margin:0 0 10px">${T("Choisissez qui s'occupe de chaque activité. Chacun verra les siennes avec « Les miennes ».")}${waiting ? " " + T("Les personnes qui n'ont pas encore rejoint n'apparaissent pas ici.") : ""}</div>
+    ${rs.map(r => { const c = CATS[r.cat] || CATS.autre; return `<div class="arow">${ico(c.color, c.icon)}<div class="main"><div class="t">${esc(r.title)}</div><div class="s">${esc(r.time)} · ${esc(daysLabel(r.days))}</div>${chips(r)}</div></div>`; }).join("")}`, () => {
+    rs.forEach(r => { if ((r.who || "") !== S.assign[r.id]) put("routine", r.id, Object.assign({}, C.routine[r.id], {who: S.assign[r.id]})); });
+    toast(T("Répartition enregistrée"));
+  });
+}
+function openJoin(){ S.joinForce = true; S.joinDirty = true; try { sessionStorage.removeItem(JOIN_KEY); } catch(_){} renderJoin(); }
+
+/* ---------- navigation helpers ---------- */
+const subBar = (label, act) => `<div class="topbar"><button class="back" data-act="${act || "subBack"}">${I.chevL}<span>${esc(label)}</span></button></div>`;
+const pageHead = (title, eyebrow, right) => `<div class="top"><div>${eyebrow ? `<div class="eyebrow">${esc(eyebrow)}</div>` : ""}<h1>${esc(title)}</h1></div>${right || ""}</div>`;
+/* ---------- notification centre (website): the family's notifications for me, read status synced on all my devices ---------- */
+let inboxOff = null;
+const NTYPES = {message: ['<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c5.2 0 9.4 3.6 9.4 8.1S17.2 19.2 12 19.2c-1 0-2-.1-2.9-.4L4.8 21c-.6.3-1.2-.3-1-.9l1.1-3.4C3.4 15.3 2.6 13.3 2.6 11.1 2.6 6.6 6.8 3 12 3Z"/></svg>', "#0A84FF"], activite: ['<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg>', "#30A46C"], rappel: ['<svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 4a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17Zm-1 4v5.4l3.8 2.3 1-1.6-2.8-1.7V8H11Z"/><path d="M3.3 6.6 6.6 3.4M20.7 6.6l-3.3-3.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>', "#F59E0B"], evenement: [I.cal, "#8E5BD9"], alerte: [WXG.sunCloud, "#E8A33D"], admin: [I_GEAR, "#8E8E93"], annonce: ['<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.5 3.5c.6-.4 1.5 0 1.5.8v15.4c0 .8-.9 1.2-1.5.8L13 16.8H9.2l.9 3.7c.2.8-.4 1.5-1.2 1.5H7.6c-.6 0-1.1-.4-1.2-1l-1-4.2H5a3 3 0 0 1-3-3V10a3 3 0 0 1 3-3h8l5.5-3.5Z"/></svg>', "#E5484D"]};
+const unread = () => (S.inbox || []).filter(x => !x.read).length;
+function bellBtn(){ const n = unread();
+  return `<button class="bell" data-act="nOpenList" aria-label="${esc(T("Notifications") + (n ? " · " + T("{n} non lue(s)", {n}) : ""))}"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg><span class="bell-n num" ${n ? "" : "hidden"}>${n > 99 ? "99+" : n}</span></button>`; }
+// the bell sits at the top right of every page, next to what is already there
+function bellInject(){
+  if (!window.carnetInbox) return; const t = document.querySelector("#view .top"); if (!t || t.querySelector(".bell")) return;
+  const kids = [...t.children], r = document.createElement("div"); r.className = "top-r"; r.innerHTML = bellBtn();
+  if (kids.length > 1) r.appendChild(kids[kids.length - 1]); t.appendChild(r);
+}
+function inboxStart(){
+  if (inboxOff || !window.carnetInbox || S.mode !== "db" || !S.ready) return;
+  inboxOff = window.carnetInbox.watch((list, live) => { if (list) S.inbox = list; S.inboxLive = live; inboxPaint(); });
+}
+function inboxPaint(){
+  const n = unread();
+  document.querySelectorAll(".bell-n").forEach(e => { e.hidden = !n; e.textContent = n > 99 ? "99+" : n; });
+  try { if (navigator.setAppBadge) n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch(_) {}
+  const L = document.getElementById("n-list"); if (!L) return;
+  const list = S.inbox || [];
+  $("#n-head").innerHTML = `<span class="n-live ${S.inboxLive ? "on" : ""}"><i></i>${S.inboxLive ? T("En direct") : T("Hors ligne · tout arrivera au retour du réseau")}</span>
+    ${n ? `<button type="button" class="link" data-act="nAll">${T("Tout marquer comme lu")}</button>` : ""}`;
+  L.innerHTML = list.length ? list.map(x => { const [ic, c] = NTYPES[x.type] || NTYPES.admin;
+    return `<div class="n-it ${x.read ? "" : "unread"}"><button type="button" class="n-main" data-act="nOpen" data-id="${esc(x.id)}"><span class="n-ic" style="--c:${c}">${ic}</span>
+      <div class="main"><div class="t">${esc(x.title || "")}</div>${x.body ? `<div class="s">${esc(x.body)}</div>` : ""}<div class="n-time">${esc(relTime(new Date(+x.at || 0).toISOString()))}</div></div>${x.read ? "" : `<i class="n-dot" aria-label="${T("Non lue")}"></i>`}</button>
+      <button type="button" class="n-x" data-act="nDel" data-id="${esc(x.id)}" aria-label="${T("Supprimer")}">×</button></div>`; }).join("")
+    : `<div class="n-empty"><span class="n-empty-i"><svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg></span><br>${T("Aucune notification pour l'instant.")}</div>`;
+}
+function inboxSheet(){
+  openSheet(T("Notifications"), `<div id="n-head" class="n-head"></div><div id="n-list" class="n-list"></div>
+    <button type="button" class="row n-set" data-act="nSettings"><span class="main t">${T("Réglages des notifications")}</span>${I.chevR}</button>`, null);
+  inboxPaint();
+}
+function inboxGo(id){ const x = (S.inbox || []).find(y => y.id === id); if (x && !x.read) window.carnetInbox.read(id); if (x && x.tab) { closeSheet(); const [t, sub] = parseHash(x.tab); go(t, sub || null); } }
+// after each family event: say right away whether the family's phones were reached (and why not)
+window.onCarnetNotified = r => {
+  if (!r) return;
+  if (r.s !== 200) toast(T("Notification non envoyée : {e}", {e: r.s === 0 ? T("serveur injoignable") : (r.e || r.s)}));
+  else if (r.people === 0) toast(T("Personne d'autre dans la famille pour l'instant"));
+  else if (!r.ok && !r.n) toast(T("Personne n'a encore activé les notifications sur son téléphone"));
+  else if (r.n && !r.ok) toast(T("Notification refusée par Apple/Google : {e}", {e: r.e || "?"}));
+  else toast(T("Famille prévenue ({n})", {n: r.ok}));
+};
+// a tap on a phone notification opens the app on it and marks it as read on every device
+if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e => { const d = e.data || {}; if (d.type === "open-notif" && d.nid && window.carnetInbox) { window.carnetInbox.read(d.nid); if (d.tab) { const [t, sub] = parseHash(d.tab); go(t, sub || null); } } });
+(function(){ const m = /^#n=([^&]+)(?:&t=([a-z]+)(?:%2F|\/)?([a-z]*))?/.exec(location.hash); if (!m) return; S.openNid = decodeURIComponent(m[1]); if (m[2]) { S.tab = m[2]; if (m[3]) S.sub = m[3]; } try { history.replaceState(null, "", location.pathname + location.search + (m[2] ? "#" + m[2] : "")); } catch(_) {} })();
+const hcard = (act, attrs, color, icon, title, value, sub, warn) => `<button class="hcard ${warn ? "warn" : ""}" data-act="${act}" ${attrs || ""}><div class="hc-h"><span class="ico" style="--c:${color}">${icon}</span><span class="hc-t" style="color:${color}">${esc(title)}</span><span class="chev">${I.chevR}</span></div><div class="hc-v">${value}</div>${sub ? `<div class="hc-s">${sub}</div>` : ""}</button>`;
+function go(tab, sub){ if (tab === "chien" && sub === "reglages") tab = "famille"; if (tab === "profil") { tab = "famille"; sub = "reglages"; }
+  const order = tabList().map(x => x[0]); if (!order.includes(tab)) tab = order[0];
+  const di = order.indexOf(tab) - order.indexOf(S.tab);
+  S.pageAnim = {cls: tab === S.tab ? (sub ? "enter-r" : "enter-l") : di > 0 ? "enter-r" : "enter-l", until: Date.now() + 500};
+  if (tab !== S.tab) S.tabBounce = {id: tab, until: Date.now() + 500};
+  S.tab = tab; S.sub = sub || null; S.editProfile = false; try { history.replaceState(null, "", "#" + tab + (sub ? "/" + sub : "")); } catch(_) {}
+  render(); window.scrollTo(0, 0); }
+
+/* ---------- several dogs ---------- */
+function dogMenu(){
+  const ds = allDogs();
+  openSheet(T("Mes chiens"), `<div class="card list" style="box-shadow:none;background:var(--fill)">${ds.map(d => `<button type="button" class="row" data-act="pickDog" data-id="${esc(d.id)}">${avatarHTML(d)}<div class="main"><div class="t">${esc(d.name)}</div><div class="s">${esc([d.breed && T(d.breed), d.birth ? ageOf(d.birth) : ""].filter(Boolean).join(" · "))}</div></div>${d.id === dogId() ? `<span style="color:var(--accent)">${I.tick}</span>` : ""}</button>`).join("")}
+    ${canEdit() ? `<button type="button" class="row" data-act="addDog"><span class="ico" style="--c:var(--accent)">${I_PLUS}</span><span class="main t" style="color:var(--accent)">${T("Ajouter un chien")}</span></button>` : ""}</div>
+    <div class="hint" style="margin-top:10px">${T("Chaque chien a sa propre routine, sa santé et son journal. La famille et les messages sont communs.")}</div>`);
+}
+function dogsSection(){
+  const ds = allDogs(); if (ds.length < 2 && !canEdit()) return "";
+  return `<div class="sec"><div class="sec-h"><h2>${T("Mes chiens")}</h2></div><div class="card list">
+    ${ds.map(d => `<div class="row"><button class="rowbtn" data-act="pickDog" data-id="${esc(d.id)}">${avatarHTML(d)}<div class="main"><div class="t">${esc(d.name)}</div><div class="s">${esc([d.breed && T(d.breed), d.birth ? ageOf(d.birth) : ""].filter(Boolean).join(" · "))}</div></div></button>
+      ${d.id === dogId() ? `<span class="pill">${T("Affiché")}</span>` : ""}${canEdit() && d.id !== "main" ? `<button class="copy" style="color:var(--red)" data-act="delDog" data-id="${esc(d.id)}">${T("Retirer")}</button>` : ""}</div>`).join("")}
+    ${canEdit() ? `<button class="row" data-act="addDog"><span class="ico" style="--c:var(--accent)">${I_PLUS}</span><span class="main t" style="color:var(--accent)">${T("Ajouter un chien")}</span><span class="chev">${I.chevR}</span></button>` : ""}
+  </div></div>`;
+}
+
+/* ---------- vaccines and recurring care (Swiss-style puppy plan; the vet has the last word) ---------- */
+const VAX = [
+  {code:"v8", w:8, t:"Vaccin CHPPi + L (1re injection)", ty:"vaccin"},
+  {code:"v12", w:12, t:"Vaccin CHPPi + L (2e injection)", ty:"vaccin"},
+  {code:"v16", w:16, t:"Vaccin CHPPi + L (3e injection)", ty:"vaccin"},
+  {code:"rage", w:12, t:"Rage (obligatoire pour voyager)", ty:"vaccin", opt:true},
+  {code:"v15m", w:65, t:"Rappel CHPPi + L (vers 15 mois)", ty:"vaccin"},
+  {code:"lepto", rec:"lepto", t:"Rappel leptospirose (chaque année)", ty:"vaccin"},
+  {code:"chppi", rec:"chppi", t:"Rappel CHPPi (tous les 3 ans)", ty:"vaccin"},
+  {code:"vermi", rec:"vermi", t:"Vermifuge", ty:"vermifuge"},
+  {code:"puces", rec:"puces", t:"Antipuces / tiques", ty:"antiparasitaire"}
+];
+const VAX_INFO = {
+  v8:"Maladie de Carré, hépatite, parvovirose, toux du chenil et leptospirose. Souvent faite chez l'éleveur : vérifiez le passeport.",
+  v12:"Deuxième injection du même vaccin, 3 à 4 semaines après la première.",
+  v16:"Troisième injection, recommandée pour bien protéger le chiot contre la parvovirose.",
+  rage:"Obligatoire pour sortir de Suisse avec le chien. Elle se fait à partir de 12 semaines, au moins 21 jours avant le voyage.",
+  v15m:"Rappel qui complète la vaccination de chiot.",
+  lepto:"La leptospirose se rappelle chaque année.",
+  chppi:"Carré, hépatite et parvovirose : un rappel tous les 3 ans suffit en général chez l'adulte.",
+  vermi:"Toutes les 2 semaines jusqu'à 3 mois, puis chaque mois jusqu'à 6 mois, puis tous les 3 mois (plus souvent s'il mange des proies).",
+  puces:"De mars à novembre, une protection contre les puces et les tiques chaque mois (ou selon le produit)."
+};
+const vaxRecs = code => Object.entries(C.vax || {}).map(([id, v]) => ({id, ...v})).filter(v => ofDog(v) && v.code === code && v.date).sort((a, b) => a.date < b.date ? -1 : 1);
+const addMonths = (ds, n) => { const d = parseYmd(ds); d.setMonth(d.getMonth() + n); return ymd(d); };
+function vaxItems(){
+  const d = dog() || {}, today = ymd(new Date()), birth = d.birth, ageW = birth ? (Date.now() - parseYmd(birth)) / (7 * 864e5) : null;
+  const out = [];
+  VAX.forEach(v => {
+    const recs = vaxRecs(v.code), last = recs.length ? recs[recs.length - 1].date : null;
+    let due = null, guess = false; // guess: no record to base the date on, so we can't say it's overdue
+    if (v.w != null) {
+      if (last) { out.push({...v, done:last, recs, status:"done"}); return; }
+      if (!birth) return;
+      if (ageW > 80 && v.code !== "rage") return; // adult: the puppy series is long done
+      due = ymd(addDays(parseYmd(birth), v.w * 7));
+      if (!v.opt && daysBetween(due, today) > 21) guess = true; // long past and never noted: probably done, just ask
+      if (v.opt) { if (due < today) due = today; out.push({...v, due, done:null, recs, status:"opt"}); return; }
+    } else if (v.rec === "vermi") {
+      const step = ageW == null ? 90 : ageW < 12 ? 14 : ageW < 26 ? 30 : 90;
+      if (last) due = ymd(addDays(parseYmd(last), step)); else { due = today; guess = true; }
+    } else if (v.rec === "puces") {
+      if (last) due = ymd(addDays(parseYmd(last), 30)); else { due = today; guess = true; }
+      const m = parseYmd(due).getMonth(); if (m < 2 || m > 10) { const y = parseYmd(due).getFullYear() + (m > 10 ? 1 : 0); due = y + "-03-01"; guess = false; }
+    } else if (v.rec === "lepto" || v.rec === "chppi") {
+      const v15 = (vaxRecs("v15m").slice(-1)[0] || {}).date, base = last || v15 || (birth ? ymd(addDays(parseYmd(birth), 65 * 7)) : null);
+      if (!base) return; due = addMonths(base, v.rec === "lepto" ? 12 : 36);
+      if (!last && !v15 && ageW != null && ageW < 60) return; // still in the puppy series
+      if (!last && !v15 && due < today) guess = true;
+    }
+    const n = daysBetween(today, due);
+    out.push({...v, due, done:last, recs, status: guess ? "unknown" : n < 0 ? "late" : n <= 14 ? "soon" : "later"});
+  });
+  const rank = {late:0, soon:1, unknown:2, later:3, opt:4, done:5};
+  return out.sort((a, b) => rank[a.status] - rank[b.status] || (a.due || a.done || "").localeCompare(b.due || b.done || ""));
+}
+function vaxStatus(v){
+  if (v.status === "done") return `<span class="vx ok">${T("Fait le {d}",{d:fmt(parseYmd(v.done),{day:"numeric",month:"short",year:"numeric"})})}</span>`;
+  if (v.status === "unknown") return `<span class="vx">${T("Dernière fois ? Touchez pour l'indiquer")}</span>`;
+  if (v.status === "opt") return `<span class="vx">${T("Facultatif · à partir du {d}",{d:fmt(parseYmd(v.due),{day:"numeric",month:"short"})})}</span>`;
+  return `<span class="vx ${v.status}">${esc(relDays(v.due))} · ${esc(fmt(parseYmd(v.due),{day:"numeric",month:"short"}))}</span>`;
+}
+function vaxView(){
+  const it = vaxItems(), d = dog() || {};
+  const row = v => { const t = ATYPES[v.ty] || ATYPES.autre; return `<button class="row" data-act="vaxSheet" data-c="${v.code}">${ico(t.color, t.icon)}<div class="main"><div class="t">${esc(T(v.t))}</div><div class="s">${vaxStatus(v)}</div></div><span class="chev">${I.chevR}</span></button>`; };
+  const todo = it.filter(v => v.status !== "done"), done = it.filter(v => v.status === "done");
+  return `${subBar(T("Santé"))}${pageHead(T("Vaccins et soins"), d.name)}
+    ${!d.birth ? `<div class="card pad empty-s">${T("Ajoutez la date de naissance dans la fiche : le calendrier des vaccins se calcule tout seul.")}</div>` : ""}
+    ${todo.length ? `<div class="sec"><div class="sec-h"><h2>${T("À faire")}</h2></div><div class="card list">${todo.map(row).join("")}</div></div>` : ""}
+    ${done.length ? `<div class="sec"><div class="sec-h"><h2>${T("Déjà fait")}</h2></div><div class="card list">${done.map(row).join("")}</div></div>` : ""}
+    <div class="foot">${T("Calendrier indicatif pour la Suisse. Votre vétérinaire peut l'adapter : suivez ce qu'il indique dans le passeport.")}</div>`;
+}
+function vaxSheet(code){
+  const v = vaxItems().find(x => x.code === code) || VAX.find(x => x.code === code); if (!v) return;
+  const recs = vaxRecs(code), can = canEdit() || S.mode !== "db";
+  openSheet(T(v.t), `<div class="hint" style="margin:0 0 12px">${T(VAX_INFO[code] || "")}</div>
+    ${v.due && v.status !== "done" ? `<div class="pill" style="margin-bottom:12px">${T("Prévu")} : ${esc(fmt(parseYmd(v.due),{day:"numeric",month:"long",year:"numeric"}))}</div>` : ""}
+    ${recs.length ? `<div class="lab" style="margin:4px 0 6px 4px;font-size:13px;color:var(--fg2);font-weight:600;text-transform:uppercase">${T("Historique")}</div><div class="card list" style="box-shadow:none;background:var(--fill)">${recs.slice().reverse().map(r => `<div class="row"><span class="main t">${esc(fmt(parseYmd(r.date),{day:"numeric",month:"long",year:"numeric"}))}</span>${can ? `<button type="button" class="copy" style="color:var(--red)" data-act="vaxDel" data-id="${esc(r.id)}">${T("Supprimer")}</button>` : ""}</div>`).join("")}</div>` : ""}
+    ${can ? `<div class="fg" style="margin-top:14px"><label for="vx-date">${T("Fait le")}</label><input class="f" type="date" id="vx-date" value="${ymd(new Date())}" max="${ymd(new Date())}"></div>
+      ${v.due && v.status !== "done" ? `<button type="button" class="btn ghost" style="width:100%" data-act="vaxPlan" data-c="${code}">${T("Ajouter au planning")}</button>` : ""}` : ""}`,
+    can ? () => { const date = val("vx-date"); if (!date) return false; put("vax", newId(), {dog: dogId(), code, date}); toast(T("Enregistré")); } : null);
+  const ok = document.querySelector("#sheet-root .save"); if (ok && can) ok.textContent = T("Marquer fait");
+}
+
+/* ---------- growth: weight against a breed reference ---------- */
+const ADULT_KG = {"Labrador Retriever":[25,36],"Golden Retriever":[25,34],"Berger australien":[16,32],"Berger allemand":[22,40],"Berger blanc suisse":[25,40],"Bouvier bernois":[35,55],"Bouvier de l'Entlebuch":[20,30],"Bouvier appenzellois":[22,32],"Grand bouvier suisse":[50,70],"Saint-Bernard":[55,90],"Border Collie":[12,20],"Malinois":[20,30],"Jack Russell Terrier":[5,8],"Yorkshire Terrier":[2,3.5],"Chihuahua":[1.5,3],"Bouledogue français":[8,14],"Carlin":[6,9],"Cavalier King Charles":[5.5,8],"Teckel":[7,12],"Beagle":[9,14],"Bichon frisé":[3,5.5],"Bichon maltais":[2,4],"Shih Tzu":[4,7.5],"Spitz nain (Poméranien)":[1.5,3.5],"Cocker anglais":[12,15],"Husky sibérien":[16,27],"Shiba Inu":[7,11],"Boxer":[25,32],"Dalmatien":[20,32],"Rottweiler":[35,60],"Lagotto Romagnolo":[11,16],"Bouledogue anglais":[18,25],"Whippet":[10,15],"Vizsla":[18,29]};
+const SIZE_KG = {"Petit":[4,10],"Moyen":[10,25],"Grand":[25,40],"Géant":[45,70]};
+const GROWTH = {
+  small:[[2,.30],[3,.47],[4,.62],[5,.74],[6,.83],[8,.93],[10,.98],[12,1]],
+  medium:[[2,.24],[3,.38],[4,.52],[5,.63],[6,.72],[8,.85],[10,.93],[12,.98],[14,1]],
+  large:[[2,.18],[3,.30],[4,.42],[5,.52],[6,.62],[8,.76],[10,.86],[12,.93],[15,.98],[18,1]],
+  giant:[[2,.12],[3,.21],[4,.31],[5,.40],[6,.49],[8,.62],[10,.73],[12,.82],[15,.91],[18,.96],[24,1]]
+};
+function adultRange(d){
+  const bk = breedKey(d.breed); let r = (bk && ADULT_KG[bk]) || SIZE_KG[d.size]; if (!r) return null;
+  const [a, b] = r; if (d.sex === "Femelle") r = [a, a + (b - a) * .7]; else if (d.sex === "Mâle") r = [a + (b - a) * .3, b];
+  const mid = (r[0] + r[1]) / 2, cls = mid < 10 ? "small" : mid < 25 ? "medium" : mid < 45 ? "large" : "giant";
+  return {lo: r[0], hi: r[1], cls};
+}
+function growthFrac(cls, m){ const g = GROWTH[cls]; if (m <= g[0][0]) return g[0][1] * Math.max(.35, m / g[0][0]); for (let i = 1; i < g.length; i++) if (m <= g[i][0]) { const [m0, f0] = g[i-1], [m1, f1] = g[i]; return f0 + (f1 - f0) * (m - m0) / (m1 - m0); } return 1; }
+const ageMonthsAt = (birth, ds) => (parseYmd(ds) - parseYmd(birth)) / (30.44 * 864e5);
+function growthStatus(){
+  const d = dog() || {}, ws = weights(), ar = adultRange(d); if (!ws.length || !ar || !d.birth) return null;
+  const w = ws[ws.length - 1], m = ageMonthsAt(d.birth, w.date), f = growthFrac(ar.cls, m), lo = ar.lo * f, hi = ar.hi * f;
+  const st = +w.kg < lo * .85 ? "low" : +w.kg > hi * 1.15 ? "high" : "ok";
+  return {w, m, lo, hi, st, ar};
+}
+function growthChart(){
+  const d = dog() || {}, ar = adultRange(d), ws = weights(); if (!ar || !d.birth) return "";
+  const end = GROWTH[ar.cls][GROWTH[ar.cls].length - 1][0], nowM = ageMonthsAt(d.birth, ymd(new Date()));
+  const x1 = Math.max(end, Math.ceil(nowM) + 1), x0 = 2;
+  const W = 340, H = 170, L = 30, Rr = 10, Tp = 10, B = 24, ymax = ar.hi * 1.15;
+  const X = m => L + (Math.min(Math.max(m, x0), x1) - x0) / (x1 - x0) * (W - L - Rr), Y = k => Tp + (1 - k / ymax) * (H - Tp - B);
+  const steps = []; for (let m = x0; m <= x1 + 1e-9; m += .25) steps.push(m);
+  const top = steps.map(m => [X(m), Y(ar.hi * growthFrac(ar.cls, m))]), bot = steps.map(m => [X(m), Y(ar.lo * growthFrac(ar.cls, m))]).reverse();
+  const band = "M" + top.concat(bot).map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L") + " Z";
+  const pts = ws.filter(w => ageMonthsAt(d.birth, w.date) >= 1).map(w => [X(ageMonthsAt(d.birth, w.date)), Y(+w.kg)]);
+  const ticksY = [0, ar.hi / 2, ar.hi].map(k => Math.round(k)), ticksX = [];
+  for (let m = x0; m <= x1; m += x1 > 14 ? 4 : 2) ticksX.push(m);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${T("Courbe de croissance")}">
+    ${ticksY.map(k => `<line x1="${L}" x2="${W - Rr}" y1="${Y(k).toFixed(1)}" y2="${Y(k).toFixed(1)}" stroke="var(--sep)"/><text x="${L - 5}" y="${(Y(k) + 4).toFixed(1)}" font-size="10" text-anchor="end" fill="var(--fg2)">${k}</text>`).join("")}
+    ${ticksX.map(m => `<text x="${X(m).toFixed(1)}" y="${H - 6}" font-size="10" text-anchor="middle" fill="var(--fg2)">${m} ${T("m.")}</text>`).join("")}
+    <path d="${band}" fill="var(--green)" opacity=".16"/>
+    <line x1="${X(nowM).toFixed(1)}" x2="${X(nowM).toFixed(1)}" y1="${Tp}" y2="${H - B}" stroke="var(--accent)" stroke-dasharray="3 3" opacity=".7"/>
+    ${pts.length > 1 ? `<path d="M${pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L")}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>` : ""}
+    ${pts.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === pts.length - 1 ? 5 : 3}" fill="${i === pts.length - 1 ? "var(--accent)" : "var(--card)"}" stroke="var(--accent)" stroke-width="2"/>`).join("")}
+  </svg><div class="legend"><span><i style="background:var(--green);opacity:.4"></i>${T("Repère pour sa race")}</span><span><i style="background:var(--accent)"></i>${esc(d.name || "")}</span></div>`;
+}
+function growthView(){
+  const d = dog() || {}, ws = weights(), gs = growthStatus(), ar = adultRange(d), today = ymd(new Date());
+  const msg = gs ? {ok:"Son poids est dans le repère pour son âge et sa race.", low:"Il est un peu en dessous du repère. Rien d'inquiétant s'il est en forme, mais parlez-en au vétérinaire à la prochaine visite.", high:"Il est un peu au-dessus du repère. Vérifiez la ration et les friandises, et demandez l'avis du vétérinaire."}[gs.st] : "";
+  return `${subBar(T("Santé"))}${pageHead(T("Croissance et poids"), d.name)}
+    <div class="card pad">
+      ${ws.length ? `<div class="g-head"><div><div class="eyebrow" style="text-transform:none;letter-spacing:0">${T("Dernière pesée · {d}",{d:esc(fmt(parseYmd(ws[ws.length-1].date),{day:"numeric",month:"short"}))})}</div><div class="big num">${nf(ws[ws.length-1].kg)}<small>kg</small></div></div>
+        ${ar ? `<div class="g-adult"><span>${T("Adulte selon la race (estimation)")}</span><b class="num">${nf(Math.round(ar.lo))}–${nf(Math.round(ar.hi))} kg</b></div>` : ""}</div>` : ""}
+      ${d.birth && ar ? growthChart() : `<div class="empty-s">${T(!d.birth ? "Ajoutez la date de naissance dans la fiche pour voir la courbe de croissance." : "Indiquez la race ou le gabarit dans la fiche pour voir la courbe de croissance.")}</div>`}
+      ${gs ? `<div class="g-msg ${gs.st}">${T(msg)}</div>` : ws.length ? "" : `<div class="empty-s" style="margin-top:8px">${T("Aucune pesée enregistrée.")}</div>`}
+      ${canEdit() ? `<form class="inl" data-form="weight" style="margin:12px -16px -16px"><input class="f num" id="w-kg" type="number" step="0.1" min="0.5" max="120" inputmode="decimal" placeholder="${T("Poids en kg")}" required><input class="f" id="w-date" type="date" value="${today}" required><button class="btn" type="submit">${T("Ajouter")}</button></form>` : ""}
+    </div>
+    ${ws.length ? `<div class="sec"><div class="sec-h"><h2>${T("Pesées")}</h2></div><div class="card list">${ws.slice().reverse().slice(0, 12).map((w, i, a) => { const p = a[i + 1], df = p ? +w.kg - +p.kg : 0;
+      return `<div class="row"><div class="main"><div class="t num">${nf(w.kg)} kg</div><div class="s">${esc(fmt(parseYmd(w.date),{day:"numeric",month:"short",year:"numeric"}))}${d.birth ? " · " + esc(ageOfAt(d.birth, w.date)) : ""}</div></div>${p ? `<span class="pill num">${df > 0 ? "+" : ""}${nf(df.toFixed(1))} kg</span>` : ""}${canEdit() ? `<button class="copy" style="color:var(--red)" data-act="delWeight" data-id="${esc(w.id)}" aria-label="${T("Supprimer")}">×</button>` : ""}</div>`; }).join("")}</div></div>` : ""}
+    <div class="foot">${T("Repère approximatif selon la race, le sexe et l'âge. Chaque chien est différent : seul le vétérinaire peut dire s'il a le bon poids.")}</div>`;
+}
+function ageOfAt(birth, ds){ const m = Math.max(0, Math.floor(ageMonthsAt(birth, ds))); if (m < 24) return T("{n} mois",{n:m}); return T("{n} ans",{n:Math.floor(m / 12)}); }
+
+/* ---------- training ---------- */
+const SKILLS = [
+  ["proprete","Propreté","Sortez-le après chaque repas, sieste et jeu, et récompensez dehors tout de suite. Les accidents s'ignorent : on nettoie sans gronder.",2],
+  ["nom","Répondre à son nom","Dites son nom d'une voix joyeuse et récompensez dès qu'il vous regarde. N'utilisez jamais son nom pour gronder.",2],
+  ["social","Socialisation","Surtout avant 4 mois : nouvelles personnes, chiens calmes, bruits, voiture, transports. Toujours à son rythme, sans le forcer.",2],
+  ["manip","Manipulations","Touchez pattes, oreilles et dents quelques secondes, puis récompensez. Les soins et le vétérinaire seront plus faciles.",2],
+  ["assis","Assis","Tenez une friandise au-dessus de sa tête et reculez-la doucement : les fesses se posent, récompensez aussitôt. Ajoutez le mot ensuite.",2],
+  ["rappel","Rappel (« viens »)","Accroupissez-vous, appelez joyeusement et faites la fête à chaque retour. Ne l'appelez jamais pour quelque chose de désagréable.",2],
+  ["couche","Couché","Depuis l'assis, descendez la friandise entre ses pattes puis glissez-la vers vous. Récompensez dès que les coudes touchent le sol.",3],
+  ["laisse","Marcher en laisse","Arrêtez-vous dès que la laisse se tend, repartez quand elle se détend. Récompensez quand il marche à côté de vous.",3],
+  ["lache","Lâche","Échangez l'objet contre une friandise en disant « lâche ». Rendez-lui souvent l'objet pour qu'il n'apprenne pas à le défendre.",3],
+  ["panier","Aller au panier","Lancez une friandise dans son panier et récompensez quand il s'y couche. C'est son coin calme, jamais une punition.",3],
+  ["seul","Rester seul au calme","Partez quelques secondes, puis quelques minutes, sans grands adieux ni grandes retrouvailles. Un jouet à mâcher aide.",3],
+  ["reste","Pas bouger","Commencez par 2 secondes à un pas, revenez récompenser. Allongez la durée avant d'augmenter la distance.",4],
+  ["laissetout","Laisse (ne touche pas)","Fermez la main sur une friandise ; dès qu'il s'écarte, récompensez avec l'autre main.",4],
+  ["patte","Donne la patte","Attendez qu'il gratte la main fermée qui tient la friandise, puis ouvrez-la. Juste pour le plaisir !",4]
+];
+const SK_ST = [["","À apprendre"],["encours","En cours"],["acquis","Acquis"]];
+const skillOf = k => (C.train || {})[dogId() + "__" + k] || {};
+function eduStats(){ const n = SKILLS.filter(s => skillOf(s[0]).status === "acquis").length; return {n, t: SKILLS.length}; }
+function eduNow(){ const d = dog() || {}, am = d.birth ? ageMonthsAt(d.birth, ymd(new Date())) : 12;
+  return SKILLS.filter(s => skillOf(s[0]).status !== "acquis" && s[3] <= Math.max(2, am)).sort((a, b) => (skillOf(b[0]).status === "encours") - (skillOf(a[0]).status === "encours") || a[3] - b[3]).slice(0, 3); }
+function eduView(){
+  const d = dog() || {}, es = eduStats(), now = eduNow();
+  const row = s => { const sk = skillOf(s[0]), st = sk.status || ""; return `<button class="row" data-act="skill" data-k="${s[0]}"><span class="sk-dot ${st}">${st === "acquis" ? I.tick : ""}</span><div class="main"><div class="t">${esc(T(s[1]))}</div><div class="s">${esc(T((SK_ST.find(x => x[0] === st) || SK_ST[0])[1]))}${sk.date && st ? " · " + esc(fmt(parseYmd(sk.date),{day:"numeric",month:"short"})) : ""}${sk.byName ? " · " + esc(sk.byName) : ""}</div></div><span class="chev">${I.chevR}</span></button>`; };
+  const seg = S.eduSeg || "prog", nC = cmds().length;
+  const head = `${subBar(d.name || T("Chien"))}${pageHead(T("Éducation"), d.name, seg === "cmd" && canTick() ? `<button class="btn" data-act="addCmd">${T("Ajouter")}</button>` : "")}
+    <div class="seg" role="tablist" style="margin-bottom:14px">${[["prog", T("Programme")], ["cmd", T("Commandes") + (nC ? ` <span class="seg-n">${nC}</span>` : "")]].map(([k, l]) => `<button class="${seg === k ? "on" : ""}" role="tab" aria-selected="${seg === k}" data-act="eduSeg" data-v="${k}">${l}</button>`).join("")}</div>`;
+  if (seg === "cmd") return head + eduCmdsBody();
+  return `${head}
+    <div class="card pad edu-h"><div style="position:relative;width:76px;height:76px">${ring(es.n / es.t, 76, 9, "var(--purple)")}<b class="num edu-n">${es.n}<small>/${es.t}</small></b></div>
+      <div><div class="t" style="font-weight:600">${T("{n} acquis sur {t}",{n:es.n, t:es.t})}</div><div class="s" style="color:var(--fg2);font-size:14px">${T("Des séances courtes (5 minutes), plusieurs fois par jour, toujours avec une récompense.")}</div></div></div>
+    ${now.length ? `<div class="sec"><div class="sec-h"><h2>${T("À travailler maintenant")}</h2></div><div class="card list">${now.map(row).join("")}</div></div>` : ""}
+    <div class="sec"><div class="sec-h"><h2>${T("Tout le programme")}</h2></div><div class="card list">${SKILLS.map(row).join("")}</div></div>`;
+}
+function skillSheet(k){
+  const s = SKILLS.find(x => x[0] === k); if (!s) return; const sk = skillOf(k); S.skSt = sk.status || "";
+  openSheet(T(s[1]), `<div class="tipbox">${esc(T(s[2]))}</div>
+    <div class="fg" style="margin-top:14px"><span class="lab">${T("Où en est-il ?")}</span><div class="seg" id="sk-seg">${SK_ST.map(([v, l]) => `<button type="button" class="${S.skSt === v ? "on" : ""}" data-act="skSet" data-v="${v}">${T(l)}</button>`).join("")}</div></div>
+    <div class="hint">${T("À partir de {n} mois environ.",{n:s[3]})}</div>`,
+    canTick() ? () => { if ((sk.status || "") === S.skSt) return; const m = meMember(); put("train", dogId() + "__" + k, {dog: dogId(), skill: k, status: S.skSt, date: ymd(new Date()), byName: m ? m.name : ""});
+      if (S.skSt === "acquis") { S.celebrateSkill = {until: Date.now() + 1200}; toast(T("Bravo ! « {s} » est acquis",{s:T(s[1])})); } } : null);
+}
+
+/* ---------- commands: the family's own cues, trained try by try ---------- */
+const CMD_SUGG = ["Assis","Couché","Pas bouger","Viens","Au pied","Donne la patte","Lâche","Laisse","Panier","Attends","Tourne","Check"];
+const CMD_GOAL = 10, CMD_NEED = 8, CMD_DAYS = 3, CMD_MIN = 5; // reliable: 8 of the last 10 tries, over 3+ days; a rate needs 5+ tries
+const cmds = () => Object.entries(C.train || {}).filter(([k, v]) => v && v.kind === "cmd" && (v.dog || "main") === dogId()).map(([id, v]) => Object.assign({id}, v)).sort((a, b) => (a.created || "").localeCompare(b.created || ""));
+const cmdById = id => { const v = (C.train || {})[id]; return v && v.kind === "cmd" ? Object.assign({id}, v) : null; };
+function cmdStats(c){
+  const tr = c.tries || [], n = tr.length, last = tr.slice(-CMD_GOAL), ok10 = last.filter(x => x.ok).length;
+  const today = ymd(new Date()), td = tr.filter(x => (x.t || "").slice(0, 10) === today);
+  const wk = ymd(addDays(new Date(), -6)), w = tr.filter(x => (x.t || "").slice(0, 10) >= wk);
+  const days = new Set(tr.map(x => (x.t || "").slice(0, 10))); let streak = 0;
+  for (let i = days.has(today) ? 0 : 1; days.has(ymd(addDays(new Date(), -i))); i++) streak++;
+  const lastDays = new Set(last.map(x => (x.t || "").slice(0, 10))).size;
+  const level = n >= CMD_GOAL && ok10 >= CMD_NEED && lastDays >= CMD_DAYS ? "fiable" : n >= 3 ? "appr" : "new";
+  return {n, ok10, last, lastDays, level, today: {n: td.length, ok: td.filter(x => x.ok).length}, week: {n: w.length, ok: w.filter(x => x.ok).length}, streak, lastAt: n ? tr[n - 1].t : ""};
+}
+const CMD_LV = {new:{l:"Nouvelle", c:"var(--gray)"}, appr:{l:"En apprentissage", c:"var(--orange)"}, fiable:{l:"Fiable", c:"var(--green)"}};
+const cmdPct = (a, b) => b ? Math.round(a / b * 100) : 0;
+const cmdRate = (a, b) => b >= CMD_MIN ? cmdPct(a, b) + " %" : "–";
+function cmdInitial(name){ const w = String(name || "?").trim(); return esc((w.match(/[\p{L}\p{N}]/u) || ["?"])[0].toUpperCase()); }
+function eduCmdsBody(){
+  const d = dog() || {}, list = cmds(), st = list.map(c => ({c, s: cmdStats(c)}));
+  const fiables = st.filter(x => x.s.level === "fiable").length, wkN = st.reduce((a, x) => a + x.s.week.n, 0), wkOk = st.reduce((a, x) => a + x.s.week.ok, 0);
+  if (!list.length) return `<div class="card cmd-empty"><div class="cmd-empty-i">${I.paw}</div><div class="t">${T("Apprenez-lui vos commandes")}</div>
+      <div class="s">${esc(T("Ajoutez une commande comme « Assis », puis notez chaque essai : {n} a obéi ou pas encore. Dogs Life suit ses progrès jusqu'à ce qu'elle soit fiable.",{n:d.name || T("le chien")}))}</div>
+      ${canTick() ? `<button class="btn" data-act="addCmd" style="margin-top:14px">${T("Ajouter une commande")}</button>` : ""}</div>`;
+  const row = ({c, s}) => { const lv = CMD_LV[s.level];
+    const sub = s.n ? [T(lv.l), T("{a} réussi(s) sur {b} derniers essais",{a:s.ok10, b:s.last.length})].join(" · ") : T("Pas encore entraînée");
+    return `<button class="row cmd-row" data-act="cmd" data-id="${esc(c.id)}" style="--c:${lv.c}"><span class="cmd-badge">${s.level === "fiable" ? I.tick : cmdInitial(c.name)}</span>
+      <div class="main"><div class="t">${esc(c.name)}</div><div class="s">${esc(sub)}</div><div class="cmd-bar"><i style="width:${s.level === "fiable" ? 100 : Math.round(Math.min(1, s.ok10 / CMD_NEED) * 100)}%"></i></div></div><span class="chev">${I.chevR}</span></button>`; };
+  return `<div class="card pad cmd-sum">
+      <div class="cmd-stat"><b class="num">${list.length}</b><small>${T("commandes")}</small></div>
+      <div class="cmd-stat"><b class="num" style="color:var(--green)">${fiables}</b><small>${T("fiables")}</small></div>
+      <div class="cmd-stat"><b class="num">${wkN >= CMD_MIN ? cmdPct(wkOk, wkN) + "<i>%</i>" : "–"}</b><small>${wkN ? esc(T("{a} sur {b} essais, 7 j",{a:wkOk, b:wkN})) : T("réussite 7 j")}</small></div></div>
+    <div class="sec"><div class="sec-h"><h2>${T("Commandes")}</h2></div><div class="card list">${st.map(row).join("")}</div>
+    <div class="foot">${esc(T("Fiable = au moins {a} réussites sur les {b} derniers essais, faits sur {d} jours différents ou plus. Les pourcentages ne s'affichent qu'à partir de {m} essais.",{a:CMD_NEED, b:CMD_GOAL, d:CMD_DAYS, m:CMD_MIN}))}</div></div>`;
+}
+function cmdLive(id){
+  const c = cmdById(id); if (!c) return ""; const s = cmdStats(c), lv = CMD_LV[s.level], d = dog() || {};
+  const dots = Array.from({length: CMD_GOAL}, (_, i) => { const x = s.last[i]; return `<i class="${x ? (x.ok ? "ok" : "ko") : ""}"></i>`; }).join("");
+  return `<div class="cmd-hero" style="--c:${lv.c}">
+      <span class="pill cmd-lv"><i style="background:${lv.c}"></i>${T(lv.l)}</span>
+      <div class="cmd-dots" aria-label="${esc(T("{a} réussites sur les {b} derniers essais",{a:s.ok10, b:s.last.length}))}">${dots}</div>
+      <div class="cmd-cap">${s.level === "fiable" ? esc(T("Bravo ! {n} connaît cette commande.",{n:d.name || T("le chien")})) : esc(s.n >= CMD_GOAL && s.ok10 >= CMD_NEED ? T("{a} réussites sur 10, mais sur {d} jour(s) seulement : continuez sur au moins {n} jours.",{a:s.ok10, d:s.lastDays, n:CMD_DAYS}) : T("{a} réussi(s) sur {b} derniers essais · objectif {g} sur 10, sur {d} jours",{a:s.ok10, b:s.last.length, g:CMD_NEED, d:CMD_DAYS}))}</div></div>
+    ${canTick() ? `<div class="cmd-try"><button type="button" class="cmd-ok" data-act="cmdTry" data-id="${esc(id)}" data-ok="1"><span>${I.tick.replace('width="16" height="16"','width="30" height="30"')}</span>${T("A obéi")}</button>
+      <button type="button" class="cmd-ko" data-act="cmdTry" data-id="${esc(id)}" data-ok="0">${T("Pas encore")}</button></div>` : ""}
+    <div class="cmd-grid">
+      <div><b class="num">${s.today.n ? s.today.ok + "/" + s.today.n : "0"}</b><small>${T("Aujourd'hui")}</small></div>
+      <div><b class="num">${cmdRate(s.week.ok, s.week.n)}</b><small>${s.week.n ? esc(T("{a}/{b} sur 7 jours",{a:s.week.ok, b:s.week.n})) : T("Sur 7 jours")}</small></div>
+      <div><b class="num">${s.streak}</b><small>${T("Jours d'affilée")}</small></div></div>
+    ${s.n && canTick() ? `<button type="button" class="cmd-undo" data-act="cmdUndo" data-id="${esc(id)}">${T("Annuler le dernier essai")}</button>` : ""}`;
+}
+function cmdSheet(id){
+  const c = cmdById(id); if (!c) return;
+  openSheet(c.name, `<div id="cmd-live">${cmdLive(id)}</div>
+    ${c.signal || c.notes ? `<div class="card list" style="margin-top:16px">${c.signal ? `<div class="row"><div class="main"><div class="s" style="margin:0">${T("Geste")}</div><div class="t">${esc(c.signal)}</div></div></div>` : ""}${c.notes ? `<div class="row"><div class="main"><div class="s" style="margin:0">${T("Comment l'entraîner")}</div><div class="t" style="font-weight:400;font-size:15px">${esc(c.notes)}</div></div></div>` : ""}</div>` : ""}
+    <div class="hint" style="margin:12px 4px 0">${T("Séances courtes, récompense tout de suite après l'obéissance. Arrêtez sur une réussite.")}</div>
+    ${canTick() ? `<button type="button" class="btn ghost" data-act="cmdEdit" data-id="${esc(id)}" style="width:100%;margin-top:16px">${T("Modifier la commande")}</button>` : ""}`, null);
+  const ok = $("#sheet-root .save"); if (ok) ok.textContent = T("Terminé");
+}
+async function cmdTry(id, good){
+  const c = cmdById(id); if (!c) return; const before = cmdStats(c).level, m = meMember();
+  const tries = (c.tries || []).concat([{t: new Date().toISOString(), ok: good, by: m ? m.name : ""}]).slice(-200);
+  const {id: _, ...data} = c; data.tries = tries;
+  try { navigator.vibrate && navigator.vibrate(good ? 12 : [8, 40, 8]); } catch(_){}
+  await put("train", id, data);
+  const live = document.getElementById("cmd-live"); if (live) live.innerHTML = cmdLive(id);
+  const b = document.querySelector(`#cmd-live .${good ? "cmd-ok" : "cmd-ko"}`); if (b) { b.classList.remove("hit"); void b.offsetWidth; b.classList.add("hit"); }
+  const after = cmdStats(Object.assign({}, c, {tries})).level;
+  if (after === "fiable" && before !== "fiable") toast(T("Bravo ! « {c} » est maintenant fiable",{c:c.name}));
+}
+async function cmdUndo(id){
+  const c = cmdById(id); if (!c || !(c.tries || []).length) return;
+  const {id: _, ...data} = c; data.tries = c.tries.slice(0, -1); await put("train", id, data);
+  const live = document.getElementById("cmd-live"); if (live) live.innerHTML = cmdLive(id);
+}
+function cmdForm(id){
+  const c = id ? cmdById(id) : null, used = cmds().map(x => x.name.toLowerCase());
+  const sugg = CMD_SUGG.filter(x => !used.includes(T(x).toLowerCase()));
+  openSheet(c ? T("Modifier la commande") : T("Nouvelle commande"), `
+    <div class="fg"><label for="c-name">${T("Commande")}</label><input class="f" id="c-name" maxlength="40" placeholder="${T("Ex. : Assis")}" value="${esc(c ? c.name : "")}" autocomplete="off"></div>
+    ${!c && sugg.length ? `<div class="opts cmd-sugg" style="margin:-4px 0 16px">${sugg.map(x => `<button type="button" class="chip-x" data-act="cmdPick" data-v="${esc(T(x))}">${esc(T(x))}</button>`).join("")}</div>` : ""}
+    <div class="fg"><label for="c-signal">${T("Geste (facultatif)")}</label><input class="f" id="c-signal" maxlength="60" placeholder="${T("Ex. : main ouverte levée")}" value="${esc(c ? c.signal || "" : "")}" autocomplete="off"></div>
+    <div class="fg"><label for="c-notes">${T("Comment l'entraîner (facultatif)")}</label><textarea class="f" id="c-notes" maxlength="300" placeholder="${T("Ce qui marche avec lui, la récompense préférée…")}">${esc(c ? c.notes || "" : "")}</textarea></div>
+    <div class="hint">${T("Toute la famille utilise le même mot et le même geste : c'est ce qui l'aide le plus.")}</div>`,
+    () => { const name = ($("#c-name").value || "").trim(); if (!name) { toast(T("Donnez un nom à la commande.")); return false; }
+      const m = meMember(), base = c ? (({id: _, ...r}) => r)(c) : {kind: "cmd", dog: dogId(), created: new Date().toISOString(), byName: m ? m.name : "", tries: []};
+      const key = c ? c.id : dogId() + "__cmd_" + newId();
+      put("train", key, Object.assign(base, {name, signal: ($("#c-signal").value || "").trim(), notes: ($("#c-notes").value || "").trim()}));
+      if (!c) { toast(T("« {c} » ajoutée. Touchez-la pour l'entraîner.",{c:name})); } },
+    c ? () => { del("train", c.id); toast(T("Commande supprimée")); } : null);
+}
+
+/* ---------- house-training ---------- */
+function pottyRate(days){ let out = 0, acc = 0; for (let i = 0; i < days; i++) { const l = dayLog(ymd(addDays(new Date(), -i)));
+  l.forEach(x => { if (x.k === "pipi" || x.k === "caca") out++; if (x.k === "balade") out += (x.pee ? 1 : 0) + (x.poo ? 1 : 0); if (x.k === "accident") acc++; }); }
+  return {out, acc, pct: out + acc ? Math.round(out / (out + acc) * 100) : null}; }
+
+/* ---------- photos ---------- */
+function shrinkPhoto(file, max){ return new Promise((ok, ko) => { const fr = new FileReader(); fr.onerror = ko; fr.onload = () => { const img = new Image(); img.onerror = ko; img.onload = () => {
+  const r = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); ok(c.toDataURL("image/jpeg", .72)); }; img.src = fr.result; }; fr.readAsDataURL(file); }); }
+function photoSheet(){
+  S.logPhoto = null;
+  openSheet(T("Photo ou note"), `<label class="ph-drop" for="lp-file" id="lp-prev"><span>${I.cam}</span><b>${T("Ajouter une photo")}</b></label><input type="file" id="lp-file" accept="image/*" hidden>
+    <div class="fg" style="margin-top:12px"><label for="lp-note">${T("Note")}</label><input class="f" id="lp-note" maxlength="200" placeholder="${T("Ce qu'il a fait de drôle, un symptôme…")}"></div>`,
+    () => { const note = val("lp-note"); if (!S.logPhoto && !note) { toast(T("Ajoutez une photo ou une note.")); return false; } addLog("photo", Object.assign({note}, S.logPhoto ? {photo: S.logPhoto} : {})); S.logPhoto = null; });
+}
+function moreSheet(){
+  openSheet(T("Noter autre chose"), `<div class="more-g">${["eau","friandise","sieste","jeu","vomi","photo"].map(k => { const q = QL[k]; return `<button type="button" class="more-b" data-act="qlMore" data-k="${k}" style="--c:${q.c}"><i>${q.i}</i>${T(q.l)}</button>`; }).join("")}</div>`);
+}
+function photoView(src){ openSheet(T("Photo"), `<img class="ph-full" src="${esc(src)}" alt="">`); }
+
+/* ---------- lost dog ---------- */
+function lostText(o){ const d = dog() || {};
+  return [T("CHIEN PERDU"), d.name, [d.breed && T(d.breed), d.sex && T(d.sex), d.birth && ageOf(d.birth)].filter(Boolean).join(" · "), o.where ? T("Vu pour la dernière fois : {w}",{w:o.where}) : "", d.chip ? T("Puce : {c}",{c:d.chip}) : "", o.phone ? T("Appelez le {p}",{p:o.phone}) : "", o.reward ? T("Récompense") : ""].filter(Boolean).join("\n"); }
+function lostPosterHTML(o){
+  const d = dog() || {}, desc = [d.breed && T(d.breed), d.sex && T(d.sex), d.birth && ageOf(d.birth)].filter(Boolean).join(" · ");
+  return `<!doctype html><html lang="${LANG}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T("Chien perdu"))} – ${esc(d.name || "")}</title><style>
+  @page{size:A4;margin:14mm}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#111;text-align:center}
+  .p{max-width:720px;margin:0 auto;padding:24px}h1{font-size:64px;margin:0;color:#D92D20;letter-spacing:.02em}h2{font-size:46px;margin:10px 0 4px}
+  .ph{width:100%;max-height:520px;object-fit:cover;border-radius:18px;margin:16px 0}.d{font-size:22px;color:#444}.w{font-size:20px;margin-top:10px}
+  .tel{font-size:44px;font-weight:800;margin-top:22px;padding:14px;border:4px solid #111;border-radius:16px}.r{display:inline-block;margin-top:16px;background:#D92D20;color:#fff;font-size:26px;font-weight:700;padding:8px 22px;border-radius:999px}.c{font-size:16px;color:#555;margin-top:12px}</style></head>
+  <body><div class="p"><h1>${esc(T("CHIEN PERDU"))}</h1>${d.photo ? `<img class="ph" src="${d.photo}" alt="">` : ""}<h2>${esc(d.name || "")}</h2><div class="d">${esc(desc)}</div>
+  ${o.where ? `<div class="w">${esc(T("Vu pour la dernière fois : {w}",{w:o.where}))}</div>` : ""}${o.phone ? `<div class="tel">${esc(T("Appelez le {p}",{p:o.phone}))}</div>` : ""}
+  ${o.reward ? `<div class="r">${esc(T("Récompense"))}</div>` : ""}${d.chip ? `<div class="c">${esc(T("Puce : {c}",{c:d.chip}))}</div>` : ""}</div></body></html>`;
+}
+function lostSheet(){
+  const me = meMember(), g = garde(), ph = (me && me.phone) || g.ownerPhone || "";
+  S.lost = {phone: ph, where: "", reward: false};
+  openSheet(T("Chien perdu"), `<div class="hint" style="margin:0 0 12px">${T("Préparez une affiche à imprimer et une annonce à partager sur les réseaux, avec sa photo et votre numéro.")}</div>
+    <div class="fg"><label for="lo-phone">${T("Téléphone à appeler")}</label><input class="f num" type="tel" id="lo-phone" value="${esc(ph)}" placeholder="079 …"></div>
+    <div class="fg"><label for="lo-where">${T("Vu pour la dernière fois")}</label><input class="f" id="lo-where" placeholder="${T("Lieu, date, heure")}"></div>
+    <div class="opts" style="margin-bottom:12px"><label><input type="checkbox" id="lo-reward"><span>${T("Récompense")}</span></label></div>
+    <div class="poster-prev" id="lo-prev"></div>
+    <div class="two"><button type="button" class="btn ghost" data-act="lostCopy">${T("Copier l'annonce")}</button><button type="button" class="btn" data-act="lostDl">${T("Télécharger l'affiche")}</button></div>
+    <div class="hint" style="margin-top:10px">${T("Prévenez aussi AMICUS (registre suisse des puces), les vétérinaires et la police du quartier.")}</div>`);
+  lostPreview();
+}
+function lostOpts(){ return {phone: val("lo-phone"), where: val("lo-where"), reward: !!($("#lo-reward") || {}).checked}; }
+function lostPreview(){ const p = $("#lo-prev"); if (!p) return; const d = dog() || {}, o = lostOpts();
+  p.innerHTML = `<div class="pp-h">${esc(T("CHIEN PERDU"))}</div>${d.photo ? `<img src="${esc(d.photo)}" alt="">` : ""}<div class="pp-n">${esc(d.name || "")}</div><div class="pp-d">${esc([d.breed && T(d.breed), d.sex && T(d.sex)].filter(Boolean).join(" · "))}</div>${o.where ? `<div class="pp-d">${esc(o.where)}</div>` : ""}${o.phone ? `<div class="pp-t">${esc(o.phone)}</div>` : ""}${o.reward ? `<div class="pp-r">${esc(T("Récompense"))}</div>` : ""}`; }
+
+/* ---------- dog-sitting report ---------- */
+function gardeReport(){
+  const g = garde(), today = ymd(new Date()), d = dog() || {};
+  let from = g.from && g.from <= today ? g.from : ymd(addDays(new Date(), -2)); const to = g.to && g.to < today ? g.to : today;
+  if (daysBetween(from, to) > 13) from = ymd(addDays(parseYmd(to), -13));
+  const lines = [T("Rapport de garde – {n}",{n:d.name || ""}), T("Du {a} au {b}",{a:fmt(parseYmd(from),{day:"numeric",month:"long"}), b:fmt(parseYmd(to),{day:"numeric",month:"long"})}), ""];
+  let tot = 0, dn = 0, walkMin = 0, pee = 0, poo = 0, acc = 0;
+  for (let ds = from; ds <= to; ds = ymd(addDays(parseYmd(ds), 1))) {
+    const st = dayStats(ds), l = dayLog(ds), day = getDay(ds); tot += st.total; dn += st.n;
+    const wm = l.filter(x => x.k === "balade").reduce((s, x) => s + (+x.dur || 0), 0); walkMin += wm;
+    const p = l.filter(x => x.k === "pipi" || (x.k === "balade" && x.pee)).length, c = l.filter(x => x.k === "caca" || (x.k === "balade" && x.poo)).length, a = l.filter(x => x.k === "accident").length; pee += p; poo += c; acc += a;
+    const meds = st.tasks.filter(t => t.cat === "med"), medsOk = meds.filter(t => st.done[t.key]).length;
+    const bits = [T("{a}/{b} tâches",{a:st.n, b:st.total}), meds.length ? T("médicaments {a}/{b}",{a:medsOk, b:meds.length}) : "", wm ? T("{n} min de balade",{n:wm}) : "", p ? T("{n} pipi",{n:p}) : "", c ? T("{n} caca",{n:c}) : "", a ? T("{n} accident(s)",{n:a}) : "",
+      day.appetite ? T("appétit {v}",{v:T(day.appetite === "Moyen" ? "Moyen (appétit)" : day.appetite).toLowerCase()}) : "", day.energy ? T("énergie {v}",{v:T(day.energy).toLowerCase()}) : ""].filter(Boolean);
+    lines.push("• " + cap(fmt(parseYmd(ds),{weekday:"long", day:"numeric"})) + " : " + bits.join(", ") + (day.note ? " — " + day.note : ""));
+  }
+  lines.push("", T("En tout : {a} tâches sur {b} faites.",{a:dn, b:tot}) + (walkMin ? " " + T("{n} min de balade.",{n:walkMin}) : "") + (acc ? " " + T("{n} accident(s).",{n:acc}) : ""));
+  return lines.join("\n");
+}
+function reportSheet(){
+  const txt = gardeReport();
+  openSheet(T("Rapport de garde"), `<pre class="report">${esc(txt)}</pre><div class="two"><button type="button" class="btn ghost" data-act="reportCopy">${T("Copier")}</button><button type="button" class="btn" data-act="reportSend">${T("Envoyer à la famille")}</button></div>`);
+}
+
+/* ---------- reorganized views ---------- */
+function viewPlanning(){
+  const seg = S.plan || "routine";
+  const head = `<div class="top"><div><div class="eyebrow">${esc((dog() || {}).name || "")}</div><h1>${T("Planning")}</h1></div>${canEdit() ? `<button class="btn" data-act="${seg === "rdv" ? "addAppt" : "addRoutine"}">${T("Ajouter")}</button>` : ""}</div>
+    <div class="seg" role="tablist" style="margin-bottom:12px">${[["routine","Routine"],["rdv","Rendez-vous"]].map(([k, l]) => `<button class="${seg === k ? "on" : ""}" role="tab" aria-selected="${seg === k}" data-act="planSeg" data-v="${k}">${T(l)}</button>`).join("")}</div>`;
+  if (seg === "rdv") {
+    const due = vaxItems().filter(v => v.status === "late" || v.status === "soon");
+    return head + apptHero() + viewApptList() + (due.length ? `<div class="sec"><div class="sec-h"><h2>${T("Soins à prévoir")}</h2><button class="link" data-act="goSub" data-tab="sante" data-sub="vaccins">${T("Tout voir")}</button></div><div class="card list">${due.map(v => { const t = ATYPES[v.ty] || ATYPES.autre; return `<button class="row" data-act="vaxSheet" data-c="${v.code}">${ico(t.color, t.icon)}<div class="main"><div class="t">${esc(T(v.t))}</div><div class="s">${vaxStatus(v)}</div></div><span class="chev">${I.chevR}</span></button>`; }).join("")}</div></div>` : "");
+  }
+  return head + viewRoutineBody();
+}
+
+// ================= WEEKLY RECAP (every Sunday): only from what was recorded; suggestions are rules, never invented =================
+function weekRange(off){
+  // the week shown: Monday → Sunday. On Sunday it's this week; other days, the last finished week. off = weeks back
+  const now = new Date(), wd = now.getDay(), end = addDays(now, wd === 0 ? 0 : -wd);
+  const sun = addDays(end, -7 * (off || 0)), days = []; for (let i = 6; i >= 0; i--) days.push(ymd(addDays(sun, -i)));
+  return days;
+}
+// every moment someone noted something that day (ticks and quick logs): shows when the family is around
+function actTimes(ds){ const out = [];
+  Object.values(getDay(ds).done || {}).forEach(t => { if (t && t.at) out.push(toMin(t.at)); });
+  dayLog(ds).forEach(x => { if (x.at) out.push(toMin(x.at)); });
+  return out.sort((a, b) => a - b); }
+// over the last 4 weeks, the weekdays on which a routine item is always forgotten while it is done on the others
+function missWeekdays(r, endDs){
+  const per = {}; let okDays = 0, all = 0;
+  for (let i = 0; i < 28; i++) { const ds = ymd(addDays(parseYmd(endDs), -i)); if (ds >= ymd(new Date())) continue;
+    const wd = parseYmd(ds).getDay(); if (!(r.days || []).includes(wd) || !actTimes(ds).length) continue;
+    const done = !!(getDay(ds).done || {})["r-" + r.id], x = per[wd] = per[wd] || {n: 0, ok: 0}; x.n++; all++; if (done) { x.ok++; okDays++; } }
+  const drop = Object.keys(per).map(Number).filter(wd => per[wd].n >= 2 && !per[wd].ok);
+  const rest = all - drop.reduce((a, wd) => a + per[wd].n, 0), restOk = okDays;
+  return drop.length && rest >= 2 && restOk / rest >= .5 && drop.length < (r.days || []).length ? drop : []; }
+const avgMin = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+const r5 = m => Math.round(m / 5) * 5;
+function weekData(days){
+  const today = ymd(new Date()), nowM = toMin(hhmm(new Date()));
+  const W = {days, walks: 0, walkMin: 0, walkKm: 0, walkStarts: [], longest: null, walkDays: 0, planned: 0, ticked: 0, perfect: 0, cat: {}, keyStat: {}, appetite: {}, energy: {}, stool: {},
+    pee: 0, poo: 0, acc: 0, accTimes: [], vomi: 0, treats: 0, water: 0, play: 0, naps: 0, medPlan: 0, medDone: 0, people: {}, msgs: 0, notes: [], journalDays: 0, peeTimes: [], active: [], idle: 0};
+  days.forEach(ds => {
+    if (ds > today) return;
+    const st = dayStats(ds), logs = dayLog(ds), day = getDay(ds), past = t => ds < today || toMin(t.time) + 60 < nowM;
+    const act = actTimes(ds); if (act.length) W.active.push(ds); else if (ds < today) W.idle++;
+    const due = st.tasks.filter(past); W.planned += due.length; const okN = due.filter(t => st.done[t.key]).length; W.ticked += okN;
+    if (st.total && st.n === st.total) W.perfect++;
+    st.tasks.forEach(t => { const c = W.cat[t.cat] = W.cat[t.cat] || {plan: 0, done: 0}; if (past(t)) { c.plan++; if (st.done[t.key]) c.done++; }
+      if (t.cat === "med" && past(t)) { W.medPlan++; if (st.done[t.key]) W.medDone++; }
+      if (!t.key.startsWith("r-") || !past(t) || !act.length) return;
+      const k = W.keyStat[t.key] = W.keyStat[t.key] || {id: t.key.slice(2), title: t.title, cat: t.cat, time: t.time, n: 0, miss: 0, delays: [], missDays: []};
+      k.n++; const tk = st.done[t.key]; if (!tk) { k.miss++; k.missDays.push(ds); } else if (tk.at && !tk.edited) k.delays.push(toMin(tk.at) - toMin(t.time)); });
+    // walks: measured walks + ticked walk tasks without a measured walk around that time
+    const wl = logs.filter(x => x.k === "balade"); let dayWalks = wl.length;
+    wl.forEach(x => { W.walkMin += +x.dur || 0; W.walkKm += (+x.dist || 0) / 1000; if (x.at) W.walkStarts.push(toMin(x.at));
+      if (+x.dur && (!W.longest || +x.dur > W.longest.dur)) W.longest = {dur: +x.dur, ds, at: x.at}; });
+    st.tasks.filter(t => t.cat === "balade" && st.done[t.key]).forEach(t => { const at = st.done[t.key].at || t.time;
+      if (!wl.some(x => x.at && Math.abs(toMin(x.at) - toMin(at)) < 45)) { dayWalks++; W.walkStarts.push(toMin(at)); } });
+    W.walks += dayWalks; if (dayWalks) W.walkDays++;
+    logs.forEach(x => { const who = (doneBy(x) || {}).name || x.byName; if (who) W.people[who] = (W.people[who] || 0) + 1;
+      if (x.k === "pipi" || (x.k === "balade" && x.pee)) { W.pee++; if (x.at) W.peeTimes.push(ds + " " + x.at); }
+      if (x.k === "caca" || (x.k === "balade" && x.poo)) W.poo++;
+      if (x.k === "accident") { W.acc++; if (x.at) W.accTimes.push(toMin(x.at)); }
+      if (x.k === "vomi") W.vomi++; if (x.k === "friandise") W.treats++; if (x.k === "eau") W.water++; if (x.k === "jeu") W.play++; if (x.k === "sieste") W.naps++; });
+    Object.values(st.done).forEach(tk => { const who = (doneBy(tk) || {}).name || tk.byName; if (who) W.people[who] = (W.people[who] || 0) + 1; });
+    if (day.appetite) W.appetite[day.appetite] = (W.appetite[day.appetite] || 0) + 1;
+    if (day.energy) W.energy[day.energy] = (W.energy[day.energy] || 0) + 1;
+    if (day.stool) W.stool[day.stool] = (W.stool[day.stool] || 0) + 1;
+    if (day.appetite || day.energy || day.stool) W.journalDays++;
+    const ms = todayMessages(ds); W.msgs += ms.length;
+  });
+  const n = days.filter(d => d <= today).length || 1; W.n = n;
+  W.minPerDay = Math.round(W.walkMin / n); W.walksPerDay = Math.round(W.walks / n * 10) / 10;
+  W.pct = W.planned ? Math.round(W.ticked / W.planned * 100) : null;
+  const ws = weights().filter(w => w.date >= days[0] && w.date <= days[6]); W.w0 = ws[0]; W.w1 = ws[ws.length - 1];
+  return W;
+}
+function weekPlan(W){
+  // personalised suggestions for next week, each one tied to a fact of the week
+  const d = dog() || {}, f = BREED_FACTS[breedKey(d.breed)], out = [], name = d.name || T("votre chien");
+  const fem = isFem(), sxx = (m, fm) => fem ? fm : m;
+  // 2. walking time vs the breed's needs (gradual, never a big jump)
+  if (W.walkMin && f && f.ex) {
+    const [lo, hi] = f.ex;
+    if (W.minPerDay < lo) out.push({ic: CATS.balade, t: T("Un peu plus de balade : visez {m} min par jour", {m: Math.min(lo, W.minPerDay + 15)}), d: T("Cette semaine : {a} min par jour en moyenne. Repère de la race : {lo} à {hi} min. Augmentez de 10 à 15 min, pas plus d'un coup.", {a: W.minPerDay, lo, hi})});
+    else if (W.minPerDay > hi * 1.3) out.push({ic: CATS.balade, t: T("Gardez des jours plus calmes"), d: T("{a} min par jour en moyenne, au-dessus du repère de la race ({lo} à {hi} min). Ce n'est pas un problème s'il est en forme ; prévoyez un ou deux jours plus tranquilles.", {a: W.minPerDay, lo, hi})});
+    else out.push({ic: CATS.balade, t: T("Le rythme des balades est bon"), d: T("{a} min par jour en moyenne, dans le repère de la race ({lo} à {hi} min). Gardez ce rythme.", {a: W.minPerDay, lo, hi})});
+  } else if (W.walks && !W.walkMin) out.push({ic: CATS.balade, t: T("Mesurez les balades"), d: T("Lancez le bouton « Balade » du journal rapide au départ : le bilan pourra alors donner les durées et les distances.")});
+  // 3. the most forgotten task
+  const miss = Object.values(W.keyStat).filter(k => k.miss >= 2).sort((a, b) => b.miss - a.miss)[0];
+  if (miss) out.push({ic: CATS[miss.cat] || CATS.autre, t: T("« {t} » oubliée {n} fois", {t: miss.title, n: miss.miss}), d: T("Sur {n} fois prévues. Attribuez-la à une personne ou changez son heure pour qu'elle tombe à un moment où quelqu'un est là.", {n: miss.n}), act: canEdit() && C.routine[miss.id] ? {a: "editRoutine", id: miss.id, l: T("Modifier")} : null});
+  // 5. food and health signals
+  const lowApp = W.appetite["Faible"] || 0; if (lowApp >= 2) out.push({ic: CATS.repas, t: T("Appétit faible {n} jours", {n: lowApp}), d: T("Notez ce qu'il laisse et à quel repas. Si ça continue la semaine prochaine, parlez-en au vétérinaire.")});
+  const lowE = W.energy["Basse"] || 0; if (lowE >= 3) out.push({ic: {color: "#5E5CE6", icon: QL.sieste.i}, t: T("Énergie basse {n} jours", {n: lowE}), d: T("Plus de repos et des balades plus courtes. Si la fatigue dure, un contrôle chez le vétérinaire est conseillé.")});
+  if (W.vomi >= 2) out.push({ic: CATS.med, t: T("{n} vomissements cette semaine", {n: W.vomi}), d: T("Plusieurs épisodes en une semaine méritent un appel au vétérinaire, même si tout va bien entre-temps.")});
+  if (W.medPlan && W.medDone < W.medPlan) out.push({ic: CATS.med, t: T("{n} prise(s) de traitement non confirmée(s)", {n: W.medPlan - W.medDone}), d: T("Gardez les notifications activées et cochez chaque prise : tout le monde sait alors si elle a été donnée.")});
+  if (W.journalDays < Math.min(4, W.n)) out.push({ic: {color: "var(--teal)", icon: I.cal || CATS.autre.icon}, t: T("Remplissez le journal plus souvent"), d: T("Appétit, énergie et selles notés {n} jour(s) sur {t}. Quelques secondes le soir suffisent et rendent le bilan bien plus précis.", {n: W.journalDays, t: W.n})});
+  if (!out.length) out.push({ic: {color: "var(--green)", icon: I.tick}, t: T("Gardez ce rythme"), d: T("Rien à changer : la semaine de {n} s'est bien passée.", {n: name})});
+  return out;
+}
+const wdList = ds => ds.slice().sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7)).map(x => fmt(addDays(parseYmd("2026-11-08"), x), {weekday: "short"})).join(", ");
+const hm5 = m => { m = ((r5(m) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
+
+// next week's program, shown like the day's schedule: each routine item at the time it is really done, walks with a target length
+function weekProgram(W){
+  const d = dog() || {}, f = BREED_FACTS[breedKey(d.breed)], rows = [];
+  const walksLog = []; W.days.forEach(ds => dayLog(ds).filter(x => x.k === "balade" && x.at && +x.dur).forEach(x => walksLog.push({m: toMin(x.at), dur: +x.dur})));
+  const rts = routine();
+  const walkR = rts.filter(r => r.cat === "balade");
+  // how many extra minutes a day to reach the breed's lower guide, spread over the walks (max +15 per walk)
+  const need = f && f.ex && W.walkMin && W.minPerDay < f.ex[0] ? f.ex[0] - W.minPerDay : 0;
+  const plus = walkR.length ? Math.min(15, Math.ceil(need / walkR.length / 5) * 5) : 0;
+  rts.forEach(r => {
+    const k = W.keyStat["r-" + r.id], c = CATS[r.cat] || CATS.autre, old = r.time || "00:00";
+    let t = old, why = "";
+    if (k && k.delays.length >= 2) { const a = avgMin(k.delays); if (Math.abs(a) >= 10) { t = hm5(toMin(old) + a); why = T("fait en moyenne à {t} ({n} fois)", {t, n: k.delays.length}); } }
+    let newDays = null, cand = null;
+    const missRate = k && k.n ? k.miss / k.n : 0;
+    // a) always forgotten on some weekdays but done on the others: drop those days
+    const drop = k && k.miss ? missWeekdays(r, W.days[6]) : [];
+    if (drop.length) { newDays = (r.days || []).filter(x => !drop.includes(x)); why = [why, T("jamais faite le {d} depuis 4 semaines", {d: wdList(drop)})].filter(Boolean).join(" · "); }
+    else if (t === old && k && k.n >= 2 && missRate >= .6) {
+      {
+        // b) nobody is around at that time: move it to when someone usually notes something
+        // only when really nobody noted anything around that time on those days, and never on top of a similar task
+        const o = toMin(old), empty = k.missDays.every(ds => !actTimes(ds).some(m => Math.abs(m - o) < 30));
+        const near = empty ? k.missDays.map(ds => { const a = actTimes(ds).filter(m => Math.abs(m - o) <= 240);
+          return a.length ? a.reduce((b, m) => Math.abs(m - o) < Math.abs(b - o) ? m : b) : null; }).filter(m => m != null) : [];
+        const a = near.length >= 2 ? hm5(avgMin(near)) : null;
+        if (a && Math.abs(toMin(a) - o) >= 30) cand = a;
+      }
+    }
+    let dur = null;
+    if (r.cat === "balade") { const near = walksLog.filter(w => Math.abs(w.m - toMin(t)) <= 75); if (near.length) dur = r5(avgMin(near.map(w => w.dur))); if (dur != null && plus) dur += plus; }
+    const days = newDays ? wdList(newDays) : (r.days || []).length === 7 ? "" : wdList(r.days || []);
+    const miss = k && k.n >= 2 ? Math.round(missRate * 100) : 0;
+    rows.push({id: r.id, cand, time: t, old, changed: t !== old || !!newDays, newDays: newDays && newDays.length ? newDays : null, oldDays: newDays ? wdList(r.days || []) : "", title: r.title || "", c, dur, why, days, miss, who: r.who || ""});
+  });
+  // moves to when someone is around: smallest shifts first, never within an hour of a similar task
+  rows.filter(x => x.cand).sort((x, y) => Math.abs(toMin(x.cand) - toMin(x.old)) - Math.abs(toMin(y.cand) - toMin(y.old))).forEach(x => {
+    if (rows.some(y => y !== x && y.c === x.c && Math.abs(toMin(y.time) - toMin(x.cand)) < 60)) return;
+    x.time = x.cand; x.changed = true; x.why = T("à {o}, personne n'est là ; quelqu'un est actif vers {t}", {o: x.old, t: x.cand}); });
+  meds().filter(m => !m.end || m.end >= ymd(new Date())).forEach(m => (m.times || []).filter(Boolean).forEach(tm => rows.push({time: tm, old: tm, title: m.name || "", c: CATS.med, med: true, detail: m.dose ? T(m.dose) : ""})));
+  if (W.acc >= 2 && W.accTimes.length >= 2) { const t = hm5(avgMin(W.accTimes) - 30);
+    if (!rts.some(r => r.cat === "balade" && Math.abs(toMin(r.time) - toMin(t)) <= 45)) rows.push({time: t, old: "", title: T("Petite sortie"), c: CATS.balade, add: true, dur: 10, why: T("les accidents arrivent en moyenne vers {t}", {t: hm5(avgMin(W.accTimes))})}); }
+  return rows.sort((a, b) => toMin(a.time) - toMin(b.time));
+}
+function weekProgramHTML(W){
+  const rows = weekProgram(W); if (!rows.length) return `<div class="card empty">${T("Aucune routine pour l'instant.")}</div>`;
+  const periods = [["Matin", 0, 660], ["Midi", 660, 840], ["Après-midi", 840, 1080], ["Soir", 1080, 1440]];
+  const nChanged = rows.filter(r => r.changed).length, nAdd = rows.filter(r => r.add).length;
+  let h = "";
+  periods.forEach(([label, a, b]) => { const ts = rows.filter(r => toMin(r.time) >= a && toMin(r.time) < b); if (!ts.length) return;
+    h += `<div class="period">${T(label)}</div><div class="card">` + ts.map(r => {
+      const sub = [r.dur ? T("≈ {m} min", {m: r.dur}) : "", r.detail || "", r.days ? esc(r.days) : "", r.changed ? `<span class="wp-was">${esc(T("avant {t}", {t: r.newDays && r.time === r.old ? r.oldDays : r.old}))}</span>` : "", r.why ? esc(r.why) : "", r.miss >= 40 && !r.changed ? `<span class="wp-miss">${esc(T("oubliée {p} % du temps", {p: r.miss})).replace(/(\d) %/, "$1&nbsp;%")}</span>` : ""].filter(Boolean).join(" · ");
+      return `<div class="task wp ${r.changed || r.add ? "wp-new" : ""}"><span class="time num">${esc(r.time)}</span>${ico(r.c.color, r.c.icon)}<div class="main"><div class="t">${esc(r.title)}${r.add ? ` <span class="xtra">${T("Nouveau")}</span>` : r.changed ? ` <span class="xtra">${T(r.newDays && r.time === r.old ? "Nouveaux jours" : "Nouvel horaire")}</span>` : ""}</div>${sub ? `<div class="s">${sub}</div>` : ""}</div>${mav(memberOf(r.who), 24)}
+        ${r.add && canEdit() ? `<button class="wp-btn" data-act="weekAddWalk" data-t="${esc(r.time)}">${T("Ajouter")}</button>` : r.changed && canEdit() ? `<button class="wp-btn" data-act="weekApplyOne" data-id="${esc(r.id)}">${T("Appliquer")}</button>` : r.miss >= 60 && r.id && canEdit() && C.routine[r.id] ? `<button class="wp-btn ghost" data-act="editRoutine" data-id="${esc(r.id)}">${T("Modifier")}</button>` : ""}</div>`;
+    }).join("") + `</div>`; });
+  const can = canEdit() && nChanged;
+  return h + (can ? `<button class="btn" style="width:100%;margin-top:14px" data-act="weekApplyAll">${T(nChanged > 1 ? "Appliquer les {n} changements" : "Appliquer le changement", {n: nChanged})}</button>` : "")
+    + `<div class="foot">${T(nChanged || nAdd ? "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race."
+      : rows.some(r => r.miss >= 40) ? "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un." : W.active.length < 2 ? "Pas encore assez de jours notés cette semaine pour proposer des changements." : "Vos horaires correspondent déjà à ce que vous faites : rien à changer.")}${W.idle ? " " + T("{n} jour(s) sans rien de noté ne sont pas comptés.", {n: W.idle}) : ""}</div>`;
+}
+function viewWeek(){
+  const off = S.wkOff || 0, days = weekRange(off), W = weekData(days), P = weekData(weekRange(off + 1)), d = dog() || {}, name = d.name || T("votre chien");
+  const f = BREED_FACTS[breedKey(d.breed)];
+  const range = cap(fmt(parseYmd(days[0]), {day: "numeric", month: "long"})) + " – " + fmt(parseYmd(days[6]), {day: "numeric", month: "long"});
+  const diff = (a, b, unit, lowIsGood) => b == null || a == null || a === b ? "" : `<span class="wk-d ${(a > b) !== !!lowIsGood ? "up" : "down"}">${a > b ? '<svg class="wk-arr" viewBox="0 0 12 12"><path d="M6 2.5 10 8.5H2Z" fill="currentColor"/></svg>' : '<svg class="wk-arr" viewBox="0 0 12 12"><path d="M6 9.5 2 3.5h8Z" fill="currentColor"/></svg>'} ${Math.abs(a - b)}${unit || ""}</span>`;
+  const kpi = (v, l, c, dd, ic) => `<div class="wk-k" style="--c:${c}">${ic ? `<i class="wk-ki">${ic}</i>` : ""}<b class="num">${v}</b><span>${esc(l)}</span>${dd || ""}</div>`;
+  const row = (l, v) => `<div class="wk-r"><span>${esc(l)}</span><b>${v}</b></div>`;
+  const dist = o => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${esc(T(k).toLowerCase())} <span class="num">×${n}</span>`).join(" · ") || `<i>${esc(T("non noté"))}</i>`;
+  const sec = (title, color, icon, body) => `<div class="sec"><div class="sec-h"><h2><span class="wk-ic" style="--c:${color}">${icon}</span>${esc(title)}</h2></div><div class="card wk-c">${body}</div></div>`;
+  const avgStart = W.walkStarts.length ? hm5(avgMin(W.walkStarts)) : "—";
+  // walks: average start per part of the day
+  const parts = [["Matin", 0, 660], ["Midi", 660, 960], ["Soir", 960, 1440]].map(([l, a, b]) => { const xs = W.walkStarts.filter(m => m >= a && m < b); return xs.length ? `${T(l)} ${hm5(avgMin(xs))} <span class="num">(${xs.length})</span>` : ""; }).filter(Boolean).join(" · ");
+  const people = Object.entries(W.people).sort((a, b) => b[1] - a[1]);
+  const top = people.slice(0, 4).map(([n, c]) => `<div class="wk-p"><span>${esc(n)}</span><i style="width:${Math.max(8, c / people[0][1] * 100)}%"></i><b class="num">${c}</b></div>`).join("");
+  const plan = weekPlan(W);
+  const daysBar = days.map(ds => { const st = dayStats(ds), fut = ds > ymd(new Date()); return `<div class="wk-day ${fut ? "fut" : ""}"><i style="height:${fut ? 0 : Math.round(st.pct * 100)}%"></i><span>${esc(fmt(parseYmd(ds), {weekday: "narrow"}))}</span></div>`; }).join("");
+  const empty = !W.planned && !W.walks && !W.pee && !W.journalDays;
+  return `${subBar(T("Santé"))}${pageHead(T("Bilan de la semaine"), range)}
+  <div class="wk-nav"><button class="btn ghost" data-act="weekNav" data-d="1">‹ ${T("Semaine d'avant")}</button>${off ? `<button class="btn ghost" data-act="weekNav" data-d="-1">${T("Semaine suivante")} ›</button>` : ""}</div>
+  ${empty ? `<div class="card empty">${T("Rien n'a été enregistré cette semaine-là.")}</div>` : `
+  <div class="card wk-hero">
+    <div class="wk-kpis">
+      ${kpi(W.pct != null ? W.pct + "%" : "—", T("des tâches faites"), "#F2A93B", diff(W.pct, P.pct, " pts"), I.tick)}
+      ${kpi(W.walkMin ? W.minPerDay + " min" : W.walksPerDay, W.walkMin ? T("de balade / jour") : T("sorties / jour"), "#2FC46B", W.walkMin ? diff(W.minPerDay, P.minPerDay, " min") : "", CATS.balade.icon)}
+      ${kpi(W.perfect, T(W.perfect > 1 ? "jours parfaits" : "jour parfait"), "#8E6CF0", "", '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.6l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8L12 2.8Z"/></svg>')}
+      ${kpi(W.acc, T(W.acc > 1 ? "accidents" : "accident"), W.acc ? "#F0524F" : "#2BA9E8", diff(W.acc, P.acc, "", true), QL.accident.i)}
+    </div>
+    <div class="wk-bars">${daysBar}</div>
+  </div>
+  ${sec("Balades", CATS.balade.color, CATS.balade.icon,
+    row(T("Sorties"), `<span class="num">${W.walks}</span> · ${esc(T("{n} par jour", {n: String(W.walksPerDay).replace(".", ",")}))}`) +
+    (W.walkMin ? row(T("Durée totale"), `<span class="num">${Math.floor(W.walkMin / 60)} h ${String(W.walkMin % 60).padStart(2, "0")}</span>`) + row(T("Moyenne par jour"), `<span class="num">${W.minPerDay} min</span>${f && f.ex ? ` <small>${esc(T("repère {a}–{b} min", {a: f.ex[0], b: f.ex[1]}))}</small>` : ""}`) : "") +
+    (W.walkKm >= .1 ? row(T("Distance"), `<span class="num">${num1(W.walkKm)} km</span>`) : "") +
+    (parts ? row(T("Heures moyennes de départ"), parts) : "") +
+    (W.longest ? row(T("Plus longue"), `<span class="num">${W.longest.dur} min</span> · ${esc(cap(fmt(parseYmd(W.longest.ds), {weekday: "long"})))}`) : ""))}
+  ${sec("Repas et routine", CATS.repas.color, CATS.repas.icon,
+    Object.entries(W.cat).filter(([, c]) => c.plan).map(([k, c]) => row(T((CATS[k] || CATS.autre).label), `<span class="num">${c.done}/${c.plan}</span>`)).join("") +
+    row(T("Appétit"), dist(W.appetite)) + (W.treats ? row(T("Friandises"), `<span class="num">${W.treats}</span>`) : "") + (W.water ? row(T("Eau notée"), `<span class="num">${W.water}</span>`) : ""))}
+  ${sec("Besoins et santé", QL.pipi.c, QL.pipi.i,
+    row(T("Pipi"), `<span class="num">${W.pee}</span> · ${esc(T("{n} par jour", {n: String(Math.round(W.pee / W.n * 10) / 10).replace(".", ",")}))}`) + row(T("Caca"), `<span class="num">${W.poo}</span>`) +
+    row(T("Selles"), dist(W.stool)) + row(T("Accidents"), `<span class="num">${W.acc}</span>`) + (W.vomi ? row(T("Vomissements"), `<span class="num">${W.vomi}</span>`) : "") +
+    (W.medPlan ? row(T("Traitements"), `<span class="num">${W.medDone}/${W.medPlan}</span>`) : "") + row(T("Énergie"), dist(W.energy)) +
+    (W.w1 ? row(T("Poids"), `<span class="num">${nf(W.w1.kg)} kg</span>${W.w0 && W.w0 !== W.w1 ? ` <small>${W.w1.kg >= W.w0.kg ? "+" : ""}${nf(Math.round((W.w1.kg - W.w0.kg) * 10) / 10)} kg</small>` : ""}`) : ""))}
+  ${people.length || W.msgs ? sec("La famille", "var(--purple)", I_FAM, (top ? `<div class="wk-ps">${top}</div>` : "") + (W.msgs ? row(T("Messages"), `<span class="num">${W.msgs}</span>`) : "")) : ""}
+  <div class="sec"><div class="sec-h"><h2><span class="wk-ic" style="--c:var(--accent)">${I.cal || ""}</span>${T("Programme proposé pour la semaine prochaine")}</h2></div>
+    ${weekProgramHTML(W)}</div>
+  <div class="sec"><div class="sec-h"><h2>${T("Conseils de la semaine")}</h2></div>
+    <div class="wk-plan">${plan.map(x => `<div class="card wk-s"><span class="ico" style="--c:${x.ic.color}">${x.ic.icon}</span><div class="main"><b>${esc(x.t)}</b><p>${esc(x.d)}</p>${x.act ? `<button class="btn ${x.act.a === "weekApply" ? "" : "ghost"} wk-btn" data-act="${x.act.a}" data-id="${esc(x.act.id)}" ${x.act.t ? `data-t="${esc(x.act.t)}"` : ""}>${esc(x.act.l)}</button>` : ""}</div></div>`).join("")}</div>
+    <div class="foot">${T("Calculé uniquement à partir de ce qui a été enregistré cette semaine. Les conseils de santé ne remplacent pas l'avis du vétérinaire.")}</div></div>`}`;
+}
+function viewHealthRoot(){
+  const d = dog() || {}, today = ymd(new Date()), st = dayStats(today);
+  const cur = meds().filter(m => !m.end || m.end >= today), medT = st.tasks.filter(t => t.cat === "med"), medN = medT.filter(t => st.done[t.key]).length;
+  const vx = vaxItems().filter(v => v.status === "late" || v.status === "soon" || v.status === "later"), nv = vx[0], gs = growthStatus(), ws = weights(), lw = ws[ws.length - 1];
+  const pr = pottyRate(7), l0 = dayLog(today), fs = foodState();
+  const pee = l0.filter(x => x.k === "pipi" || (x.k === "balade" && x.pee)).length;
+  return `${previewBanner()}${pageHead(T("Santé"), d.name)}
+  <button class="card wk-cta" data-act="go" data-tab="sante/semaine"><span class="ico" style="--c:var(--accent)">${I.cal || ""}</span><div class="main"><div class="t">${T("Bilan de la semaine")}</div><div class="s">${T("Balades, repas, besoins, famille et programme proposé")}</div></div><span class="chev">›</span></button>
+  <div class="hgrid">
+    ${hcard("goSub", 'data-tab="sante" data-sub="traitements"', "var(--pink)", I.pill, T("Traitements"), cur.length ? `<b class="num">${cur.length}</b> <small>${T("en cours")}</small>` : `<small>${T("Aucun en cours")}</small>`, medT.length ? T("{a}/{b} prises aujourd'hui",{a:medN, b:medT.length}) : "")}
+    ${hcard("goSub", 'data-tab="sante" data-sub="vaccins"', "var(--blue)", I.syringe, T("Vaccins"), nv ? `<small class="${nv.status}">${esc(relDays(nv.due))}</small>` : `<small>${T("À jour")}</small>`, nv ? esc(T(nv.t)) : "", nv && nv.status === "late")}
+    ${hcard("goSub", 'data-tab="sante" data-sub="croissance"', "var(--accent)", I.dna, T("Croissance"), lw ? `<b class="num">${nf(lw.kg)}</b> <small>kg</small>` : `<small>${T("Aucune pesée")}</small>`, gs ? T(gs.st === "ok" ? "Dans le repère" : gs.st === "low" ? "Un peu en dessous du repère" : "Un peu au-dessus du repère") : lw ? esc(fmt(parseYmd(lw.date),{day:"numeric",month:"short"})) : "")}
+    ${hcard("goSub", 'data-tab="sante" data-sub="proprete"', QL.pipi.c, QL.pipi.i, T("Propreté"), `<b class="num">${pee}</b> <small>${T("pipi aujourd'hui")}</small>`, pr.pct != null ? T("{p} % dehors sur 7 jours",{p:pr.pct}) : "")}
+    ${hcard("goSub", 'data-tab="sante" data-sub="nourriture"', "var(--orange)", I.bowl, T("Nourriture"), fs && fs.daily ? `<b class="num">~${Math.floor(fs.daysLeft)}</b> <small>${T("jours de croquettes")}</small>` : `<small>${T("À configurer")}</small>`, d.ration ? esc(T("{r} par jour",{r:d.ration})) : "", fs && fs.daily && fs.daysLeft <= 5)}
+  </div>
+  <button class="card vet-cta" data-act="vet"><span class="ico" style="--c:var(--blue)">${I.steth.replace("<svg",'<svg width="18" height="18"')}</span><div class="main"><div class="t">${T("Résumé pour le vétérinaire")}</div><div class="s">${T("30 derniers jours : journal, traitements, poids, notes")}</div></div><span class="chev">${I.chevR}</span></button>`;
+}
+function viewHealth(){
+  const sub = S.sub, d = dog() || {};
+  if (sub === "semaine") return viewWeek();
+  if (sub === "vaccins") return vaxView();
+  if (sub === "croissance") return growthView();
+  if (sub === "traitements") return subBar(T("Santé")) + pageHead(T("Traitements"), d.name) + viewMedsBody();
+  if (sub === "nourriture") return subBar(T("Santé")) + pageHead(T("Nourriture"), d.name) + foodSection();
+  if (sub === "proprete") { const pr = pottyRate(14);
+    return subBar(T("Santé")) + pageHead(T("Propreté et activité"), d.name)
+      + (pr.out + pr.acc ? `<div class="card pad prop"><div style="position:relative;width:76px;height:76px">${ring((pr.pct || 0) / 100, 76, 9, QL.pipi.c)}<b class="num edu-n">${pr.pct}<small>%</small></b></div><div><div class="t" style="font-weight:600">${T("{p} % des besoins faits dehors",{p:pr.pct})}</div><div class="s" style="color:var(--fg2);font-size:14px">${T("Sur 14 jours : {o} dehors, {a} accident(s) à l'intérieur.",{o:pr.out, a:pr.acc})}</div></div></div>` : "")
+      + statsSection() + viewRegularity(); }
+  return viewHealthRoot();
+}
+function viewChien(){
+  if (S.sub === "buddy") return subBar((dog() || {}).name || T("Chien")) + viewBuddy();
+  if (S.sub === "education") return eduView();
+  if (S.sub === "carte") return walksMapView();
+  return viewProfile();
+}
+function chienCards(){
+  const b = buddyStats(), es = eduStats(), now = eduNow();
+  return `<div class="ccards">
+    <button class="ccard" data-act="goSub" data-tab="chien" data-sub="buddy"><div class="cc-art"><div class="cc-rings">${activityRings([b.health, b.happy, b.fed])}${avatarHTML(dog() || {}, "cc-av")}</div></div><div class="cc-t">${T("Compagnon")}</div><div class="cc-s">${esc(T(STAGES[b.stage][1]))}</div></button>
+    <button class="ccard" data-act="goSub" data-tab="chien" data-sub="education"><div class="cc-art"><div style="position:relative;width:64px;height:64px">${ring(es.n / es.t, 64, 8, "var(--purple)")}<b class="num edu-n" style="font-size:18px">${es.n}<small>/${es.t}</small></b></div></div><div class="cc-t">${T("Éducation")}</div><div class="cc-s">${cmds().length ? esc(T("{n} commande(s) · {f} fiable(s)",{n:cmds().length, f:cmds().filter(c => cmdStats(c).level === "fiable").length})) : now[0] ? esc(T("Ensuite : {s}",{s:T(now[0][1])})) : T("Tout est acquis")}</div></button>
+    <button class="ccard cc-wide" data-act="goSub" data-tab="chien" data-sub="carte"><span class="ico" style="--c:var(--green)">${I_MAP}</span><div class="cc-wt"><div class="cc-t">${T("Carte des balades")}</div><div class="cc-s">${(() => { const l = walkLogs(30), km = l.reduce((a, x) => a + (+x.dist || 0), 0); return l.length ? T("{n} trajets sur 30 jours · {k}", {n: l.length, k: fmtKm(km)}) : T("Les trajets GPS de vos balades"); })()}</div></div><span class="chev">${I.chevR}</span></button>
+  </div>`;
+}
+// settings and account: about the person using the app, so they live in Famille
+function youSection(){
+  return `<div class="sec"><div class="card list">
+    <button class="row" data-act="goSub" data-tab="famille" data-sub="reglages"><span class="ico" style="--c:var(--gray)">${I_GEAR}</span><div class="main"><div class="t">${T("Réglages")}</div><div class="s">${T("Notifications, style, langue, widget, aide")}</div></div><span class="chev">${I.chevR}</span></button>
+    ${SITE && window.carnetAccount ? `<div class="row">${mav(meMember() || {name: (window.carnetAccount.name || "?"), color: MCOL[1]}, 34)}<div class="main"><div class="t">${esc(window.carnetAccount.name || T("Votre compte"))}</div><div class="s">${esc(window.carnetAccount.email || "")}</div></div></div>
+    <button class="row" data-act="signOut"><span class="ico" style="--c:var(--red)">${I_OUT}</span><span class="main t" style="color:var(--red)">${T("Se déconnecter")}</span></button>` : ""}</div></div>`;
+}
+function viewFamilyTab(){
+  if (S.sub === "reglages") return viewSettings();
+  const sitter = sitterUI(), g = garde(), gOn = g.from && g.to && g.to >= ymd(addDays(new Date(), -3));
+  return previewBanner() + viewFamily()
+    + (!sitter ? gardeSection() : "")
+    + youSection()
+    + (gOn || sitter ? `<div class="sec"><div class="card list"><button class="row" data-act="report"><span class="ico" style="--c:var(--teal)">${I_GARDE.replace('viewBox="0 0 28 28"','viewBox="0 0 28 28" width="18" height="18"')}</span><div class="main"><div class="t">${T("Rapport de garde")}</div><div class="s">${T("Ce qui a été fait pendant la garde, à envoyer à la famille")}</div></div><span class="chev">${I.chevR}</span></button></div></div>` : "");
+}
+
+/* ---------- vet summary (last 30 days) ---------- */
+function vetData(){
+  const d = dog() || {}, today = ymd(new Date()), from = ymd(addDays(new Date(), -29)), nowM = toMin(hhmm(new Date()));
+  const days = []; for (let i = 29; i >= 0; i--) days.push(ymd(addDays(new Date(), -i)));
+  const J = {appetite:{}, energy:{}, stool:{}}; let filled = 0; const notes = [];
+  days.forEach(ds => { const x = getDay(ds); let any = false;
+    ["appetite","energy","stool"].forEach(f => { if (x[f]) { J[f][x[f]] = (J[f][x[f]] || 0) + 1; any = true; } });
+    if (any) filled++; if (x.note && x.note.trim()) notes.push([ds, x.note.trim()]); });
+  const cat = {}, missed = [];
+  days.forEach(ds => { const st = dayStats(ds); st.tasks.forEach(t => { if (ds === today && toMin(t.time) > nowM) return;
+    cat[t.cat] = cat[t.cat] || {n:0, t:0}; cat[t.cat].t++; if (st.done[t.key]) cat[t.cat].n++; else if (t.cat === "med") missed.push([ds, t.time, t.title]); }); });
+  const medRows = meds().filter(m => (!m.end || m.end >= from) && (!m.start || m.start <= today)).map(m => {
+    let n = 0, t = 0; days.forEach(ds => { const st = dayStats(ds); st.tasks.forEach(k => { if (!k.key.startsWith("m-" + m.id + "-")) return; if (ds === today && toMin(k.time) > nowM) return; t++; if (st.done[k.key]) n++; }); });
+    return {m, n, t}; });
+  const ws = weights(), wIn = ws.filter(w => w.date >= ymd(addDays(new Date(), -120)));
+  const pastAppts = appts().filter(a => a.last && a.last >= from), nextAppts = appts().filter(a => a.date >= today).slice(0, 5);
+  const oneOff = Object.entries(C.extras || {}).map(([id, x]) => ({id, ...x})).filter(x => x.cat === "med" && (x.dog || "main") === dogId() && x.date >= from && x.date <= today).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  return {d, from, today, J, filled, notes: notes.reverse(), cat, missed: missed.reverse(), medRows, oneOff, ws: wIn, last: ws[ws.length-1], pastAppts, nextAppts};
+}
+const pct = (o) => o && o.t ? Math.round(o.n / o.t * 100) + " %" : "—";
+function jLine(obj, keys){ const parts = keys.filter(k => obj[k]).map(k => `${T(k === "Moyen" ? "Moyen (appétit)" : k)} ${obj[k]}`); return parts.length ? parts.join(" · ") : "—"; }
+function vetHTML(full){
+  const v = vetData(), d = v.d, F = (ds, o) => fmt(parseYmd(ds), o || {day:"numeric", month:"short"});
+  const kv = (k, val) => val ? `<tr><th>${esc(k)}</th><td>${esc(val)}</td></tr>` : "";
+  const ident = [kv(T("Race"), d.breed && T(d.breed)), kv(T("Sexe"), d.sex && T(d.sex)), kv(T("Né(e) le"), d.birth ? F(d.birth, {day:"numeric", month:"long", year:"numeric"}) + " · " + ageOf(d.birth) : ""),
+    kv(T("Stérilisé(e)"), d.sterilized && T(d.sterilized)), kv(T("N° de puce"), d.chip), kv(T("Poids"), v.last ? nf(v.last.kg) + " kg (" + F(v.last.date) + ")" : ""),
+    kv(T("Alimentation"), [d.food && T(d.food), d.foodBrand, d.ration, d.meals ? T("{n} repas",{n:d.meals}) : ""].filter(Boolean).join(" · ")),
+    kv(T("Allergies"), listOf(d.allergies).map(x => T(x)).join(", "))].join("");
+  const sec = (t, body) => body ? `<h2>${esc(t)}</h2>${body}` : "";
+  const medTable = v.medRows.length ? `<table class="t"><tr><th>${T("Médicament")}</th><th>${T("Dose")}</th><th>${T("Période")}</th><th>${T("Prises")}</th></tr>${v.medRows.map(({m, n, t}) => `<tr><td>${esc(m.name)}</td><td>${esc([m.dose && T(m.dose), (m.times||[]).filter(Boolean).join(", ")].filter(Boolean).join(" · "))}</td><td>${esc((m.start ? F(m.start) : "…") + " → " + (m.end ? F(m.end) : T("en cours")))}</td><td>${t ? n + "/" + t : "—"}</td></tr>`).join("")}</table>` : "";
+  const weightRows = v.ws.length ? `<p>${v.ws.map(w => `${F(w.date)}${LANG==="fr"?" : ":": "}<b>${nf(w.kg)} kg</b>`).join(" · ")}</p>` : "";
+  const journal = `<table class="t"><tr><th>${T("Appétit")}</th><td>${jLine(v.J.appetite, OPT.appetite)}</td></tr><tr><th>${T("Énergie")}</th><td>${jLine(v.J.energy, OPT.energy)}</td></tr><tr><th>${T("Selles")}</th><td>${jLine(v.J.stool, OPT.stool)}</td></tr></table><p class="muted">${T("Journal rempli {n} jour(s) sur 30.",{n:v.filled})}</p>`;
+  const care = Object.keys(v.cat).length ? `<p>${Object.entries(v.cat).map(([k, o]) => `${T(CATS[k].label)}${LANG==="fr"?" : ":": "}<b>${pct(o)}</b>`).join(" · ")}</p>` : "";
+  const missed = v.missed.length ? `<ul>${v.missed.slice(0, 12).map(([ds, t, n]) => `<li>${F(ds)} ${esc(t)} — ${esc(n)}</li>`).join("")}</ul>` : "";
+  const notes = v.notes.length ? `<ul>${v.notes.slice(0, full ? 30 : 8).map(([ds, n]) => `<li><b>${F(ds)}</b> — ${esc(n)}</li>`).join("")}</ul>` : `<p class="muted">${T("Aucune note.")}</p>`;
+  const ap = [...v.pastAppts.map(a => `<li>${F(a.last)} — ${esc(a.title)} (${T("fait")})</li>`), ...v.nextAppts.map(a => `<li>${F(a.date)} — ${esc(a.title)} (${T("prévu")})</li>`)];
+  const body = `<header><div><h1>${esc(d.name || T("Votre chien"))}</h1><p class="muted">${T("Résumé pour le vétérinaire")} · ${F(v.from, {day:"numeric", month:"long"})} – ${F(v.today, {day:"numeric", month:"long", year:"numeric"})}</p></div></header>
+    <table class="id">${ident}</table>
+    ${sec(T("Traitements"), medTable)}
+    ${v.oneOff.length ? sec(T("Prises ponctuelles"), `<ul>${v.oneOff.map(x => { const tk = C.ticks[tickId(x.date, "x-" + x.id)], i = medInfo(x.title); return `<li>${F(x.date)} ${esc(tk ? tk.at || x.time : x.time)} — ${esc(x.title)}${i ? " (" + esc(i.kind) + ")" : ""}${x.notes ? " · " + esc(x.notes) : ""}${tk ? "" : " — " + esc(T("non confirmé"))}</li>`; }).join("")}</ul>`) : ""}
+    ${sec(T("Prises oubliées"), missed)}
+    ${sec(T("Journal (30 jours)"), journal)}
+    ${sec(T("Soins réalisés"), care)}
+    ${sec(T("Poids"), weightRows)}
+    ${sec(T("Observations"), notes)}
+    ${sec(T("Rendez-vous"), ap.length ? `<ul>${ap.join("")}</ul>` : "")}
+    ${d.notes ? sec(T("À savoir"), `<p>${esc(d.notes)}</p>`) : ""}`;
+  return body;
+}
+const VET_CSS = `body{font:15px/1.45 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#1C1C1E;max-width:720px;margin:24px auto;padding:0 20px}
+h1{font-size:28px;margin:0}h2{font-size:17px;margin:22px 0 8px;padding-top:12px;border-top:1px solid #E5E0D8}p{margin:6px 0}.muted{color:#6C6C70}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:6px 8px;vertical-align:top;border-bottom:1px solid #EFEBE5}th{color:#6C6C70;font-weight:600;width:34%}
+.t th{width:auto}ul{margin:6px 0;padding-left:20px}li{margin:3px 0}header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px}`;
+function vetText(){
+  const v = vetData(), d = v.d, F = ds => fmt(parseYmd(ds), {day:"numeric", month:"short"});
+  const L = [`${d.name || T("Votre chien")} — ${T("Résumé pour le vétérinaire")} (${F(v.from)} – ${F(v.today)})`];
+  L.push([d.breed && T(d.breed), d.sex && T(d.sex), d.birth && ageOf(d.birth), v.last && nf(v.last.kg) + " kg"].filter(Boolean).join(" · "));
+  const al = listOf(d.allergies).filter(x => x !== "Aucune"); if (al.length) L.push(T("Allergies") + " : " + al.map(x => T(x)).join(", "));
+  if (v.medRows.length) { L.push("", T("Traitements") + " :"); v.medRows.forEach(({m, n, t}) => L.push(`- ${m.name} ${m.dose ? "(" + T(m.dose) + ")" : ""} ${t ? n + "/" + t : ""}`)); }
+  if (v.missed.length) L.push("", T("Prises oubliées") + " : " + v.missed.slice(0, 6).map(([ds, t, n]) => `${F(ds)} ${t} ${n}`).join(" ; "));
+  L.push("", T("Appétit") + " : " + jLine(v.J.appetite, OPT.appetite), T("Énergie") + " : " + jLine(v.J.energy, OPT.energy), T("Selles") + " : " + jLine(v.J.stool, OPT.stool));
+  if (v.notes.length) { L.push("", T("Observations") + " :"); v.notes.slice(0, 10).forEach(([ds, n]) => L.push(`- ${F(ds)} : ${n}`)); }
+  return L.join("\n");
+}
+function vetSheet(){
+  openSheet(T("Résumé pour le vétérinaire"), `<div class="vet-prev">${vetHTML(false)}</div>
+    <div style="display:grid;gap:8px;margin-top:14px">${downloader ? `<button type="button" class="btn" data-act="vetDownload">${T("Télécharger le résumé")}</button>` : ""}<button type="button" class="btn ghost" data-act="vetCopy">${T("Copier le texte")}</button></div>
+    <div class="hint" style="margin-top:10px">${T("À montrer en consultation ou à envoyer au cabinet. Rien n'est partagé sans votre action.")}</div>`, () => {});
+}
+
+/* ---------- in-app notifications ---------- */
+let NOTIF = false, SOUND = true, NOTIF_ASKED = false;
+try { const n = LS.get("carnet-notif"); NOTIF_ASKED = n !== null; NOTIF = n === "1"; SOUND = LS.get("carnet-sound") !== "0"; } catch(_) {}
+// website: notifications are required. A full screen stays until this phone receives them.
+
+
+// one-time "choose your style" window: for new people and after the update; then "What's new"
+function stylePick(){
+  let asked = ""; try { asked = localStorage.getItem("dl-style-asked") || ""; } catch(_) { return true; }
+  if (asked) return true;
+  if ($("#sp-root") || document.body.classList.contains("gate-open") || $("#sheet-root .scrim") || document.querySelector(".wiz,.tuto-card") || !S.ready) return false;
+  const cur = document.documentElement.dataset.skin === "classic" ? "classic" : "aurora";
+  const mock = k => `<div class="mk ${k === "aurora" ? "a" : "c"}" aria-hidden="true"><div class="mk-bg"></div><div class="mk-in">
+      <div class="mk-eb"></div><div class="mk-h1">${esc(T("Aujourd'hui"))}</div>
+      <div class="mk-card mk-hero"><div class="mk-ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" fill="none" stroke-width="5" class="mk-rb"/><circle cx="18" cy="18" r="14" fill="none" stroke-width="5" stroke-linecap="round" stroke-dasharray="88" stroke-dashoffset="35" transform="rotate(-90 18 18)" class="mk-rf"/></svg></div><div><b>3/5</b><i></i></div></div>
+      <div class="mk-card">${["#FF9500", "#34C759", "#FF2D55"].map((c, i) => `<div class="mk-row"><span class="mk-t"></span><span class="mk-ic" style="background:${c}"></span><span class="mk-ln"></span><span class="mk-ck ${i === 0 ? "on" : ""}"></span></div>`).join("")}</div>
+      <div class="mk-btn"></div></div><div class="mk-bar"><i class="on"></i><i></i><i></i><i></i><i></i></div></div>`;
+  const opt = (k, name, sub) => `<button type="button" class="sp-o" data-act="spPick" data-v="${k}" aria-pressed="${cur === k}">${mock(k)}<span class="sp-n"><span class="sp-r"></span><span><b>${esc(T(name))}</b><small>${esc(T(sub))}</small></span></span></button>`;
+  const el = document.createElement("div"); el.id = "sp-root";
+  el.innerHTML = `<div class="wn" role="dialog" aria-modal="true" aria-labelledby="sp-t"><div class="wn-c sp-c">
+    <div class="wn-h"><span class="wn-badge">${esc(T("NOUVEAU"))}</span><h2 id="sp-t">${T("Choisissez votre style")}</h2><p>${T("Touchez un style pour l'essayer : l'app change tout de suite derrière.")}</p></div>
+    <div class="sp-g">${opt("aurora", "Aurora", "Verre, halo doré animé, nouvelle police")}${opt("classic", "Classique", "Le design d'origine, sobre, façon iPhone")}</div>
+    <p class="sp-note">${T("Vous pourrez changer à tout moment dans Jiji → Réglages → Apparence.")}</p>
+    <div class="wn-go"><button class="btn" data-act="spDone">${T("Continuer avec ce style")}</button></div></div></div>`;
+  document.body.appendChild(el);
+  return false;
+}
+// "What's new" for 1.1: shown once per phone, after notifications are on and nothing else is open
+function whatsNew(){
+  let seen = ""; try { seen = localStorage.getItem("dl-whatsnew") || ""; } catch(_) { return; }
+  if (seen === APP_RELEASE) { stylePick(); return; }
+  if ($("#wn-root") || document.body.classList.contains("gate-open") || $("#sheet-root .scrim") || document.querySelector(".wiz,.tuto-card") || !S.ready) return;
+  const svg = d => `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${d}"/></svg>`;
+  const P = (c, d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const items = [
+    ["#30D158", I_ROUTE, "Sortir en balade", "Un bouton en haut d'Aujourd'hui lance le suivi en partant avec le chien. Le GPS est bien plus précis : positions filtrées, sauts ignorés, trajet collé aux vrais chemins."],
+    ["#0A84FF", I_MAP, "Carte des balades", "Tous vos trajets sur une vraie carte façon Plans, en clair ou sombre. Touchez un trajet pour le voir en couleur."],
+    ["#5E5CE6", I_ROUTE, "Balades proposées", "Une boucle autour de vous selon la durée, le terrain (forêt ou ville), les parcs à chiens, les points d'eau et la météo."],
+    ["#FF9F0A", I_HOME.replace(/26/g, "24"), "Détection des balades", "Option : l'app propose de démarrer quand vous partez à pied, et de terminer et cocher au retour. Les trajets en voiture sont ignorés."],
+    ["#FF375F", P(0, '<path d="M12 20s-7-4.4-8.8-8.8C2 7.9 4 5 7 5c2 0 3.5 1 5 2.8C13.5 6 15 5 17 5c3 0 5 2.9 3.8 6.2C19 15.6 12 20 12 20Z"/>'), "Réactions et réponses", "Appui long sur un message pour réagir, répondre ou copier. Glissez vers la droite pour répondre."],
+    ["#64D2FF", I_MIC, "Messages vocaux", "Le bouton micro enregistre jusqu'à 60 secondes."],
+    ["#BF5AF2", P(0, '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/>'), "Vu par, en ligne, en train d'écrire", "Qui a lu votre message, combien sont en ligne, et la bulle quand quelqu'un écrit. Le chat s'ouvre aussi en plein écran."],
+    ["#FFD60A", I_CAKE.replace(/26/g, "24"), "Anniversaire et jour d'arrivée", "Une carte de fête et une notification le jour J. Ajoutez la date d'arrivée dans la fiche du chien."],
+    ["#5AC8FA", I_GARDE.replace('viewBox="0 0 28 28"', 'viewBox="0 0 28 28" width="24" height="24"'), "Garde simplifiée", "Choisissez le gardien parmi la famille. À la fin de la garde, son accès est retiré tout seul."],
+    ["#FF9500", '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>', "Notifications plus claires", "Qui, quoi, et le contenu, sans répétition."]];
+  const fixes = ["le clavier de l'iPhone qui décalait le chat", "l'adresse e-mail proposée au-dessus du clavier", "les icônes refaites sans aucun emoji"];
+  const el = document.createElement("div"); el.id = "wn-root";
+  el.innerHTML = `<div class="wn" role="dialog" aria-modal="true" aria-labelledby="wn-t"><div class="wn-c">
+    <div class="wn-h"><span class="wn-badge">VERSION ${APP_RELEASE}</span><h2 id="wn-t">${T("Quoi de neuf")}</h2><p>${T("Balades, carte et messages : voici tout ce qui change.")}</p></div>
+    <ul class="wn-l">${items.map(([c, ic, t, d]) => `<li style="--c:${c}"><span class="wn-i">${ic}</span><div><b>${esc(T(t))}</b><span>${esc(T(d))}</span></div></li>`).join("")}</ul>
+    <div class="wn-fix"><b>${T("Corrigé")} :</b> ${fixes.map(f => esc(T(f))).join(" · ")}.</div>
+    <div class="wn-go"><button class="btn" data-act="wnClose">${T("C'est parti")}</button></div></div></div>`;
+  document.body.appendChild(el);
+}
+const RPI_DOC = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm2 9v2h8v-2H8Zm0 4v2h6v-2H8Z"/></svg>';
+function pushGate(){
+  const g = $("#gate-root"), cp = window.carnetPush;
+  if (!SPLASH.gone || !S.readyAt || Date.now() - S.readyAt < 2000) { clearTimeout(S.pgT); S.pgT = setTimeout(pushGate, 2100); return; }
+  // on a phone, the app must be installed (home screen) before anything else: pick a tutorial video
+  if (installNeeded()) { igRender(); if (g.innerHTML) { g.innerHTML = ""; } return; }
+  const need = cp && S.mode === "db" && S.ready && !noAccess() && (cp.ios || (cp.available() && !cp.state()));
+  if (!need) { if (g.innerHTML) { g.innerHTML = ""; document.body.classList.remove("gate-open"); } return; }
+  const perm = cp.info ? cp.info().perm : "default", bell = `<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg>`;
+  let body;
+  if (cp.ios) body = `<h1>${T("Installez Dogs Life")}</h1><p>${T("Sur iPhone, les notifications ne marchent que depuis l'écran d'accueil.")}</p>
+      <ol class="gate-steps"><li>${T("Touchez le bouton menu dans la barre d'adresse, puis « Partager »")} <span class="gate-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="vertical-align:-3px"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span></li><li>${T("Touchez « Afficher plus », puis « Sur l'écran d'accueil »")}</li><li>${T("Touchez « Ajouter »")}</li><li>${T("Ouvrez Dogs Life depuis l'icône sur votre écran d'accueil")}</li></ol><p class="gate-small">${T("Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.")}</p>`;
+  else if (perm === "denied") body = `<h1>${T("Notifications bloquées")}</h1><p>${T("Dogs Life a besoin des notifications pour prévenir la famille. Autorisez-les puis revenez ici.")}</p>
+      <ol class="gate-steps"><li>${T("Ouvrez Réglages sur le téléphone")}</li><li>${T("Notifications → Dogs Life")}</li><li>${T("Activez « Autoriser les notifications »")}</li></ol>
+      <button class="btn gate-btn" data-act="gatePush">${T("C'est fait, réessayer")}</button>`;
+  else body = `<h1>${T("Activez les notifications")}</h1><p>${T("Dogs Life prévient toute la famille : rappels des tâches, messages, balades, rendez-vous. Elles sont obligatoires pour utiliser l'app.")}</p>
+      <button class="btn gate-btn" data-act="gatePush">${T("Activer les notifications")}</button><p class="gate-small">${T("Vous pourrez choisir ensuite lesquelles recevoir dans Réglages.")}</p>`;
+  const h = `<div class="gate" role="dialog" aria-modal="true"><div class="gate-in"><div class="gate-bell">${bell}</div>${body}</div></div>`;
+  if (g.innerHTML !== h) g.innerHTML = h; document.body.classList.add("gate-open");
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pushGate(); });
+const STANDALONE = () => matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+const PHONE = () => { const ua = navigator.userAgent; return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ? "ios" : /Android/i.test(ua) ? "and" : ""; };
+const installNeeded = () => !S.preview && !STANDALONE() && !!PHONE();
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); S.bip = e; igRender(); });
+window.addEventListener("appinstalled", () => { S.bip = null; S.installed = true; igRender(); });
+// the very first screen on a phone browser: nothing of the app is reachable until it is installed
+function igRender(){
+  let g = document.getElementById("ig-root");
+  if (!installNeeded()) { if (g && g.innerHTML) { g.innerHTML = ""; document.body.classList.remove("ig-open"); } return; }
+  if (!g) { g = document.createElement("div"); g.id = "ig-root"; document.body.appendChild(g); }
+  document.body.classList.add("ig-open"); installGate(g);
+}
+function installGate(g){
+  const mine = PHONE(), phone = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.8"/><path d="M10.5 5h3"/></svg>';
+  const opt = (k, name, br) => `<button class="ig-o ${k === mine ? "on" : ""}" data-act="igPlay" data-v="${k}"><span class="ig-th"><img src="videos/install-${k === "ios" ? "iphone" : "android"}.jpg" alt=""><i><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5.5v13l11-6.5Z"/></svg></i></span><b>${name}</b><small>${br}</small>${k === mine ? `<span class="ig-me">${T("Votre téléphone")}</span>` : ""}</button>`;
+  const vid = S.igVideo ? `<div class="ig-v" role="dialog" aria-modal="true"><video src="videos/install-${S.igVideo === "ios" ? "iphone" : "android"}.mp4" poster="videos/install-${S.igVideo === "ios" ? "iphone" : "android"}.jpg" controls playsinline autoplay></video><button class="ig-x" data-act="igClose" aria-label="${T("Fermer")}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>` : "";
+  const h = `<div class="gate ig" role="dialog" aria-modal="true"><div class="gate-in">
+    <div class="ig-icon"><img src="icon-512.png" alt=""></div>
+    <h1>${T(S.installed ? "Dogs Life est installée" : "Installez Dogs Life")}</h1>
+    <p>${T(S.installed ? "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil." : "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :")}</p>
+    ${S.installed ? "" : `<div class="ig-ch">${opt("ios", "iPhone", "Safari")}${opt("and", "Android", "Chrome")}</div>`}
+    ${!S.installed && mine === "and" && S.bip ? `<button class="btn gate-btn" data-act="igInstall">${T("Installer maintenant")}</button>` : ""}
+    <p class="gate-small">${T("Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.")}</p>
+  </div>${vid}</div>`;
+  if (g.innerHTML !== h) g.innerHTML = h;
+}
+function notifPrompt(){
+  if (window.carnetPush || NOTIF_ASKED || !dog() || S.dismissNotifAsk) return "";
+  return `<div class="card ask"><div class="ask-h"><span class="ico" style="--c:var(--orange)"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg></span>
+    <div class="main"><div class="t">${T("Recevoir des alertes ?")}</div><div class="s">${T("Une bannière, une vibration et un petit son à l'heure de chaque tâche, tant que le carnet est ouvert.")}</div></div></div>
+    <div class="ask-b"><button class="btn ghost" data-act="notifAsk" data-v="0">${T("Non merci")}</button><button class="btn" data-act="notifAsk" data-v="1">${T("Activer")}</button></div></div>`;
+}
+const notified = new Set(); let actx = null;
+document.addEventListener("pointerdown", () => { if (!actx && SOUND) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_) {} } }, {once:true});
+function chime(){ if (!SOUND || !actx) return; try { const t = actx.currentTime; [880, 1175].forEach((f, i) => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; o.type = "sine";
+  g.gain.setValueAtTime(0, t + i*.16); g.gain.linearRampToValueAtTime(.18, t + i*.16 + .02); g.gain.exponentialRampToValueAtTime(.001, t + i*.16 + .45); o.connect(g).connect(actx.destination); o.start(t + i*.16); o.stop(t + i*.16 + .5); }); } catch(_) {} }
+function checkNotifs(){
+  if (window.carnetPush || !NOTIF || !dog() || S.mode === "loading") return; // website: reminders come as real notifications from the server
+  const today = ymd(new Date()), nm = toMin(hhmm(new Date())), st = dayStats(today), me = ME;
+  const due = st.tasks.filter(t => !st.done[t.key] && toMin(t.time) <= nm && nm - toMin(t.time) <= 5 && !notified.has(today + t.key) && (!t.who || !me || t.who === me));
+  if (!due.length && isPuppy()) {
+    // puppies usually need to go out 15-20 min after eating
+    const meal = st.tasks.filter(t => t.cat === "repas" && st.done[t.key]).map(t => st.done[t.key].at).filter(Boolean).sort().pop();
+    const lp = lastOf("pipi"), since = meal && lp && lp.ds === today && toMin(lp.x.at) >= toMin(meal);
+    if (meal && !since && nm - toMin(meal) >= 15 && nm - toMin(meal) <= 25 && !notified.has(today + "pm" + meal)) { notified.add(today + "pm" + meal);
+      $("#notif-root").innerHTML = `<div class="notif" role="alert"><span class="ico" style="--c:${QL.pipi.c}">${QL.pipi.i}</span><div class="main"><div class="t">${T("Sortie pipi")}</div><div class="s">${T("{n} a mangé il y a {m} min : c'est le bon moment pour sortir.",{n:esc(dog().name || ""), m: nm - toMin(meal)})}</div></div>
+        ${canTick() ? `<button class="btn" data-act="notifPee">${T("Pipi fait")}</button>` : ""}<button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
+      try { if (navigator.vibrate) navigator.vibrate([30, 60, 30]); } catch(_) {} chime(); return; }
+  }
+  if (!due.length) return;
+  due.forEach(t => notified.add(today + t.key));
+  const t = due[0], c = CATS[t.cat] || CATS.autre, m = memberOf(t.who);
+  $("#notif-root").innerHTML = `<div class="notif" role="alert"><span class="ico" style="--c:${c.color}">${c.icon}</span><div class="main"><div class="t">${T("C'est l'heure")} · ${esc(t.time)}</div><div class="s">${esc(t.title)}${m ? " · " + esc(m.name) : ""}${due.length > 1 ? " · " + T("+{n} autre(s)",{n:due.length-1}) : ""}</div></div>
+    ${canTick() ? `<button class="btn" data-act="notifDone" data-k="${esc(t.key)}">${T("Fait")}</button>` : ""}<button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
+  try { if (navigator.vibrate) navigator.vibrate([30, 60, 30]); } catch(_) {}
+  chime();
+  clearTimeout(checkNotifs._t); checkNotifs._t = setTimeout(() => { clearRoot("#notif-root"); }, 60000);
+}
+function notifSection(){
+  return `<div class="sec"><div class="sec-h"><h2>${T("Notifications")}</h2></div><div class="card list">
+    ${window.carnetPush ? "" : `<div class="row"><div class="main"><div class="t">${T("Alertes à l'heure des tâches")}</div><div class="s">${T("Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.")}</div></div><button class="switch ${NOTIF?"on":""}" data-act="toggleNotif" role="switch" aria-checked="${NOTIF}" aria-label="${T("Alertes à l'heure des tâches")}"><i></i></button></div>`}
+    <div class="row"><div class="main"><div class="t">${T("Son")}</div></div><button class="switch ${SOUND?"on":""}" data-act="toggleSound" role="switch" aria-checked="${SOUND}" aria-label="${T("Son")}"><i></i></button></div>
+    ${navigator.geolocation ? `<div class="row"><div class="main"><div class="t">${T("Suivre les balades par GPS")}</div><div class="s">${T("Distance et trajet mesurés sur ce téléphone pendant la balade.")}</div></div><button class="switch ${gpsOff() ? "" : "on"}" data-act="gpsPref" role="switch" aria-checked="${!gpsOff()}" aria-label="${T("Suivre les balades par GPS")}"><i></i></button></div>` : ""}
+    <div class="row"><div class="main"><div class="t">${T("Bouton « Sortir en balade »")}</div><div class="s">${T("En haut de la page Aujourd'hui : un geste pour lancer le suivi GPS précis quand vous partez avec le chien.")}</div></div><button class="switch ${walkBtnOff() ? "" : "on"}" data-act="walkBtnPref" role="switch" aria-checked="${!walkBtnOff()}" aria-label="${T("Bouton « Sortir en balade »")}"><i></i></button></div>
+    ${navigator.geolocation ? (() => { const c = awCfg(); return `<div class="row"><div class="main"><div class="t">${T("Détecter les balades")}</div><div class="s">${T("Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Les trajets en voiture, vélo ou bus sont ignorés. Fonctionne quand l'app est ouverte.")}</div></div><button class="switch ${c.on ? "on" : ""}" data-act="awPref" role="switch" aria-checked="${!!c.on}" aria-label="${T("Détecter les balades")}"><i></i></button></div>${c.on ? `<button class="row" data-act="awHome"><span class="main t" style="color:var(--accent)">${T("La maison est ici (redéfinir)")}</span></button>` : ""}`; })() : ""}
+    ${window.carnetPush ? "" : `<button class="row" data-act="testNotif"><span class="main t" style="color:var(--accent)">${T("Tester une alerte")}</span></button>`}
+    ${window.carnetPush && window.carnetPush.available() ? `<div class="row"><div class="main"><div class="t">${T("Notifications sur ce téléphone")}</div><div class="s">${T("Même app fermée : les tâches à l'heure et ce que fait la famille.")}</div></div>${window.carnetPush.state() ? `<span class="pill" style="color:var(--green)">${T("Activées")}</span>` : `<button class="switch" data-act="togglePush" role="switch" aria-checked="false" aria-label="${T("Notifications sur ce téléphone")}"><i></i></button>`}</div>
+      ${window.carnetPush.state() && window.carnetPush.prefs ? (() => { const pr = window.carnetPush.prefs();
+        return [["tasks", "Rappels des tâches", "5 min avant, puis 30 min après si ce n'est pas fait."], ["family", "Activité de la famille", "Quand quelqu'un coche, note un pipi ou écrit un message."],
+          ["self", "Mes propres actions", "Recevoir aussi ce que je coche, note ou écris."],
+          ["weather", "Beau temps pour sortir", "Une fois par jour, si une ville est choisie dans la météo."], ["appts", "Rendez-vous", "La veille à 18 h et 1 h avant."],
+          ["daily", "Bilan du soir et croquettes", "À 20 h 30 s'il reste des tâches, et quand le sac est presque vide."]]
+          .map(([k, t, x]) => `<div class="row push-sub"><div class="main"><div class="t">${T(t)}</div><div class="s">${T(x)}</div></div><button class="switch ${pr[k] !== false ? "on" : ""}" data-act="pushPref" data-k="${k}" role="switch" aria-checked="${pr[k] !== false}" aria-label="${T(t)}"><i></i></button></div>`).join(""); })() : ""}
+      ${window.carnetPush.state() ? `<button class="row" data-act="testPush"><span class="main t" style="color:var(--accent)">${T("Tester une notification")}</span></button>` : ""}` : ""}
+    ${window.carnetPush && window.carnetPush.info ? (() => { const i = window.carnetPush.info();
+      const ls = window.carnetPush.last && window.carnetPush.last(), K = {msg: T("message"), log: T("journal"), tick: T("tâche cochée")};
+      const lastTxt = ls ? T("Dernier envoi") + " (" + (K[ls.k] || ls.k) + ", " + relTime(new Date(ls.at).toISOString()) + ") : " + (ls.s === 200 ? T("{n} téléphone(s) prévenu(s)", {n: ls.ok != null ? ls.ok : ls.n}) + (ls.e ? " · " + ls.e : "") : T("échec") + " " + (ls.s || "") + (ls.e ? " " + ls.e : "")) : "";
+      return `<div class="row push-diag"><div class="main"><div class="s">${esc([T("Autorisation") + " : " + i.perm, (i.ios ? (i.standalone ? T("app de l'écran d'accueil") : T("ouvert dans Safari")) : ""), i.on ? T("téléphone enregistré") : T("téléphone pas enregistré"), i.err ? T("erreur") + " : " + i.err : "", lastTxt].filter(Boolean).join(" · "))}</div></div></div>`; })() : ""}
+  </div><div class="foot">${window.carnetPush && window.carnetPush.ios ? T("Sur iPhone : ajoutez d'abord Dogs Life à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis activez les notifications depuis l'app.") : window.carnetPush && window.carnetPush.available() ? T("Chaque personne choisit sur son téléphone. Vous pouvez les couper à tout moment.") : T("Les alertes s'affichent tant que l'app est ouverte.")}</div></div>`;
+}
+
+/* ---------- explanations: every number leads somewhere ---------- */
+function buddyHelp(k){
+  const b = buddyStats(), today = ymd(new Date()), day = getDay(today), st = dayStats(today), nm = toMin(hhmm(new Date()));
+  const late = c => st.tasks.filter(t => (Array.isArray(c) ? c.includes(t.cat) : t.cat === c) && !st.done[t.key] && toMin(t.time) <= nm);
+  const items = [];
+  if (k === "health") {
+    if (!day.appetite || !day.energy || !day.stool) items.push([T("Remplissez le journal du jour (appétit, énergie, selles)."), "aujourdhui"]);
+    late("med").forEach(t => items.push([T("Donnez {m} prévu à {t}.",{m:t.title, t:t.time}), "aujourdhui"]));
+    if (!items.length) items.push([T("Tout est à jour. Continuez à noter le journal chaque jour."), null]);
+  } else if (k === "happy") {
+    late(["balade","jeu"]).forEach(t => items.push([T("Faites « {m} » ({t}) et cochez-la.",{m:t.title, t:t.time}), "aujourdhui"]));
+    if (!routine().some(r => r.cat === "jeu")) items.push([T("Ajoutez un moment de jeu ou d'éducation à la routine."), "routine"]);
+    if (!items.length) items.push([T("Les balades sont à jour. Bravo !"), null]);
+  } else {
+    late("repas").forEach(t => items.push([T("Servez « {m} » ({t}) et cochez-le.",{m:t.title, t:t.time}), "aujourdhui"]));
+    if (!routine().some(r => r.cat === "repas")) items.push([T("Ajoutez les repas à la routine."), "routine"]);
+    if (!items.length) items.push([T("Les repas sont à jour."), null]);
+  }
+  const what = {health:T("La santé vient du journal des 3 derniers jours et des médicaments donnés à l'heure."), happy:T("Le bonheur vient des balades et des jeux cochés sur 7 jours."), fed:T("Le ventre plein vient des repas cochés sur 7 jours.")}[k];
+  const val = {health:b.health, happy:b.happy, fed:b.fed}[k];
+  openSheet({health:T("Santé"), happy:T("Bonheur"), fed:T("Ventre plein")}[k] + " · " + Math.round(val*100) + " %", `<p style="margin:0 4px 14px;color:var(--fg2)">${what}</p>
+    <div class="card list">${items.map(([txt, tab]) => tab ? `<button type="button" class="row" data-act="go" data-tab="${tab}"><span class="main t">${esc(txt)}</span><span class="chev">${I.chevR}</span></button>` : `<div class="row"><span class="main t">${esc(txt)}</span></div>`).join("")}</div>`, () => {});
+}
+const BADGE_HOW = {streak3:"Cochez toutes les tâches 3 jours de suite.", streak7:"Cochez toutes les tâches 7 jours de suite.", walks:"Ne manquez aucune balade pendant 7 jours.", meds:"Donnez tous les médicaments à l'heure pendant 7 jours.", log:"Remplissez appétit, énergie et selles 5 jours.", weigh:"Enregistrez 3 pesées dans Santé."};
+function badgeHelp(k){
+  const b = buddyStats().badges.find(x => x.k === k); if (!b) return;
+  openSheet(T(b.l), `<div class="card pad" style="display:flex;gap:14px;align-items:center"><div class="badge ${b.ok?"ok":""}" style="box-shadow:none;padding:0;background:none"><span>${b.ok?I.tick.replace('width="16" height="16"','width="20" height="20"'):"?"}</span></div><div><div class="t" style="font-weight:600">${b.ok ? T("Badge obtenu") : T("Pas encore obtenu")}</div><div class="s" style="color:var(--fg2)">${T(BADGE_HOW[k])}</div></div></div>`, () => {});
+}
+
+/* ---------- 3D buddy (three.js, loaded on demand) ---------- */
+const COATS = {
+  _:{base:"#A97447",belly:"#EBD6B8",muzzle:"#D9B68E",ear:"#8A5A34"},
+  "Golden Retriever":{base:"#D59A52",belly:"#EDC68E",muzzle:"#E3B272",ear:"#C2843E",ears:"flop",size:1.05,fluffy:1},
+  "Labrador Retriever":{base:"#E2C189",belly:"#EDD6A8",muzzle:"#E8CD99",ear:"#D2AC6C",ears:"flop",size:1.05},
+  "Berger australien":{base:"#8E929B",belly:"#F3F0EA",muzzle:"#F3F0EA",ear:"#36353A",ears:"semi",merle:"#2E2D32",points:"#B3663A",blaze:1,paws:"#F3F0EA",fluffy:1},
+  "Berger allemand":{base:"#B9773B",belly:"#D8A465",muzzle:"#29211C",ear:"#29211C",ears:"up",saddle:"#1E1A17",size:1.1},
+  "Berger blanc suisse":{base:"#F2EEE6",belly:"#F8F5EF",muzzle:"#F6F2EA",ear:"#EAE2D5",ears:"up",size:1.1,fluffy:1},
+  "Bouvier bernois":{base:"#1F1D1E",belly:"#F4F1EC",muzzle:"#F4F1EC",ear:"#1F1D1E",ears:"flop",points:"#A9582A",blaze:1,paws:"#F4F1EC",size:1.25,fluffy:1},
+  "Bouvier de l'Entlebuch":{base:"#1F1D1E",belly:"#F4F1EC",muzzle:"#F4F1EC",ear:"#1F1D1E",ears:"flop",points:"#A9582A",blaze:1,paws:"#F4F1EC",size:.85},
+  "Bouvier appenzellois":{base:"#1F1D1E",belly:"#F4F1EC",muzzle:"#F4F1EC",ear:"#1F1D1E",ears:"flop",points:"#A9582A",blaze:1,paws:"#F4F1EC",size:.95,curl:1},
+  "Grand bouvier suisse":{base:"#1F1D1E",belly:"#F4F1EC",muzzle:"#F4F1EC",ear:"#1F1D1E",ears:"flop",points:"#A9582A",blaze:1,paws:"#F4F1EC",size:1.3},
+  "Saint-Bernard":{base:"#F2EDE6",belly:"#F7F3EE",muzzle:"#F7F3EE",ear:"#A9532A",head:"#A9532A",ears:"flop",saddle:"#A9532A",blaze:1,size:1.35,fluffy:1},
+  "Border Collie":{base:"#1F1E22",belly:"#F3F1EC",muzzle:"#F3F1EC",ear:"#1F1E22",ears:"semi",blaze:1,paws:"#F3F1EC",fluffy:1},
+  "Malinois":{base:"#C48C4C",belly:"#D9AC72",muzzle:"#1F1915",ear:"#2A211B",ears:"up",size:1.05},
+  "Jack Russell Terrier":{base:"#F5F2EC",belly:"#F8F6F2",muzzle:"#F5F2EC",ear:"#B57741",head:"#B57741",ears:"fold",size:.6,blaze:1},
+  "Yorkshire Terrier":{base:"#4F5664",belly:"#C99E61",muzzle:"#C99E61",head:"#C99E61",ear:"#B88A4F",ears:"up",size:.45,fluffy:1,paws:"#C99E61"},
+  "Chihuahua":{base:"#D8A86C",belly:"#EBCD9F",muzzle:"#E3BC86",ear:"#D8A86C",ears:"big",size:.4},
+  "Bouledogue français":{base:"#D9C29E",belly:"#EDE0C8",muzzle:"#D3B994",ear:"#CDB38D",ears:"bat",size:.65,flat:1,stocky:1},
+  "Carlin":{base:"#D8BC8E",belly:"#E8D4B0",muzzle:"#2B2420",ear:"#2B2420",ears:"fold",size:.55,flat:1,stocky:1,curl:1},
+  "Cavalier King Charles":{base:"#F5F1EA",belly:"#F8F5EF",muzzle:"#F5F1EA",ear:"#A6542A",head:"#A6542A",ears:"long",size:.6,blaze:1,fluffy:1},
+  "Teckel":{base:"#8F4B26",belly:"#A65F35",muzzle:"#9A552E",ear:"#7A3E1F",ears:"long",size:.6,long:1},
+  "Beagle":{base:"#C27F42",belly:"#F4F0E8",muzzle:"#F4F0E8",ear:"#B06F35",ears:"long",saddle:"#2A2421",blaze:1,paws:"#F4F0E8",size:.7},
+  "Caniche":{base:"#D9AC7B",belly:"#E4BE93",muzzle:"#DDB386",ear:"#CC9C69",ears:"long",curly:1,size:.8},
+  "Bichon frisé":{base:"#F5F2EC",belly:"#F8F6F2",muzzle:"#F5F2EC",ear:"#EFEAE1",ears:"flop",curly:1,size:.5,curl:1},
+  "Bichon maltais":{base:"#F6F3EE",belly:"#FAF8F4",muzzle:"#F6F3EE",ear:"#F0EBE3",ears:"long",fluffy:1,size:.45},
+  "Shih Tzu":{base:"#E7D5B7",belly:"#F4EBDD",muzzle:"#F4EBDD",ear:"#C69A5F",head:"#D9B98C",ears:"long",fluffy:1,flat:1,size:.5,curl:1},
+  "Spitz nain (Poméranien)":{base:"#E3913F",belly:"#EDB06A",muzzle:"#EAA75F",ear:"#D9822F",ears:"up",fluffy:1,curl:1,size:.4},
+  "Cocker anglais":{base:"#B9692F",belly:"#C67937",muzzle:"#C27333",ear:"#A65B25",ears:"long",fluffy:1,size:.7},
+  "Husky sibérien":{base:"#7C818B",belly:"#F3F2EF",muzzle:"#F3F2EF",ear:"#5E626B",ears:"up",eyes:"#4FA3E3",blaze:1,paws:"#F3F2EF",curl:1,fluffy:1},
+  "Shiba Inu":{base:"#C96C33",belly:"#F1E2C8",muzzle:"#F1E2C8",ear:"#C96C33",ears:"up",curl:1,size:.75,paws:"#F1E2C8"},
+  "Boxer":{base:"#B97A40",belly:"#F2EDE4",muzzle:"#2A221E",ear:"#A86C36",ears:"fold",flat:1,paws:"#F2EDE4"},
+  "Dalmatien":{base:"#F5F3EF",belly:"#F8F6F3",muzzle:"#F5F3EF",ear:"#2A2828",ears:"flop",spots:"#242222"},
+  "Rottweiler":{base:"#1C1A1B",belly:"#1C1A1B",muzzle:"#A0562A",ear:"#1C1A1B",ears:"fold",points:"#A0562A",size:1.15,stocky:1},
+  "Lagotto Romagnolo":{base:"#8C6A4A",belly:"#9A7756",muzzle:"#93704F",ear:"#7E5F41",ears:"flop",curly:1,size:.8},
+  "Bouledogue anglais":{base:"#F2ECE2",belly:"#F7F2EA",muzzle:"#F2ECE2",ear:"#C9915A",head:"#E6D3B6",ears:"fold",saddle:"#C9915A",flat:1,stocky:1,size:.75},
+  "Whippet":{base:"#A9A6A3",belly:"#F1EFEC",muzzle:"#B5B2AF",ear:"#97938F",ears:"fold",slim:1,size:.85,paws:"#F1EFEC"},
+  "Vizsla":{base:"#B4672F",belly:"#C27637",muzzle:"#BC6E33",ear:"#A65D29",ears:"flop",slim:1}
+};
+const B3D = (() => {
+  let THREEp = null, failed = false, R, scene, cam, dog = null, P = {}, cfgKey = "", mood = "content", raf = 0, host = null;
+  let rotY = -0.55, targetRotY = -0.55, lastInteract = 0, jumpT = -10, ptr = {x:0, y:0}, drag = null, clockStart = performance.now(), nextBlink = 2;
+  const cur = {lying:0, headX:0, headY:0, ear:0, tailUp:.6, tailSpeed:7, tailAmp:.5, eye:1, tongue:.5, hop:0, thermo:0};
+  const RM = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(_) { return false; } };
+  function load(){
+    if (THREEp) return THREEp;
+    THREEp = new Promise((res, rej) => {
+      if (window.THREE) return res(window.THREE);
+      const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+      s.onload = () => window.THREE ? res(window.THREE) : rej(); s.onerror = rej; document.head.appendChild(s);
+    });
+    return THREEp;
+  }
+  // seeded random so a dog keeps the same spots
+  function rng(seed){ let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+  function init(THREE){
+    try {
+      R = new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference:"low-power"});
+    } catch(e) { failed = true; return false; }
+    R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
+    R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+    scene = new THREE.Scene();
+    cam = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
+    // studio environment for soft reflections (nose, eyes, gold)
+    const c = document.createElement("canvas"); c.width = 256; c.height = 128; const g = c.getContext("2d");
+    const gr = g.createLinearGradient(0,0,0,128); gr.addColorStop(0,"#ffffff"); gr.addColorStop(.42,"#f4e9dc"); gr.addColorStop(.55,"#8d7a69"); gr.addColorStop(1,"#3b312a");
+    g.fillStyle = gr; g.fillRect(0,0,256,128); g.fillStyle = "rgba(255,255,255,.95)"; g.fillRect(150,18,60,26); g.fillRect(30,24,30,16);
+    const et = new THREE.CanvasTexture(c); et.mapping = THREE.EquirectangularReflectionMapping; et.encoding = THREE.sRGBEncoding;
+    const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromEquirectangular(et).texture; et.dispose(); pm.dispose();
+    scene.add(new THREE.HemisphereLight(0xfff6ee, 0x8a7566, .75));
+    const key = new THREE.DirectionalLight(0xfff3e6, 1.05); key.position.set(2.6, 4.2, 3.2); key.castShadow = true;
+    key.shadow.mapSize.set(1024,1024); key.shadow.radius = 5; key.shadow.bias = -0.0006; key.shadow.normalBias = .025;
+    Object.assign(key.shadow.camera, {left:-2, right:2, top:2, bottom:-2, near:.5, far:12}); key.shadow.camera.updateProjectionMatrix();
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0xfff0f4, .5); fill.position.set(-3, 2, 1.5); scene.add(fill);
+    const rim = new THREE.DirectionalLight(0xffffff, .7); rim.position.set(-.5, 3, -4); scene.add(rim);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.ShadowMaterial({opacity:.13}));
+    floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+    // soft contact shadow
+    const sc = document.createElement("canvas"); sc.width = sc.height = 128; const sg = sc.getContext("2d");
+    const rg = sg.createRadialGradient(64,64,0,64,64,64); rg.addColorStop(0,"rgba(0,0,0,.42)"); rg.addColorStop(1,"rgba(0,0,0,0)"); sg.fillStyle = rg; sg.fillRect(0,0,128,128);
+    const blob = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(sc), transparent:true, depthWrite:false}));
+    blob.rotation.x = -Math.PI/2; blob.position.y = .002; scene.add(blob); P.blob = blob;
+    // fur micro-texture
+    const fc = document.createElement("canvas"); fc.width = fc.height = 256; const fg = fc.getContext("2d");
+    fg.fillStyle = "#fff"; fg.fillRect(0,0,256,256); const r = rng(7);
+    for (let i = 0; i < 2600; i++) { const v = 205 + Math.floor(r()*50); fg.strokeStyle = `rgba(${v},${v},${v},.55)`; fg.lineWidth = .6 + r(); const x = r()*256, y = r()*256, a = (r()-.5)*.6 + Math.PI/2;
+      fg.beginPath(); fg.moveTo(x,y); fg.lineTo(x + Math.cos(a)*6, y + Math.sin(a)*6); fg.stroke(); }
+    P.fur = new THREE.CanvasTexture(fc); P.fur.wrapS = P.fur.wrapT = THREE.RepeatWrapping; P.fur.repeat.set(3,3); P.fur.encoding = THREE.sRGBEncoding;
+    const el = R.domElement; el.setAttribute("role","img");
+    el.addEventListener("pointerdown", e => { drag = {x:e.clientX, y:e.clientY, rot:targetRotY, moved:false}; lastInteract = performance.now(); });
+    el.addEventListener("pointermove", e => {
+      const b = el.getBoundingClientRect(); ptr.x = ((e.clientX - b.left) / b.width) * 2 - 1; ptr.y = ((e.clientY - b.top) / b.height) * 2 - 1;
+      if (drag) { const dx = e.clientX - drag.x; if (Math.abs(dx) > 6) drag.moved = true; targetRotY = drag.rot + dx * .012; lastInteract = performance.now(); }
+    });
+    const up = () => { if (drag && !drag.moved) pet(); drag = null; };
+    el.addEventListener("pointerup", up); el.addEventListener("pointercancel", () => drag = null);
+    el.addEventListener("pointerleave", () => { drag = null; ptr.x = 0; ptr.y = 0; });
+    if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(el);
+    return true;
+  }
+  /* ---- sculpting: signed distance fields, smooth unions, surface nets ---- */
+  const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+  const sstep = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+  const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
+  function rotM(rx, ry, rz){ // inverse rotation (world -> local) as 3x3, Euler XYZ
+    const cx = Math.cos(rx), sx = Math.sin(rx), cy = Math.cos(ry), sy = Math.sin(ry), cz = Math.cos(rz), sz = Math.sin(rz);
+    const m = [cy*cz, -cy*sz, sy, sx*sy*cz + cx*sz, -sx*sy*sz + cx*cz, -sx*cy, -cx*sy*cz + sx*sz, cx*sy*sz + sx*cz, cx*cy];
+    return [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]; // transpose = inverse
+  }
+  function Ell(c, r, rot){ const M = rot ? rotM(rot[0], rot[1], rot[2]) : null;
+    return (x, y, z) => { let px = x - c[0], py = y - c[1], pz = z - c[2];
+      if (M) { const ax = M[0]*px + M[1]*py + M[2]*pz, ay = M[3]*px + M[4]*py + M[5]*pz, az = M[6]*px + M[7]*py + M[8]*pz; px = ax; py = ay; pz = az; }
+      const a = px / r[0], b = py / r[1], cc = pz / r[2], k0 = Math.sqrt(a*a + b*b + cc*cc);
+      const a2 = a / r[0], b2 = b / r[1], c2 = cc / r[2], k1 = Math.sqrt(a2*a2 + b2*b2 + c2*c2);
+      return k1 < 1e-6 ? -Math.min(r[0], r[1], r[2]) : k0 * (k0 - 1) / k1; }; }
+  function Cap(a, b, r1, r2){ const bx = b[0]-a[0], by = b[1]-a[1], bz = b[2]-a[2], l2 = bx*bx + by*by + bz*bz;
+    return (x, y, z) => { const px = x - a[0], py = y - a[1], pz = z - a[2]; const t = clamp01((px*bx + py*by + pz*bz) / l2);
+      const dx = px - bx*t, dy = py - by*t, dz = pz - bz*t; return Math.sqrt(dx*dx + dy*dy + dz*dz) - (r1 + (r2 - r1) * t); }; }
+  function Union(list, k){ return (x, y, z) => { let d = list[0](x, y, z); for (let i = 1; i < list.length; i++) d = smin(d, list[i](x, y, z), k); return d; }; }
+  // Naive surface nets: one vertex per surface cell, quads across sign-changing edges -> seamless smooth mesh
+  function sculpt(THREE, sdf, colorAt, min, max, step){
+    const nx = Math.ceil((max[0]-min[0])/step) + 1, ny = Math.ceil((max[1]-min[1])/step) + 1, nz = Math.ceil((max[2]-min[2])/step) + 1;
+    const F = new Float32Array(nx*ny*nz), id = (i, j, k) => i + nx*(j + ny*k);
+    for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) F[id(i,j,k)] = sdf(min[0] + i*step, min[1] + j*step, min[2] + k*step);
+    const cx = nx - 1, cy = ny - 1, cz = nz - 1, CV = new Int32Array(cx*cy*cz).fill(-1), cid = (i, j, k) => i + cx*(j + cy*k);
+    const O = [[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,1],[1,0,1],[0,1,1],[1,1,1]], E = [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+    const pos = [], v = new Float32Array(8);
+    for (let k = 0; k < cz; k++) for (let j = 0; j < cy; j++) for (let i = 0; i < cx; i++) {
+      let mask = 0; for (let c = 0; c < 8; c++) { v[c] = F[id(i + O[c][0], j + O[c][1], k + O[c][2])]; if (v[c] < 0) mask |= 1 << c; }
+      if (mask === 0 || mask === 255) continue;
+      let sx = 0, sy = 0, sz = 0, n = 0;
+      for (const [a, b] of E) { if ((v[a] < 0) === (v[b] < 0)) continue; const t = v[a] / (v[a] - v[b]);
+        sx += O[a][0] + (O[b][0] - O[a][0]) * t; sy += O[a][1] + (O[b][1] - O[a][1]) * t; sz += O[a][2] + (O[b][2] - O[a][2]) * t; n++; }
+      CV[cid(i,j,k)] = pos.length / 3;
+      pos.push(min[0] + (i + sx/n) * step, min[1] + (j + sy/n) * step, min[2] + (k + sz/n) * step);
+    }
+    const tri = [];
+    const quad = (a, b, c, d) => { if (a < 0 || b < 0 || c < 0 || d < 0) return; tri.push(a, b, c, a, c, d); };
+    for (let k = 0; k < cz; k++) for (let j = 0; j < cy; j++) for (let i = 0; i < cx; i++) {
+      const v0 = F[id(i,j,k)] < 0;
+      if (j > 0 && k > 0 && (F[id(i+1,j,k)] < 0) !== v0) quad(CV[cid(i,j,k)], CV[cid(i,j-1,k)], CV[cid(i,j-1,k-1)], CV[cid(i,j,k-1)]);
+      if (i > 0 && k > 0 && (F[id(i,j+1,k)] < 0) !== v0) quad(CV[cid(i,j,k)], CV[cid(i,j,k-1)], CV[cid(i-1,j,k-1)], CV[cid(i-1,j,k)]);
+      if (i > 0 && j > 0 && (F[id(i,j,k+1)] < 0) !== v0) quad(CV[cid(i,j,k)], CV[cid(i-1,j,k)], CV[cid(i-1,j-1,k)], CV[cid(i,j-1,k)]);
+    }
+    // normals from the field gradient, then wind every triangle to face outward
+    const nv = pos.length / 3, nor = new Float32Array(nv*3), col = new Float32Array(nv*3), e = step * .5;
+    for (let q = 0; q < nv; q++) { const x = pos[q*3], y = pos[q*3+1], z = pos[q*3+2];
+      let gx = sdf(x+e,y,z) - sdf(x-e,y,z), gy = sdf(x,y+e,z) - sdf(x,y-e,z), gz = sdf(x,y,z+e) - sdf(x,y,z-e); const l = Math.hypot(gx, gy, gz) || 1;
+      nor[q*3] = gx/l; nor[q*3+1] = gy/l; nor[q*3+2] = gz/l;
+      const c = colorAt(x, y, z); col[q*3] = c[0]; col[q*3+1] = c[1]; col[q*3+2] = c[2]; }
+    for (let t = 0; t < tri.length; t += 3) { const a = tri[t]*3, b = tri[t+1]*3, c = tri[t+2]*3;
+      const ux = pos[b]-pos[a], uy = pos[b+1]-pos[a+1], uz = pos[b+2]-pos[a+2], wx = pos[c]-pos[a], wy = pos[c+1]-pos[a+1], wz = pos[c+2]-pos[a+2];
+      const fx = uy*wz - uz*wy, fy = uz*wx - ux*wz, fz = ux*wy - uy*wx;
+      if (fx*(nor[a]+nor[b]+nor[c]) + fy*(nor[a+1]+nor[b+1]+nor[c+1]) + fz*(nor[a+2]+nor[b+2]+nor[c+2]) < 0) { const s = tri[t+1]; tri[t+1] = tri[t+2]; tri[t+2] = s; } }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    g.setIndex(nv > 65535 ? new THREE.Uint32BufferAttribute(tri, 1) : new THREE.Uint16BufferAttribute(tri, 1));
+    g.computeBoundingSphere();
+    return g;
+  }
+  let buildTok = 0;
+  const idle = () => new Promise(r => setTimeout(r, 0));
+  const disposeTree = t => t.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); });
+  /* ---- Jiji: the hand-built 3D puppy (DOG3), coloured per breed with crisp per-pixel markings, animated in the vertex shader ---- */
+  const models = {};
+  const earKind = breed => { const e = (COATS[breed] || {}).ears; return e === "up" || e === "big" || e === "bat" ? "up" : "flop"; };
+  function loadModel(kind){
+    if (models[kind]) return models[kind];
+    const url = kind === "up" ? "dog-up.bin" : "dog.bin", js = kind === "up" ? "dog-up-model.js" : "dog-model.js", key = kind === "up" ? "__DOGUP_B64" : "__DOG_B64";
+    const viaScript = () => new Promise((res, rej) => { if (window[key]) return res();
+      const sc = document.createElement("script"); sc.src = js; sc.onload = () => window[key] ? res() : rej("model"); sc.onerror = () => rej("model"); document.head.appendChild(sc); })
+      .then(() => { const s = atob(window[key]), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; });
+    models[kind] = fetch(url).then(r => { if (!r.ok) throw "model"; return r.arrayBuffer(); }).then(b => { if (new DataView(b).getUint32(0, true) !== 0x33474F44) throw "model"; return b; }).catch(viaScript).then(buf => {
+      const dv = new DataView(buf); if (dv.getUint32(0, true) !== 0x33474F44) throw "model"; // "DOG3"
+      const nV = dv.getUint32(4, true), nF = dv.getUint32(8, true), mn = [], mx = [];
+      for (let i = 0; i < 3; i++) { mn.push(dv.getFloat32(12 + i*4, true)); mx.push(dv.getFloat32(24 + i*4, true)); }
+      let o = 36; const q = new Uint16Array(buf.slice(o, o + nV*6)); o += nV*6;
+      const nr = new Int16Array(buf.slice(o, o + nV*6)); o += nV*6;
+      const idx = new Uint16Array(buf.slice(o, o + nF*6)); o += nF*6;
+      const part = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const w = new Uint8Array(buf.slice(o, o + nV*4)); o += nV*4;
+      const em = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const ao = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const inn = new Uint8Array(buf.slice(o, o + nV)); o += nV;
+      const jl = dv.getUint32(o, true); o += 4;
+      const L = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, o, jl)));
+      return {nV, nF, mn, mx, q, nr, idx, part, w, em, ao, inn, L};
+    }).catch(e => { delete models[kind]; throw e; });
+    return models[kind];
+  }
+  const VS_HEAD = `
+    attribute vec4 aW; attribute float aCls, aEarM, aAO, aIn;
+    uniform vec3 uHead, uEarL, uEarR, uTail, uHeadP, uEarLP, uEarRP, uTailP, uBodyC;
+    uniform float uBreath, uTongue, uSquash;
+    varying float vGloss, vEar, vAO, vIn; varying vec3 vRest, vRestN;
+    mat3 rotE(vec3 e){ // = Rx * Ry * Rz (three.js Euler "XYZ")
+      float cx = cos(e.x), sx = sin(e.x), cy = cos(e.y), sy = sin(e.y), cz = cos(e.z), sz = sin(e.z);
+      mat3 X = mat3(1.,0.,0., 0.,cx,sx, 0.,-sx,cx), Y = mat3(cy,0.,-sy, 0.,1.,0., sy,0.,cy), Z = mat3(cz,sz,0., -sz,cz,0., 0.,0.,1.);
+      return X * Y * Z; }
+  `;
+  const VS_NORMAL = `
+    #include <beginnormal_vertex>
+    vRestN = objectNormal;
+    mat3 rEL = rotE(uEarL * aW.y), rER = rotE(uEarR * aW.z), rH = rotE(uHead * aW.x), rT = rotE(uTail * aW.w);
+    objectNormal = rH * (rER * (rEL * objectNormal)); objectNormal = rT * objectNormal;
+  `;
+  const VS_POS = `
+    #include <begin_vertex>
+    vRest = position; vEar = aEarM; vAO = aAO; vIn = aIn;
+    vGloss = (aCls > 3.5 && aCls < 4.5) ? 1.0 : 0.0;
+    float bodyW = (1.0 - aW.x) * (1.0 - aW.w);
+    transformed.xz = mix(transformed.xz, uBodyC.xz + (transformed.xz - uBodyC.xz) * (1.0 + uBreath * 0.014), bodyW);
+    transformed.y = mix(transformed.y, uBodyC.y + (transformed.y - uBodyC.y) * (1.0 + uBreath * 0.006), bodyW);
+    if (aCls > 3.5 && aCls < 4.5) transformed.y += uTongue;
+    transformed = rEL * (transformed - uEarLP) + uEarLP;
+    transformed = rER * (transformed - uEarRP) + uEarRP;
+    transformed = rH * (transformed - uHeadP) + uHeadP;
+    transformed = rT * (transformed - uTailP) + uTailP;
+    transformed.y *= uSquash; transformed.xz *= 1.0 + (1.0 - uSquash) * 0.5;
+  `;
+  // markings, eyes, nose and mouth are drawn per pixel from the rest pose: sharp at any zoom, no texture
+  const FS_HEAD = `varying float vGloss, vEar, vAO, vIn; varying vec3 vRest, vRestN; uniform vec3 uKey, cPts; uniform float uPts, uBlaze, uS;
+    uniform vec3 uEyeC0, uEyeC1, uEyeD0, uEyeD1, uNoseC, uNoseR, uMouthC, uMuzC, uMuzR, uBibC, uBibR, uBlushC, uBlushR, uEarF;
+    uniform vec2 uEyeR; uniform vec4 uMouth; uniform float uEye, uArc, uPawY, uHasPaw, uUp;
+    uniform vec3 cMuz, cBib, cEar, cPaw, cInner, cBlush, cNose, cEyeI, cEyeO, cLine, cTongue;
+    float aa(float d){ float w = max(fwidth(d), 1e-5) * .8; return 1.0 - smoothstep(-w, w, d); }
+    float ell(vec3 p, vec3 c, vec3 r){ vec3 q = (p - c) / r; return (length(q) - 1.0) * min(r.x, min(r.y, r.z)); }
+    vec3 eyeQ(vec3 c, vec3 d){ vec3 t = normalize(cross(vec3(0., 1., 0.), d)), b = cross(d, t); vec3 v = vRest - c; return vec3(dot(v, t), dot(v, b), dot(v, d)); }
+  `;
+  const FS_EYE = `
+    float eyeOpen = step(.42, uEye), lineA = 0.0, eyeA = 0.0, glintA = 0.0, irisA = 0.0;
+    for (int k = 0; k < 2; k++) {
+      vec3 q = k == 0 ? eyeQ(uEyeC0, uEyeD0) : eyeQ(uEyeC1, uEyeD1);
+      float front = step(-uEyeR.y * .7, q.z) * step(q.z, uEyeR.y * .7);
+      float ry = max(uEyeR.y * uEye, 1e-4), dE = (length(vec2(q.x / uEyeR.x, (q.y + uEyeR.y * (1.0 - uEye) * .35) / ry)) - 1.0) * min(uEyeR.x, ry);
+      float inE = aa(dE) * front * eyeOpen;
+      eyeA = max(eyeA, inE);
+      lineA = max(lineA, aa(dE - uEyeR.x * .13) * (1.0 - aa(dE)) * front * eyeOpen);
+      irisA = max(irisA, inE * (1.0 - aa(length(vec2(q.x, q.y - uEyeR.y * .42)) - uEyeR.y * 1.02)));
+      float g = max(aa(length(vec2(q.x + uEyeR.x * .34, q.y - uEyeR.y * .36)) - uEyeR.x * .3), aa(length(vec2(q.x - uEyeR.x * .36, q.y + uEyeR.y * .4)) - uEyeR.x * .13));
+      glintA = max(glintA, g * inE * step(.6, uEye));
+      // closed: a soft curve, "‿" asleep or blinking, "∩" when squinting with joy
+      vec2 o = vec2(0., uArc * uEyeR.y * .45); float dA = abs(length(q.xy - o) - uEyeR.x * .85) - uEyeR.x * .12;
+      lineA = max(lineA, aa(dA) * front * step(abs(q.x), uEyeR.x * .95) * step(0., -uArc * (q.y - o.y)) * (1.0 - eyeOpen));
+    }
+    // mouth: a small "ω" under the nose
+    vec2 m = vec2(vRest.x - uMouthC.x, vRest.y - uMouthC.y); float mf = step(uMouthC.z - uMouth.y * 3.0, vRest.z);
+    float dm = min(abs(length(m - vec2(uMouth.y, 0.)) - uMouth.y), abs(length(m + vec2(uMouth.y, 0.)) - uMouth.y)) - uMouth.z;
+    float mouthA = aa(dm) * step(m.y, 0.0) * step(abs(m.x), uMouth.y * 2.05);
+    mouthA = max(mouthA, aa(abs(m.x) - uMouth.z) * step(0.0, m.y) * step(vRest.y, uMouth.x)) * mf;
+    float noseA = aa(ell(vRest, uNoseC, uNoseR)) * step(uNoseC.z, vRest.z + uNoseR.z);
+  `;
+  const FS_COLOR = `
+    #include <color_fragment>
+    ${""}
+    vec3 col = diffuseColor.rgb;
+    // chest: wide at the throat, three soft scallops at the bottom over the fluff
+    vec2 bq = (vRest.xy - uBibC.xy) / uBibR.xy; float bd = (length(vec2(bq.x * (1.0 - .18 * clamp(bq.y, 0., 1.)), bq.y)) - 1.0) * uBibR.x;
+    float sc0 = uBibC.z, by = uBibC.y - uBibR.y * .78;
+    for (int k = -1; k <= 1; k++) bd = min(bd, length(vec2(vRest.x - float(k) * 4.7 * sc0, vRest.y - by)) - 3.4 * sc0); // fluffy scallops
+    col = mix(col, cBib, aa(bd) * step(.15, vRestN.z) * step(0.0, vRest.z) * (1.0 - vEar));
+    col = mix(col, cPaw, aa(vRest.y - uPawY) * uHasPaw);
+    col = mix(col, cMuz, aa(ell(vRest, uMuzC, uMuzR)) * step(.0, vRest.z - uMuzC.z + uMuzR.z * .3));
+    col = mix(col, cEar, aa(.5 - vEar));
+    col = mix(col, cInner, aa(.5 - vIn) * uUp);
+    // tan points (Bernese, Rottweiler…): eyebrow dots, cheeks, lower legs; white blaze up the forehead
+    float pts = 0.0;
+    for (int k = 0; k < 2; k++) { vec3 q = k == 0 ? eyeQ(uEyeC0, uEyeD0) : eyeQ(uEyeC1, uEyeD1); float sx = k == 0 ? 1.0 : -1.0;
+      pts = max(pts, aa(length(vec2((q.x - sx * uEyeR.x * .2) / (uEyeR.x * .62), (q.y - uEyeR.y * 1.75) / (uEyeR.y * .42))) - 1.0) * step(-uEyeR.y, q.z)); }
+    pts = max(pts, aa(length(vec2((abs(vRest.x) - 10.5 * uS) / (3.4 * uS), (vRest.y - 52.0 * uS) / (2.8 * uS))) - 1.0) * step(.1, vRestN.z) * step(uMuzC.z, vRest.z));
+    pts = max(pts, aa(vRest.y - uPawY - 6.5 * uS) * aa((uHasPaw > .5 ? uPawY - .5 * uS : -1.0) - vRest.y) * step(-.4, vRestN.z) * step(3.0 * uS, abs(vRest.x)) * (1.0 - vEar));
+    col = mix(col, cPts, pts * uPts * (1.0 - eyeA));
+    float bw = (1.4 + max(0., 80.0 * uS - vRest.y) / uS * .16) * uS;
+    col = mix(col, cMuz, aa(abs(vRest.x) - bw) * step(58.0 * uS, vRest.y) * aa(vRest.y - 84.0 * uS) * step(.25, vRestN.z) * uBlaze * (1.0 - vEar));
+    float bl = 1.0 - smoothstep(.55, 1.0, length((vec3(abs(vRest.x), vRest.yz) - uBlushC) / uBlushR));
+    col = mix(col, cBlush, bl * .55 * (1.0 - eyeA));
+    col = mix(col, cLine, max(lineA, mouthA));
+    col = mix(col, cEyeO, eyeA); col = mix(col, cEyeI, irisA);
+    col = mix(col, vec3(1.0), glintA);
+    col = mix(col, cNose, noseA);
+    col = mix(col, cTongue, vGloss);
+    diffuseColor.rgb = col;
+    float glossM = max(vGloss, max(eyeA * (1.0 - glintA), noseA));
+  `;
+  const CEL = `
+    vec3 Ld = normalize((viewMatrix * vec4(uKey, 0.)).xyz), Vd = normalize(vViewPosition);
+    float ndl = dot(normal, Ld), tw = max(fwidth(ndl), 1e-4) * 1.2;
+    float lit = smoothstep(-.06 - tw, -.06 + tw, ndl);
+    vec3 base = diffuseColor.rgb, shade = base * vec3(.80, .66, .62);
+    vec3 outgoingLight = mix(shade, base, lit);
+    outgoingLight *= mix(.62, 1.0, smoothstep(.15, .95, vAO));                  // contact shadows in the creases
+    outgoingLight *= .94 + .06 * normal.y;                                       // a touch lighter on top
+    float rim = smoothstep(.62, .9, 1.0 - max(dot(normal, Vd), 0.0)) * smoothstep(-.2, .5, normal.y);
+    outgoingLight += rim * vec3(1.0, .9, .78) * .1 * (1.0 - glossM);
+    float spec = pow(max(dot(normal, normalize(Ld + Vd)), 0.0), 60.0);
+    outgoingLight += glossM * smoothstep(.45, .55, spec) * .55;`;
+  async function buildSTL(THREE, cfg, my){
+    const M = await loadModel(earKind(cfg.breed)); if (my !== buildTok) throw "stale";
+    const C = Object.assign({}, COATS._, COATS[cfg.breed] || {}), L = M.L;
+    const soft = h => { const c = new THREE.Color(h), l = c.getHSL({}).l; c.offsetHSL(-.008, .17, l < .3 ? .02 : .04); return c.convertSRGBToLinear(); };
+    const raw = h => new THREE.Color(h).convertSRGBToLinear();
+    const dark = new THREE.Color(C.base).getHSL({}).l < .25;
+    const {nV, mn, mx, q, nr, idx, part, w} = M;
+    const pos = new Float32Array(nV*3), nor = new Float32Array(nV*3), cf = new Float32Array(nV), col = new Float32Array(nV*3);
+    const cBase = soft(C.base), cHead = C.head ? soft(C.head) : null, cSad = C.saddle ? soft(C.saddle) : null;
+    for (let i = 0; i < nV; i++) {
+      for (let k = 0; k < 3; k++) { pos[i*3+k] = mn[k] + q[i*3+k] / 65535 * (mx[k] - mn[k]); nor[i*3+k] = nr[i*3+k] / 32767; }
+      const y = pos[i*3+1], z = pos[i*3+2], s = L.scale;
+      let c = cBase;
+      if (cHead && w[i*4] > 200) c = cHead;
+      if (cSad && z < -2 * s && y > 16 * s && y < 44 * s && nor[i*3+1] > -.2) c = cSad;
+      col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b; cf[i] = part[i];
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    geo.setAttribute("aW", new THREE.BufferAttribute(new Uint8Array(w), 4, true));
+    geo.setAttribute("aCls", new THREE.BufferAttribute(cf, 1));
+    geo.setAttribute("aEarM", new THREE.BufferAttribute(new Uint8Array(M.em), 1, true));
+    geo.setAttribute("aAO", new THREE.BufferAttribute(new Uint8Array(M.ao), 1, true));
+    geo.setAttribute("aIn", new THREE.BufferAttribute(new Uint8Array(M.inn), 1, true));
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    geo.computeBoundingSphere(); geo.boundingSphere.radius *= 1.6; // animation moves parts outside the rest pose
+    const v3 = a => new THREE.Vector3(a[0], a[1], a[2]);
+    const U = {uHead:{value:new THREE.Vector3()}, uEarL:{value:new THREE.Vector3()}, uEarR:{value:new THREE.Vector3()}, uTail:{value:new THREE.Vector3()},
+      uHeadP:{value:v3(L.head)}, uEarLP:{value:v3(L.earL)}, uEarRP:{value:v3(L.earR)}, uTailP:{value:v3(L.tail)}, uBodyC:{value:v3(L.body)},
+      uBreath:{value:0}, uEye:{value:1}, uArc:{value:1}, uTongue:{value:0}, uSquash:{value:1}};
+    const eyeCol = C.eyes ? new THREE.Color(C.eyes) : new THREE.Color("#5A3420");
+    const FU = {uEyeC0:{value:v3(L.eye[0].c)}, uEyeC1:{value:v3(L.eye[1].c)}, uEyeD0:{value:v3(L.eye[0].d)}, uEyeD1:{value:v3(L.eye[1].d)}, uEyeR:{value:new THREE.Vector2(L.eyeR[0], L.eyeR[1])},
+      uNoseC:{value:v3(L.nose.c)}, uNoseR:{value:v3(L.nose.r)}, uMouthC:{value:v3(L.mouth.c)}, uMouth:{value:new THREE.Vector4(L.mouth.top, L.mouth.r, L.mouth.w, 0)},
+      uMuzC:{value:v3(L.muzzle.c)}, uMuzR:{value:v3(L.muzzle.r)}, uBibC:{value:v3(L.bib.c)}, uBibR:{value:v3(L.bib.r)}, uBlushC:{value:v3(L.blush.c)}, uBlushR:{value:v3(L.blush.r)},
+      uKey:{value:new THREE.Vector3(.5, .78, .62).normalize()}, uEarF:{value:v3(L.earFront)}, uS:{value:L.scale}, uPts:{value:C.points ? 1 : 0}, cPts:{value:soft(C.points || C.base)}, uBlaze:{value:C.blaze ? 1 : 0}, uPawY:{value:L.pawY}, uHasPaw:{value:C.paws ? 1 : 0}, uUp:{value:L.ears === "up" ? 1 : 0},
+      cMuz:{value:soft(C.muzzle)}, cBib:{value:soft(C.belly)}, cEar:{value:soft(C.ear || C.base)}, cPaw:{value:soft(C.paws || C.base)},
+      cInner:{value:soft(dark ? "#B97A80" : "#F2A7AE")}, cBlush:{value:soft(dark ? "#C46A74" : "#FF8C9C")}, cNose:{value:raw("#241816")},
+      cEyeO:{value:raw("#1A100D")}, cEyeI:{value:eyeCol.clone().multiplyScalar(C.eyes ? .8 : 1).convertSRGBToLinear()}, cLine:{value:raw(dark ? "#0E0A0A" : "#3A2316")}, cTongue:{value:soft("#F0607A")}};
+    const steps = new Uint8Array([92,92,92,255, 132,132,132,255, 170,170,170,255]);
+    const grad = new THREE.DataTexture(steps, 3, 1, THREE.RGBAFormat); grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.generateMipmaps = false; grad.needsUpdate = true;
+    const mat = new THREE.MeshToonMaterial({vertexColors:true, gradientMap:grad});
+    mat.extensions = {derivatives:true}; mat.toneMapped = false;
+    mat.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, U, FU);
+      sh.vertexShader = VS_HEAD + sh.vertexShader.replace("#include <beginnormal_vertex>", VS_NORMAL).replace("#include <begin_vertex>", VS_POS);
+      sh.fragmentShader = FS_HEAD + sh.fragmentShader.replace("#include <color_fragment>", FS_EYE + FS_COLOR).replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;", CEL).replace("#include <dithering_fragment>", `#include <dithering_fragment>`);
+    };
+    const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = false; mesh.frustumCulled = false;
+    const ink = new THREE.MeshBasicMaterial({color:raw(dark ? "#000000" : "#3A2316"), side:THREE.BackSide}); ink.toneMapped = false;
+    const OUTLINE = {value:.0036};
+    ink.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, U, {uOutline:OUTLINE});
+      sh.vertexShader = VS_HEAD + "uniform float uOutline;\n" + sh.vertexShader.replace("#include <begin_vertex>",
+        "mat3 rEL = rotE(uEarL * aW.y), rER = rotE(uEarR * aW.z), rH = rotE(uHead * aW.x), rT = rotE(uTail * aW.w);\n vec3 nO = rT * (rH * (rER * (rEL * normal)));\n"
+        + VS_POS + "\n transformed += normalize(nO) * uOutline;");
+      sh.fragmentShader = "varying float vGloss, vEar, vAO, vIn; varying vec3 vRest, vRestN;\n" + sh.fragmentShader;
+    };
+    const shell = new THREE.Mesh(geo, ink); shell.frustumCulled = false;
+    const root = new THREE.Group(), body = new THREE.Group(); root.add(body); body.add(shell); body.add(mesh);
+    // head-attached extras follow the shader's head rotation exactly
+    const headG = new THREE.Group(); headG.position.copy(v3(L.head)); body.add(headG);
+    const inHead = (o, p) => { o.position.set(p[0] - L.head[0], p[1] - L.head[1], p[2] - L.head[2]); headG.add(o); return o; };
+    const gold = new THREE.MeshStandardMaterial({color:raw("#E9B949"), roughness:.25, metalness:.85, envMapIntensity:1.4});
+    let bell = null;
+    if (cfg.stage >= 1) { // collar, then a golden bell from stage 2
+      const cl = L.collar, collar = new THREE.Mesh(new THREE.TorusGeometry(cl.r, .014, 14, 64), new THREE.MeshStandardMaterial({color:raw(cfg.stage >= 3 ? "#7B4BC4" : "#D64550"), roughness:.55}));
+      collar.rotation.x = Math.PI/2 - cl.tilt; collar.position.copy(v3(cl.c)); body.add(collar);
+      if (cfg.stage >= 2) { bell = new THREE.Mesh(new THREE.SphereGeometry(.026, 24, 16), gold); bell.position.copy(v3(cl.front)); body.add(bell); }
+    }
+    if (cfg.stage >= 4) { const cr = new THREE.Group(); cr.rotation.x = -.12;
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(.085, .095, .05, 32, 1, true), gold); ring.material.side = THREE.DoubleSide; cr.add(ring);
+      for (let i = 0; i < 6; i++) { const a = i/6*Math.PI*2, sp = new THREE.Mesh(new THREE.ConeGeometry(.02, .06, 12), gold); sp.position.set(Math.cos(a)*.085, .05, Math.sin(a)*.085); cr.add(sp); }
+      inHead(cr, [L.top[0], L.top[1] + .012, L.top[2]]); }
+    const box = new THREE.Box3().setFromObject(mesh), sz = new THREE.Vector3(), ctr = new THREE.Vector3(); box.getSize(sz); box.getCenter(ctr);
+    return {root, Q:{stl:true, flop:L.ears !== "up", U, body, headG, glints:[], bell, frame:{h: sz.y, len: Math.max(sz.z, sz.x), cy: ctr.y}, size: sz}};
+  }
+  // little director: ear twitches, curious head tilts, look-arounds
+  const LIFE = {twitch:0, twitchSide:1, nextTwitch:3, tilt:0, tiltDir:1, nextTilt:6, look:0};
+  function tickSTL(t, now, rm, jy){
+    const U = P.U, tg = TARGET[mood] || TARGET.content, awake = 1 - cur.lying * (mood === "dort" ? 1 : .6), sleepy = mood === "dort";
+    if (t > LIFE.nextTwitch) { LIFE.twitch = t; LIFE.twitchSide = Math.random() < .5 ? -1 : 1; LIFE.nextTwitch = t + 3 + Math.random() * 4; }
+    if (t > LIFE.nextTilt && !sleepy) { LIFE.tilt = t; LIFE.tiltDir = Math.random() < .5 ? -1 : 1; LIFE.nextTilt = t + 6 + Math.random() * 6; }
+    const tw = rm ? 0 : Math.max(0, Math.sin(Math.min(1, (t - LIFE.twitch) / .35) * Math.PI)) * (t - LIFE.twitch < .35 ? 1 : 0);
+    const tiltP = Math.min(1, Math.max(0, (t - LIFE.tilt) / 1.6)), tilt = rm ? 0 : Math.sin(tiltP * Math.PI) * .26 * LIFE.tiltDir;
+    const idleLook = rm ? 0 : Math.sin(t * .37) * .22 + Math.sin(t * .91) * .06;
+    const ptrOn = Math.abs(ptr.x) + Math.abs(ptr.y) > .01;
+    const breathe = Math.sin(t * (sleepy ? 1.3 : mood === "ravi" ? 3.6 : 2.4));
+    U.uBreath.value = breathe * (sleepy ? 1.6 : 1);
+    // head: pointer when there is one, otherwise a lazy look-around and the odd curious tilt
+    const hx = cur.headX * .9 + (sleepy ? .1 : 0) + Math.sin(t * 1.3) * .035 * awake + (ptrOn ? ptr.y * .2 : 0) * awake;
+    const hy = ((ptrOn ? ptr.x * .42 : idleLook) * awake) + (sleepy ? .28 : 0);
+    const hz = ((mood === "ravi" ? Math.sin(t * 2.4) * .14 : Math.sin(t * .7) * .03) + tilt) * awake + (sleepy ? .22 : 0);
+    U.uHead.value.set(hx, hy, hz); P.headG.rotation.set(hx, hy, hz, "XYZ");
+    // ears: droop when sad or sleepy, perk when happy, twitch now and then, bounce with hops
+    const droop = cur.ear, bounce = Math.sin(t * 11) * .05 * cur.hop;
+    const earL = .1 + droop * .45 - (mood === "ravi" ? .05 : 0) + (LIFE.twitchSide < 0 ? tw * .35 : 0) + bounce;
+    const earR = .1 + droop * .45 - (mood === "ravi" ? .05 : 0) + (LIFE.twitchSide > 0 ? tw * .35 : 0) - bounce;
+    if (P.flop) { // floppy ears: lift outwards when happy, hang when sad, swing with the head and the hops
+      const lift = (mood === "ravi" ? .2 : .06) - droop * .08, sw = Math.sin(t * 1.3) * .035 * awake;
+      U.uEarL.value.set(-.05 * droop + (LIFE.twitchSide < 0 ? tw * .12 : 0), 0, -(lift + sw + (LIFE.twitchSide < 0 ? tw * .25 : 0) + bounce * 2));
+      U.uEarR.value.set(-.05 * droop + (LIFE.twitchSide > 0 ? tw * .12 : 0), 0, lift - sw + (LIFE.twitchSide > 0 ? tw * .25 : 0) - bounce * 2);
+    } else { U.uEarL.value.set(-.1 * droop, 0, earL); U.uEarR.value.set(-.1 * droop, 0, -earR); }
+    // tail: wag around its base, faster and wider when happy; higher when happy, low when sad
+    const wag = rm ? 0 : Math.sin(t * cur.tailSpeed) * cur.tailAmp * 1.15;
+    U.uTail.value.set(-(cur.tailUp - .6) * .35, wag, wag * .25);
+    // eyes: blinks, happy squint after a pet, closed when asleep
+    if (t > nextBlink) { nextBlink = t + 2.2 + Math.random() * 3.2; P.blinkT = t; }
+    const bl = P.blinkT != null ? (t - P.blinkT) / .16 : 9, blink = bl >= 0 && bl < 1 ? Math.sin(bl * Math.PI) : 0;
+    const petAgo = (now - jumpT) / 1000, squint = petAgo >= 0 && petAgo < 1.3 ? Math.sin(Math.min(1, petAgo / 1.3) * Math.PI) * .7 : 0;
+    const open = Math.max(.06, Math.min(sleepy ? cur.eye : Math.max(.9, cur.eye), 1 - blink * .94, 1 - squint));
+    U.uEye.value = open; U.uArc.value = squint > .3 && !sleepy ? -1 : 1;
+    U.uTongue.value = Math.sin(t * 8) * .0018 * cur.tongue + (1 - cur.tongue) * .004;
+    // squash & stretch: pet jump, happy hops, landing
+    const jp = (now - jumpT) / 900; let sq = 1;
+    if (!rm && jp >= 0 && jp < 1) sq = jp < .14 ? 1 - Math.sin(jp / .14 * Math.PI) * .12 : jp < .78 ? 1 + Math.sin((jp - .14) / .64 * Math.PI) * .06 : 1 - Math.sin((jp - .78) / .22 * Math.PI) * .09;
+    const hopPh = (t * 5.5) % Math.PI, hopSq = cur.hop > .05 && !rm ? (hopPh < .35 ? 1 - Math.sin(hopPh / .35 * Math.PI) * .05 * cur.hop : 1) : 1;
+    U.uSquash.value = sq * hopSq;
+    // pop-in when it first appears
+    const ap = Math.min(1, (now - (P.bornAt || (P.bornAt = now))) / 650), pop = rm ? 1 : 1 - Math.pow(1 - ap, 3) * Math.cos(ap * Math.PI * 2.2) * .35;
+    P.body.scale.setScalar(Math.max(.6, pop));
+    P.body.position.y = -cur.lying * .03;
+    if (P.bell) P.bell.rotation.z = Math.sin(t * 6) * .25 * (cur.hop + .3);
+    P.blob.scale.set((P.size.x * 1.9 + .3) * (1 - jy * .7), P.size.z * 1.25 * (1 - jy * .7), 1); P.blob.material.opacity = 1 - jy * 1.2;
+  }
+  async function build(THREE, cfg){
+    const my = ++buildTok; let res;
+    try { res = await buildSTL(THREE, cfg, my); }
+    catch(e) { if (e === "stale") throw e; console.warn("dog model", e); return buildProc(THREE, cfg); }
+    if (my !== buildTok) { disposeTree(res.root); throw "stale"; }
+    if (dog) { scene.remove(dog); disposeTree(dog); }
+    dog = res.root; scene.add(dog);
+    // if this phone's GPU refuses the custom shaders, fall back to the sculpted dog instead of showing nothing
+    try { R.compile(scene, cam); if ((R.info.programs || []).some(pg => pg.diagnostics && pg.diagnostics.runnable === false)) { scene.remove(dog); disposeTree(dog); dog = null; console.warn("dog model shaders"); return buildProc(THREE, cfg); } } catch(_){}
+    for (const k of Object.keys(P)) if (k !== "blob") delete P[k];
+    Object.assign(P, res.Q);
+    P.blob.scale.set(res.Q.size.x * 1.9 + .3, res.Q.size.z * 1.25, 1);
+    frame();
+  }
+  async function buildProc(THREE, cfg){
+    const my = ++buildTok, Q = {};
+    const sculptA = async (...a) => { await idle(); if (my !== buildTok) throw "stale"; return sculpt(...a); };
+    const C = Object.assign({}, COATS._, COATS[cfg.breed] || {});
+    let size = C.size || 1;
+    if (!COATS[cfg.breed] && cfg.size) size = {Petit:.55, Moyen:.85, Grand:1.1, "Géant":1.3}[cfg.size] || 1;
+    const pup = cfg.age != null && cfg.age < 1, small = size < .7;
+    const soften = h => { const c = new THREE.Color(h), l = .3*c.r + .59*c.g + .11*c.b, w = new THREE.Color("#FFF4E8"), dk = new THREE.Color("#5A5054");
+      if (l < .2) c.lerp(dk, .22); c.lerp(w, .1); return c; };
+    const lin = h => { const c = soften(h).convertSRGBToLinear(); return [c.r, c.g, c.b]; };
+    const col = h => new THREE.Color(h).convertSRGBToLinear();
+    const mix = (a, b, t) => [a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t, a[2] + (b[2]-a[2])*t];
+    const cBase = lin(C.base), cBelly = lin(C.belly), cMuzzle = lin(C.muzzle), cEar = lin(C.ear), cHead = C.head ? lin(C.head) : cBase,
+      cPaw = C.paws ? lin(C.paws) : cBase, cSaddle = C.saddle ? lin(C.saddle) : null, cPts = C.points ? lin(C.points) : null,
+      cSpots = C.spots ? lin(C.spots) : null, cMerle = C.merle ? lin(C.merle) : null;
+    // tiny hash noise so the coat is never a flat plastic colour
+    const hash = (x, y, z) => { const s = Math.sin(x*127.1 + y*311.7 + z*74.7) * 43758.5453; return s - Math.floor(s); };
+    const h3 = (a, b, c, k) => { const s = Math.sin(a*127.1 + b*311.7 + c*74.7 + k*19.19) * 43758.5453; return s - Math.floor(s); };
+    const seed = (cfg.seed || 11) % 997;
+    const worley = (x, y, z, cell, rMin, rMax, k) => { const ix = Math.floor(x/cell), iy = Math.floor(y/cell), iz = Math.floor(z/cell); let best = 9;
+      for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const cx = ix + dx, cy = iy + dy, cz = iz + dz;
+        const px = (cx + h3(cx, cy, cz, k + seed)) * cell, py = (cy + h3(cx, cy, cz, k + seed + 1)) * cell, pz = (cz + h3(cx, cy, cz, k + seed + 2)) * cell;
+        const d = Math.hypot(x - px, y - py, z - pz) - (rMin + (rMax - rMin) * h3(cx, cy, cz, k + seed + 3)); if (d < best) best = d; }
+      return best; };
+    const pattern = (c, x, y, z, k = 0) => {
+      if (cSpots) c = mix(c, cSpots, sstep(.008, -.008, worley(x, y, z, .16, .028, .055, k)));
+      if (cMerle) c = mix(c, cMerle, sstep(.015, -.015, worley(x*1.3, y, z*.9, .32, .07, .13, k + 7)) * .9);
+      return c; };
+    const grain = (c, x, y, z) => { const n = (hash(Math.floor(x*90), Math.floor(y*90), Math.floor(z*90)) - .5) * .03 + 1; return [c[0]*n, c[1]*n, c[2]*n]; };
+    const coatMat = () => new THREE.MeshStandardMaterial({vertexColors:true, roughness:.86, metalness:0, envMapIntensity:.55});
+    const gloss = h => new THREE.MeshStandardMaterial({color:col(h), roughness:.16, metalness:0, envMapIntensity:1.6});
+    const cloth = h => new THREE.MeshStandardMaterial({color:col(h), roughness:.75, metalness:0, side:THREE.DoubleSide, envMapIntensity:.5});
+    const gold = new THREE.MeshStandardMaterial({color:col("#E9BC4E"), roughness:.22, metalness:1, envMapIntensity:1.4});
+    const SPH = new THREE.SphereGeometry(1, 40, 28);
+    const ball = (rx, ry, rz, m, parent, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(SPH, m); o.scale.set(rx, ry, rz); o.position.set(x, y, z); o.castShadow = true; parent.add(o); return o; };
+    const grp = (parent, x = 0, y = 0, z = 0) => { const gq = new THREE.Group(); gq.position.set(x, y, z); parent.add(gq); return gq; };
+    const meshOf = (geo, parent) => { const m = new THREE.Mesh(geo, coatMat()); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
+    const fuzz = C.curly ? (x, y, z) => .014 * (Math.sin(x*22) * Math.sin(y*24 + 1) * Math.sin(z*21 + 2) + .4 * Math.sin(x*30 + 2) * Math.sin(y*28) * Math.sin(z*31 + 1)) : null;
+    const withFuzz = f => fuzz ? (x, y, z) => f(x, y, z) - fuzz(x, y, z) : f;
+
+    const S = C.slim ? .84 : C.stocky ? 1.14 : 1, L = C.long ? 1.32 : 1;
+    // chibi proportions: big round head, small round body, stubby legs
+    const hs = (1.6 + Math.max(0, .9 - size) * .2) * (pup ? 1.06 : 1);
+    const legLen = .32 * (C.long ? .62 : 1) * (C.slim ? 1.2 : 1) * (C.stocky ? .9 : 1);
+    const rx = .4 * S, ry = .35 * S, rz = .5 * (C.long ? 1.4 : 1);
+    const bodyY = legLen + .2, legX = .22 * S, legZ = rz * .58, cf = C.fluffy ? 1.12 : 1;
+    const headPos = [0, ry + .36, rz * .62];
+    const root = new THREE.Group();
+    const body = grp(root, 0, bodyY, 0); Q.body = body; Q.bodyY = bodyY;
+    const torso = grp(body); Q.torso = torso;
+
+    // --- body: one continuous sculpt (torso, chest, haunches, shoulders, thighs, neck)
+    const bodySdf = withFuzz(Union([
+      Ell([0,0,0], [rx, ry, rz]),
+      Ell([0, .05, rz*.6], [.34*S*cf, .36*S*cf, .32*cf]),
+      Ell([0, .04, -rz*.6], [rx*.96, ry*.96, .34]),
+      Ell([-legX, -.1, legZ], [.13*S, .2, .15]), Ell([legX, -.1, legZ], [.13*S, .2, .15]),
+      Ell([-legX, -.08, -legZ], [.16*S, .25, .21]), Ell([legX, -.08, -legZ], [.16*S, .25, .21]),
+      Cap([0, ry*.25, rz*.55], [0, headPos[1] - .02, headPos[2] - .02], .25*S*cf, .19*cf)
+    ], .16));
+    const bodyColor = (x, y, z) => {
+      let c = cBase;
+      const front = sstep(rz*.42, rz*.72, z + Math.max(0, y)*.45) * sstep(ry*1.15, ry*.5, y); // chest bib running up the throat
+      const under = sstep(-ry*.15, -ry*.6, y);
+      const bib = front * sstep(rx*.8, rx*.3, Math.abs(x));
+      c = mix(c, cBelly, Math.max(bib, under * .85));
+      if (cSaddle) c = mix(c, cSaddle, sstep(ry*.05, ry*.4, y) * sstep(rz*.75, rz*.35, z) * (1 - bib));
+      if (cMerle || cSpots) { const pc = pattern(c, x, y, z, 1); c = cSpots ? pc : mix(c, pc, 1 - bib); }
+      if (cPts) c = mix(c, cPts, sstep(.07, .02, Math.hypot(Math.abs(x) - legX*.95, y + .2, z - legZ)) );
+      return grain(c, x, y, z);
+    };
+    meshOf(await sculptA(THREE, bodySdf, bodyColor, [-rx - .15, -ry - .32, -rz - .3], [rx + .15, headPos[1] + .32, Math.max(rz*.6 + .5, headPos[2] + .32)], .026), torso);
+
+    // --- legs: one sculpt reused by all four (tapered leg + paw)
+    Q.legs = [];
+    const legSdf = Union([Cap([0, .02, 0], [0, -legLen + .07, .01], .11*S, .1*S), Ell([0, -legLen + .035, .035], [.115*S, .072, .125])], .07);
+    const legColor = (x, y, z) => grain(pattern(mix(cBase, cPaw, sstep(-legLen*.55, -legLen*.75, y)), x + 3, y, z, 3), x + 3, y, z);
+    const legGeo = await sculptA(THREE, legSdf, legColor, [-.17, -legLen - .1, -.17], [.17, .2, .24], .018);
+    [[-legX, legZ, 1], [legX, legZ, 1], [-legX, -legZ, 0], [legX, -legZ, 0]].forEach(([x, z, front]) => {
+      const pv = grp(body, x, -.12, z); const m = new THREE.Mesh(legGeo, coatMat()); m.castShadow = true; m.receiveShadow = true; pv.add(m); Q.legs.push({pv, front}); });
+
+    // --- stage accessories: fabric is sculpted as a thin shell that hugs the body
+    const clothMat = () => new THREE.MeshStandardMaterial({vertexColors:true, roughness:.72, metalness:0, envMapIntensity:.5});
+    const shell = (region, off = .016, th = .012) => (x, y, z) => Math.max(Math.abs(bodySdf(x, y, z) - off) - th, region(x, y, z));
+    const frontZ = (x, y) => { let z = rz + .8; for (let i = 0; i < 200; i++) { if (bodySdf(x, y, z) < 0) return z; z -= .008; } return rz; };
+    const chinY = headPos[1] - .28*hs + .02, chinZ = frontZ(0, chinY - .06);
+    if (cfg.stage >= 1 && cfg.stage <= 3) {
+      // bandana: a soft triangle on the chest, polka dots
+      const top = chinY + .02, tip = chinY - .3;
+      const region = (x, y, z) => Math.max(Math.abs(x) - (y - tip) * .62, y - top, tip - y, chinZ - .22 - z);
+      const teal = lin(cfg.stage === 3 ? "#E85D75" : "#1E9AAE"), dot = lin("#FFF7EE");
+      const kCol = (x, y, z) => mix(teal, dot, sstep(.004, -.004, Math.hypot(((x + 1.0175) % .07) - .035, ((y + 1.0175) % .07) - .035) - .013));
+      const km = new THREE.Mesh(await sculptA(THREE, shell(region), kCol, [-.4, tip - .05, chinZ - .3], [.4, top + .05, chinZ + .12], .01), clothMat());
+      km.castShadow = true; torso.add(km);
+    }
+    if (cfg.stage >= 2) { // golden bell under the chin
+      const by = chinY - .07, bz = frontZ(0, by) + .03, bell = grp(torso, 0, by, bz);
+      const bs = new THREE.Mesh(new THREE.SphereGeometry(.055, 32, 20), gold); bs.castShadow = true; bell.add(bs);
+      const slit = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .07, 8), new THREE.MeshStandardMaterial({color:col("#7A5A18"), roughness:.4})); slit.rotation.z = Math.PI/2; slit.position.set(0, -.012, .045); bell.add(slit);
+      const bd = new THREE.Mesh(new THREE.SphereGeometry(.012, 12, 8), slit.material); bd.position.set(0, -.03, .046); bell.add(bd);
+    }
+    if (cfg.stage >= 3) { // cape draped over the back
+      const region = (x, y, z) => Math.max(ry*.05 - y + Math.abs(x)*.25, z - rz*.35, -rz - .4 - z);
+      const cc = lin(cfg.stage >= 4 ? "#7B4BC4" : "#D64550"), trim = lin("#F2C94C");
+      const capeCol = (x, y, z) => mix(cc, trim, sstep(.02, .0, y - ry*.05 - Math.abs(x)*.25) * .9);
+      const cape = new THREE.Mesh(await sculptA(THREE, shell(region, C.curly ? .045 : .02, .014), capeCol, [-rx - .22, -ry - .1, -rz - .47], [rx + .22, ry + .47, rz*.5], .014), clothMat());
+      cape.castShadow = true; torso.add(cape); Q.cape = null;
+    } else Q.cape = null;
+    // --- head: kawaii — a big soft ball, chubby cheeks, a tiny button snout
+    const head = grp(body, headPos[0], headPos[1], headPos[2]); Q.head = head;
+    const hg = grp(head); hg.scale.setScalar(hs); Q.hg = hg;
+    const snout = C.flat ? .055 : (C.long || C.slim) ? .1 : .075;
+    const headSdf = withFuzz(Union([
+      Ell([0, .01, 0], [.3, .28, .29]),
+      Ell([-.14*cf, -.075, .1], [.15*cf, .13, .15]), Ell([.14*cf, -.075, .1], [.15*cf, .13, .15]),
+      Ell([0, -.09, .2], [.13, .095, .06 + snout]),
+      Ell([-.05, -.115, .23 + snout*.6], [.065, .05, .055]), Ell([.05, -.115, .23 + snout*.6], [.065, .05, .055])
+    ], .08));
+    // find the face surface along +z, so features sit exactly on the skin
+    const surfZ = (x, y) => { let z = .75, prev = headSdf(x, y, z); for (let i = 0; i < 160; i++) { const nz = z - .006, d = headSdf(x, y, nz); if (d < 0) { let a = nz, b = z; for (let k = 0; k < 18; k++) { const mid = (a + b) / 2; if (headSdf(x, y, mid) < 0) a = mid; else b = mid; } return (a + b) / 2; } z = nz; prev = d; } return .25; };
+    const headColor = (x, y, z) => {
+      let c = cHead;
+      const muzzleW = sstep(.15, .24, z) * sstep(-.01, -.07, y) + sstep(-.13, -.17, y) * sstep(.08, .16, z);
+      c = mix(c, cMuzzle, clamp01(muzzleW));
+      if (C.blaze) c = mix(c, cMuzzle === cHead ? cBelly : cMuzzle, sstep(.06, .03, Math.abs(x) - Math.max(0, -y)*.3) * sstep(.14, .22, z) * sstep(.3, .16, y));
+      if (cPts) c = mix(c, cPts, sstep(.04, .025, Math.hypot(Math.abs(x) - .12, y - .14, z - .22)));
+      if (cSpots) c = mix(c, cSpots, sstep(.008, -.008, worley(x, y, z, .14, .016, .028, 5)) * (1 - sstep(.12, .2, z)));
+      if (cMerle) c = mix(c, pattern(c, x, y, z, 5), sstep(.08, .2, y) * sstep(.25, .1, Math.abs(x) - .1 + .2));
+      return grain(c, x, y, z);
+    };
+    meshOf(await sculptA(THREE, headSdf, headColor, [-.42, -.34, -.38], [.42, .36, .5], .016), hg);
+    const sp = (x, y, out = 0) => [x, y, surfZ(x, y) + out];
+    // tiny button nose
+    const nz = sp(0, -.05);
+    ball(.048, .034, .034, gloss("#2E211D"), hg, 0, -.05, nz[2] - .006);
+    const ball2 = (r, m, parent, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(SPH, m); o.scale.set(r*sx, r*sy, r*sz); o.position.set(x, y, z); parent.add(o); return o; };
+    // eyes: shiny dark ovals with big sparkles, no whites (that is what reads as "cute" instead of creepy)
+    Q.eyes = []; Q.closed = [];
+    const eyeCol = C.eyes ? "#1E3556" : "#22160F";
+    const eyeM = new THREE.MeshStandardMaterial({color:col(eyeCol), roughness:.06, metalness:0, envMapIntensity:2});
+    const spark = new THREE.MeshBasicMaterial({color:0xffffff});
+    const lineM = new THREE.MeshStandardMaterial({color:col("#2A1C17"), roughness:.5});
+    const tube = (pts, r, parent) => { const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+      const mm = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, r, 8, false), lineM); parent.add(mm);
+      [pts[0], pts[pts.length-1]].forEach(p => ball2(r, lineM, parent, p[0], p[1], p[2])); return mm; };
+    const EX = .145, EY = -.005;
+    [-1, 1].forEach(s => {
+      const p = sp(s*EX, EY), e = grp(hg, p[0], p[1], p[2] - .01); e.rotation.y = s*.32;
+      ball2(.07, eyeM, e, 0, 0, 0, 1, 1.2, .45);
+      if (C.eyes) ball2(.05, new THREE.MeshStandardMaterial({color:col(C.eyes), roughness:.1, envMapIntensity:1.6, emissive:col(C.eyes), emissiveIntensity:.25}), e, 0, -.022, .006, 1, .55, .45);
+      ball2(.026, spark, e, .022, .034, .028, 1, 1.1, .35);
+      ball2(.011, spark, e, -.021, -.028, .029, 1, 1, .35);
+      Q.eyes.push(e);
+      // closed eye: a soft "︶" for blinks and naps
+      const cg = grp(hg, p[0], p[1], p[2] + .004); cg.rotation.y = s*.32; cg.visible = false;
+      tube([[-.055, .012, 0], [-.025, -.018, .008], [.025, -.018, .008], [.055, .012, 0]], .011, cg);
+      Q.closed.push(cg);
+    });
+    // little "ω" mouth under the nose
+    const mY = -.115, mpts = [-.05, -.025, 0, .025, .05].map((x, i) => { const y = mY - (i % 2 ? .02 : 0) + (i === 2 ? .006 : 0) + (i === 0 || i === 4 ? .006 : 0); return [x, y, surfZ(x, y) + .003]; });
+    tube(mpts, .0075, hg);
+    // blush stickers
+    const blushM = new THREE.MeshBasicMaterial({color:col("#FF8FA3"), transparent:true, opacity:.55, depthWrite:false});
+    [-1, 1].forEach(s => { const p = sp(s*.215, -.075, .004); const b = ball2(1, blushM, hg, p[0], p[1], p[2], .055, .032, .012); b.rotation.y = s*.62; });
+    // tongue peeking out, thermometer when sick
+    const tg = grp(hg, 0, mY - .03, surfZ(0, mY - .03) - .01); tg.rotation.x = .35; Q.tongue = tg;
+    ball(.034, .012, .05, new THREE.MeshStandardMaterial({color:col("#F07D8E"), roughness:.4, envMapIntensity:.8}), tg, 0, 0, .03);
+    const th = grp(hg, .05, mY - .02, surfZ(.05, mY) - .01); th.rotation.set(.2, .5, -.5); Q.thermo = th;
+    const tb = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .2, 12), new THREE.MeshStandardMaterial({color:0xffffff, roughness:.2})); tb.rotation.x = Math.PI/2; tb.position.z = .1; th.add(tb);
+    const tbu = new THREE.Mesh(new THREE.SphereGeometry(.02, 12, 8), new THREE.MeshStandardMaterial({color:col("#E5484D"), roughness:.3})); tbu.position.z = .2; th.add(tbu);
+
+    // --- ears: each one sculpted (rounded leather, thicker at the base)
+    Q.ears = [];
+    const et = C.ears || "flop";
+    const earColor = c => (x, y, z) => grain(c, x + 5, y, z);
+    const flapGeo = async (len, wid) => await sculptA(THREE, withFuzz(Union([Ell([0, -len*.7, 0], [wid*1.08, len*.95, .05]), Ell([0, -.02, 0], [wid*.85, .07, .065])], .07)), earColor(cEar), [-wid - .06, -len*1.8 - .06, -.12], [wid + .06, .1, .12], .014);
+    const pointGeo = async (h, r) => await sculptA(THREE, Union([Cap([0, 0, 0], [0, h*.82, -.01], r, .04)], .05), (x, y, z) => grain(mix(cEar, lin("#E6A5A0"), sstep(.0, .025, z) * sstep(.04, .1, y) * sstep(r*.85, r*.35, Math.abs(x))), x, y, z), [-r - .05, -r - .05, -r - .05], [r + .05, h + .06, r + .05], .012);
+    let earGeo, earType;
+    if (et === "flop" || et === "long") { earGeo = await flapGeo(et === "long" ? .24 : .17, .115); earType = "flop"; }
+    else if (et === "fold") { earGeo = await flapGeo(.09, .095); earType = "fold"; }
+    else { const h = {up:.3, big:.42, semi:.25, bat:.3}[et] || .3, r = {up:.11, big:.17, semi:.1, bat:.15}[et] || .11; earGeo = await pointGeo(h, r); earType = "up"; }
+    [-1, 1].forEach(s => {
+      let pv;
+      if (earType === "flop") { pv = grp(hg, s*.23, .15, -.02); const mm = meshOf(earGeo, pv); mm.position.x = s*.025; mm.rotation.y = s*.25; }
+      else if (earType === "fold") { pv = grp(hg, s*.19, .21, .04); const mm = meshOf(earGeo, pv); mm.rotation.set(-.9, 0, s*.35); mm.position.set(s*.03, .04, .05); }
+      else { pv = grp(hg, s*.16, .19, -.03); pv.rotation.z = -s*(et === "big" ? .55 : .28); if (et === "semi") pv.rotation.x = .3;
+        const mm = meshOf(earGeo, pv); mm.scale.z = .5; mm.rotation.y = s*.15;
+        if (et === "semi") { const tip = new THREE.Mesh(earGeo, mm.material); tip.scale.set(.5, .35, .5); tip.position.set(0, .23, .02); tip.rotation.x = 1.3; pv.add(tip); } }
+      Q.ears.push({pv, s, type:earType});
+    });
+
+    // --- tail: a single tapered sculpt following its curve
+    const tr = grp(torso, 0, ry*.42, -rz*.92); Q.tail = tr; Q.tailSegs = []; Q.curl = 0;
+    const fl = C.fluffy || C.curly, segs = 5, segL = .07, bend = C.curl ? .62 : .22;
+    const pts = [[0, 0, 0]]; let dy = 0, dz = -1, ang = 0;
+    for (let i = 1; i <= segs; i++) { ang += bend; const p = pts[i-1]; pts.push([0, p[1] + Math.sin(ang)*segL, p[2] - Math.cos(ang)*segL]); }
+    const r0 = fl ? .08 : .06, caps = [];
+    for (let i = 0; i < segs; i++) caps.push(Cap(pts[i], pts[i+1], r0*(1 - i/segs*.7), r0*(1 - (i+1)/segs*.7)));
+    const tailSdf = withFuzz(Union(caps, .04));
+    const tailColor = (x, y, z) => { const tip = fl ? sstep(segs*segL*.55, segs*segL*.85, Math.hypot(y, z)) : 0; return grain(pattern(mix(cBase, cBelly, tip), x, y, z, 9), x, y, z); };
+    const tb2 = pts.reduce((b, p) => [Math.min(b[0], p[1]), Math.max(b[1], p[1]), Math.min(b[2], p[2]), Math.max(b[3], p[2])], [0, 0, 0, 0]);
+    meshOf(await sculptA(THREE, tailSdf, tailColor, [-r0 - .05, tb2[0] - r0 - .05, tb2[2] - r0 - .05], [r0 + .05, tb2[1] + r0 + .05, tb2[3] + r0 + .08], .014), tr);
+
+    // --- crown
+    if (cfg.stage >= 4) { const cr = grp(hg, 0, .28, -.02); cr.rotation.x = -.15;
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(.13, .14, .07, 32, 1, true), gold); ring.castShadow = true; cr.add(ring);
+      for (let i = 0; i < 6; i++) { const a = i/6*Math.PI*2, sp = new THREE.Mesh(new THREE.ConeGeometry(.03, .09, 12), gold); sp.position.set(Math.cos(a)*.13, .07, Math.sin(a)*.13); cr.add(sp);
+        const gem = new THREE.Mesh(new THREE.SphereGeometry(.016, 12, 8), gloss(i%2 ? "#D33A4A" : "#2F6FDB")); gem.position.set(Math.cos(a)*.142, 0, Math.sin(a)*.142); cr.add(gem); } }
+
+    const box = new THREE.Box3().setFromObject(root), sz = new THREE.Vector3(), ctr = new THREE.Vector3(); box.getSize(sz); box.getCenter(ctr);
+    Q.frame = {h: sz.y, len: Math.max(sz.z, sz.x), cy: ctr.y};
+    if (my !== buildTok) { disposeTree(root); throw "stale"; }
+    if (dog) { scene.remove(dog); disposeTree(dog); }
+    dog = root; scene.add(root);
+    for (const k of Object.keys(P)) if (k !== "blob") delete P[k];
+    Object.assign(P, Q);
+    P.blob.scale.set(sz.x*1.9 + .3, Math.max(sz.z, sz.x)*1.3, 1);
+    frame();
+  }
+  function frame(){
+    if (!P.frame || !host) return;
+    const w = host.clientWidth || 340, h = host.clientHeight || 300, asp = w / h;
+    const need = Math.max(P.frame.h * 1.45, P.frame.len * 1.05 / Math.min(1.25, asp));
+    const dist = need / (2 * Math.tan(cam.fov * Math.PI / 360));
+    cam.position.set(0, P.frame.cy + P.frame.h * .32, dist); cam.lookAt(0, P.frame.cy * .95, 0);
+  }
+  function resize(){ if (!R || !host) return; const w = host.clientWidth, h = host.clientHeight; if (!w || !h) return; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); frame(); }
+  const TARGET = {
+    content:{lying:0, headX:0, ear:0, tailUp:.6, tailSpeed:7, tailAmp:.45, eye:1, tongue:.6, hop:0, thermo:0},
+    ravi:{lying:0, headX:-.08, ear:-.3, tailUp:.95, tailSpeed:16, tailAmp:.6, eye:1, tongue:1, hop:1, thermo:0},
+    triste:{lying:0, headX:.38, ear:1, tailUp:-.35, tailSpeed:2, tailAmp:.12, eye:.55, tongue:0, hop:0, thermo:0},
+    malade:{lying:1, headX:.22, ear:1, tailUp:-.45, tailSpeed:1, tailAmp:.05, eye:.45, tongue:0, hop:0, thermo:1},
+    dort:{lying:1, headX:.42, ear:1, tailUp:-.5, tailSpeed:1, tailAmp:0, eye:.04, tongue:0, hop:0, thermo:0}
+  };
+  function bail(){ failed = true; if (raf) cancelAnimationFrame(raf); raf = 0; try { const el = R && R.domElement; if (el && el.parentNode) { el.parentNode.classList.remove("has3d"); el.remove(); } } catch(_){}
+    const h = document.getElementById("buddy3d"); if (h) h.classList.add("b3-fail"); }
+  function tick(){ try { tick_(); } catch(e) { console.warn("buddy 3D", e); bail(); } }
+  function tick_(){
+    raf = 0;
+    if (!host || !document.body.contains(R.domElement)) return; // tab left: stop
+    const now = performance.now(), t = (now - clockStart) / 1000, rm = RM();
+    const tg = TARGET[mood] || TARGET.content, k = .08;
+    for (const key in tg) cur[key] += (tg[key] - cur[key]) * k;
+    // turntable: return to 3/4 view when idle
+    if (!drag && now - lastInteract > 4000) targetRotY += (-.55 - targetRotY) * .02;
+    rotY += (targetRotY - rotY) * .12;
+    // jump on pet
+    const jp = (now - jumpT) / 900; let jy = 0, spin = 0;
+    if (jp >= 0 && jp < 1) { jy = Math.sin(jp * Math.PI) * (rm ? .05 : .45); spin = rm ? 0 : (1 - Math.cos(jp * Math.PI)) * Math.PI; }
+    dog.rotation.y = rotY + spin;
+    const hop = rm ? 0 : Math.abs(Math.sin(t * 5.5)) * .1 * cur.hop;
+    dog.position.y = jy + hop;
+    if (P.stl) { tickSTL(t, now, rm, jy); R.render(scene, cam); raf = requestAnimationFrame(tick); return; }
+    const breathe = Math.sin(t * (mood === "dort" ? 1.4 : 2.6));
+    P.body.position.y = P.bodyY - cur.lying * (P.bodyY - .3);
+    P.torso.scale.set(1 + breathe * .008, 1 + breathe * .016, 1);
+    P.legs.forEach(l => { l.pv.rotation.x = -1.45 * cur.lying; l.pv.scale.y = l.front ? 1 : 1 - .45 * cur.lying; });
+    const awake = 1 - cur.lying * (mood === "dort" ? 1 : .6);
+    P.head.rotation.x = cur.headX + Math.sin(t * 1.3) * .03 * awake + ptr.y * .12 * awake;
+    P.head.rotation.y = ptr.x * .45 * awake + (mood === "dort" ? .35 : 0);
+    P.head.rotation.z = (mood === "ravi" ? Math.sin(t * 2.2) * .12 : Math.sin(t * .7) * .03) * awake;
+    P.head.position.y = (P.frameHeadY ??= P.head.position.y) - cur.lying * .12 - cur.headX * .05;
+    P.ears.forEach(e => {
+      if (e.type === "flop") e.pv.rotation.z = e.s * (.12 + cur.ear * .22) + Math.sin(t * 6 + e.s) * .03 * cur.hop;
+      else if (e.type === "up") e.pv.rotation.x = -.7 * Math.max(0, cur.ear);
+      else e.pv.rotation.x = .1 * cur.ear;
+    });
+    const wag = rm ? 0 : Math.sin(t * cur.tailSpeed) * cur.tailAmp;
+    P.tail.rotation.set(.35 + cur.tailUp * .75, wag, 0);
+    P.tailSegs.forEach((s, i) => { if (i) s.rotation.x = P.curl + Math.sin(t * cur.tailSpeed - i * .6) * .04 * cur.tailAmp; });
+    // blink
+    if (t > nextBlink) { nextBlink = t + 2.5 + Math.random() * 3; P.blinkT = t; }
+    const blinking = P.blinkT != null && t - P.blinkT < .14;
+    const open = blinking ? 0 : cur.eye; // 1 = wide open, 0 = closed
+    const shut = open < .22;
+    P.eyes.forEach(e => { e.visible = !shut; e.scale.y = Math.max(.35, open); });
+    P.closed.forEach(c => c.visible = shut);
+    P.tongue.scale.set(1, 1, Math.max(.01, cur.tongue)); P.tongue.visible = cur.tongue > .05;
+    P.tongue.position.y = -.19 + Math.sin(t * 9) * .006 * cur.tongue;
+    P.thermo.visible = cur.thermo > .5;
+    if (P.cape) { const pos = P.cape.geometry.attributes.position, b = P.capeBase;
+      for (let i = 0; i < pos.count; i++) { const y = b[i*3+1]; pos.setZ(i, b[i*3+2] + Math.sin(t * 3 + y * 7) * .025 * (.5 - y)); }
+      pos.needsUpdate = true; }
+    R.render(scene, cam);
+    raf = requestAnimationFrame(tick);
+  }
+  function hearts(){
+    if (!host) return;
+    const box = document.createElement("span"); box.className = "pets"; box.setAttribute("aria-hidden","true"); box.innerHTML = "<i></i>".repeat(6);
+    host.appendChild(box); setTimeout(() => box.remove(), 1100);
+  }
+  function pet(){ jumpT = performance.now(); lastInteract = jumpT; hearts(); try { if (navigator.vibrate) navigator.vibrate(10); } catch(_){} }
+  function mount(el, cfg){
+    if (!el) return; if (failed) { el.classList.add("b3-fail"); return; }
+    load().then(THREE => {
+      el = document.getElementById("buddy3d"); if (!el) return;
+      if (!R && !init(THREE)) return;
+      host = el;
+      const key = [cfg.breed, cfg.size, cfg.age != null && cfg.age < 1, cfg.stage].join("|");
+      mood = cfg.mood || "content"; label = cfg.label || "";
+      if (key !== cfgKey) { cfgKey = key; building = build(THREE, cfg).then(() => { building = null; P.frameHeadY = undefined; show(); })
+        .catch(e => { building = null; if (e !== "stale") { console.warn("buddy 3D", e); bail(); } }); }
+      if (!building) show();
+    }).catch(e => { if (e) console.warn("buddy 3D", e); bail(); });
+  }
+  let building = null, label = "";
+  function show(){
+      const el = document.getElementById("buddy3d"); if (!el || !dog || failed) return;
+      host = el;
+      if (R.domElement.parentNode !== el) el.insertBefore(R.domElement, el.firstChild);
+      R.domElement.setAttribute("aria-label", label);
+      el.classList.add("has3d");
+      resize();
+      if (!raf) raf = requestAnimationFrame(tick);
+  }
+  return {mount};
+})();
+function mountBuddy(){
+  const el = document.getElementById("buddy3d"); if (!el) return;
+  let cfg = {}; try { cfg = JSON.parse(el.dataset.cfg || "{}"); } catch(_){}
+  B3D.mount(el, cfg);
+}
+
+/* ---------- render ---------- */
+const I_BUDDY = '<svg viewBox="0 0 28 28" fill="currentColor"><path d="M8.3 5.2C5.2 5 2.6 7.6 2.3 11.6c-.2 3.3.9 6.6 2.9 7.4 1.3.5 2.3-.3 2.5-1.6l1.5-9.3c.2-1.6 0-2.8-.9-2.9Z"/><path d="M19.7 5.2c3.1-.2 5.7 2.4 6 6.4.2 3.3-.9 6.6-2.9 7.4-1.3.5-2.3-.3-2.5-1.6l-1.5-9.3c-.2-1.6 0-2.8.9-2.9Z"/><path fill-rule="evenodd" d="M14 4.4c3.6 0 5.9 2.3 5.9 6v6.3c0 4-2.6 7.1-5.9 7.1s-5.9-3.1-5.9-7.1v-6.3c0-3.7 2.3-6 5.9-6Zm-2.6 7.2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm5.2 0a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4ZM14 16.6c-.9 0-1.8.4-1.8 1 0 .7.9 1.5 1.8 1.5s1.8-.8 1.8-1.5c0-.6-.9-1-1.8-1Z"/></svg>';
+const I_GARDE = '<svg viewBox="0 0 28 28" fill="currentColor"><path d="M14 3 4 7v6c0 6.2 4.3 11 10 12 5.7-1 10-5.8 10-12V7L14 3Zm-1.2 15.6-4-4 1.6-1.6 2.4 2.4 5.6-5.6 1.6 1.6-7.2 7.2Z"/></svg>';
+const chienLabel = () => { const n = (dog() || {}).name || ""; return n && n.length <= 9 ? n : SITE && !n ? "Profil" : "Chien"; };
+const LEGACY_TAB = {routine:["planning"], profil:["chien"], compagnon:["chien","buddy"], rdv:["planning"]};
+function parseHash(h){ let [t, sub] = String(h || "").split("/"); if (t === "profil" && !sub) return ["famille", "reglages"]; if (LEGACY_TAB[t]) { sub = sub || LEGACY_TAB[t][1]; t = LEGACY_TAB[t][0]; } if (t === "chien" && sub === "reglages") t = "famille"; return [t, sub || null]; }
+function tabList(){
+  return sitterUI()
+    ? [["aujourdhui","Aujourd'hui",I.tToday],["garde","Consignes",I_GARDE],["sante","Santé",I.tHealth],["famille","Famille",I_FAM],["chien",chienLabel(),I_BUDDY]]
+    : [["aujourdhui","Aujourd'hui",I.tToday],["planning","Planning",I.tRoutine],["sante","Santé",I.tHealth],["famille","Famille",I_FAM],["chien",chienLabel(),I_BUDDY]];
+}
+function renderTabs(){
+  const t = tabList();
+  const tb = live("tabBounce");
+  const th = t.map(([id,l,ic]) => `<button class="tab ${S.tab===id?"on":""} ${tb && tb.id===id?"bounce":""}" data-act="go" data-tab="${id}" aria-current="${S.tab===id?"page":"false"}">${ic}<span>${T(l)}</span></button>`).join("");
+  if (th !== S.lastTabs) { S.lastTabs = th; const el = $("#tabs"); el.style.gridTemplateColumns = `repeat(${t.length},1fr)`; el.innerHTML = th; }
+}
+
+// ---- splash: stays until the family's data is really there, then the page comes in piece by piece (once) ----
+const SPLASH = {t0: Date.now(), gone: false};
+function splashOut(){
+  if (SPLASH.gone) return; SPLASH.gone = true; S.readyAt = S.readyAt || Date.now();
+  const g = document.getElementById("gate"), gs = g && g.querySelector(".gate");
+  const onLoading = gs && gs.querySelector(".g-spin");
+  const host = $("#view .page") || $("#view");
+  if (host && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    [...host.children].forEach((c, i) => { c.classList.add("intro-i"); c.style.setProperty("--i", Math.min(i, 9)); });
+    document.body.classList.add("intro");
+    setTimeout(() => { document.body.classList.remove("intro"); document.querySelectorAll(".intro-i").forEach(c => c.classList.remove("intro-i")); }, 1800);
+  }
+  if (onLoading) { document.body.classList.remove("gated"); gs.classList.add("out"); setTimeout(() => { if (g.querySelector(".gate.out")) g.innerHTML = ""; }, 650); }
+  setTimeout(whatsNew, 1900); setTimeout(pushGate, 2100);
+}
+function splashCheck(){
+  if (SPLASH.gone) return;
+  const ready = S.ready && S.mode !== "loading" && $("#view") && !$("#view .skel");
+  const wait = 650 - (Date.now() - SPLASH.t0);
+  if (ready) setTimeout(splashOut, Math.max(0, wait));
+}
+// a sign-in / family screen from the bridge, or a very slow network: never keep the splash on top of it
+setInterval(() => { if (SPLASH.gone) return; const g = document.getElementById("gate");
+  if (g && g.innerHTML && !g.querySelector(".g-spin")) return; // sign-in / family screens belong to the bridge
+  if (Date.now() - SPLASH.t0 > 15000 || S.stale) splashOut(); }, 300);
+// the bridge asks to close its screen once signed in: keep the loading screen until the data is really there
+window.__dlHold = root => { if (SPLASH.gone) return false; if (!root.querySelector(".g-spin")) root.innerHTML = '<div class="gate"><div class="g-in"><div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>Dogs Life</h1><div class="g-spin"><svg class="g-ecg" viewBox="0 0 150 40" aria-hidden="true"><path d="M2 22h40l6-10 8 22 8-30 7 18h20c4 0 6-6 10-6s6 6 10 6h37"/></svg></div></div></div>'; document.body.classList.add("gated"); SPLASH.t0 = Math.min(SPLASH.t0, Date.now()); setTimeout(splashCheck, 50); return true; };
+function render(skipNames){
+  setTimeout(() => { gardeExpiry(); splashCheck(); pushGate(); inboxStart(); bellInject(); if (SPLASH.gone) setTimeout(whatsNew, 1600); if (S.openNid && window.carnetInbox && S.mode === "db" && S.ready) { window.carnetInbox.read(S.openNid); S.openNid = null; } }, 0);
+  const v = $("#view");
+  document.documentElement.lang = LANG;
+  const active = document.activeElement, keepNote = active && active.id && /^(INPUT|TEXTAREA)$/.test(active.tagName) && active.type !== "file" && v.contains(active) ? {id: active.id, v: active.value, s: active.selectionStart} : null;
+  if (S.mode === "locked" || noAccess() || (S.mode === "db" && S.ready && S.readOnly && !dog())) { if ($("#wiz-root .join")) { clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); } const h = viewLocked(); if (h !== S.lastHTML) { S.lastHTML = h; v.innerHTML = h; } $("#tabs").innerHTML = ""; S.lastTabs = ""; document.body.classList.add("locked"); return; }
+  if (S.mode === "db" && S.ready && !S.isOwner && family().length && !myMember()) { syncMe(); const h = viewNotMember(); if (h !== S.lastHTML) { S.lastHTML = h; v.innerHTML = h; } $("#tabs").innerHTML = ""; S.lastTabs = ""; document.body.classList.add("locked"); renderJoin(); return; }
+  document.body.classList.remove("locked");
+  if (S.mode === "loading" || (S.mode === "db" && !S.ready)) { renderTabs(); if (!S.stale) return; }
+  syncMe();
+  if (S.mode !== "loading" && (!dog() || (!dog().name && !S.editProfile)) && (S.ready || S.mode==="local")) {
+    if (!SITE && !S.wizAuto && !S.wiz && canEdit()) { S.wizAuto = true; setTimeout(() => { if (!S.wiz && (!dog() || !dog().name)) wizStart(); }, 250); } const h = viewOnboarding(); if (h !== S.lastHTML) { S.lastHTML = h; v.innerHTML = h; } renderTabs(); return; }
+  if (S.editProfile && S.tab === "chien" && v.querySelector("#p-name")) { renderTabs(); return; }
+  const pa = live("pageAnim");
+  if (!tabList().some(x => x[0] === S.tab)) { S.tab = "aujourdhui"; S.sub = null; }
+  const view = S.sitterRole && !S.preview && S.mode === "db" && S.ready && gardeOver() && (!garde().sitterId || garde().sitterId === ME) ? viewGardeEnded
+    : {planning:viewPlanning, sante:viewHealth, famille:viewFamilyTab, chien:viewChien, garde:viewGarde}[S.tab] || viewToday;
+  const html = `<div class="page ${pa ? pa.cls : ""}">` + view() + `</div>`;
+  if (html === S.lastHTML && v.firstElementChild) { renderTabs(); renderJoin(); syncChat(); return; }
+  const ml0 = v.querySelector(".msg-list"), mlKeep = ml0 ? {top: ml0.scrollTop, first: ml0.dataset.first} : null;
+  S.lastHTML = html; v.innerHTML = html;
+  const ml1 = v.querySelector(".msg-list");
+  if (ml1) { if (mlKeep && mlKeep.first === ml1.dataset.first) ml1.scrollTop = mlKeep.top; msgFade(ml1); ml1.addEventListener("scroll", () => msgFade(ml1), {passive:true}); }
+  mountBuddy();
+  if (keepNote) { const n = document.getElementById(keepNote.id); if (n && n !== active) { n.value = keepNote.v; n.focus(); try { n.setSelectionRange(keepNote.s, keepNote.s); } catch(e){} } }
+  renderTabs(); syncChat(); presenceBeat(); replyBar(); chatSeen(); if (S.tab === "chien" && S.sub === "carte") requestAnimationFrame(paintWalksMap); else if (S.wm) { liveMapDrop(S.wm); S.wm = null; }
+  if (!skipNames) { resolveNames(); resolveAvatars(); }
+  syncOrbit();
+  renderJoin();
+}
+// keep the orbit turning smoothly across re-renders: phase comes from the clock
+function msgFade(el){ el.classList.toggle("more-below", el.scrollHeight - el.scrollTop - el.clientHeight > 8); el.classList.toggle("more-above", el.scrollTop > 8); }
+function syncOrbit(){ const o = document.querySelector(".orbit-ring"); if (!o) return; const ph = -((Date.now() / 1000) % 24);
+  o.style.animationDelay = ph + "s"; o.querySelectorAll(".orb > .mav").forEach(x => x.style.animationDelay = ph + "s, " + ph + "s");
+  const c = document.querySelector(".orbit-center .avatar"); if (c) c.style.animationDelay = ph + "s"; }
+async function joined(name){
+  S.joinForce = false; S.joinRole = null;
+  try { await put("notes", newId(), {kind:"join", name, text: name + " a rejoint la famille", mid: ME || "", uid: S.me || "", at: new Date().toISOString()}); } catch(_) {}
+  const d = dog() || {}, m = meMember() || {name, color:MCOL[0]}, fam = family();
+  const root = $("#wiz-root"); document.body.classList.add("wiz-open");
+  root.innerHTML = `<div class="wiz join-ok" role="dialog" aria-modal="true" aria-label="${T("Bienvenue dans la famille")}">
+    <div class="wz-body in-r" style="padding-top:calc(48px + env(safe-area-inset-top,0px));text-align:center">
+      <div class="jo-art">${d.name ? avatarHTML(d, "lg") : `<div class="join-ic">${I_FAM}</div>`}<span class="jo-me">${mav(m, 56)}</span><span class="jo-check">${I.tick}</span></div>
+      <h1 class="wz-t">${d.name ? T("Bienvenue dans la famille de {n}, {p} !",{n:esc(d.name), p:esc(name)}) : T("Bienvenue dans la famille, {p} !",{p:esc(name)})}</h1>
+      <p class="wz-s">${fam.length > 1 ? T("Vous êtes maintenant {n} à vous en occuper. La famille a été prévenue.",{n:fam.length}) : T("Vous êtes le premier membre de la famille.")}</p>
+      <div class="jo-list">
+        <div><span style="background:var(--green)">${I.tick}</span>${T("Cochez les tâches : elles sont signées à votre nom")}</div>
+        <div><span style="background:var(--accent)">${I.paw}</span>${T("Retrouvez les vôtres avec « Les miennes »")}</div>
+        <div><span style="background:var(--blue)">${I_SEND}</span>${T("Écrivez à la famille dans l'onglet Famille")}</div>
+      </div>
+      ${d.name ? "" : `<div class="wz-note" style="margin-top:16px;text-align:left">${T("Le carnet du chien n'est pas encore créé. La personne qui vous a invité(e) va le remplir, ou vous pouvez le créer vous-même.")}</div>`}
+    </div>
+    <div class="wz-foot"><button class="btn wz-next" data-act="joinOk">${T("C'est parti !")}</button></div></div>`;
+  try { if (navigator.vibrate) navigator.vibrate([20, 40, 20]); } catch(_) {} try { chime(); } catch(_) {}
+}
+function maybeTuto(){ let seen = false; try { seen = !!LS.get("carnet-tuto"); } catch(_){} if (!seen && S.tuto == null) setTimeout(tutoStart, 500); }
+
+/* ---------- sheets ---------- */
+let sheetSave = null, sheetDelete = null, sheetTok = 0;
+function openSheet(title, body, onSave, onDelete){
+  sheetTok++; sheetSave = onSave; sheetDelete = onDelete;
+  $("#sheet-root").innerHTML = `<div class="scrim" data-act="sheetBg"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="sheet-h"><button class="cancel" data-act="sheetClose">${T("Annuler")}</button><b>${esc(title)}</b><button class="save" data-act="sheetSave">${T("OK")}</button></div>
+    <form id="sheet-form">${body}${onDelete?`<button type="button" class="btn danger" data-act="sheetDel" style="width:100%;margin-top:6px">${T("Supprimer")}</button>`:""}</form></div></div>`;
+  const f = $("#sheet-form input, #sheet-form select"); if (f) setTimeout(()=>f.focus(), 50);
+}
+function closeSheet(){ sheetSave = sheetDelete = null; const sc = $("#sheet-root .scrim"); if (!sc) return; const tok = ++sheetTok; sc.classList.add("closing"); setTimeout(() => { if (tok === sheetTok) { $("#sheet-root").innerHTML = ""; if (S.wvMap) { liveMapDrop(S.wvMap); S.wvMap = null; } } }, 220); }
+const val = id => { const e = document.getElementById(id); return e ? e.value.trim() : ""; };
+
+function routineSheet(r){
+  r = r || {title:"",cat:"balade",time:"08:00",days:[S.rday],notes:""};
+  const cats = Object.entries(CATS).filter(([k])=>k!=="med");
+  const pre = (p, l) => `<button type="button" data-act="daysPreset" data-p="${p}" style="color:var(--accent);font-weight:600">${T(l)}</button>`;
+  openSheet(r.id ? T("Modifier") : T("Nouvelle activité"), `
+    <div class="fg"><label for="s-title">${T("Activité")}</label><input class="f" id="s-title" value="${esc(r.title)}" placeholder="${T("Balade, repas, brossage…")}" required></div>
+    <div class="fg"><span class="lab">${T("Catégorie")}</span><div class="opts">${cats.map(([k,c])=>`<label><input type="radio" name="s-cat" value="${k}" ${r.cat===k?"checked":""}><span><i style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block"></i>${T(c.label)}</span></label>`).join("")}</div></div>
+    <div class="fg"><label for="s-time">${T("Heure")}</label><input class="f num" id="s-time" type="time" value="${esc(r.time)}" required></div>
+    <div class="fg"><span class="lab">${T("Jours")}</span><div class="opts">${ORDER.map(d=>`<label><input type="checkbox" name="s-days" value="${d}" ${(r.days||[]).includes(d)?"checked":""}><span>${WD()[d]}</span></label>`).join("")}</div></div>
+    <div class="hint">${pre("all","Tous les jours")} · ${pre("wk","En semaine")} · ${pre("we","Week-end")}</div>
+    <div class="fg"><span class="lab">${T("Qui s'en occupe ?")}</span>${whoChips(r.who)}</div>
+    <div class="fg"><label for="s-notes">${T("Détails")}</label><input class="f" id="s-notes" value="${esc(r.notes)}" placeholder="${T("Durée, quantité, consigne…")}"></div>
+    <div class="hint">${T("Les médicaments s'ajoutent dans l'onglet Santé.")}</div>`,
+  () => {
+    const title = val("s-title"), time = val("s-time");
+    const days = [...document.querySelectorAll('input[name="s-days"]:checked')].map(x=>+x.value);
+    const cat = (document.querySelector('input[name="s-cat"]:checked')||{}).value || "autre";
+    if (!title || !time || !days.length) { toast(T("Indiquez l'activité, l'heure et au moins un jour.")); return false; }
+    put("routine", r.id || newId(), {title, cat, time, days, notes: val("s-notes"), who: whoVal(), dog: r.dog || dogId()});
+  }, r.id ? () => del("routine", r.id) : null);
+}
+function medSheet(m){
+  const today = ymd(new Date());
+  m = m || {name:"",dose:"",times:["08:00"],start:today,end:"",stock:"",unit:"comprimés",perDose:1,notes:""};
+  const t = (m.times||[]).concat(["","",""]).slice(0,4);
+  const unitKnown = OPT.units.includes(m.unit);
+  openSheet(m.id ? T("Modifier le traitement") : T("Nouveau médicament"), `
+    <div class="fg"><label for="s-name">${T("Médicament")}</label><input class="f" id="s-name" value="${esc(m.name)}" placeholder="${T("Nom et dosage")}" required><div id="s-name-info">${medInfoHTML(medInfo(m.name))}</div></div>
+    <div class="fg"><label for="s-dose">${T("Dose par prise")}</label><input class="f" id="s-dose" value="${esc(m.dose ? T(m.dose) : "")}" placeholder="${T("1 comprimé, 5 gouttes…")}"><div class="opts">${OPT.doses.map(o=>`<button type="button" class="chip" data-act="fillDose" data-v="${esc(o)}" style="padding:7px 10px">${esc(T(o))}</button>`).join("")}</div></div>
+    <div class="fg"><span class="lab">${T("Heures de prise")}</span><div class="two">${t.map((x,i)=>`<input class="f num" type="time" id="s-t${i}" value="${esc(x)}" aria-label="${T("Prise {n}",{n:i+1})}">`).join("")}</div></div>
+    <div class="two"><div class="fg"><label for="s-start">${T("Début")}</label><input class="f" type="date" id="s-start" value="${esc(m.start||"")}"></div><div class="fg"><label for="s-end">${T("Fin")}</label><input class="f" type="date" id="s-end" value="${esc(m.end||"")}"></div></div>
+    <div class="hint">${T("Laissez la fin vide pour un traitement continu.")}</div>
+    <div class="fg"><label for="s-stock">${T("Stock actuel")}</label><input class="f num" type="number" step="0.5" min="0" id="s-stock" value="${esc(m.id ? (medStock(m)? Math.round(medStock(m).left*2)/2 : "") : m.stock)}" placeholder="${T("Optionnel")}"></div>
+    <div class="fg"><span class="lab">${T("Unité")}</span><div class="opts">${OPT.units.map(u=>`<label><input type="radio" name="s-unitc" value="${u}" ${m.unit===u?"checked":""}><span>${T(u)}</span></label>`).join("")}</div><input class="f" id="s-unit" value="${esc(unitKnown?"":(m.unit||""))}" placeholder="${T("Autre unité (tapez-la)")}"></div>
+    <div class="fg"><label for="s-per">${T("Unités par prise")}</label><input class="f num" type="number" step="0.25" min="0.25" id="s-per" value="${esc(m.perDose||1)}"></div>
+    <div class="fg"><span class="lab">${T("Qui le donne ?")}</span>${whoChips(m.who)}</div>
+    <div class="fg"><label for="s-mnotes">${T("Consigne")}</label><input class="f" id="s-mnotes" value="${esc(m.notes||"")}" placeholder="${T("Avec le repas, caché dans une friandise…")}"></div>`,
+  () => {
+    const name = val("s-name"), times = [0,1,2,3].map(i=>val("s-t"+i)).filter(Boolean).sort();
+    if (!name || !times.length) { toast(T("Indiquez le nom et au moins une heure de prise.")); return false; }
+    const start = val("s-start"), end = val("s-end");
+    if (start && end && end < start) { toast(T("La date de fin précède la date de début.")); return false; }
+    // store a preset dose in its canonical (French) form so it shows in either language
+    let dose = val("s-dose"); const pd = OPT.doses.find(o => o === dose || EN[o] === dose); if (pd) dose = pd;
+    const stockIn = val("s-stock"), per = +val("s-per") || 1;
+    const prevLeft = m.id && medStock(m) ? Math.round(medStock(m).left*2)/2 : null;
+    let stock = m.stock, stockDate = m.stockDate || start;
+    if (stockIn === "") { stock = ""; stockDate = ""; }
+    else if (!m.id || +stockIn !== prevLeft || JSON.stringify(times) !== JSON.stringify(m.times) || per !== (+m.perDose||1)) {
+      stock = +stockIn; stockDate = today;
+      const now = hhmm(new Date());
+      if (!start || start <= today) stock += times.filter(x => x <= now).length * per;
+    }
+    put("meds", m.id || newId(), {name, dose, times, start, end, stock, unit: val("s-unit") || ((document.querySelector('input[name="s-unitc"]:checked')||{}).value || ""), perDose: per, stockDate, notes: val("s-mnotes"), who: whoVal(), dog: m.dog || dogId()});
+  }, m.id ? () => del("meds", m.id) : null);
+}
+
+const MEDINFO = [["smecta|diosmectite", "Pansement intestinal", "contre la diarrhée", "Intestinal dressing", "for diarrhoea"], ["charbon", "Adsorbant digestif", "troubles digestifs, certaines intoxications (sur avis vétérinaire)", "Digestive adsorbent", "digestive upsets, some poisonings (on vet advice)"], ["fortiflora|probiotique|prob[iy]o|pro-?kolin|canikur", "Probiotique", "équilibre de la flore intestinale", "Probiotic", "gut flora balance"], ["cerenia|maropitant", "Anti-vomissement", "vomissements, mal des transports", "Anti-vomiting", "vomiting, travel sickness"], ["om[eé]prazole|gastro?prot", "Protecteur de l'estomac", "acidité, ulcères (sur prescription)", "Stomach protector", "acidity, ulcers (prescription)"], ["metacam|m[eé]loxicam|loxicom|inflacam", "Anti-inflammatoire vétérinaire (AINS)", "douleur, arthrose, après une opération", "Veterinary anti-inflammatory (NSAID)", "pain, arthritis, after surgery"], ["rimadyl|carprof[eè]ne|carprodyl|canidryl", "Anti-inflammatoire vétérinaire (AINS)", "douleur, arthrose", "Veterinary anti-inflammatory (NSAID)", "pain, arthritis"], ["previcox|firocoxib|onsior|robenacoxib|trocoxil|galliprant|grapiprant", "Anti-inflammatoire vétérinaire", "douleur, arthrose", "Veterinary anti-inflammatory", "pain, arthritis"], ["tramadol", "Antidouleur", "douleur (sur prescription)", "Painkiller", "pain (prescription)"], ["gabapentin", "Antidouleur nerveux", "douleur chronique, parfois anxiété (sur prescription)", "Nerve painkiller", "chronic pain, sometimes anxiety (prescription)"], ["apoquel|oclacitinib", "Anti-démangeaisons", "allergies, grattage", "Anti-itch", "allergies, scratching"], ["cytopoint", "Anticorps anti-démangeaisons (injection)", "dermatite allergique", "Anti-itch antibody (injection)", "allergic dermatitis"], ["predni|dermipred|cortison|cortico|dexam[eé]thas|m[eé]drol", "Corticoïde", "inflammation, allergies (sur prescription, ne pas arrêter d'un coup sans avis)", "Corticosteroid", "inflammation, allergies (prescription, don't stop suddenly without advice)"], ["synulox|clavaseptin|kesium|amoxi|clavul|augmentin|clamoxyl", "Antibiotique", "infections bactériennes : finir la boîte prescrite", "Antibiotic", "bacterial infections: finish the prescribed course"], ["doxy|ronaxan|marbocyl|marbofloxa|baytril|enrofloxa|xeden|c[eé]falexine|therios|rilexine|clindamycine|antirobe|zeniquin", "Antibiotique", "infections bactériennes : finir la boîte prescrite", "Antibiotic", "bacterial infections: finish the prescribed course"], ["m[eé]tronidazole|flagyl|stomorgyl|metrobactin", "Antibiotique / antiparasitaire digestif", "diarrhées infectieuses (sur prescription)", "Antibiotic / gut antiparasitic", "infectious diarrhoea (prescription)"], ["milbemax|milpro|drontal|dolpac|panacur|fenbendazole|praziquantel|cestem|strantel|vermifug", "Vermifuge", "vers intestinaux", "Wormer", "intestinal worms"], ["nexgard|bravecto|simparica|credelio|frontline|advantix|seresto|advocate|stronghold|scalibor|effipro|fiprokil|vectra|antipuce|anti-?puce|anti-?tique", "Antiparasitaire externe", "puces et tiques (selon le produit, aussi moustiques ou vers)", "External antiparasitic", "fleas and ticks (depending on the product, also mosquitoes or worms)"], ["vetmedin|pimobendane|cardisure", "Médicament cardiaque", "insuffisance cardiaque (sur prescription)", "Heart medicine", "heart failure (prescription)"], ["fortekor|b[eé]naz[eé]pril|benakor|prilben|enalapril", "Médicament cardiaque et rénal (IECA)", "cœur, reins, tension (sur prescription)", "Heart and kidney medicine (ACE inhibitor)", "heart, kidneys, blood pressure (prescription)"], ["furos[eé]mide|dimazon|libeo|diur[eé]tique|spironolactone", "Diurétique", "élimine l'eau en trop (cœur) : laissez de l'eau à volonté", "Diuretic", "removes excess fluid (heart): leave water available"], ["forthyron|canitroid|l[eé]vothyrox|thyro", "Hormone thyroïdienne", "hypothyroïdie", "Thyroid hormone", "hypothyroidism"], ["vetoryl|trilostane", "Traitement hormonal", "syndrome de Cushing", "Hormonal treatment", "Cushing's syndrome"], ["caninsulin|insulin|prozinc", "Insuline", "diabète : toujours avec le repas, selon l'ordonnance", "Insulin", "diabetes: always with the meal, as prescribed"], ["ph[eé]nobarbital|pexion|imepitoin|libromide|bromure|keppra|l[eé]v[eé]tirac[eé]tam", "Anti-épileptique", "crises d'épilepsie : ne pas sauter de prise", "Anti-epileptic", "seizures: don't skip doses"], ["surolan|easotic|osurnia|aurizon|otomax|posatex|epiotic|oreille", "Soin des oreilles", "otite, nettoyage", "Ear care", "ear infection, cleaning"], ["collyre|tobrex|ocryl|optimmune|isathal|lacryvisc|oeil|œil|yeux", "Soin des yeux", "irritation, infection des yeux", "Eye care", "eye irritation or infection"], ["zylk[eè]ne|adaptil|anxitane|calmex|calmo", "Aide au calme", "stress, anxiété (complément ou phéromone)", "Calming aid", "stress, anxiety (supplement or pheromone)"], ["glucosamine|chondro|cosequin|flexadin|seraquin|articul", "Complément articulaire", "soutien des articulations", "Joint supplement", "joint support"], ["om[eé]ga|huile de saumon", "Complément oméga-3", "peau, pelage, articulations", "Omega-3 supplement", "skin, coat, joints"], ["vaccin|\\brage\\b|nobivac|eurican|versican", "Vaccin", "protection contre les maladies (rappel)", "Vaccine", "protection against diseases (booster)"]];
+const MEDDANGER = [["ibuprof|advil|nurofen|algifor|brufen", "Médicament humain (ibuprofène)", "Ibuprofen (human medicine)"], ["parac[eé]tamol|doliprane|dafalgan|efferalgan|tylenol|panadol|acetaminoph", "Médicament humain (paracétamol)", "Paracetamol (human medicine)"], ["aspirin|asp[eé]gic|aspro|ac[eé]tylsalicyl", "Médicament humain (aspirine)", "Aspirin (human medicine)"], ["diclof[eé]nac|voltar[eè]n|na[pr]rox[eè]ne|aleve|apranax|k[eé]toprof[eè]ne|profenid", "Anti-inflammatoire humain", "Human anti-inflammatory"]];
+
+// what a medicine name is, from a list of common veterinary products (no doses, no diagnosis)
+function medInfo(name){
+  const n = String(name || "").toLowerCase(); if (n.length < 3) return null;
+  for (const [re, fr, en] of MEDDANGER) if (new RegExp(re).test(n)) return {danger: true, kind: LANG === "en" ? en : fr, use: T("Toxique pour le chien, même à petite dose. N'en donnez pas sans l'accord du vétérinaire ; s'il en a pris, appelez-le tout de suite.")};
+  for (const [re, kfr, ufr, ken, uen] of MEDINFO) if (new RegExp(re).test(n)) return {kind: LANG === "en" ? ken : kfr, use: LANG === "en" ? uen : ufr};
+  return null;
+}
+// guess the type of an extra from its name
+function extraCat(name){
+  const n = String(name || "").toLowerCase();
+  if (/m[eé]dic|cachet|comprim|g[eé]lule|pilule|sirop|pipette|piq[uû]re|gouttes|pommade|cr[eè]me/.test(n)) return "med";
+  if (/balade|promen|sortie|\bmarche|\bcourse|rando|canicross|v[eé]lo|\bparc\b|for[eê]t|\blac\b|plage/.test(n)) return "balade";
+  if (/bain|toilett|griffe|ongle|oreille|dent|bross|shampo|tonte|douche|nettoy|coiff/.test(n)) return "soin";
+  if (/repas|croquette|p[aâ]t[eé]e|gamelle|manger|ration|barf/.test(n)) return "repas";
+  if (/jeu|jouer|balle|[eé]ducation|dressage|flair|agility|\btours?\b|apprentissage|\bcours\b/.test(n)) return "jeu";
+  if (medInfo(n)) return "med";
+  return null;
+}
+const medInfoHTML = i => i ? `<div class="medinfo ${i.danger ? "danger" : ""}"><b>${esc(i.kind)}</b> · ${esc(i.use)}</div>` : "";
+
+// extras: something unplanned, only on one date (an extra walk, a one-off medicine, a bath…), ticked like any task
+
+// medicines given as extras: listed with the treatments, newest first
+function oneOffMeds(){
+  const today = ymd(new Date()), from = ymd(addDays(new Date(), -90));
+  const xs = Object.entries(C.extras || {}).map(([id, x]) => ({id, ...x})).filter(x => x.cat === "med" && (x.dog || "main") === dogId() && x.date >= from).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+  if (!xs.length) return "";
+  const row = x => { const tk = C.ticks[tickId(x.date, "x-" + x.id)], i = medInfo(x.title), fut = x.date > today || (x.date === today && toMin(x.time || "00:00") + 60 > toMin(hhmm(new Date())));
+    const st = tk ? `<span class="ok">${esc(T("Donné à {t}", {t: tk.at || x.time}))}</span>${tk.byName ? " " + esc(T("par {w}", {w: tk.byName})) : ""}` : fut ? esc(T("Prévu à {t}", {t: x.time})) : `<span style="color:var(--orange)">${esc(T("Non enregistré"))}</span>`;
+    return `<button class="row" style="width:100%;text-align:left;align-items:flex-start" data-act="extraEdit" data-id="${esc(x.id)}" ${canEdit() ? "" : "disabled"}>${ico(i && i.danger ? "var(--red)" : CATS.med.color, i && i.danger ? I.warn : CATS.med.icon)}<div class="main"><div class="t">${esc(x.title)}</div><div class="s">${esc(cap(fmt(parseYmd(x.date), {weekday: "short", day: "numeric", month: "short"})))} · ${st}${x.notes ? " · " + esc(x.notes) : ""}</div>${medInfoHTML(i)}</div></button>`; };
+  return `<div class="sec"><div class="sec-h"><h2>${T("Prises ponctuelles")}</h2></div><div class="card list">${xs.slice(0, 12).map(row).join("")}</div><div class="foot">${T("Les médicaments ajoutés en extra. Le type est reconnu à partir du nom, à titre indicatif : suivez toujours l'ordonnance.")}</div></div>`;
+}
+
+// pretty pickers shared by the sheets
+const typeGrid = (name, items, cur) => `<div class="tgrid">${items.map(([k, c, l]) => `<label class="tg" style="--c:${c.color}"><input type="radio" name="${name}" value="${k}" ${cur === k ? "checked" : ""}><span class="tg-i">${c.icon}</span><span class="tg-l">${esc(T(l || c.label))}</span></label>`).join("")}</div>`;
+const whenCard = (idD, idT, d, t, quick) => `<div class="when"><label class="when-f"><span class="when-k">${I.cal.replace(/width="\d+" height="\d+"/, "")}${T("Date")}</span><input type="date" id="${idD}" value="${esc(d || "")}" required></label><span class="when-sep"></span><label class="when-f"><span class="when-k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${T("Heure")}</span><input type="time" id="${idT}" value="${esc(t || "")}"></label></div>${quick ? `<div class="quick">${quick.map(([l, a, v]) => `<button type="button" class="qk" data-act="whenQuick" data-d="${idD}" data-t="${idT}" data-k="${a}" data-v="${v}">${esc(T(l))}</button>`).join("")}</div>` : ""}`;
+
+// change when a task was done (forgot to tick it on time)
+function tickTimeSheet(ds, key){
+  const tk = C.ticks[tickId(ds, key)], t = tasksFor(ds).find(x => x.key === key); if (!tk || !t) return;
+  const c = CATS[t.cat] || CATS.autre, now = new Date(), isToday = ds === ymd(now);
+  const qk = [[T("Heure prévue"), t.time]].concat(isToday ? [[T("Maintenant"), hhmm(now)], [T("Il y a 15 min"), hhmm(new Date(now - 15 * 60000))], [T("Il y a 30 min"), hhmm(new Date(now - 30 * 60000))], [T("Il y a 1 h"), hhmm(new Date(now - 60 * 60000))]] : []);
+  openSheet(T("Heure de la tâche"), `
+    <div class="sh-hero" style="--c:${c.color}"><span class="sh-hero-i">${c.icon}</span><div><div class="sh-hero-t">${esc(t.title)}</div><div class="sh-hero-s">${esc(T("Prévu à {t}", {t: t.time}))}${tk.byName ? " · " + esc(T("coché par {w}", {w: tk.byName})) : ""}</div></div></div>
+    <div class="fg"><label for="tt-at">${T("Fait à")}</label><div class="when" style="grid-template-columns:1fr"><label class="when-f"><span class="when-k">${T("Heure")}</span><input type="time" id="tt-at" value="${esc(tk.at || t.time)}" required></label></div>
+      <div class="quick">${qk.filter(([, v]) => !isToday || toMin(v) <= toMin(hhmm(now)) || v === t.time).map(([l, v]) => `<button type="button" class="qk" data-act="ttQuick" data-v="${v}">${esc(l)} · <span class="num">${v}</span></button>`).join("")}</div></div>`,
+  () => { const at = val("tt-at"); if (!at) { toast(T("Indiquez l'heure.")); return false; }
+    if (isToday && toMin(at) > toMin(hhmm(new Date())) + 1) { toast(T("Cette heure n'est pas encore passée.")); return false; }
+    put("ticks", tickId(ds, key), Object.assign({}, tk, {at, edited: true}));
+    if (key.startsWith("x-")) { const id = key.slice(2), x = C.extras[id]; if (x && canEdit()) put("extras", id, Object.assign({}, x, {planned: x.planned || x.time, time: at})); }
+    toast(T("Heure modifiée : {t}", {t: at})); });
+}
+function extraSheet(x){
+  const isNew = !x || !x.id; x = Object.assign({cat: "balade", title: "", date: S.sel || ymd(new Date()), time: hhmm(new Date()), notes: ""}, x || {});
+  const DEF = {balade: "Balade", med: "Médicament", repas: "Repas", soin: "Soin", jeu: "Jeu", autre: ""};
+  const c0 = CATS[x.cat] || CATS.autre;
+  openSheet(isNew ? T("Nouvel extra") : T("Modifier l'extra"), `
+    <div class="sh-hero" style="--c:${c0.color}"><span class="sh-hero-i" id="x-hero">${c0.icon}</span><div><div class="sh-hero-t">${esc(T(isNew ? "Un imprévu pour ce jour-là" : "Extra"))}</div><div class="sh-hero-s">${esc(T("Il s'ajoute à la liste du jour et toute la famille peut le cocher."))}</div></div></div>
+    <div class="fg"><span class="lab">${T("Type")}</span>${typeGrid("x-cat", Object.entries(CATS).map(([k, c]) => [k, c, k === "jeu" ? "Jeu" : c.label]), x.cat)}</div>
+    <div class="fg"><label for="x-title">${T("Intitulé")}</label><input class="f big" id="x-title" value="${esc(x.title)}" placeholder="${esc(T("Balade en plus, Smecta, bain…"))}" maxlength="60" list="x-names" autocomplete="off" enterkeyhint="done"><datalist id="x-names">${[...new Set(meds().map(m => m.name).concat(Object.values(C.extras || {}).filter(e => e && e.cat === "med").map(e => e.title)))].filter(Boolean).slice(0, 30).map(n => `<option value="${esc(n)}">`).join("")}</datalist><div id="x-info">${x.cat === "med" || x.cat === "soin" ? medInfoHTML(medInfo(x.title)) : ""}</div></div>
+    <div class="fg"><span class="lab">${T("Quand")}</span>${whenCard("x-date", "x-time", x.date, x.time, [["Maintenant", "now", 0], ["Dans 1 h", "in", 60], ["Ce soir", "at", "19:00"], ["Demain matin", "tom", "08:00"]])}</div>
+    <div class="fg"><label for="x-notes">${T("Détail")}</label><input class="f" id="x-notes" value="${esc(x.notes || "")}" placeholder="${esc(T("Dose, durée, raison…"))}" maxlength="120" enterkeyhint="done"></div>
+    <div class="fg"><span class="lab">${T("Qui s'en occupe ?")}</span>${whoChips(x.who)}</div>
+    ${isNew ? `<label class="tgl-row"><span><b>${T("Déjà fait")}</b><small>${T("Coché tout de suite, avec l'heure et votre prénom.")}</small></span><input type="checkbox" class="tgl" id="x-done" ${x.date <= ymd(new Date()) ? "" : "disabled"}></label>` : ""}`,
+  () => {
+    const cat = (document.querySelector('input[name="x-cat"]:checked') || {}).value || "autre", date = val("x-date"), time = val("x-time") || "12:00";
+    const title = val("x-title") || T(DEF[cat] || "Extra");
+    if (!date) { toast(T("Indiquez la date.")); return false; }
+    const id = x.id || newId(), m = meMember(), doneNow = isNew && $("#x-done") && $("#x-done").checked;
+    const mi = cat === "med" || cat === "soin" ? medInfo(title) : null;
+    put("extras", id, {date, time, title, cat, notes: val("x-notes"), info: mi ? mi.kind : "", who: whoVal(), dog: x.dog || dogId(), byName: x.byName || (m ? m.name : ""), mid: x.mid || ME || "", by: x.by || S.me || null});
+    // moved to another day or time: the tick follows
+    if (!isNew && x.date !== date && C.ticks[tickId(x.date, "x-" + id)]) { const old = C.ticks[tickId(x.date, "x-" + id)]; del("ticks", tickId(x.date, "x-" + id)); put("ticks", tickId(date, "x-" + id), Object.assign({}, old, {date})); }
+    if (doneNow) put("ticks", tickId(date, "x-" + id), tickDoc(date, "x-" + id, date === ymd(new Date()) ? hhmm(new Date()) : time));
+    if (isNew && window.carnetNotify && date === ymd(new Date())) window.carnetNotify("log", {k: "extra", text: T("Extra : {t}", {t: title}), at: time, who: m ? m.name : "", ev: "x" + id});
+    toast(isNew ? T("Extra ajouté") : T("Extra modifié"));
+  }, isNew ? null : async () => { if (C.ticks[tickId(x.date, "x-" + x.id)]) await del("ticks", tickId(x.date, "x-" + x.id)); await del("extras", x.id); toast(T("Extra supprimé")); });
+}
+function apptSheet(a){
+  a = a || {title:"",type:"veto",date:ymd(addDays(new Date(),7)),time:"",repeat:0,notes:""};
+  const t0 = ATYPES[a.type] || ATYPES.autre;
+  openSheet(a.id ? T("Modifier le rendez-vous") : T("Nouveau rendez-vous"), `
+    <div class="sh-hero" style="--c:${t0.color}"><span class="sh-hero-i" id="a-hero">${t0.icon}</span><div><div class="sh-hero-t">${esc(a.title || T("Rendez-vous"))}</div><div class="sh-hero-s">${esc(a.date ? cap(fmt(parseYmd(a.date), {weekday: "long", day: "numeric", month: "long"})) + (a.time ? " · " + a.time : "") : "")}</div></div></div>
+    <div class="fg"><label for="s-atitle">${T("Intitulé")}</label><input class="f big" id="s-atitle" value="${esc(a.title)}" placeholder="${T("Rappel vaccin, contrôle…")}" required enterkeyhint="done"></div>
+    <div class="fg"><span class="lab">${T("Type")}</span>${typeGrid("s-type", Object.entries(ATYPES).map(([k, t]) => [k, t, k === "antiparasitaire" ? "Antipuces" : t.label]), a.type)}</div>
+    <div class="fg"><span class="lab">${T("Quand")}</span>${whenCard("s-adate", "s-atime", a.date, a.time || "", [["Demain", "day", 1], ["Dans 1 semaine", "day", 7], ["Dans 1 mois", "mon", 1], ["Dans 1 an", "mon", 12]])}</div>
+    <div class="fg"><span class="lab">${T("Répéter")}</span><div class="segs">${[[0,"Jamais"],[1,"1 mois"],[3,"3 mois"],[6,"6 mois"],[12,"1 an"]].concat(+a.repeat === 2 ? [[2,"2 mois"]] : []).map(([v,l]) => `<label><input type="radio" name="s-rep" value="${v}" ${+a.repeat === v ? "checked" : ""}><span>${T(l)}</span></label>`).join("")}</div></div>
+    <div class="fg"><label for="s-anotes">${T("Note")}</label><input class="f" id="s-anotes" value="${esc(a.notes||"")}" placeholder="${T("À apporter, questions à poser…")}" enterkeyhint="done"></div>
+    <div class="fg"><span class="lab">${T("Qui y va ?")}</span>${whoChips(a.who)}</div>
+    ${a.id && canEdit() && daysBetween(ymd(new Date()), a.date) <= 7 ? `<button type="button" class="btn" style="width:100%;margin-top:4px" data-act="apptDoneSheet" data-id="${esc(a.id)}">${T(a.repeat ? "C'est fait : programmer le suivant" : "Marquer comme fait")}</button>` : ""}`,
+  () => {
+    const title = val("s-atitle"), date = val("s-adate");
+    if (!title || !date) { toast(T("Indiquez l'intitulé et la date.")); return false; }
+    put("appts", a.id || newId(), {title, type:(document.querySelector('input[name="s-type"]:checked')||{}).value||"autre", date, time: val("s-atime"), repeat: +((document.querySelector('input[name="s-rep"]:checked') || {}).value) || 0, notes: val("s-anotes"), who: whoVal(), dog: a.dog || dogId()});
+  }, a.id ? () => del("appts", a.id) : null);
+}
+
+/* ---------- actions ---------- */
+const tickId = (ds, key) => dayKey(ds) + "__" + key;
+const tickDoc = (ds, key, at, extra) => { const m = meMember(); return Object.assign({date: ds, dog: dogId(), key, at: at || hhmm(new Date()), ts: new Date().toISOString(), by: S.me || null, byName: m ? m.name : "", mid: ME || ""}, extra || {}); };
+async function setTick(ds, key, on, at){
+  if (on && window.carnetNotify && ds === ymd(new Date())) { const t = tasksFor(ds).find(x => x.key === key), m = meMember(); if (t) window.carnetNotify("tick", {text: t.title, at: at || hhmm(new Date()), who: m ? m.name : "", ev: tickId(ds, key).replace(/[^A-Za-z0-9_-]/g, "")}); }
+  // an extra is a one-off: once done, its time becomes the moment it was ticked
+  if (on && key.startsWith("x-") && ds === ymd(new Date())) { const id = key.slice(2), x = C.extras[id]; if (x && canEdit()) put("extras", id, Object.assign({}, x, {planned: x.planned || x.time, time: at || hhmm(new Date())})); }
+  if (on && !at && ds !== ymd(new Date())) { const t = tasksFor(ds).find(x => x.key === key); if (t) at = t.time; }
+  if (on) return put("ticks", tickId(ds, key), tickDoc(ds, key, at));
+  if (C.ticks[tickId(ds, key)]) await del("ticks", tickId(ds, key));
+  const raw = C.days[dayKey(ds)]; if (raw && raw.done && raw.done[key]) { const done = Object.assign({}, raw.done); delete done[key]; await setDay(ds, {done}); }
+}
+async function delLog(ds, id){
+  if (C.logs[id]) return del("logs", id);
+  const raw = C.days[dayKey(ds)]; if (raw && raw.log && raw.log[id]) { const log = Object.assign({}, raw.log); delete log[id]; await setDay(ds, {log}); }
+}
+async function setDay(ds, patch){
+  const k = dayKey(ds), next = JSON.parse(JSON.stringify(C.days[k] || {})); Object.assign(next, patch, {date: ds, dog: dogId()});
+  await put("days", k, next);
+}
+async function seedSample(){ const s = sampleData(); for (const col of COLS) for (const [id, data] of Object.entries(s[col]||{})) await put(col, id, data); }
+async function clearAll(){
+  for (const col of ["routine","meds","weights","appts","days"]) for (const id of Object.keys(C[col])) await del(col, id);
+  await del("config","dog"); S.confirmClear = false; render();
+}
+document.addEventListener("click", async e => {
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  const act = el.dataset.act;
+  if (act === "sheetBg") { if (e.target === el) closeSheet(); return; }
+  switch (act) {
+    case "go": { const [t, sub] = parseHash(el.dataset.tab); go(t, sub); break; }
+    case "goSub": if (el.classList.contains("ccard") && el.dataset.sub === "buddy" && !matchMedia("(prefers-reduced-motion: reduce)").matches) { el.classList.remove("blub"); void el.offsetWidth; el.classList.add("blub"); await new Promise(r => setTimeout(r, 260)); }
+      go(el.dataset.tab, el.dataset.sub); break;
+    case "subBack": go(S.tab, null); break;
+    case "planSeg": S.plan = el.dataset.v; S.pageAnim = {cls:"enter-u", until: Date.now() + 400}; render(); break;
+    case "dogMenu": if (allDogs().length > 1 || canEdit()) dogMenu(); else go("chien"); break;
+    case "pickDog": closeSheet(); if (el.dataset.id !== dogId()) { switchDog(el.dataset.id); toast(T("Carnet de {n}",{n:(dog() || {}).name || ""})); } break;
+    case "addDog": closeSheet(); wizStart(true); break;
+    case "delDog": { if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer"); break; } const id = el.dataset.id; if (dogId() === id) switchDog("main"); await del("dogs", id); toast(T("Retiré du carnet")); break; }
+    case "vaxSheet": vaxSheet(el.dataset.c || el.dataset.id); break;
+    case "vaxDel": { await del("vax", el.dataset.id); const r = el.closest(".row"); if (r) r.remove(); break; }
+    case "vaxPlan": { const v = vaxItems().find(x => x.code === el.dataset.c); if (!v) break; closeSheet(); await put("appts", newId(), {title: T(v.t), type: v.ty, date: v.due, time: "", repeat: 0, notes: "", who: "", dog: dogId()}); toast(T("Ajouté au planning")); break; }
+    case "delWeight": if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Supprimer ?"); break; } await del("weights", el.dataset.id); break;
+    case "skill": skillSheet(el.dataset.k); break;
+    case "eduSeg": S.eduSeg = el.dataset.v; S.pageAnim = {cls:"enter-u", until: Date.now() + 400}; render(); break;
+    case "addCmd": cmdForm(); break;
+    case "cmd": cmdSheet(el.dataset.id); break;
+    case "cmdEdit": { const id = el.dataset.id; closeSheet(); setTimeout(() => cmdForm(id), 260); break; }
+    case "cmdTry": cmdTry(el.dataset.id, el.dataset.ok === "1"); break;
+    case "cmdUndo": cmdUndo(el.dataset.id); break;
+    case "cmdPick": { const n = $("#c-name"); if (n) { n.value = el.dataset.v; n.focus(); } break; }
+    case "skSet": S.skSt = el.dataset.v; document.querySelectorAll("#sk-seg button").forEach(b => b.classList.toggle("on", b.dataset.v === S.skSt)); break;
+    case "qlMore": { const k = el.dataset.k; closeSheet(); if (k === "photo") setTimeout(photoSheet, 240); else await addLog(k); break; }
+    case "photoView": photoView(el.dataset.src || (el.querySelector("img") || {}).src); break;
+    case "lostOpen": lostSheet(); break;
+    case "lostCopy": { if (await copyText(lostText(lostOpts()))) toast(T("Annonce copiée")); else toast(T("Copie impossible sur cet appareil.")); break; }
+    case "lostDl": { const html = lostPosterHTML(lostOpts()), fn = (T("chien-perdu") + "-" + ((dog() || {}).name || "")).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9-]+/g, "-") + ".html";
+      if (!downloader) { toast(T("Téléchargement impossible ici. Utilisez « Copier l'annonce ».")); break; }
+      try { await downloader.save({filename: fn, data: html}); toast(T("Affiche téléchargée : ouvrez-la puis imprimez")); } catch(e) { if (!e || e.code !== "declined") toast(T("Téléchargement impossible ici. Utilisez « Copier l'annonce ».")); } break; }
+    case "report": reportSheet(); break;
+    case "reportCopy": { if (await copyText(gardeReport())) toast(T("Rapport copié")); break; }
+    case "reportSend": { const m = meMember(); await put("notes", newId(), {text: gardeReport(), mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString(), kind: "report"}); closeSheet(); toast(T("Rapport envoyé dans les messages de la famille")); break; }
+    case "langSheet": langSheet(); break;
+    case "spPick": { const v = el.dataset.v === "classic" ? "classic" : "aurora"; document.documentElement.dataset.skin = v; try { localStorage.setItem("dl-skin", v); } catch(_){}
+      document.querySelectorAll("#sp-root .sp-o").forEach(b => b.setAttribute("aria-pressed", String(b === el))); S.lastHTML = ""; render(); break; }
+    case "spDone": { try { localStorage.setItem("dl-style-asked", "1"); localStorage.setItem("dl-skin", document.documentElement.dataset.skin === "classic" ? "classic" : "aurora"); } catch(_){} leave($("#sp-root")); break; }
+    case "wnClose": { try { localStorage.setItem("dl-whatsnew", APP_RELEASE); } catch(_){} leave($("#wn-root")); setTimeout(stylePick, 520); break; }
+    case "widgetOn": { try { el.disabled = true; let tz = ""; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch(_) {}
+        await window.carnetWidget.create(dogId(), tz); S.lastHTML = ""; render(); toast(T("Widget créé : copiez le script")); } catch(e) { toast(T("Impossible de créer le widget. Réessayez.")); el.disabled = false; } break; }
+    case "widgetCopy": { const sc = widgetScript(); try { await navigator.clipboard.writeText(sc); toast(T("Script copié : collez-le dans Scriptable")); }
+        catch(_) { openSheet(T("Script du widget"), `<textarea class="f" readonly style="min-height:260px;font:12px/1.4 ui-monospace,Menlo,monospace">${esc(sc)}</textarea>`); } break; }
+    case "widgetOff": { await window.carnetWidget.remove(); S.lastHTML = ""; render(); toast(T("Widget désactivé")); break; }
+    case "weekApplyAll": { if (!canEdit()) break; const W = weekData(weekRange(S.wkOff || 0)); let n = 0;
+      for (const r of weekProgram(W).filter(r => r.changed && r.id && C.routine[r.id])) { await put("routine", r.id, Object.assign({}, C.routine[r.id], {time: r.time}, r.newDays ? {days: r.newDays} : {})); n++; }
+      toast(T("{n} changement(s) appliqué(s)", {n})); break; }
+    case "weekApplyOne": { if (!canEdit()) break; const W = weekData(weekRange(S.wkOff || 0)), r = weekProgram(W).find(x => x.id === el.dataset.id && x.changed);
+      if (!r || !C.routine[r.id]) break; await put("routine", r.id, Object.assign({}, C.routine[r.id], {time: r.time}, r.newDays ? {days: r.newDays} : {}));
+      toast(T("« {t} » mise à jour", {t: r.title})); break; }
+    case "weekAddWalk": { if (!canEdit()) break; const id = newId(); await put("routine", id, {title: T("Petite sortie"), cat: "balade", time: el.dataset.t, days: [0,1,2,3,4,5,6], dog: dogId(), notes: T("Sortie courte pour éviter les accidents"), who: ""}); toast(T("Petite sortie ajoutée à {t}", {t: el.dataset.t})); break; }
+    case "weekNav": S.wkOff = Math.max(0, (S.wkOff || 0) + (+el.dataset.d || 0)); render(); scrollTo({top: 0}); break;
+    case "weekApply": { const r = C.routine[el.dataset.id]; if (!r || !canEdit()) break; await put("routine", el.dataset.id, Object.assign({}, r, {time: el.dataset.t})); toast(T("« {t} » passe à {h}", {t: r.title || "", h: el.dataset.t})); break; }
+    case "skin": { const v = el.dataset.v === "classic" ? "classic" : "aurora"; document.documentElement.dataset.skin = v; try { localStorage.setItem("dl-skin", v); localStorage.setItem("dl-style-asked", "1"); } catch(_){} S.lastHTML = ""; render(); toast(v === "aurora" ? T("Design Aurora activé") : T("Design classique activé")); break; }
+    case "lang": { if ($("#sheet-root .scrim")) closeSheet(); LANG = el.dataset.v; try { localStorage.setItem("carnet-lang", LANG); } catch(_){} document.documentElement.lang = LANG; S.pageAnim = {cls:"enter-u", until: Date.now() + 500}; S.lastHTML = ""; S.lastTabs = ""; render();
+      if (S.wiz) { const sc = ($("#wiz-root .wz-body") || {}).scrollTop || 0; S.wiz.still = true; if (S.wiz.routine) S.wiz.routine = null; renderWiz(); S.wiz.still = false; const b = $("#wiz-root .wz-body"); if (b) b.scrollTop = sc; }
+      if ($("#wiz-root .join")) { S.joinDirty = true; renderJoin(); }
+      if (S.tuto != null) renderTuto();
+      try { if (navigator.vibrate) navigator.vibrate(8); } catch(_){} break; }
+    case "selday": if (el.dataset.d !== S.sel) { S.pageAnim = {cls: el.dataset.d > S.sel ? "enter-r" : "enter-l", until: Date.now() + 500}; S.sel = el.dataset.d; S.eod = null; render(); } break;
+    case "week": S.pageAnim = {cls: +el.dataset.n > 0 ? "enter-r" : "enter-l", until: Date.now() + 500}; S.sel = ymd(addDays(parseYmd(S.sel), +el.dataset.n)); render(); break;
+    case "advice": askAdvice(el.dataset.d); break;
+    case "tickTime": tickTimeSheet(S.sel, el.dataset.k); break;
+    case "ttQuick": { const i = $("#tt-at"); if (i) i.value = el.dataset.v; el.parentNode.querySelectorAll(".qk").forEach(b => b.classList.toggle("on", b === el)); break; }
+    case "whenQuick": { const dI = document.getElementById(el.dataset.d), tI = document.getElementById(el.dataset.t), k = el.dataset.k, v = el.dataset.v, now = new Date();
+      if (k === "now") { dI.value = ymd(now); tI.value = hhmm(now); }
+      else if (k === "in") { const t = new Date(now.getTime() + (+v) * 60000); dI.value = ymd(t); tI.value = hhmm(t); }
+      else if (k === "at") { dI.value = ymd(now); tI.value = v; }
+      else if (k === "tom") { dI.value = ymd(addDays(now, 1)); tI.value = v; }
+      else if (k === "day") dI.value = ymd(addDays(now, +v));
+      else if (k === "mon") { const t = new Date(now); t.setMonth(t.getMonth() + (+v)); dI.value = ymd(t); }
+      el.parentNode.querySelectorAll(".qk").forEach(b => b.classList.toggle("on", b === el)); break; }
+    case "extraAdd": if (canEdit()) extraSheet({date: el.dataset.d || S.sel}); break;
+    case "extraEdit": { const x = C.extras[el.dataset.id]; if (x && canEdit()) extraSheet(Object.assign({id: el.dataset.id}, x)); break; }
+    case "factsRefresh": { const ds = el.dataset.d; S.factsBusy = ds; render(); await new Promise(r => setTimeout(r, 450)); S.factsBusy = null; (S.factsAt = S.factsAt || {})[ds] = Date.now(); render(); toast(T("Bilan régénéré avec les dernières infos")); break; }
+    case "hTab": S.hTab = el.dataset.v; S.pageAnim = {cls:"enter-u", until: Date.now() + 400}; render(); break;
+    case "hTabGo": { const v = el.dataset.v; if (v === "rdv") { S.plan = "rdv"; go("planning"); } else go("sante", v === "suivi" ? "croissance" : v); break; }
+    case "scrollTimeline": { const t = document.getElementById("timeline"); if (t) t.scrollIntoView({behavior:"smooth", block:"start"}); break; }
+    case "eod": { const open = el.getAttribute("aria-expanded") === "true"; S.eod = !open; render(); if (!open) setTimeout(() => { const e = document.querySelector(".eod"); if (e) e.scrollIntoView({behavior:"smooth", block:"start"}); }, 60); break; }
+    case "openSettings": go("chien", "reglages"); break;
+    case "ql": { const k = el.dataset.k;
+      if (k === "plus") { moreSheet(); break; }
+      if (k === "caca") { stoolSheet(); break; }
+      if (k === "balade") { if (walkNow()) walkSheet(); else { const st0 = new Date().toISOString(); gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}});
+        toast(navigator.geolocation && !gpsOff() ? T("Balade lancée : gardez l'app ouverte pour mesurer le trajet") : T("Balade lancée : touchez Terminer au retour")); } break; }
+      await addLog(k); break; }
+    case "qlStool": closeSheet(); await addLog("caca", {q: el.dataset.q}); break;
+    case "qlItem": case "qlAll": logSheet(); break;
+    case "walkView": walkView(el.dataset.id); break;
+    case "wxToggle": { try { localStorage.getItem("dl-wx-open") === "1" ? localStorage.removeItem("dl-wx-open") : localStorage.setItem("dl-wx-open", "1"); } catch(_) {} render(); break; }
+    case "goWalk": { el.classList.add("on"); try { if (navigator.vibrate) navigator.vibrate(10); } catch(_) {}
+      await new Promise(r => setTimeout(r, 220)); if (walkNow()) break;
+      const st0 = new Date().toISOString(); gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}});
+      toast(navigator.geolocation && !gpsOff() ? T("Balade lancée : gardez l'app ouverte pour mesurer le trajet") : T("Balade lancée : touchez Terminer au retour")); break; }
+    case "walkBtnPref": { const on = el.getAttribute("aria-checked") !== "true"; gLS.s("dl-walkbtn-off", on ? null : "1"); render(); break; }
+    case "gpsPref": { const on = el.getAttribute("aria-checked") !== "true"; gLS.s("dl-gps-off", on ? null : "1"); if (!on) gpsDrop(); render(); break; }
+    case "qlDel": { await delLog(el.dataset.ds || ymd(new Date()), el.dataset.id); const r = el.closest(".row"); if (r) r.remove(); break; }
+    case "walkEnd": walkSheet(); break;
+    case "walkCancel": if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer"); break; } gpsDrop(); await setDay(ymd(new Date()), {walk: null}); break;
+    case "notifPee": clearRoot("#notif-root"); await addLog("pipi"); break;
+    case "openFamily": go("famille"); break;
+    case "closeFamily": go("aujourdhui"); break;
+    case "memberSheet": memberSheet(el.dataset.id); break;
+    case "msRole": S.msRole = el.dataset.v; document.querySelectorAll("#ms-role button").forEach(b => b.classList.toggle("on", b.dataset.v === S.msRole)); break;
+    case "assignAll": assignSheet(); break;
+    case "assignPick": S.assign[el.dataset.r] = el.dataset.m; el.parentElement.querySelectorAll(".achip").forEach(b => b.classList.toggle("on", b === el)); break;
+    case "openJoin": closeSheet(); openJoin(); break;
+    case "leaveFam": { if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Toucher encore pour quitter"); break; }
+      const m = meMember(); closeSheet(); S.joinForce = false; try { sessionStorage.setItem(JOIN_KEY, "1"); } catch(_){}
+      if (window.carnetLeave) { // website: leave for real (access, data on this phone), the page then restarts
+        toast(T("Départ de la famille…")); const r = await window.carnetLeave(m ? m.name : "");
+        if (r === "offline") toast(T("Connectez-vous à Internet pour quitter la famille."));
+        break; }
+      if (m) await removeMember(m.id); ME = null; try { LS.del("carnet-me"); } catch(_){} render(); toast(T("Vous avez quitté la famille")); break; }
+    case "delNote": await del("notes", el.dataset.id); break;
+    case "igPlay": S.igVideo = el.dataset.v; igRender(); break;
+    case "igClose": { const v = document.querySelector(".ig-v"); if (v) { v.classList.add("out"); setTimeout(() => { S.igVideo = null; igRender(); }, 260); } else { S.igVideo = null; igRender(); } break; }
+    case "igInstall": if (S.bip) { const p = S.bip; S.bip = null; p.prompt(); try { const r = await p.userChoice; if (r && r.outcome === "accepted") S.installed = true; } catch(_) {} igRender(); } break;
+    case "chatFull": S.chatFull = true; render(); setTimeout(() => { const i = $("#n-text"); if (i && matchMedia("(hover:hover)").matches) i.focus(); }, 60); break;
+    case "chatClose": S.chatFull = false; render(); break;
+    case "sendNote": await sendNote(); break;
+    case "msgMenu": if (Date.now() - (S.mmLong || 0) < 600) break; msgMenu(el.dataset.id, el.getBoundingClientRect()); break;
+    case "mmClose": mmClose(); break;
+    case "msgReact": mmClose(); await msgReact(el.dataset.id, el.dataset.k); break;
+    case "msgReply": mmClose(); setReply(el.dataset.id); break;
+    case "replyX": S.replyTo = null; replyBar(); break;
+    case "msgCopy": { mmClose(); const n = (C.notes || {})[el.dataset.id]; if (n && n.text) { try { await navigator.clipboard.writeText(n.text); toast(T("Copié")); } catch(_) {} } break; }
+    case "msgDel": mmClose(); await del("notes", el.dataset.id); break;
+    case "msgJump": { const t = document.querySelector(`#chat-root #msg-${CSS.escape(el.dataset.id)}`) || document.getElementById("msg-" + el.dataset.id); if (t) { t.scrollIntoView({block: "center", behavior: "smooth"}); t.classList.remove("blink"); void t.offsetWidth; t.classList.add("blink"); } break; }
+    case "recStart": recStart(); break;
+    case "sugOpen": sugSheet(); break;
+    case "sgFind": await sgFind(); break;
+    case "sugAgain": if (S.sug) runSuggest(Object.assign({}, S.sug.opts, {seed: (S.sug.opts.seed || 0) + 1})); break;
+    case "sugX": S.sug = null; S.sugErr = ""; render(); break;
+    case "sugGo": if (!walkNow()) { const st0 = new Date().toISOString(); gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}}); toast(T("Balade lancée : suivez le tracé violet")); render(); } break;
+    case "mapF": S.mapF = el.dataset.v === "all" ? "all" : +el.dataset.v; S.mapSel = null; render(); break;
+    case "mapRoute": case "mapPick": if (act === "mapPick" && S.mapSel === el.dataset.id) { walkView(el.dataset.id); break; } S.mapSel = S.mapSel === el.dataset.id && act === "mapRoute" ? null : el.dataset.id; render(); if (act === "mapPick") { const m = document.getElementById("wm-map"); if (m) m.scrollIntoView({block: "center", behavior: "smooth"}); } break;
+    case "awPref": { const on = el.getAttribute("aria-checked") !== "true", c = awCfg();
+      if (on) { if (!c.home && !(await awSetHome())) break; awSet(Object.assign(awCfg(), {on: true})); } else awSet(Object.assign(c, {on: false}));
+      render(); awTick(); break; }
+    case "awHome": await awSetHome(); render(); break;
+    case "awYes": await awYes(el.dataset.k); break;
+    case "awNo": AW.snooze = Date.now() + 15 * 60000; awClose(); break;
+    case "recCancel": recStop(true); break;
+    case "recSend": recStop(false); break;
+    case "voicePlay": voicePlay(el.dataset.id); break;
+    case "closeSettings": go("famille"); break;
+    case "editFood": foodSheet(); break;
+    case "newBag": { const f = C.config.food; if (!f) break; if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer : nouveau sac aujourd'hui"); break; }
+      await put("config", "food", Object.assign({}, f, {opened: ymd(new Date())})); toast(T("Nouveau sac enregistré")); break; }
+    case "catFilter": S.catF = S.catF === el.dataset.c ? null : el.dataset.c; render();
+      if (S.catF) setTimeout(() => { const h = document.getElementById("prog-h"); if (h) h.scrollIntoView({behavior: "smooth", block: "start"}); const t = document.querySelector("#timeline .task"); if (t) { t.classList.remove("blink"); void t.offsetWidth; setTimeout(() => t.classList.add("blink"), 350); setTimeout(() => t.classList.remove("blink"), 2300); } }, 60);
+      break;
+    case "mineFilter": S.mine = el.dataset.v === "1"; render(); break;
+    case "jump": { const go = () => { const t = document.getElementById(el.dataset.to); if (!t) return false;
+        t.scrollIntoView({behavior: "smooth", block: "center"}); t.classList.remove("blink"); void t.offsetWidth;
+        setTimeout(() => t.classList.add("blink"), 280); setTimeout(() => t.classList.remove("blink"), 2200); return true; };
+      if (!go() && (S.catF || S.mine)) { S.catF = null; S.mine = false; render(); setTimeout(go, 60); } break; }
+    case "alertLate": { const t = document.getElementById("task-" + el.dataset.k); if (t) { t.scrollIntoView({behavior:"smooth", block:"center"}); t.classList.remove("blink"); void t.offsetWidth; setTimeout(() => t.classList.add("blink"), 280); setTimeout(() => t.classList.remove("blink"), 2200); } break; }
+    case "openDay": S.sel = el.dataset.d; S.tab = "aujourdhui"; S.pageAnim = {cls:"enter-l", until: Date.now() + 500}; try { history.replaceState(null,"","#aujourdhui"); } catch(_){} render(); window.scrollTo(0,0); break;
+    case "vet": vetSheet(); break;
+    case "vetCopy": { const txt = vetText(); try { await navigator.clipboard.writeText(txt); toast(T("Résumé copié")); } catch(_) { toast(T("Copie impossible sur cet appareil.")); } break; }
+    case "vetDownload": { if (!downloader) break; const d = dog() || {};
+      const html = `<!doctype html><html lang="${LANG}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T("Résumé pour le vétérinaire"))} – ${esc(d.name||"")}</title><style>${VET_CSS}</style></head><body>${vetHTML(true)}</body></html>`;
+      const fn = (T("resume-veterinaire") + "-" + (d.name || "chien") + "-" + ymd(new Date())).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9-]+/g, "-") + ".html";
+      try { await downloader.save({filename: fn, data: html}); toast(T("Résumé téléchargé")); } catch(e) { if (!e || e.code !== "declined") toast(T("Téléchargement impossible ici. Utilisez « Copier le texte ».")); } break; }
+    case "delMember": { if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer"); break; }
+      const lg = C.config.family && Array.isArray(C.config.family.members) ? C.config.family.members : [];
+      if (lg.some(m => m.id === el.dataset.id)) await put("config", "family", {members: lg.filter(m => m.id !== el.dataset.id)});
+      if ((C.members || {})[el.dataset.id]) await del("members", el.dataset.id); if (ME === el.dataset.id) { ME = null; try { LS.del("carnet-me"); } catch(_){} } break; }
+    case "pushPref": { const cp = window.carnetPush, k = el.dataset.k, on = !(cp.prefs()[k] !== false); el.classList.toggle("on", on); el.setAttribute("aria-checked", on);
+      try { await cp.setPref(k, on); } catch(_) { toast(T("Impossible pour l'instant. Réessayez.")); } break; }
+    case "testPush": { toast(T("Envoi par le serveur…"));
+      try { const r = await window.carnetPush.test();
+        if (r.old) toast(T("Le code du serveur Cloudflare n'est pas à jour : collez la dernière version pour tester l'envoi réel."));
+        else if (r.error) toast(T("Le serveur a refusé ({e}).", {e: r.error}));
+        else if (!r.tokens) toast(T("Ce téléphone n'est pas inscrit sur le serveur : coupez puis réactivez « Notifications sur ce téléphone »."));
+        else if (r.ok) toast(T("Envoyée. Revenez à l'écran d'accueil : elle arrive dans quelques secondes."));
+        else toast(T("Envoi refusé par Apple/Google : {e}", {e: (r.fail || [])[0] || "?"}));
+      } catch(e) { toast(T("Serveur injoignable : {e}", {e: String(e && e.message || e).slice(0, 80)})); }
+      render(); break; }
+    case "nOpenList": inboxSheet(); break;
+    case "nOpen": inboxGo(el.dataset.id); break;
+    case "nDel": { const id = el.dataset.id; S.inbox = (S.inbox || []).filter(x => x.id !== id); inboxPaint(); window.carnetInbox.del(id); break; }
+    case "nAll": { const ids = (S.inbox || []).filter(x => !x.read).map(x => x.id); (S.inbox || []).forEach(x => x.read = true); inboxPaint(); window.carnetInbox.readAll(ids); break; }
+    case "nSettings": closeSheet(); go("chien", "reglages"); break;
+    case "gatePush": { const cp = window.carnetPush; if (!cp) break; el.disabled = true; el.textContent = T("Un instant…");
+      const ok = await cp.enable().catch(() => false); const er = cp.info ? cp.info().err : "";
+      if (!ok) toast(er && er !== "permission refusée" ? T("Erreur : {e}", {e: er}) : T("Notifications refusées. Autorisez-les dans les réglages du téléphone."));
+      else toast(T("Notifications activées"));
+      S.lastHTML = ""; render(); break; }
+    case "togglePush": { const cp = window.carnetPush; if (!cp) break; el.disabled = true;
+      try { if (cp.state()) { await cp.disable(); toast(T("Notifications coupées sur ce téléphone")); } else { const ok = await cp.enable(); const er = cp.info ? cp.info().err : ""; toast(ok ? T("Notifications activées") : er && er !== "permission refusée" ? T("Erreur : {e}", {e: er}) : T("Notifications refusées. Autorisez-les dans les réglages du téléphone.")); } } catch(_) { toast(T("Impossible pour l'instant. Réessayez.")); }
+      S.lastHTML = ""; render(); break; }
+    case "notifAsk": { NOTIF = el.dataset.v === "1"; NOTIF_ASKED = true; if (NOTIF && window.carnetPush && window.carnetPush.available()) window.carnetPush.enable().catch(() => {}); try { LS.set("carnet-notif", NOTIF ? "1" : "0"); } catch(_){}
+      if (NOTIF) { if (!actx && SOUND) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){} } try { if (navigator.vibrate) navigator.vibrate(20); } catch(_){} chime(); toast(T("Alertes activées")); }
+      else toast(T("Vous pourrez les activer dans Profil."));
+      render(); break; }
+    case "toggleNotif": NOTIF = !NOTIF; NOTIF_ASKED = true; try { LS.set("carnet-notif", NOTIF ? "1" : "0"); } catch(_){} render(); break;
+    case "toggleSound": SOUND = !SOUND; try { LS.set("carnet-sound", SOUND ? "1" : "0"); } catch(_){} if (SOUND && !actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){} } render(); break;
+    case "testNotif": { if (!actx && SOUND) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){} }
+      $("#notif-root").innerHTML = `<div class="notif" role="alert"><span class="ico" style="--c:var(--green)">${I.paw}</span><div class="main"><div class="t">${T("C'est l'heure")} · ${hhmm(new Date())}</div><div class="s">${T("Exemple d'alerte")}</div></div><button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
+      try { if (navigator.vibrate) navigator.vibrate([30, 60, 30]); } catch(_){} chime(); break; }
+    case "notifClose": clearRoot("#notif-root"); break;
+    case "notifDone": { const k = el.dataset.k, ds = ymd(new Date()), done = getDay(ds).done || {};
+      clearRoot("#notif-root"); if (!done[k]) await setTick(ds, k, true); toast(T("Fait")); break; }
+    case "buddyHelp": buddyHelp(el.dataset.k); break;
+    case "badgeHelp": badgeHelp(el.dataset.k); break;
+    case "editGarde": gardeSheet(); break;
+    case "inviteGarde": closeSheet(); setTimeout(() => inviteForm("garde"), 280); break;
+    case "previewOn": S.preview = true; S.tab = "garde"; S.pageAnim = {cls:"enter-u", until: Date.now() + 500}; render(); window.scrollTo(0,0); break;
+    case "previewOff": S.preview = false; S.tab = "famille"; S.sub = null; S.pageAnim = {cls:"enter-u", until: Date.now() + 500}; render(); window.scrollTo(0,0); break;
+    case "petBuddy": S.buddyJump = {until: Date.now() + 900}; try { if (navigator.vibrate) navigator.vibrate(8); } catch(_){} render(true); setTimeout(() => render(true), 950); break;
+    case "toggle": {
+      const k = el.dataset.k, ds = S.sel, done = getDay(ds).done || {};
+      const before = dayStats(ds), on = !done[k];
+      const n2 = before.n + (on ? 1 : -1), now = Date.now();
+      S.pop = {key: k, day: ds, until: now + 900};
+      S.ringAnim = {day: ds, from: before.pct, until: now + 1000};
+      if (on && before.total && n2 === before.total) S.celebrate = {day: ds, until: now + 1200};
+      try { if (navigator.vibrate) navigator.vibrate(on ? 12 : 6); } catch(_){}
+      await setTick(ds, k, on); break; }
+    case "jset": { const day = getDay(S.sel); await setDay(S.sel, {[el.dataset.f]: day[el.dataset.f] === el.dataset.v ? "" : el.dataset.v}); break; }
+    case "rday": S.rday = +el.dataset.d; render(); break;
+    case "addRoutine": routineSheet(); break;
+    case "editRoutine": { const r = C.routine[el.dataset.id]; if (r) routineSheet({id: el.dataset.id, ...r}); break; }
+    case "daysPreset": { const p = el.dataset.p, set = p==="all"?[0,1,2,3,4,5,6]:p==="wk"?[1,2,3,4,5]:[6,0]; document.querySelectorAll('input[name="s-days"]').forEach(x => x.checked = set.includes(+x.value)); break; }
+    case "addMed": medSheet(); break;
+    case "editMed": { const m = C.meds[el.dataset.id]; if (m) medSheet({id: el.dataset.id, ...m}); break; }
+    case "addAppt": apptSheet(); break;
+    case "editAppt": { const a = C.appts[el.dataset.id]; if (a) apptSheet({id: el.dataset.id, ...a}); break; }
+    case "apptDoneSheet": closeSheet(); { const b = document.createElement("button"); b.dataset.act = "apptDone"; b.dataset.id = el.dataset.id; document.body.appendChild(b); b.click(); b.remove(); } break;
+    case "apptDone": { const id = el.dataset.id, a = C.appts[id]; if (!a) break;
+      if (a.repeat) { const d = parseYmd(a.date), base = d < new Date() ? new Date() : d, nd = new Date(base); nd.setMonth(nd.getMonth() + (+a.repeat));
+        await put("appts", id, {...a, date: ymd(nd), last: ymd(new Date())}); toast(T("Reprogrammé au {d}",{d:fmt(nd,{day:"numeric",month:"long"})})); }
+      else { await del("appts", id); toast(T("Rendez-vous marqué comme fait")); } break; }
+    case "sheetClose": closeSheet(); break;
+    case "sheetSave": if (!sheetSave || sheetSave() !== false) closeSheet(); break;
+    case "sheetDel": { if (el.dataset.confirm) { const f = sheetDelete; closeSheet(); f && f(); } else { el.dataset.confirm = "1"; el.textContent = T("Confirmer la suppression"); } break; }
+    case "editProfile": startEdit(); break;
+    case "cancelProfile": S.editProfile = false; S.draft = null; S.pendingPhoto = null; render(); break;
+    case "saveProfile": {
+      const d = JSON.parse(JSON.stringify(S.draft || {}));
+      d.name = (d.name || "").trim() || T("Mon chien");
+      if (S.pendingPhoto) d.photo = S.pendingPhoto;
+      delete d.example; S.pendingPhoto = null; S.editProfile = false; S.draft = null;
+      await saveDog(d); render(); window.scrollTo(0,0); toast(T("Fiche enregistrée")); break; }
+    case "pfSeg": { const k = el.dataset.k, v = el.dataset.v; S.draft[k] = S.draft[k] === v ? "" : v; redrawEdit(); break; }
+    case "pfPick": pickSheet(el.dataset.k); break;
+    case "pickOpt": { S.draft[el.dataset.k] = el.dataset.v; closeSheet(); redrawEdit(); break; }
+    case "pickOther": { const o = $("#pick-other"); o.hidden = false; const t = $("#pick-txt"); t.focus(); t.scrollIntoView({block:"center"}); break; }
+    case "pfMulti": { const k = el.dataset.k, v = el.dataset.v; let cur = listOf(S.draft[k]);
+      if (el.checked) cur = v === "Aucune" ? ["Aucune"] : cur.filter(x => x !== "Aucune").concat(v); else cur = cur.filter(x => x !== v);
+      S.draft[k] = cur; redrawEdit(); break; }
+    case "pfMultiOther": { S.multiOther = el.checked ? el.dataset.k : null; redrawEdit(); if (S.multiOther) { const t = $("#pf-other-" + el.dataset.k); if (t) t.focus(); } break; }
+    case "pfMultiAdd": { const k = el.dataset.k, t = val("pf-other-" + k); if (!t) { toast(T("Tapez une allergie à ajouter.")); break; }
+      S.draft[k] = listOf(S.draft[k]).filter(x => x !== "Aucune" && x !== t).concat(t); S.multiOther = null; redrawEdit(); break; }
+    case "fillDose": { const i = $("#s-dose"); if (i) i.value = T(el.dataset.v); break; }
+    case "copy": { const v = el.dataset.v; try { await navigator.clipboard.writeText(v); toast(T("Copié : {v}",{v})); } catch(_) { toast(v); } break; }
+    case "clearAsk": S.confirmClear = true; render(); break;
+    case "clearCancel": S.confirmClear = false; render(); break;
+    case "clearAll": await clearAll(); break;
+    case "keepExample": { const d = JSON.parse(JSON.stringify(dog()||{})); delete d.example; await saveDog(d); break; }
+    case "startBlank": wizStart(); break;
+    case "wxSheet": wxSheet(); break;
+    case "wxFind": { const q = ($("#wx-q").value || "").trim(); if (!q) break; const box = $("#wx-res");
+      try { const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=${LANG}`); const j = await r.json(); const res = j.results || [];
+        box.style.display = ""; box.innerHTML = res.length ? res.map(x => `<button type="button" class="row" data-act="wxPick" data-lat="${x.latitude}" data-lon="${x.longitude}" data-n="${esc(x.name)}"><div class="main"><div class="t">${esc(x.name)}</div><div class="s">${esc([x.admin1, x.country].filter(Boolean).join(", "))}</div></div><span class="chev">${I.chevR}</span></button>`).join("") : `<div class="empty">${T("Aucune ville trouvée.")}</div>`;
+      } catch(_) { toast(T("Recherche impossible pour l'instant.")); } break; }
+    case "wxPick": wxSave(+el.dataset.lat, +el.dataset.lon, el.dataset.n); break;
+    case "wxHere": { if (!navigator.geolocation) { toast(T("Position indisponible sur cet appareil.")); break; }
+      navigator.geolocation.getCurrentPosition(pos => wxSave(pos.coords.latitude, pos.coords.longitude, T("Votre position")), () => toast(T("Position refusée. Cherchez plutôt votre ville.")), {timeout: 10000, maximumAge: 600000}); break; }
+    case "joinCode": joinCodeSheet(); break;
+    case "freshMore": S.freshMore = !S.freshMore; render(); break;
+    case "wzPick": { const w = S.wiz; if (!w) break; const f = el.dataset.f, v = el.dataset.v; w.d[f] = v; if (f === "meals") w.routine = null;
+      wizGroup(f, x => x === v); try { if (navigator.vibrate) navigator.vibrate(8); } catch(_){} wizFoot(); break; }
+    case "wzMulti": { const w = S.wiz; if (!w) break; const f = el.dataset.f, v = el.dataset.v; let a = (w.d[f] || []).slice();
+      if (a.includes(v)) a = a.filter(x => x !== v); else if (v === "Aucune") a = ["Aucune"]; else a = a.filter(x => x !== "Aucune").concat(v);
+      w.d[f] = a; wizGroup(f, x => a.includes(x)); try { if (navigator.vibrate) navigator.vibrate(8); } catch(_){} break; }
+    case "wzBreed": { const w = S.wiz; w.d.breed = el.dataset.v; w.routine = null; document.querySelectorAll("#w-breeds .row").forEach(r => r.classList.toggle("sel", r === el)); const o = $("#w-breed-other"); if (o) o.value = "";
+      setTimeout(() => { if (S.wiz === w && wizSteps()[w.i] === "breed") { w.dir = 1; w.i++; renderWiz(); } }, 260); break; }
+    case "wzToggle": { const r = S.wiz.routine[+el.dataset.i]; r.on = !r.on; el.classList.toggle("on", r.on); el.setAttribute("aria-checked", r.on); const row = el.closest(".wz-r"); if (row) row.classList.toggle("off", !r.on); break; }
+    case "wzNotif": { const on = el.dataset.v === "1"; S.wiz.d.notif = on; if (on) { try { if (!actx && SOUND) actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){} chime(); }
+      wizGroup("notif", x => x === el.dataset.v); wizFoot(); break; }
+    case "wzBack": if (S.wiz && S.wiz.i > 0) { S.wiz.i--; S.wiz.dir = -1; renderWiz(); } break;
+    case "wzNext": { const w = S.wiz; if (!w || w.busy) break; const k = wizSteps()[w.i];
+      if (el.dataset.skip && k === "breed") w.d.breed = w.d.breed || "";
+      if (w.i === wizSteps().length - 1) { if (w.d.notif === null) w.d.notif = false; await wizFinish(); break; }
+      if (!el.dataset.skip && !wizCanNext(k, w.d)) break;
+      w.i++; w.dir = 1; renderWiz(); break; }
+    case "joinCode": await checkCode(); break;
+    case "signOut": { if (!el.dataset.confirm) { el.dataset.confirm = "1"; const t = el.querySelector(".main") || el; t.textContent = T("Confirmer la déconnexion"); setTimeout(() => { if (el.isConnected) { delete el.dataset.confirm; t.textContent = T("Se déconnecter"); } }, 4000); break; }
+      if (window.carnetAccount) await window.carnetAccount.signOut(); break; }
+    case "codeCopy": { if (await copyText(el.dataset.v)) { el.textContent = T("Copié"); toast(T("Code copié")); } else toast(fmtCode(el.dataset.v)); break; }
+    case "joinNew": { const i = $("#j-name"), n = i && i.value.trim(); if (!n) { i && i.focus(); toast(T("Indiquez votre prénom.")); break; }
+      if (family().some(m => m.name.toLowerCase() === n.toLowerCase())) { toast(T("Ce prénom est déjà dans la famille.")); break; }
+      await joinFamily(n, S.codeInv ? S.codeInv.role : "famille", S.codeInv || null); break; }
+    case "joinOk": clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); render(); if (dog() && dog().name) maybeTuto(); break;
+    case "wzJoin": S.wiz = null; renderWiz(); S.wizAuto = true; openJoin(); break;
+    case "joinLater": S.joinForce = false; try { sessionStorage.setItem(JOIN_KEY, "1"); } catch(_){} clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); maybeTuto(); break;
+    case "tutoNext": if (S.tuto != null) { if (S.tuto >= TUTO.length - 1) tutoEnd(); else { S.tuto++; renderTuto(); } } break;
+    case "tutoSkip": tutoEnd(); break;
+    case "wzClose": S.wiz = null; renderWiz(); break;
+    case "wzSample": S.wiz = null; renderWiz(); await seedSample(); break;
+    case "tutoAgain": tutoStart(); break;
+    case "wizAgain": if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.querySelector(".t").textContent = T("Toucher encore pour confirmer"); break; } wizStart(); S.wiz.replace = true; break;
+    case "invite": if (S.mode === "db" && !meMember()) { toast(T("Rejoignez d'abord la famille pour inviter quelqu'un.")); openJoin(); break; } inviteForm(); break;
+    case "invRole": S.invRole = el.dataset.v; document.querySelectorAll("#iv-role .role-c").forEach(b => b.classList.toggle("on", b.dataset.v === S.invRole)); break;
+    case "inviteMenu": { const v = invites().find(x => x.id === el.dataset.id); if (!v) break;
+      openSheet(T("Code en attente"), `<div class="inv-ok" style="background:var(--fill)"><span class="mav" style="--c:var(--accent);width:40px;height:40px;font-size:18px">#</span><div><b>${esc(T(v.role === "garde" ? "Garde" : "Famille"))}</b><span>${esc(T("Expire dans {n} j",{n:daysLeft(v)}))}${v.byName ? " · " + esc(T("par {n}",{n:v.byName})) : ""}</span></div></div>
+        <div class="hint" style="margin-top:10px">${T("Le code n'est plus affichable. S'il est perdu, créez-en un nouveau : l'ancien ne marchera plus.")}</div>
+        <button type="button" class="btn ghost" style="width:100%;margin-top:10px" data-act="inviteRenew" data-id="${esc(v.id)}">${T("Créer un nouveau code")}</button>
+        <button type="button" class="btn danger" style="width:100%;margin-top:8px" data-act="inviteDel" data-id="${esc(v.id)}">${T("Annuler ce code")}</button>`); break; }
+    case "inviteRenew": { const v = invites().find(x => x.id === el.dataset.id); if (!v) break; closeSheet(); await newInviteCode(v.role, v.id); break; }
+    case "inviteDel": if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Toucher encore pour confirmer"); break; } closeSheet(); await del("invites", el.dataset.id); toast(T("Code annulé")); break;
+    case "shareApp": case "shareCopy": {
+      // the page runs inside a sandbox that may not be allowed to open other apps: put the message on the clipboard first, then try
+      const full = inviteText() + "\n" + ART_URL, copied = await copyText(full);
+      if (act === "shareCopy") { toast(copied ? T("Message copié : collez-le dans l'app de votre choix") : T("Copie impossible sur cet appareil.")); break; }
+      const href = el.dataset.href; let opened = null;
+      try { opened = window.open(href, "_blank", "noopener"); } catch(_) {}
+      const scheme = !/^https?:/i.test(href); // sms:, mailto: open an app without leaving the page
+      if (!opened && scheme) { try { window.top.location.href = href; opened = true; } catch(_) {} }
+      if (!opened && scheme) { try { const a = document.createElement("a"); a.href = href; a.target = "_top"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove(); } catch(_) {} }
+      toast(copied ? T("Message copié. Si l'app ne s'ouvre pas, collez-le dans {a}.",{a: el.textContent.trim()}) : T("Copiez le lien ci-dessus et envoyez-le dans {a}.",{a: el.textContent.trim()}));
+      break; }
+    case "shareNative": { try { await navigator.share({title: T("Le carnet de {n}",{n:(dog() || {}).name || T("notre chien")}), text: inviteText(), url: ART_URL}); } catch(e) { if (!e || e.name !== "AbortError") { S.shareBroken = true; const ok = await copyText(inviteText() + "\n" + ART_URL); toast(ok ? T("Message copié : collez-le dans l'app de votre choix") : T("Le partage n'est pas disponible ici. Copiez le lien.")); } } break; }
+    case "copyLink": { if (await copyText(ART_URL)) { el.textContent = T("Copié"); toast(T("Lien copié")); } else toast(ART_URL); break; }
+    case "msPhotoDel": S.msPhoto = ""; { const a = $("#ms-av"); if (a) a.innerHTML = mav(Object.assign({}, memberOf(el.dataset.id) || {}, {photo:"", uid:""}), 84); } el.hidden = true; break;
+    case "copyInvite": { const v = el.dataset.v; try { await navigator.clipboard.writeText(v); toast(T("Message copié")); } catch(_) { toast(T("Copie impossible sur cet appareil.")); } break; }
+    case "loadSample": await seedSample(); break;
+  }
+});
+async function sendNote(extra){
+  extra = extra || {};
+  const text = extra.audio ? "" : val("n-text"), photo = extra.audio ? null : S.notePhoto; if (!text && !photo && !extra.audio) return; typingBeat(true);
+  if (S.replyTo) { extra.replyTo = S.replyTo; S.replyTo = null; replyBar(); } const m = meMember(); S.notePhoto = null;
+  const nId = newId(); await put("notes", nId, Object.assign({text, mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString()}, photo ? {photo} : {}, extra));
+  if (window.carnetNotify) window.carnetNotify("msg", {text: text || (extra.audio ? T("Message vocal") + " · " + fmtSec(extra.dur || 0) : T("Photo")), who: m ? m.name : "", ev: nId});
+  if (extra.audio) return;
+  setTimeout(() => { const i = $("#n-text"); if (i) { i.value = ""; if (i.tagName === "TEXTAREA") i.style.height = ""; i.focus(); } const ph = $("#chat-root #n-ph"); if (ph) ph.innerHTML = I_PLUS; }, 30);
+}
+document.addEventListener("submit", async e => {
+  const f = e.target; e.preventDefault();
+  if (f.dataset.form === "note") { await sendNote(); return; }
+  if (f.dataset.form === "member") {
+    const name = val("m-name"); if (!name) return; const fam = family();
+    if (fam.some(m => m.name.toLowerCase() === name.toLowerCase())) { toast(T("Ce prénom est déjà dans la famille.")); return; }
+    await put("members", newId(), {name, color: freeColor(), uid:"", role:"famille", since: Date.now()}); return;
+  }
+  if (f.dataset.form === "weight") {
+    const kg = parseFloat(String(val("w-kg")).replace(",", ".")), date = val("w-date");
+    if (!kg || !date) { toast(T("Indiquez un poids et une date.")); return; }
+    await put("weights", newId(), {date, kg: Math.round(kg*10)/10, dog: dogId()}); toast(T("Pesée ajoutée"));
+  } else if (f.id === "sheet-form") { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
+});
+document.addEventListener("input", e => { const t = e.target;
+  if (t.id === "n-text") { if (t.value.trim()) typingBeat(); else typingBeat(true); }
+  if (t.id === "n-text" && t.tagName === "TEXTAREA") { t.style.height = "auto"; t.style.height = Math.min(140, t.scrollHeight) + "px"; }
+  if (t.id === "x-title") { const c = extraCat(t.value), box = $("#x-info");
+    if (c && !t.dataset.manual) { const r = document.querySelector(`input[name="x-cat"][value="${c}"]`); if (r && !r.checked) { r.checked = true; const h = $("#x-hero"); if (h) { h.innerHTML = CATS[c].icon; h.parentNode.style.setProperty("--c", CATS[c].color); } } }
+    const cat = (document.querySelector('input[name="x-cat"]:checked') || {}).value; if (box) box.innerHTML = cat === "med" || cat === "soin" || c === "med" ? medInfoHTML(medInfo(t.value)) : ""; }
+  if (t.id === "s-atitle") { const h = $("#a-hero"); const tt = h && h.parentNode.querySelector(".sh-hero-t"); if (tt) tt.textContent = t.value.trim() || T("Rendez-vous"); }
+  if (t.id === "s-name") { const box = $("#s-name-info"); if (box) box.innerHTML = medInfoHTML(medInfo(t.value)); }
+  if (t.name === "x-cat") { const ti = $("#x-title"); if (ti) ti.dataset.manual = "1"; }
+  if (t.name === "x-cat" || t.name === "s-type") { const c = t.name === "x-cat" ? CATS[t.value] : ATYPES[t.value], h = $(t.name === "x-cat" ? "#x-hero" : "#a-hero"); if (c && h) { h.innerHTML = c.icon; h.parentNode.style.setProperty("--c", c.color); } }
+  if (t.id === "s-unit" && t.value) document.querySelectorAll('input[name="s-unitc"]').forEach(r => r.checked = false);
+  if (t.id === "f-bag-other" && t.value) document.querySelectorAll('input[name="f-bag"]').forEach(r => r.checked = false);
+  if (t.dataset && t.dataset.pf && S.draft) S.draft[t.dataset.pf] = t.value;
+  if (S.wiz && t.dataset && t.dataset.w) { const k = t.dataset.w; if (k === "breedOther") { S.wiz.d.breed = t.value.trim(); S.wiz.routine = null; } else S.wiz.d[k] = t.value;
+    if (k === "breedOther" && t.value.trim()) document.querySelectorAll("#w-breeds .row.sel").forEach(r => r.classList.remove("sel"));
+    wizFoot(); }
+  if (S.wiz && t.dataset && t.dataset.wr) S.wiz.routine[+t.dataset.wr].time = t.value;
+  if (t.id === "lo-phone" || t.id === "lo-where") lostPreview();
+  if (t.id === "w-q") { const q = t.value.trim().toLowerCase(); document.querySelectorAll("#w-breeds [data-s]").forEach(r => r.hidden = !!q && !r.dataset.s.includes(q)); }
+  if (t.id === "pick-q") { const q = t.value.trim().toLowerCase(); document.querySelectorAll("#pick-list [data-s]").forEach(r => { if (r.dataset.act === "pickOpt") r.hidden = !!q && !r.dataset.s.includes(q); }); } });
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.id === "day-note") setDay(t.dataset.day, {note: t.value});
+  if (S.wiz && t.id === "w-birth") { S.wiz.d.birth = t.value; const a = $("#w-age"); if (a) a.textContent = t.value ? ageOf(t.value) : ""; }
+  if (t.id === "w-photo" && t.files && t.files[0] && S.wiz) {
+    const fr = new FileReader();
+    fr.onload = () => { const img = new Image(); img.onload = () => {
+      const s = 320, c = document.createElement("canvas"); c.width = c.height = s; const g = c.getContext("2d");
+      const m = Math.min(img.width, img.height); g.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, s, s);
+      S.wiz.d.photo = c.toDataURL("image/jpeg", 0.82); const l = $("#w-photo-l"); if (l) l.innerHTML = `<img src="${S.wiz.d.photo}" alt=""><small>${T("Changer la photo")}</small>`;
+    }; img.src = fr.result; };
+    fr.readAsDataURL(t.files[0]);
+  }
+  if (t.id === "lp-file" && t.files && t.files[0]) shrinkPhoto(t.files[0], 900).then(ph => { S.logPhoto = ph; const p = $("#lp-prev"); if (p) p.innerHTML = `<img src="${ph}" alt="">`; }).catch(() => toast(T("Photo illisible.")));
+  if (t.id === "n-photo" && t.files && t.files[0]) shrinkPhoto(t.files[0], 900).then(ph => { S.notePhoto = ph; const p = $("#n-ph"); if (p) p.innerHTML = `<img src="${ph}" alt="">`; }).catch(() => toast(T("Photo illisible.")));
+  if (t.id === "lo-reward") lostPreview();
+  if (t.id === "ms-photo" && t.files && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => { const img = new Image(); img.onload = () => {
+      const sz = 192, c = document.createElement("canvas"); c.width = c.height = sz; const g = c.getContext("2d");
+      const m = Math.min(img.width, img.height); g.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, sz, sz);
+      S.msPhoto = c.toDataURL("image/jpeg", 0.8); const a = $("#ms-av"); if (a) a.innerHTML = `<span class="mav ph" style="width:84px;height:84px"><img src="${S.msPhoto}" alt=""></span>`;
+    }; img.src = fr.result; };
+    fr.readAsDataURL(t.files[0]);
+  }
+  if (t.id === "p-photo" && t.files && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => { const img = new Image(); img.onload = () => {
+      const s = 320, c = document.createElement("canvas"); c.width = c.height = s; const g = c.getContext("2d");
+      const m = Math.min(img.width, img.height); g.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, s, s);
+      S.pendingPhoto = c.toDataURL("image/jpeg", 0.82);
+      const av = document.querySelector(".hero .avatar"); if (av) av.innerHTML = `<img src="${S.pendingPhoto}" alt="">`;
+    }; img.src = fr.result; };
+    fr.readAsDataURL(t.files[0]);
+  }
+});
+document.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && e.target.id === "n-text" && e.target.tagName === "TEXTAREA") { e.preventDefault(); sendNote(); return; }
+  if (e.key === "Escape" && sheetSave !== null) closeSheet();
+  if (e.key === "Escape" && S.tuto != null) tutoEnd();
+  if (e.key === "Enter" && S.wiz && e.target.id === "w-other") { e.preventDefault(); const b = document.querySelector('[data-act="wzAddOther"]'); b && b.click(); }
+  else if (e.key === "Enter" && S.wiz && e.target.matches && e.target.matches("input[data-w]") && e.target.type !== "date") { e.preventDefault(); const b = $("#wiz-root .wz-next"); b && !b.disabled && b.click(); }
+  if (e.key === "Enter" && e.target.id === "j-code") { e.preventDefault(); checkCode(); }
+  if (e.key === "Enter" && e.target.id === "j-name") { e.preventDefault(); const b = document.querySelector('[data-act="joinNew"]'); b && b.click(); } });
+window.addEventListener("resize", () => { if (S.tuto != null) renderTuto(); });
+window.addEventListener("hashchange", () => { const [t, sub] = parseHash(location.hash.slice(1)); if (t && (t !== S.tab || sub !== S.sub)) { S.tab = t; S.sub = sub; render(); } });
+setInterval(() => { if (!document.querySelector(".sheet") && !S.editProfile && document.activeElement?.id !== "day-note") render(true); }, 60000);
+setInterval(checkNotifs, 20000);
+setInterval(() => { const e = document.getElementById("walk-min"), w = walkNow(); if (e && w) e.textContent = Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000)) + " min"; }, 15000);
+
+function useAccount(id){
+  LSU = id || "anon";
+  // first account to open the new version on this device keeps the old (unscoped) settings; nobody else inherits them
+  try { PER_USER.forEach(k => { const old = localStorage.getItem(k); if (old !== null) { if (localStorage.getItem(LS.k(k)) === null) localStorage.setItem(LS.k(k), old); localStorage.removeItem(k); } }); } catch(_) {}
+  ME = LS.get("carnet-me"); CUR = LS.get("carnet-dog") || "main";
+  const n = LS.get("carnet-notif"); NOTIF_ASKED = n !== null; NOTIF = n === "1"; SOUND = LS.get("carnet-sound") !== "0";
+  try { const lf = sessionStorage.getItem("dl-left"); if (lf) { sessionStorage.removeItem("dl-left"); setTimeout(() => lf === "garde" ? openSheet(T("Garde terminée"), `<p style="margin:4px 0 8px;font-size:16px;line-height:1.45">${T("Date de garde terminée : accès à la famille retiré.")}</p>`, () => {}) : toast(T(lf === "removed" ? "Vous ne faites plus partie de cette famille" : "Vous avez quitté la famille")), 1200); } } catch(_) {}
+}
+/* ---------- boot ---------- */
+igRender();
+(function(){ const [t, sub] = parseHash(location.hash.slice(1)); if (t) { S.tab = t; S.sub = sub; } })();
+document.documentElement.lang = LANG;
+renderTabs();
+let booted = false;
+function goLocal(){ if (booted) return; booted = true; S.mode = "local"; local = loadLocal(); syncLocal(); S.ready = true;
+  // outside claude.ai: files are saved with a plain browser download
+  if (!downloader) downloader = {save: async ({filename, data}) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], {type: /\.html$/.test(filename) ? "text/html" : "text/plain"})); a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }};
+  render(); }
+const fallback = SITE ? 0 : setTimeout(goLocal, 4000); // the site signs in first: no silent fallback to a local copy
+(async () => {
+  try {
+    if (!window.claude || !window.claude.use) { clearTimeout(fallback); goLocal(); return; }
+    window.claude.use("sample").then(sp => { if (sp) { sampler = sp; render(true); } }).catch(() => {});
+    window.claude.use("downloads").then(dl => { if (dl) downloader = dl; }).catch(() => {});
+    const [d, u] = await Promise.all([window.claude.use("db"), window.claude.use("user").catch(() => null)]);
+    user = u;
+    if (u) { try { S.me = await u.id(); } catch(_){} useAccount(S.me);
+      try { S.isOwner = !!(await u.isOwner()); } catch(_){}
+      try { const w = await u.can("data.write"); S.canWrite = w; if (w === false) { S.readOnly = true; S.viewOnly = true; } } catch(_){}
+      try { const ed = await u.canEdit(); S.platEdit = ed; if (ed === false && !S.readOnly) S.sitter = true; } catch(_){} }
+    if (d && !booted) { booted = true; clearTimeout(fallback); db = d; startDb(); }
+    else { clearTimeout(fallback); booted = true; S.mode = "locked"; S.ready = true; render(); }
+  } catch(_) { clearTimeout(fallback); goLocal(); }
+})();
+})();
