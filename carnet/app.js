@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "108"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "109"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -431,6 +431,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"Vous": "You", "Aucune garde prévue": "No sitting planned"}); Object.assign(HR, {"Vous": "Vi", "Aucune garde prévue": "Nema planiranog čuvanja"});
 Object.assign(EN, {"En direct": "Live", "Position il y a {n}": "Position {n} ago", "Dernière balade": "Last walk", "{n} a promené {d}": "{n} walked {d}", "Besoins": "Needs"}); Object.assign(HR, {"En direct": "Uživo", "Position il y a {n}": "Pozicija prije {n}", "Dernière balade": "Zadnja šetnja", "{n} a promené {d}": "{n} je prošetao/la {d}", "Besoins": "Potrebe"});
 Object.assign(EN, {"Indigo":"Indigo"}); Object.assign(HR, {"Indigo":"Indigo"});
 Object.assign(EN, {"Couleurs": "Colours", "Corail": "Coral", "Océan": "Ocean", "Violet": "Violet", "Menthe": "Mint", "Or": "Gold"}); Object.assign(HR, {"Couleurs": "Boje", "Corail": "Koralj", "Océan": "Ocean", "Violet": "Ljubičasta", "Menthe": "Metvica", "Or": "Zlatna"});
@@ -3135,6 +3136,15 @@ function gpsUI(){
   const e = document.getElementById("walk-gps"), w = walkNow(); if (e) { const l = gpsLine(w); e.innerHTML = l ? " · " + l : ""; }
   if (Date.now() - GPS.painted > (PM.lw && PM.lw.ready ? 4000 : 12000)) gpsPaint();
 }
+// sections that are useful now and then start folded; tap the header to open them (remembered per phone)
+function foldSec(html, key, hint){
+  const m = String(html || "").match(/^\s*<div class="sec"><div class="sec-h"><h2>([\s\S]*?)<\/h2>([\s\S]*?)<\/div>([\s\S]*)<\/div>\s*$/);
+  if (!m) return html || "";
+  const open = gLS.g("dl-fold-" + key) === "1";
+  return `<details class="sec fold" data-fold="${key}" ${open ? "open" : ""}><summary class="sec-h fold-h"><h2>${m[1]}</h2><span class="fold-hint">${hint || ""}</span><span class="fold-chev" aria-hidden="true">${I.chevR}</span></summary>
+    <div class="fold-b">${m[2].trim() ? `<div class="fold-tools">${m[2]}</div>` : ""}${m[3]}</div></details>`;
+}
+document.addEventListener("toggle", e => { const d = e.target; if (d && d.classList && d.classList.contains("fold")) { gLS.s("dl-fold-" + d.dataset.fold, d.open ? "1" : null); S.lastHTML = ""; } }, true);
 // Famille: the most recent walk, always visible (map, distance, time, who); tap for the details
 function lastWalkCard(){
   const all = Object.entries(C.logs || {}).map(([id, l]) => Object.assign({id}, l)).filter(l => l.k === "balade" && (l.dog || "main") === dogId()).sort((a, b) => (b.date + (b.at || "")).localeCompare(a.date + (a.at || "")));
@@ -3404,7 +3414,8 @@ function viewFamily(){
       ${canEdit() || S.mode !== "db" ? `<button class="row" data-act="invite"><span class="ico" style="--c:var(--blue)">${I_PLUS}</span><span class="main t" style="color:var(--accent)">${T("Ajouter quelqu'un")}</span><span class="chev">${I.chevR}</span></button>` : ""}
     </div><div class="foot">${T("Chaque personne a son propre compte. « Ajouter quelqu'un » crée un code avec le rôle choisi ; la personne l'entre avec son compte et rejoint la famille.") + " " + T("Famille : voit et coche tout. Garde : la personne qui garde le chien, elle voit la fiche de garde et coche les tâches.")}</div></div>`;
   return `${pageHead(T("Famille"), "", `<button class="gearbtn" data-act="goSub" data-tab="famille" data-sub="reglages" aria-label="${T("Réglages")}">${I_GEAR.replace('width="18" height="18"', 'width="21" height="21"')}</button>`)}
-    ${hero}${walkNow() ? `<div class="sec">${liveWalk()}</div>` : lastWalkCard()}${board}${today}${shareSection()}${members}<div class="sec">${meCard}</div>`;
+    ${hero}${walkNow() ? `<div class="sec">${liveWalk()}</div>` : lastWalkCard()}${board}${today}
+    ${foldSec(shareSection(), "share", T("7 derniers jours"))}${foldSec(members, "members", T("{n} membre(s)", {n: fam.length}))}${me ? foldSec(`<div class="sec"><div class="sec-h"><h2>${T("Vous")}</h2></div>${meCard}</div>`, "me", esc(me.name)) : ""}`;
 }
 function memberSheet(id){
   const m = memberOf(id); if (!m) return;
@@ -4147,7 +4158,7 @@ function viewFamilyTab(){
   if (S.sub === "reglages") return viewSettings();
   const sitter = sitterUI(), g = garde(), gOn = g.from && g.to && g.to >= ymd(addDays(new Date(), -3));
   return previewBanner() + viewFamily()
-    + (!sitter ? gardeSection() : "")
+    + (!sitter ? foldSec(gardeSection(), "garde", esc(gardeRange(garde()) || T("Aucune garde prévue"))) : "")
     + youSection()
     + (gOn || sitter ? `<div class="sec"><div class="card list"><button class="row" data-act="report"><span class="ico" style="--c:var(--teal)">${I_GARDE.replace('viewBox="0 0 28 28"','viewBox="0 0 28 28" width="18" height="18"')}</span><div class="main"><div class="t">${T("Rapport de garde")}</div><div class="s">${T("Ce qui a été fait pendant la garde, à envoyer à la famille")}</div></div><span class="chev">${I.chevR}</span></button></div></div>` : "");
 }
