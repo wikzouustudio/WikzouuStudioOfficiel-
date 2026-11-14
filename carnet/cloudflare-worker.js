@@ -164,17 +164,17 @@ async function push(env, family, t, msg) {
 
 /* ---------- texts ---------- */
 const L = {
-  fr: {week: "Le bilan de la semaine est prêt", weekBody: "Moyennes, tendances et un programme adapté pour la semaine prochaine de {n}.", test: "Notification envoyée par le serveur", soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
+  fr: {testT: "Notifications activées", testB: "Tout fonctionne : les rappels et les messages de la famille arriveront ici.", soonT: "{t} dans 5 min", soonB: "À {h}", lateT: "Toujours à faire : {t}", lateB: "Prévue à {h}. Touchez pour la cocher.", msgT: "Message de {w}", doneB: "Cochée par {w}", logB: "Noté par {w}", apptT: "Rendez-vous demain", apptTat: "Rendez-vous demain à {h}", appt1T: "Rendez-vous dans 1 heure", apptB: "{t} à {h}", week: "Le bilan de la semaine est prêt", weekBody: "Moyennes, tendances et un programme adapté pour la semaine prochaine de {n}.", test: "Notification envoyée par le serveur", soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
     warn: "Météo à éviter pour la balade de {h}", better: "Mieux vers {h} : {t}°, {p} % de pluie.", earlier: "Avancez-la ?", later: "Décalez-la ?", alsoBetter: "mieux vers {h}",
     ideal: "Temps idéal pour une balade", goOut: "Parfait pour sortir {n}", dryUntil: "sec jusqu'à", rain: "pluie probable", hot: "chaud, gardez-la courte", cold: "froid", nice: "temps idéal",
     tomorrow: "Demain", in1h: "Dans 1 heure", at: "à", recap: "Pas encore fait aujourd'hui", more: "et {n} autre(s)", food: "Croquettes bientôt finies", foodDays: "Il en reste pour environ {n} jour(s).",
     k: {pipi: "Petit besoin", caca: "Grand besoin", balade: "Balade", accident: "Accident", eau: "Eau", friandise: "Friandise", sieste: "Sieste", jeu: "Jeu", vomi: "Vomissement", photo: "Photo"}},
-  en: {week: "Your weekly summary is ready", weekBody: "Averages, trends and a plan for {n}'s next week.", test: "Notification sent by the server", soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
+  en: {testT: "Notifications are on", testB: "All set: reminders and family messages will show up here.", soonT: "{t} in 5 min", soonB: "At {h}", lateT: "Still to do: {t}", lateB: "Planned at {h}. Tap to tick it off.", msgT: "Message from {w}", doneB: "Ticked off by {w}", logB: "Logged by {w}", apptT: "Appointment tomorrow", apptTat: "Appointment tomorrow at {h}", appt1T: "Appointment in 1 hour", apptB: "{t} at {h}", week: "Your weekly summary is ready", weekBody: "Averages, trends and a plan for {n}'s next week.", test: "Notification sent by the server", soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
     warn: "Bad weather for the {h} walk", better: "Better around {h}: {t}°, {p}% rain.", earlier: "Go earlier?", later: "Go later?", alsoBetter: "better around {h}",
     ideal: "Perfect weather for a walk", goOut: "A great time to take {n} out", dryUntil: "dry until", rain: "rain likely", hot: "hot, keep it short", cold: "cold", nice: "ideal weather",
     tomorrow: "Tomorrow", in1h: "In 1 hour", at: "at", recap: "Not done yet today", more: "and {n} more", food: "Food running low", foodDays: "About {n} day(s) left.",
     k: {pipi: "Pee", caca: "Poo", balade: "Walk", accident: "Accident", eau: "Water", friandise: "Treat", sieste: "Nap", jeu: "Play", vomi: "Vomiting", photo: "Photo"}},
-  hr: {week: "Tjedni sažetak je spreman", weekBody: "Prosjeci, trendovi i plan za sljedeći tjedan ({n}).", test: "Obavijest poslana s poslužitelja", soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
+  hr: {testT: "Obavijesti su uključene", testB: "Sve radi: podsjetnici i poruke obitelji stizat će ovdje.", soonT: "{t} za 5 min", soonB: "U {h}", lateT: "Još za napraviti: {t}", lateB: "Planirano u {h}. Dodirnite za označavanje.", msgT: "Poruka od {w}", doneB: "Označio/la {w}", logB: "Zabilježio/la {w}", apptT: "Termin sutra", apptTat: "Termin sutra u {h}", appt1T: "Termin za 1 sat", apptB: "{t} u {h}", week: "Tjedni sažetak je spreman", weekBody: "Prosjeci, trendovi i plan za sljedeći tjedan ({n}).", test: "Obavijest poslana s poslužitelja", soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
     warn: "Loše vrijeme za šetnju u {h}", better: "Bolje oko {h}: {t}°, {p} % kiše.", earlier: "Ranije?", later: "Kasnije?", alsoBetter: "bolje oko {h}",
     ideal: "Idealno vrijeme za šetnju", goOut: "Savršeno za izlazak ({n})", dryUntil: "suho do", rain: "moguća kiša", hot: "vruće, neka bude kratko", cold: "hladno", nice: "idealno vrijeme",
     tomorrow: "Sutra", in1h: "Za 1 sat", at: "u", recap: "Danas još nije napravljeno", more: "i još {n}", food: "Hrana pri kraju", foodDays: "Ostalo je za otprilike {n} dan(a).",
@@ -195,9 +195,10 @@ async function onNotify(request, env, origin) {
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
   const who = clean(b.who, 30), text = clean(b.text, 140), at = /^\d{1,2}:\d{2}$/.test(b.at || "") ? b.at : "";
   const ctx = await familyCtx(env, b.family), ev = (validId(b.ev) ? b.ev : b.kind + Date.now()).slice(0, 60);
-  const make = l => b.kind === "msg" ? {title: `${l.wrote} ${who}`, body: text}
-    : b.kind === "log" ? {title: `${who} · ${(Object.hasOwn(l.k, b.k) && l.k[b.k]) || text}`, body: at ? at : ""}
-    : {title: `${who} ${l.did}`, body: text + (at ? " · " + at : "")};
+  // line 1: what happened, line 2 (added by the phone): Dogs Life, line 3: the details
+  const make = l => b.kind === "msg" ? {title: l.msgT.replace("{w}", who), body: text}
+    : b.kind === "log" ? {title: (Object.hasOwn(l.k, b.k) && l.k[b.k]) || text, body: l.logB.replace("{w}", who) + (at ? " · " + at : "")}
+    : {title: text, body: l.doneB.replace("{w}", who) + (at ? " · " + at : "")};
   const self = ctx.tokens.some(t => t.uid === uid && wants(t, "self")) ? [uid] : [];
   const res = await deliver(env, b.family, ctx, {ev: b.kind + "-" + ev, uids: ctx.uids.filter(u => u !== uid), pushOnly: self, from: uid, fromName: who, pref: "family",
     type: b.kind === "msg" ? "message" : "activite", tab: b.kind === "msg" ? "famille" : "aujourdhui", make});
@@ -215,7 +216,7 @@ async function onTest(request, env, origin) {
   if (!validId(b.family)) return reply(400, {error: "famille"}, origin);
   if (!(await getDocAdmin(env, `families/${b.family}/access/${uid}`))) return reply(403, {error: "famille"}, origin);
   const ctx = await familyCtx(env, b.family), all = ctx.tokens, mine = all.filter(t => t.uid === uid && t.token);
-  const res = await deliver(env, b.family, ctx, {ev: "test-" + Date.now(), uids: [uid], type: "admin", tab: "profil", make: l => ({title: "Dogs Life", body: l.test})});
+  const res = await deliver(env, b.family, ctx, {ev: "test-" + Date.now(), uids: [uid], type: "admin", tab: "profil", make: l => ({title: l.testT, body: l.testB})});
   const bad = res.filter(r => !r.ok);
   return reply(200, {tokens: mine.length, family: all.length, ok: res.length - bad.length, off: mine.filter(t => t.on === false).length, fail: bad.map(r => `${r.status} ${r.err}`).slice(0, 3)}, origin);
 }
@@ -278,15 +279,15 @@ async function remindFamily(env, fid, when) {
     const soon = at(T - EARLY_MIN), late = at(T + LATE_MIN); if (!soon && !late) continue;
     const w = soon && walk ? await getWx() : null, x = w ? w(Math.floor(T / 60)) : null, b = x && wxScore(x) >= 45 ? betterHour(w, T, n.min) : null;
     await send("tasks", forWho(task.who), l => { const dn = task.dog === "main" && dogName ? ` ${l.for} ${dogName}` : "";
-      return soon ? {title: `${l.soon} · ${task.time}`, body: task.title + dn + wxNote(x, l) + (b ? `, ${l.alsoBetter.replace("{h}", hm(b.H * 60))}` : "")} : {title: `${l.late} · ${task.time}`, body: `${task.title} ${l.notYet}`}; },
+      return soon ? {title: l.soonT.replace("{t}", task.title), body: l.soonB.replace("{h}", task.time) + dn + wxNote(x, l) + (b ? `, ${l.alsoBetter.replace("{h}", hm(b.H * 60))}` : "")} : {title: l.lateT.replace("{t}", task.title), body: l.lateB.replace("{h}", task.time)}; },
       `${soon ? "soon" : "late"}-${task.key}-${n.ds}`, "rappel");
   }
 
   // appointments: the evening before at 18:00, and 1 hour before
   for (const a of appts) {
     const T = a.time ? toMin(a.time) : null, title = a.title || "";
-    if (a.date === tmr.ds && at(18 * 60)) await send("appts", forWho(a.who), l => ({title: `${l.tomorrow}${a.time ? " " + l.at + " " + a.time : ""}`, body: title + (dogName ? ` · ${dogName}` : "")}), `appt-${a._id}-eve`, "evenement", "planning");
-    if (a.date === n.ds && T != null && at(T - 60)) await send("appts", forWho(a.who), l => ({title: `${l.in1h} · ${a.time}`, body: title + (dogName ? ` · ${dogName}` : "")}), `appt-${a._id}-1h`, "evenement", "planning");
+    if (a.date === tmr.ds && at(18 * 60)) await send("appts", forWho(a.who), l => ({title: a.time ? l.apptTat.replace("{h}", a.time) : l.apptT, body: title + (dogName ? ` · ${dogName}` : "")}), `appt-${a._id}-eve`, "evenement", "planning");
+    if (a.date === n.ds && T != null && at(T - 60)) await send("appts", forWho(a.who), l => ({title: l.appt1T, body: l.apptB.replace("{t}", title).replace("{h}", a.time) + (dogName ? ` · ${dogName}` : "")}), `appt-${a._id}-1h`, "evenement", "planning");
   }
 
   // perfect weather to go out: once a day, between 10:00 and 18:00, dry for the next 2 hours

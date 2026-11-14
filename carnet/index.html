@@ -1697,6 +1697,9 @@ body.chat-full #tabs{visibility:hidden}
 :root[data-skin="aurora"] .cf-send{background:var(--grad)}
 
 /* install gate with tutorial videos */
+#ig-root .gate{z-index:20000}
+body.ig-open{overflow:hidden}
+body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .ig .gate-in{max-width:420px}
 .ig-icon{width:84px;height:84px;margin:0 auto 18px;border-radius:22px;background:#fff;display:grid;place-items:center;box-shadow:0 14px 40px -10px rgba(241,199,106,.5)}
 .ig-icon img{width:82%}
@@ -1776,7 +1779,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "74"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "75"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5420,7 +5423,7 @@ function pushGate(){
   const g = $("#gate-root"), cp = window.carnetPush;
   if (!SPLASH.gone || !S.readyAt || Date.now() - S.readyAt < 2000) { clearTimeout(S.pgT); S.pgT = setTimeout(pushGate, 2100); return; }
   // on a phone, the app must be installed (home screen) before anything else: pick a tutorial video
-  if (S.mode === "db" && S.ready && !noAccess() && installNeeded()) { installGate(g); return; }
+  if (installNeeded()) { igRender(); if (g.innerHTML) { g.innerHTML = ""; } return; }
   const need = cp && S.mode === "db" && S.ready && !noAccess() && (cp.ios || (cp.available() && !cp.state()));
   if (!need) { if (g.innerHTML) { g.innerHTML = ""; document.body.classList.remove("gate-open"); } return; }
   const perm = cp.info ? cp.info().perm : "default", bell = `<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg>`;
@@ -5439,8 +5442,15 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 const STANDALONE = () => matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
 const PHONE = () => { const ua = navigator.userAgent; return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ? "ios" : /Android/i.test(ua) ? "and" : ""; };
 const installNeeded = () => !S.preview && !STANDALONE() && !!PHONE();
-window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); S.bip = e; pushGate(); });
-window.addEventListener("appinstalled", () => { S.bip = null; S.installed = true; pushGate(); });
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); S.bip = e; igRender(); });
+window.addEventListener("appinstalled", () => { S.bip = null; S.installed = true; igRender(); });
+// the very first screen on a phone browser: nothing of the app is reachable until it is installed
+function igRender(){
+  let g = document.getElementById("ig-root");
+  if (!installNeeded()) { if (g && g.innerHTML) { g.innerHTML = ""; document.body.classList.remove("ig-open"); } return; }
+  if (!g) { g = document.createElement("div"); g.id = "ig-root"; document.body.appendChild(g); }
+  document.body.classList.add("ig-open"); installGate(g);
+}
 function installGate(g){
   const mine = PHONE(), phone = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.8"/><path d="M10.5 5h3"/></svg>';
   const opt = (k, name, br) => `<button class="ig-o ${k === mine ? "on" : ""}" data-act="igPlay" data-v="${k}"><span class="ig-th"><img src="videos/install-${k === "ios" ? "iphone" : "android"}.jpg" alt=""><i><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5.5v13l11-6.5Z"/></svg></i></span><b>${name}</b><small>${br}</small>${k === mine ? `<span class="ig-me">${T("Votre téléphone")}</span>` : ""}</button>`;
@@ -5453,7 +5463,7 @@ function installGate(g){
     ${!S.installed && mine === "and" && S.bip ? `<button class="btn gate-btn" data-act="igInstall">${T("Installer maintenant")}</button>` : ""}
     <p class="gate-small">${T("Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.")}</p>
   </div>${vid}</div>`;
-  if (g.innerHTML !== h) g.innerHTML = h; document.body.classList.add("gate-open");
+  if (g.innerHTML !== h) g.innerHTML = h;
 }
 function notifPrompt(){
   if (window.carnetPush || NOTIF_ASKED || !dog() || S.dismissNotifAsk) return "";
@@ -6709,9 +6719,9 @@ document.addEventListener("click", async e => {
         break; }
       if (m) await removeMember(m.id); ME = null; try { LS.del("carnet-me"); } catch(_){} render(); toast(T("Vous avez quitté la famille")); break; }
     case "delNote": await del("notes", el.dataset.id); break;
-    case "igPlay": S.igVideo = el.dataset.v; pushGate(); break;
-    case "igClose": { const v = document.querySelector(".ig-v"); if (v) { v.classList.add("out"); setTimeout(() => { S.igVideo = null; pushGate(); }, 260); } else { S.igVideo = null; pushGate(); } break; }
-    case "igInstall": if (S.bip) { const p = S.bip; S.bip = null; p.prompt(); try { const r = await p.userChoice; if (r && r.outcome === "accepted") S.installed = true; } catch(_) {} pushGate(); } break;
+    case "igPlay": S.igVideo = el.dataset.v; igRender(); break;
+    case "igClose": { const v = document.querySelector(".ig-v"); if (v) { v.classList.add("out"); setTimeout(() => { S.igVideo = null; igRender(); }, 260); } else { S.igVideo = null; igRender(); } break; }
+    case "igInstall": if (S.bip) { const p = S.bip; S.bip = null; p.prompt(); try { const r = await p.userChoice; if (r && r.outcome === "accepted") S.installed = true; } catch(_) {} igRender(); } break;
     case "chatFull": S.chatFull = true; render(); setTimeout(() => { const i = $("#n-text"); if (i && matchMedia("(hover:hover)").matches) i.focus(); }, 60); break;
     case "chatClose": S.chatFull = false; render(); break;
     case "sendNote": await sendNote(); break;
@@ -6999,6 +7009,7 @@ function useAccount(id){
   try { const lf = sessionStorage.getItem("dl-left"); if (lf) { sessionStorage.removeItem("dl-left"); setTimeout(() => lf === "garde" ? openSheet(T("Garde terminée"), `<p style="margin:4px 0 8px;font-size:16px;line-height:1.45">${T("Date de garde terminée : accès à la famille retiré.")}</p>`, () => {}) : toast(T(lf === "removed" ? "Vous ne faites plus partie de cette famille" : "Vous avez quitté la famille")), 1200); } } catch(_) {}
 }
 /* ---------- boot ---------- */
+igRender();
 (function(){ const [t, sub] = parseHash(location.hash.slice(1)); if (t) { S.tab = t; S.sub = sub; } })();
 document.documentElement.lang = LANG;
 renderTabs();
