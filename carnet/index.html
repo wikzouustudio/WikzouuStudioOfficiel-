@@ -1724,6 +1724,16 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .pres{position:relative;display:inline-flex;flex:none}
 .pdot{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2.5px var(--card)}
 .on-t{color:var(--green);font-weight:600}
+
+/* typing bubble */
+.msg.typing .bub{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;flex:0 0 auto;width:auto;max-width:max-content}
+.typ-d{display:inline-flex;gap:4px}
+.typ-d i{width:7px;height:7px;border-radius:50%;background:var(--fg2);animation:typ 1.2s ease-in-out infinite}
+.typ-d i:nth-child(2){animation-delay:.15s}.typ-d i:nth-child(3){animation-delay:.3s}
+@keyframes typ{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.typ-n{font-size:13px;color:var(--fg2)}
+.typ-av{display:inline-flex;flex:none}.typ-av .mav+.mav{margin-left:-8px;box-shadow:0 0 0 2px var(--card)}
+.msg.typing{animation:msgIn .3s cubic-bezier(.2,.9,.25,1) both}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1787,7 +1797,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "76"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "77"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2214,6 +2224,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"{n} écrit…":"{n} is typing…"}); Object.assign(HR, {"{n} écrit…":"{n} piše…"});
 Object.assign(EN, {"{n} membre(s)": "{n} member(s)", "{n} en ligne": "{n} online", "En ligne": "Online", "Vu {t}": "Seen {t}"}); Object.assign(HR, {"{n} membre(s)": "Članova: {n}", "{n} en ligne": "{n} na mreži", "En ligne": "Na mreži", "Vu {t}": "Viđen/a {t}"});
 Object.assign(EN, {"Votre téléphone": "Your phone", "Dogs Life est installée": "Dogs Life is installed", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Now open it from its icon on your home screen.", "Installez Dogs Life": "Install Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "To get notifications and open it full screen, install the app on your phone. Watch the 45-second tutorial:", "Installer maintenant": "Install now", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Once installed, always open Dogs Life from its icon: this screen won't show again.", "Fermer": "Close"}); Object.assign(HR, {"Votre téléphone": "Vaš telefon", "Dogs Life est installée": "Dogs Life je instaliran", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Sada ga otvorite preko ikone na početnom zaslonu.", "Installez Dogs Life": "Instalirajte Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "Za obavijesti i prikaz preko cijelog zaslona instalirajte aplikaciju na telefon. Pogledajte vodič od 45 sekundi:", "Installer maintenant": "Instaliraj sada", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Nakon instalacije uvijek otvarajte Dogs Life preko ikone: ovaj se zaslon više neće prikazivati.", "Fermer": "Zatvori"});
 Object.assign(EN, {"Touchez le bouton menu dans la barre d'adresse, puis « Partager »": "Tap the menu button in the address bar, then “Share”", "Touchez « Afficher plus », puis « Sur l'écran d'accueil »": "Tap “View More”, then “Add to Home Screen”", "Touchez « Ajouter »": "Tap “Add”", "Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.": "On older iOS versions: the Share button at the bottom of Safari."}); Object.assign(HR, {"Touchez le bouton menu dans la barre d'adresse, puis « Partager »": "Dodirnite gumb izbornika u adresnoj traci, pa „Dijeli”", "Touchez « Afficher plus », puis « Sur l'écran d'accueil »": "Dodirnite „Prikaži više”, pa „Dodaj na početni zaslon”", "Touchez « Ajouter »": "Dodirnite „Dodaj”", "Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.": "Na starijim verzijama iOS-a: gumb Dijeli na dnu Safarija."});
@@ -3726,7 +3737,21 @@ function presenceBeat(force, away){
   put("members", m.id, Object.assign({}, C.members[m.id], {seen: away ? Date.now() - ONLINE_MS : Date.now()}));
 }
 setInterval(() => { presenceBeat(); if (S.tab === "famille" && !S.sub) render(true); }, 30000);
-document.addEventListener("visibilitychange", () => presenceBeat(true, document.visibilityState !== "visible"));
+document.addEventListener("visibilitychange", () => { presenceBeat(true, document.visibilityState !== "visible"); if (document.visibilityState !== "visible") typingBeat(true); });
+document.addEventListener("focusout", e => { if (e.target && e.target.id === "n-text") setTimeout(() => { if (document.activeElement && document.activeElement.id === "n-text") return; typingBeat(true); }, 400); });
+// typing bubble: whoever is writing a message shows "…" to the others for a few seconds
+const TYPING_MS = 6000;
+const typers = () => { const me = myMember(); return family().filter(m => m.typing && Date.now() - m.typing < TYPING_MS && (!me || m.id !== me.id)); };
+function typingHTML(){ const ts = typers(); if (!ts.length) return "";
+  const names = ts.map(m => m.name).slice(0, 2).join(", ") + (ts.length > 2 ? " +" + (ts.length - 2) : "");
+  return `<div class="msg typing" aria-live="polite">${ts.length === 1 ? mav(ts[0], 28) : `<span class="typ-av">${ts.slice(0, 2).map(m => mav(m, 22)).join("")}</span>`}<div class="bub"><span class="typ-d"><i></i><i></i><i></i></span><span class="typ-n">${esc(T("{n} écrit…", {n: names}))}</span></div></div>`; }
+function typingBeat(stop){
+  if (S.mode !== "db" || !S.ready) return; const m = myMember(); if (!m || !(C.members || {})[m.id]) return;
+  if (stop) { if (!S.lastTyping) return; S.lastTyping = 0; put("members", m.id, Object.assign({}, C.members[m.id], {typing: 0})); return; }
+  if (Date.now() - (S.lastTyping || 0) < 3000) return; S.lastTyping = Date.now();
+  put("members", m.id, Object.assign({}, C.members[m.id], {typing: Date.now()}));
+}
+setInterval(() => { const k = typers().map(m => m.id).join(","); if (k !== (S.typKey || "")) { S.typKey = k; if (S.tab === "famille") render(true); } }, 1200);
 const presDot = m => isOnline(m) ? '<i class="pdot" aria-hidden="true"></i>' : "";
 const myMember = () => S.me ? family().find(m => m.uid === S.me) || null : meMember();
 S.avatars = S.avatars || {};
@@ -4550,7 +4575,8 @@ function viewFamily(){
   const today = fam.length ? `<div class="sec"><div class="sec-h"><h2>${T("Aujourd'hui")}</h2>${canEdit() && routine().length ? `<button class="link" data-act="assignAll">${T("Répartir")}</button>` : ""}</div><div class="card list">${todayRows}${openRow}</div></div>` : "";
   // messages
   // messages: in the page, or full screen (own layer, see syncChat)
-  const msgList = ns.length ? `<div class="msg-list" data-first="${esc(ns[0].id || "")}">` + ns.slice(0, 60).map(n => { if (n.kind === "join" || n.kind === "leave") return `<div class="msg-sys">${mav(memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, 22)}<span>${esc(T(n.kind === "join" ? "{n} a rejoint la famille" : "{n} a quitté la famille",{n:n.name || "?"}))} · ${esc(relTime(n.at))}</span></div>`;
+  const typ = typingHTML();
+  const msgList = ns.length || typ ? `<div class="msg-list" data-first="${esc((ns[0] || {}).id || "")}">` + typ + ns.slice(0, 60).map(n => { if (n.kind === "join" || n.kind === "leave") return `<div class="msg-sys">${mav(memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, 22)}<span>${esc(T(n.kind === "join" ? "{n} a rejoint la famille" : "{n} a quitté la famille",{n:n.name || "?"}))} · ${esc(relTime(n.at))}</span></div>`;
         const m = memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}; const mine = (n.mid && n.mid === ME) || (S.me && n.uid === S.me);
         return `<div class="msg ${mine ? "mine" : ""}">${mav(m, 28)}<div class="bub"><div class="msg-h"><b>${esc(m.name)}</b><span>${esc(relTime(n.at))}</span></div>${n.text ? `<div class="msg-t ${n.kind === "report" ? "rep" : ""}">${esc(n.text)}</div>` : ""}${n.photo ? `<img class="msg-ph" src="${esc(n.photo)}" alt="" data-act="photoView" data-src="${esc(n.photo)}">` : ""}</div>${mine || canEdit() ? `<button class="msg-x" data-act="delNote" data-id="${esc(n.id)}" aria-label="${T("Supprimer")}">×</button>` : ""}</div>`; }).join("") + `</div>`
         : `<div class="empty-s">${T("Pas encore de message. Laissez une consigne, un rappel ou une nouvelle de {n}.",{n:esc(d.name || T("votre chien"))})}</div>`;
@@ -6935,7 +6961,7 @@ document.addEventListener("click", async e => {
   }
 });
 async function sendNote(){
-  const text = val("n-text"), photo = S.notePhoto; if (!text && !photo) return; const m = meMember(); S.notePhoto = null;
+  const text = val("n-text"), photo = S.notePhoto; if (!text && !photo) return; typingBeat(true); const m = meMember(); S.notePhoto = null;
   const nId = newId(); await put("notes", nId, Object.assign({text, mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString()}, photo ? {photo} : {}));
   if (window.carnetNotify) window.carnetNotify("msg", {text: text || T("Photo"), who: m ? m.name : "", ev: nId});
   setTimeout(() => { const i = $("#n-text"); if (i) { i.value = ""; if (i.tagName === "TEXTAREA") i.style.height = ""; i.focus(); } const ph = $("#chat-root #n-ph"); if (ph) ph.innerHTML = I_PLUS; }, 30);
@@ -6955,6 +6981,7 @@ document.addEventListener("submit", async e => {
   } else if (f.id === "sheet-form") { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
 });
 document.addEventListener("input", e => { const t = e.target;
+  if (t.id === "n-text") { if (t.value.trim()) typingBeat(); else typingBeat(true); }
   if (t.id === "n-text" && t.tagName === "TEXTAREA") { t.style.height = "auto"; t.style.height = Math.min(140, t.scrollHeight) + "px"; }
   if (t.id === "x-title") { const c = extraCat(t.value), box = $("#x-info");
     if (c && !t.dataset.manual) { const r = document.querySelector(`input[name="x-cat"][value="${c}"]`); if (r && !r.checked) { r.checked = true; const h = $("#x-hero"); if (h) { h.innerHTML = CATS[c].icon; h.parentNode.style.setProperty("--c", CATS[c].color); } } }
