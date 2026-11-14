@@ -1822,6 +1822,20 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .rmap .maplibregl-ctrl-attrib-button{width:22px;height:22px;background-size:16px}
 .rmap.wmap,.rmap.big{box-shadow:inset 0 0 0 .5px var(--sep),0 8px 24px rgba(0,0,0,.18)}
 .rmap .ml-box{border-radius:inherit;overflow:hidden}
+
+/* send / play / record buttons: same finish as the other main buttons */
+.cf-send,.m-play,.rec-s{position:relative;border:0;cursor:pointer;transition:transform .18s cubic-bezier(.34,1.56,.64,1),filter .2s}
+.cf-send:active,.m-play:active,.rec-s:active,.cf-mic:active,.cf-plus:active{transform:scale(.9)}
+:root[data-skin="aurora"] .cf-send,:root[data-skin="aurora"] .m-play,:root[data-skin="aurora"] .rec-s{color:var(--on-grad);background-image:linear-gradient(120deg,var(--g2),var(--g3),var(--g2),var(--g1),var(--g2));background-size:300% 100%;animation:dl-flow 8s ease-in-out infinite;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.14),0 0 0 1px color-mix(in srgb,var(--g4) 35%,transparent),0 4px 14px color-mix(in srgb,var(--g3) 26%,transparent)}
+:root[data-skin="classic"] .cf-send,:root[data-skin="classic"] .m-play,:root[data-skin="classic"] .rec-s{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 10px rgba(0,0,0,.18)}
+.cf-send svg,.rec-s svg{filter:drop-shadow(0 1px 0 rgba(255,255,255,.25))}
+.m-play svg{margin-left:1px}.m-voice.playing .m-play svg{margin-left:0}
+.cf-mic,.cf-plus{transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+:root[data-skin="aurora"] .cf-mic,:root[data-skin="aurora"] .cf-plus{background:var(--fill);border:1px solid transparent;background:linear-gradient(var(--sf),var(--sf)) padding-box,var(--edge-g) border-box;color:var(--fg)}
+.cf-send{width:40px;height:40px}.cf-mic,.cf-plus{width:40px;height:40px}
+.m-play{width:36px;height:36px}
+@media (prefers-reduced-motion: reduce){:root[data-skin="aurora"] .cf-send,:root[data-skin="aurora"] .m-play,:root[data-skin="aurora"] .rec-s{animation:none}}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1885,7 +1899,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "80"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "81"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -4071,7 +4085,7 @@ function msgsHTML(list){
     const myR = (n.reacts || {})[myUid()];
     const reacts = rs.length ? `<div class="m-reacts">${Object.entries(cnt).map(([k, c]) => `<button class="m-rc ${myR === k ? "mine" : ""}" data-act="msgReact" data-id="${esc(n.id)}" data-k="${k}">${REACTS[k][1]}${c > 1 ? `<b class="num">${c}</b>` : ""}</button>`).join("")}</div>` : "";
     const q = n.replyTo ? `<button class="m-quote" data-act="msgJump" data-id="${esc(n.replyTo.id || "")}"><b>${esc(n.replyTo.name || "")}</b><span>${esc(n.replyTo.text || T("Message"))}</span></button>` : "";
-    const voice = n.audio ? `<div class="m-voice" data-id="${esc(n.id)}"><button class="m-play" data-act="voicePlay" data-id="${esc(n.id)}" aria-label="${T("Écouter")}"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5.5v13l11-6.5Z"/></svg></button><span class="m-wave">${Array.from({length: 22}, (_, i) => `<i style="height:${30 + Math.round(60 * Math.abs(Math.sin(i * 1.7 + (n.dur || 3))))}%"></i>`).join("")}</span><span class="num m-dur">${fmtSec(n.dur || 0)}</span></div>` : "";
+    const voice = n.audio ? `<div class="m-voice" data-id="${esc(n.id)}"><button class="m-play" data-act="voicePlay" data-id="${esc(n.id)}" aria-label="${T("Écouter")}"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8.2 4.9c-.9-.5-2 .1-2 1.2v11.8c0 1 1.1 1.7 2 1.2l10-5.9c.9-.5.9-1.8 0-2.4Z"/></svg></button><span class="m-wave">${Array.from({length: 22}, (_, i) => `<i style="height:${30 + Math.round(60 * Math.abs(Math.sin(i * 1.7 + (n.dur || 3))))}%"></i>`).join("")}</span><span class="num m-dur">${fmtSec(n.dur || 0)}</span></div>` : "";
     let seen = "";
     if (lastMine && n.id === lastMine.id) { const t = Date.parse(n.at) || 0, by = family().filter(x => (!me || x.id !== me.id) && x.readAt && x.readAt >= t);
       seen = `<div class="m-seen">${by.length ? `${T("Vu par")} <span class="m-seen-av">${by.slice(0, 5).map(x => mav(x, 16)).join("")}</span>${by.length > 5 ? " +" + (by.length - 5) : ""}` : T("Envoyé")}</div>`; }
@@ -4157,7 +4171,7 @@ function voicePlay(id){
   VO.a.play().catch(() => toast(T("Lecture impossible.")));
 }
 function voiceUI(id, p, playing){ document.querySelectorAll(`.m-voice[data-id="${CSS.escape(id)}"]`).forEach(v => { v.style.setProperty("--p", Math.round(p * 100) + "%"); v.classList.toggle("playing", playing);
-  const b = v.querySelector(".m-play"); if (b) b.innerHTML = playing ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5.5v13l11-6.5Z"/></svg>'; }); }
+  const b = v.querySelector(".m-play"); if (b) b.innerHTML = playing ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><rect x="6" y="5" width="4.2" height="14" rx="1.6"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.6"/></svg>' : '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8.2 4.9c-.9-.5-2 .1-2 1.2v11.8c0 1 1.1 1.7 2 1.2l10-5.9c.9-.5.9-1.8 0-2.4Z"/></svg>'; }); }
 // press and hold a bubble (or swipe it to the right to reply)
 (() => { let tm = null, sx = 0, sy = 0, tgt = null, moved = false;
   document.addEventListener("pointerdown", e => { const b = e.target.closest(".msg .bub"); if (!b || e.target.closest("button,img,a")) return; tgt = b; sx = e.clientX; sy = e.clientY; moved = false;
@@ -4909,7 +4923,7 @@ function statsSection(){
 /* ---------- family hub ---------- */
 const I_FAM = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="9" cy="7.5" r="3.6"/><path d="M2 19.2c0-3.5 3.1-6 7-6s7 2.5 7 6c0 .7-.6 1.3-1.3 1.3H3.3c-.7 0-1.3-.6-1.3-1.3Z"/><circle cx="17" cy="8.4" r="2.9"/><path d="M17.6 13.4c2.6.2 4.4 2.2 4.4 4.7 0 .6-.5 1.1-1.1 1.1h-3.7c.1-.3.1-.6.1-.9 0-1.9-.8-3.6-2.1-4.7.7-.2 1.5-.2 2.4-.2Z"/></svg>';
 const I_EXPAND = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/></svg>';
-const I_UP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+const I_UP = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
 // full-screen conversation, in its own layer so typing is never interrupted when new messages arrive
 function syncChat(){
   let root = document.getElementById("chat-root");
