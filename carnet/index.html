@@ -1664,7 +1664,21 @@ html.chat-full,body.chat-full{overflow:hidden;overscroll-behavior:none}
 body.chat-full #view,body.chat-full #tabs{pointer-events:none}
 .cf-back{position:fixed;left:0;right:0;top:-50vh;bottom:-50vh;z-index:59;background:var(--bg);touch-action:none}
 body.chat-full #tabs{visibility:hidden}
-.cf{position:fixed;left:0;right:0;top:0;height:100%;z-index:60;overscroll-behavior:none;display:flex;flex-direction:column;background:var(--bg);animation:fadeUp .22s cubic-bezier(.2,.8,.2,1) both}
+.cf{position:fixed;left:0;right:0;top:0;height:100%;z-index:60;overscroll-behavior:none;display:flex;flex-direction:column;background:var(--bg);transform-origin:50% var(--oy,60%);animation:cfIn .42s cubic-bezier(.2,.9,.25,1) both}
+.cf-back{animation:cfBack .3s ease both}
+.cf.out{animation:cfOut .28s cubic-bezier(.4,0,.8,.4) both;pointer-events:none}
+.cf-back.out{animation:cfBackOut .28s ease both;pointer-events:none}
+.cf .cf-h{animation:cfPart .4s .06s cubic-bezier(.2,.9,.25,1) both}.cf .cf-in{animation:cfPartUp .45s .1s cubic-bezier(.2,.9,.25,1) both}
+@keyframes cfIn{from{opacity:0;transform:scale(.9);border-radius:28px}to{opacity:1;transform:none;border-radius:0}}
+@keyframes cfOut{from{opacity:1;transform:none}to{opacity:0;transform:scale(.92);border-radius:28px}}
+@keyframes cfBack{from{opacity:0}to{opacity:1}}@keyframes cfBackOut{from{opacity:1}to{opacity:0}}
+@keyframes cfPart{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes cfPartUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.dl-leave{animation:dlLeave .24s cubic-bezier(.4,0,1,1) both!important;pointer-events:none!important}
+@keyframes dlLeave{from{opacity:1;transform:none}to{opacity:0;transform:translateY(6px) scale(.97)}}
+.cf-body .msg-list>.msg:first-child,.cf-body .msg-list>.msg-sys:first-child{animation:msgIn .35s cubic-bezier(.2,.9,.25,1) both}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.cf,.cf-back,.cf.out,.cf-back.out,.cf .cf-h,.cf .cf-in,.dl-leave,.msg-list>*{animation:none!important}}
 .cf-h{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 8px) 14px 10px;border-bottom:.5px solid var(--sep);background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
 .cf-t{flex:1;text-align:center;display:grid;line-height:1.2}.cf-t b{font-size:16px}.cf-t span{font-size:12.5px;color:var(--fg2)}
 .cf-x{width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);color:var(--fg);display:grid;place-items:center}
@@ -1744,7 +1758,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "71"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "72"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2526,7 +2540,9 @@ function burstHTML(){ const cols = ["var(--green)","var(--orange)","var(--pink)"
   for (let i = 0; i < 18; i++) h += `<i style="--a:${(i*20 + (i%2?8:0))}deg;background:${cols[i%6]};animation-delay:${(i%3)*0.04}s"></i>`; return h + "</span>"; }
 const ico = (c, svg) => `<span class="ico" style="--c:${c}">${svg}</span>`;
 function avatarHTML(d, cls){ if (d && d.photo) return `<div class="avatar ${cls||""}"><img src="${esc(d.photo)}" alt=""></div>`; return `<div class="avatar dflt ${cls||""}"><img src="${DOG_DEFAULT}" alt=""></div>`; }
-function toast(msg, ms){ const r = $("#toast-root"); r.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`; clearTimeout(toast._t); toast._t = setTimeout(() => r.innerHTML = "", ms || 2600); }
+function leave(el, done){ if (!el) { done && done(); return; } el.classList.add("dl-leave"); setTimeout(() => { done ? done() : el.remove(); }, 240); }
+function clearRoot(sel){ const r = $(sel); if (!r) return; [...r.children].forEach(c => leave(c)); }
+function toast(msg, ms){ const r = $("#toast-root"); r.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`; clearTimeout(toast._t); toast._t = setTimeout(() => leave(r.firstElementChild), ms || 2600); }
 const sitterUI = () => S.sitter || S.preview || S.sitterRole;
 const canEdit = () => !S.readOnly && !sitterUI();
 const canTick = () => !S.readOnly;
@@ -3960,13 +3976,13 @@ async function joinFamily(name, role, inv){
   const free = S.isOwner || S.mode !== "db" || (!family().length && S.platEdit === true);
   if (!free && !(inv && inv.hash && invites().some(v => v.id === inv.id))) { S.codeInv = null; S.joinDirty = true; renderJoin(); toast(T("Ce code n'est plus valable.")); return; }
   const mine = myMember();
-  if (mine) { ME = mine.id; LS.set("carnet-me", ME); S.joinForce = false; $("#wiz-root").innerHTML = ""; document.body.classList.remove("wiz-open"); render(); toast(T("Vous faites déjà partie de la famille.")); return; }
+  if (mine) { ME = mine.id; LS.set("carnet-me", ME); S.joinForce = false; clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); render(); toast(T("Vous faites déjà partie de la famille.")); return; }
   if (family().length >= MAX_FAMILY) { toast(T("Une famille compte au maximum {n} membres.", {n: MAX_FAMILY})); return; }
   const fam = family(), id = newId(), doc = {name, color: freeColor(), uid: S.me || "", role: role || "famille", since: Date.now(), invitedBy: inv ? inv.byName || "" : ""};
   const btn = $("#wiz-root .wz-next"); if (btn) { btn.disabled = true; btn.innerHTML = `<span class="spin"></span>${T("Un instant…")}`; }
   if (S.mode === "db") {
     try { await db.collection("members").doc(id).set(doc); }
-    catch(e) { S.noWrite = true; S.joinForce = false; $("#wiz-root").innerHTML = ""; document.body.classList.remove("wiz-open"); S.lastHTML = ""; render(); toast(T("Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur »."), 5000); return; }
+    catch(e) { S.noWrite = true; S.joinForce = false; clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); S.lastHTML = ""; render(); toast(T("Votre compte n'a pas encore le droit de rejoindre : demandez au propriétaire de vous ajouter en « Éditeur »."), 5000); return; }
     C.members = Object.assign({}, C.members, {[id]: doc});
   } else await put("members", id, doc);
   if (inv) await del("invites", inv.id); S.codeInv = null;
@@ -4398,9 +4414,15 @@ const I_UP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke
 function syncChat(){
   let root = document.getElementById("chat-root");
   const on = S.chatFull && S.tab === "famille" && !S.sub;
-  if (!on) { if (root && root.firstChild) { root.innerHTML = ""; document.body.classList.remove("chat-full"); document.documentElement.classList.remove("chat-full"); } return; }
+  if (!on) { if (root && root.querySelector(".cf:not(.out)")) { const tok = syncChat.tok = (syncChat.tok || 0) + 1;
+      root.querySelectorAll(".cf,.cf-back").forEach(x => x.classList.add("out"));
+      document.body.classList.remove("chat-full"); document.documentElement.classList.remove("chat-full");
+      setTimeout(() => { if (syncChat.tok === tok && !S.chatFull) root.innerHTML = ""; }, 300); } return; }
+  if (root && root.querySelector(".cf.out")) { syncChat.tok = (syncChat.tok || 0) + 1; root.innerHTML = ""; }
   if (!root) { root = document.createElement("div"); root.id = "chat-root"; document.body.appendChild(root); }
   if (!root.firstChild) {
+    const card = document.querySelector("#view .board"), cr = card ? card.getBoundingClientRect() : null;
+    root.style.setProperty("--oy", cr ? Math.round(cr.top + cr.height / 2) + "px" : "60%");
     root.innerHTML = `<div class="cf-back" aria-hidden="true"></div><div class="cf" role="dialog" aria-modal="true" aria-label="${T("Messages")}">
       <div class="cf-h"><button class="cf-x" data-act="chatClose" aria-label="${T("Réduire")}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="cf-t"><b>${T("Messages")}</b><span>${esc(T("La famille de {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></div><span style="width:36px"></span></div>
       <div class="cf-body"></div>
@@ -5422,7 +5444,7 @@ function checkNotifs(){
     ${canTick() ? `<button class="btn" data-act="notifDone" data-k="${esc(t.key)}">${T("Fait")}</button>` : ""}<button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
   try { if (navigator.vibrate) navigator.vibrate([30, 60, 30]); } catch(_) {}
   chime();
-  clearTimeout(checkNotifs._t); checkNotifs._t = setTimeout(() => { $("#notif-root").innerHTML = ""; }, 60000);
+  clearTimeout(checkNotifs._t); checkNotifs._t = setTimeout(() => { clearRoot("#notif-root"); }, 60000);
 }
 function notifSection(){
   return `<div class="sec"><div class="sec-h"><h2>${T("Notifications")}</h2></div><div class="card list">
@@ -6287,7 +6309,7 @@ function render(skipNames){
   const v = $("#view");
   document.documentElement.lang = LANG;
   const active = document.activeElement, keepNote = active && active.id && /^(INPUT|TEXTAREA)$/.test(active.tagName) && active.type !== "file" && v.contains(active) ? {id: active.id, v: active.value, s: active.selectionStart} : null;
-  if (S.mode === "locked" || noAccess() || (S.mode === "db" && S.ready && S.readOnly && !dog())) { if ($("#wiz-root .join")) { $("#wiz-root").innerHTML = ""; document.body.classList.remove("wiz-open"); } const h = viewLocked(); if (h !== S.lastHTML) { S.lastHTML = h; v.innerHTML = h; } $("#tabs").innerHTML = ""; S.lastTabs = ""; document.body.classList.add("locked"); return; }
+  if (S.mode === "locked" || noAccess() || (S.mode === "db" && S.ready && S.readOnly && !dog())) { if ($("#wiz-root .join")) { clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); } const h = viewLocked(); if (h !== S.lastHTML) { S.lastHTML = h; v.innerHTML = h; } $("#tabs").innerHTML = ""; S.lastTabs = ""; document.body.classList.add("locked"); return; }
   if (S.mode === "db" && S.ready && !S.isOwner && family().length && !myMember()) { syncMe(); const h = viewNotMember(); if (h !== S.lastHTML) { S.lastHTML = h; v.innerHTML = h; } $("#tabs").innerHTML = ""; S.lastTabs = ""; document.body.classList.add("locked"); renderJoin(); return; }
   document.body.classList.remove("locked");
   if (S.mode === "loading" || (S.mode === "db" && !S.ready)) { renderTabs(); if (!S.stale) return; }
@@ -6573,8 +6595,8 @@ document.addEventListener("click", async e => {
     case "langSheet": langSheet(); break;
     case "spPick": { const v = el.dataset.v === "classic" ? "classic" : "aurora"; document.documentElement.dataset.skin = v; try { localStorage.setItem("dl-skin", v); } catch(_){}
       document.querySelectorAll("#sp-root .sp-o").forEach(b => b.setAttribute("aria-pressed", String(b === el))); S.lastHTML = ""; render(); break; }
-    case "spDone": { try { localStorage.setItem("dl-style-asked", "1"); localStorage.setItem("dl-skin", document.documentElement.dataset.skin === "classic" ? "classic" : "aurora"); } catch(_){} const r = $("#sp-root"); if (r) r.remove(); break; }
-    case "wnClose": { try { localStorage.setItem("dl-whatsnew", APP_RELEASE); } catch(_){} const r = $("#wn-root"); if (r) r.remove(); setTimeout(stylePick, 450); break; }
+    case "spDone": { try { localStorage.setItem("dl-style-asked", "1"); localStorage.setItem("dl-skin", document.documentElement.dataset.skin === "classic" ? "classic" : "aurora"); } catch(_){} leave($("#sp-root")); break; }
+    case "wnClose": { try { localStorage.setItem("dl-whatsnew", APP_RELEASE); } catch(_){} leave($("#wn-root")); setTimeout(stylePick, 520); break; }
     case "widgetOn": { try { el.disabled = true; let tz = ""; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch(_) {}
         await window.carnetWidget.create(dogId(), tz); S.lastHTML = ""; render(); toast(T("Widget créé : copiez le script")); } catch(e) { toast(T("Impossible de créer le widget. Réessayez.")); el.disabled = false; } break; }
     case "widgetCopy": { const sc = widgetScript(); try { await navigator.clipboard.writeText(sc); toast(T("Script copié : collez-le dans Scriptable")); }
@@ -6630,7 +6652,7 @@ document.addEventListener("click", async e => {
     case "qlDel": { await delLog(el.dataset.ds || ymd(new Date()), el.dataset.id); const r = el.closest(".row"); if (r) r.remove(); break; }
     case "walkEnd": walkSheet(); break;
     case "walkCancel": if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer"); break; } gpsDrop(); await setDay(ymd(new Date()), {walk: null}); break;
-    case "notifPee": $("#notif-root").innerHTML = ""; await addLog("pipi"); break;
+    case "notifPee": clearRoot("#notif-root"); await addLog("pipi"); break;
     case "openFamily": go("famille"); break;
     case "closeFamily": go("aujourdhui"); break;
     case "memberSheet": memberSheet(el.dataset.id); break;
@@ -6706,9 +6728,9 @@ document.addEventListener("click", async e => {
     case "testNotif": { if (!actx && SOUND) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){} }
       $("#notif-root").innerHTML = `<div class="notif" role="alert"><span class="ico" style="--c:var(--green)">${I.paw}</span><div class="main"><div class="t">${T("C'est l'heure")} · ${hhmm(new Date())}</div><div class="s">${T("Exemple d'alerte")}</div></div><button class="nx" data-act="notifClose" aria-label="${T("Fermer")}">×</button></div>`;
       try { if (navigator.vibrate) navigator.vibrate([30, 60, 30]); } catch(_){} chime(); break; }
-    case "notifClose": $("#notif-root").innerHTML = ""; break;
+    case "notifClose": clearRoot("#notif-root"); break;
     case "notifDone": { const k = el.dataset.k, ds = ymd(new Date()), done = getDay(ds).done || {};
-      $("#notif-root").innerHTML = ""; if (!done[k]) await setTick(ds, k, true); toast(T("Fait")); break; }
+      clearRoot("#notif-root"); if (!done[k]) await setTick(ds, k, true); toast(T("Fait")); break; }
     case "buddyHelp": buddyHelp(el.dataset.k); break;
     case "badgeHelp": badgeHelp(el.dataset.k); break;
     case "editGarde": gardeSheet(); break;
@@ -6800,9 +6822,9 @@ document.addEventListener("click", async e => {
     case "joinNew": { const i = $("#j-name"), n = i && i.value.trim(); if (!n) { i && i.focus(); toast(T("Indiquez votre prénom.")); break; }
       if (family().some(m => m.name.toLowerCase() === n.toLowerCase())) { toast(T("Ce prénom est déjà dans la famille.")); break; }
       await joinFamily(n, S.codeInv ? S.codeInv.role : "famille", S.codeInv || null); break; }
-    case "joinOk": $("#wiz-root").innerHTML = ""; document.body.classList.remove("wiz-open"); render(); if (dog() && dog().name) maybeTuto(); break;
+    case "joinOk": clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); render(); if (dog() && dog().name) maybeTuto(); break;
     case "wzJoin": S.wiz = null; renderWiz(); S.wizAuto = true; openJoin(); break;
-    case "joinLater": S.joinForce = false; try { sessionStorage.setItem(JOIN_KEY, "1"); } catch(_){} $("#wiz-root").innerHTML = ""; document.body.classList.remove("wiz-open"); maybeTuto(); break;
+    case "joinLater": S.joinForce = false; try { sessionStorage.setItem(JOIN_KEY, "1"); } catch(_){} clearRoot("#wiz-root"); document.body.classList.remove("wiz-open"); maybeTuto(); break;
     case "tutoNext": if (S.tuto != null) { if (S.tuto >= TUTO.length - 1) tutoEnd(); else { S.tuto++; renderTuto(); } } break;
     case "tutoSkip": tutoEnd(); break;
     case "wzClose": S.wiz = null; renderWiz(); break;
