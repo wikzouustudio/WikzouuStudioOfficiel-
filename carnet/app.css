@@ -1933,3 +1933,4 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .scrubbing button.on{background:transparent!important;box-shadow:none!important}
 .tab.scrub-hot{color:var(--fg)!important}.tab.scrub-hot svg{color:var(--accent)!important;transform:translateY(-2px) scale(1.12);transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
 .seg button.scrub-hot{font-weight:600}
+#tabs.scrubbing .tab{transform:none!important;transition:none!important}

@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "95"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "96"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5567,8 +5567,13 @@ function backDragBegin(pg){
     const hot = at(SC.box, e.clientX); if (hot !== SC.hot) { if (SC.hot) SC.hot.classList.remove("scrub-hot"); hot.classList.add("scrub-hot"); SC.hot = hot; try { if (navigator.vibrate) navigator.vibrate(4); } catch(_) {} } });
   const end = e => { if (!SC) return; const s = SC; SC = null; if (!s.on) return;
     const pick = s.hot; if (s.hot) s.hot.classList.remove("scrub-hot"); s.ind.remove(); s.box.classList.remove("scrubbing");
-    const stop = ev => { ev.stopPropagation(); ev.preventDefault(); }; document.addEventListener("click", stop, {capture: true});
-    setTimeout(() => { document.removeEventListener("click", stop, {capture: true}); if (pick && !(pick.classList.contains("on") && pick.getAttribute("aria-current") !== null && false)) pick.click(); }, 0); };
+    // the browser may still send its own click (late on iPhone, on the wrong button): swallow every click for a moment,
+    // except the one we send to the button you lifted your finger on
+    let pass = pick; const stop = ev => { if (pass && ev.target === pass) { pass = null; return; } ev.stopPropagation(); ev.preventDefault(); };
+    document.addEventListener("click", stop, {capture: true}); setTimeout(() => document.removeEventListener("click", stop, {capture: true}), 450);
+    if (pick && !pick.classList.contains("on")) pick.click(); else pass = null; };
+  // while sliding, the page must not scroll or bounce (iPhone would otherwise cancel the gesture)
+  document.addEventListener("touchmove", e => { if (SC && SC.on && e.cancelable) e.preventDefault(); }, {passive: false});
   document.addEventListener("pointerup", end); document.addEventListener("pointercancel", e => { if (SC && SC.on) { SC.ind.remove(); SC.box.classList.remove("scrubbing"); if (SC.hot) SC.hot.classList.remove("scrub-hot"); } SC = null; });
 })();
 // switches: the knob can be dragged as well as tapped
