@@ -1660,9 +1660,11 @@ input[type="time"].f::-webkit-datetime-edit{padding:0;line-height:46px}
 
 /* full-screen conversation */
 .exp-l{display:inline-flex;align-items:center;gap:5px}
-body.chat-full{overflow:hidden}
+html.chat-full,body.chat-full{overflow:hidden;overscroll-behavior:none}
+body.chat-full #view,body.chat-full #tabs{pointer-events:none}
+.cf-back{position:fixed;left:0;right:0;top:-50vh;bottom:-50vh;z-index:59;background:var(--bg);touch-action:none}
 body.chat-full #tabs{visibility:hidden}
-.cf{position:fixed;left:0;right:0;top:0;height:100%;z-index:60;display:flex;flex-direction:column;background:var(--bg);animation:fadeUp .22s cubic-bezier(.2,.8,.2,1) both}
+.cf{position:fixed;left:0;right:0;top:0;height:100%;z-index:60;overscroll-behavior:none;display:flex;flex-direction:column;background:var(--bg);animation:fadeUp .22s cubic-bezier(.2,.8,.2,1) both}
 .cf-h{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 8px) 14px 10px;border-bottom:.5px solid var(--sep);background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
 .cf-t{flex:1;text-align:center;display:grid;line-height:1.2}.cf-t b{font-size:16px}.cf-t span{font-size:12.5px;color:var(--fg2)}
 .cf-x{width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);color:var(--fg);display:grid;place-items:center}
@@ -1742,7 +1744,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "70"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "71"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -4396,15 +4398,15 @@ const I_UP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke
 function syncChat(){
   let root = document.getElementById("chat-root");
   const on = S.chatFull && S.tab === "famille" && !S.sub;
-  if (!on) { if (root && root.firstChild) { root.innerHTML = ""; document.body.classList.remove("chat-full"); } return; }
+  if (!on) { if (root && root.firstChild) { root.innerHTML = ""; document.body.classList.remove("chat-full"); document.documentElement.classList.remove("chat-full"); } return; }
   if (!root) { root = document.createElement("div"); root.id = "chat-root"; document.body.appendChild(root); }
   if (!root.firstChild) {
-    root.innerHTML = `<div class="cf" role="dialog" aria-label="${T("Messages")}">
+    root.innerHTML = `<div class="cf-back" aria-hidden="true"></div><div class="cf" role="dialog" aria-modal="true" aria-label="${T("Messages")}">
       <div class="cf-h"><button class="cf-x" data-act="chatClose" aria-label="${T("Réduire")}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="cf-t"><b>${T("Messages")}</b><span>${esc(T("La famille de {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></div><span style="width:36px"></span></div>
       <div class="cf-body"></div>
       ${S.chatCanWrite ? `<div class="cf-in"><div class="cf-box"><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message à la famille")}" autocomplete="off" enterkeyhint="send"></textarea><div class="cf-row"><label class="cf-plus" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : I_PLUS}</label><input type="file" id="n-photo" accept="image/*" hidden><button class="cf-send" type="button" data-act="sendNote" aria-label="${T("Envoyer")}">${I_UP}</button></div></div></div>`
         : `<div class="cf-in s" style="color:var(--fg2);justify-content:center">${T("Rejoignez la famille pour écrire un message.")}</div>`}</div>`;
-    document.body.classList.add("chat-full");
+    document.body.classList.add("chat-full"); document.documentElement.classList.add("chat-full");
   }
   if (!window.__cfVV && window.visualViewport) { window.__cfVV = true;
     const fit = () => { const cf = document.querySelector("#chat-root .cf"), vv = window.visualViewport; if (!cf) return;
