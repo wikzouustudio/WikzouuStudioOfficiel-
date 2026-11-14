@@ -168,7 +168,7 @@ const L = {
     warn: "Météo à éviter pour la balade de {h}", better: "Mieux vers {h} : {i} {t}°, {p} % de pluie.", earlier: "Avancez-la ?", later: "Décalez-la ?", alsoBetter: "mieux vers {h}",
     ideal: "Temps idéal pour une balade", goOut: "Parfait pour sortir {n}", dryUntil: "sec jusqu'à", rain: "pluie probable", hot: "chaud, gardez-la courte", cold: "froid", nice: "temps idéal",
     tomorrow: "Demain", in1h: "Dans 1 heure", at: "à", recap: "Pas encore fait aujourd'hui", more: "et {n} autre(s)", food: "Croquettes bientôt finies", foodDays: "Il en reste pour environ {n} jour(s).",
-    k: {pipi: "Pipi", caca: "Caca", balade: "Balade", accident: "Accident", eau: "Eau", friandise: "Friandise", sieste: "Sieste", jeu: "Jeu", vomi: "Vomissement", photo: "Photo"}},
+    k: {pipi: "Petit besoin", caca: "Grand besoin", balade: "Balade", accident: "Accident", eau: "Eau", friandise: "Friandise", sieste: "Sieste", jeu: "Jeu", vomi: "Vomissement", photo: "Photo"}},
   en: {week: "📊 Your weekly summary is ready", weekBody: "Averages, trends and a plan for {n}'s next week.", test: "Notification sent by the server ✓", soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
     warn: "Bad weather for the {h} walk", better: "Better around {h}: {i} {t}°, {p}% rain.", earlier: "Go earlier?", later: "Go later?", alsoBetter: "better around {h}",
     ideal: "Perfect weather for a walk", goOut: "A great time to take {n} out", dryUntil: "dry until", rain: "rain likely", hot: "hot, keep it short", cold: "cold", nice: "ideal weather",

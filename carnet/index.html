@@ -590,7 +590,7 @@ details.sh-how[open] summary{margin-bottom:10px}
 .ql-b{display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:none;font:inherit;font-size:12px;color:var(--fg);cursor:pointer;padding:2px 0;min-width:0}
 .ql-b i{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--c);box-shadow:0 4px 12px color-mix(in srgb,var(--c) 35%,transparent);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
 .ql-b i svg{width:24px;height:24px}
-.ql-b span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ql-b span{overflow:hidden;max-width:100%;text-align:center;line-height:1.15;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .ql-b:active i{transform:scale(.86)}.ql-b:disabled{opacity:.4}
 .ql-b.on i{animation:qlOn 1.6s ease-in-out infinite}
 @keyframes qlOn{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 45%,transparent)}50%{box-shadow:0 0 0 8px transparent}}
@@ -1651,7 +1651,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "54"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "55"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -1794,7 +1794,7 @@ const EN = {
 };
 const HR = {};
 const DICT = () => LANG === "en" ? EN : LANG === "hr" ? HR : null;
-const FRX = {"Moyen (appétit)":"Moyen"};
+const FRX = {"Moyen (appétit)":"Moyen", "Pipi": "Petit besoin", "Caca": "Grand besoin", "Cacas": "Grands besoins", "pipi": "petit besoin", "caca": "grand besoin", "Pipi : {a} · Caca : {b}": "Petits besoins : {a} · Grands besoins : {b}", "Pipi fait": "Besoin fait", "Pipi, balade, repas : un geste et c'est noté.": "Besoins, balade, repas : un geste et c'est noté.", "Pipi, balade, repas : un geste, l'heure et votre prénom sont notés.": "Besoins, balade, repas : un geste, l'heure et votre prénom sont notés.", "Pipi, caca, balade chronométrée, accident, photo… Un toucher suffit : l'heure et votre prénom sont notés.": "Besoins, balade chronométrée, accident, photo… Un toucher suffit : l'heure et votre prénom sont notés.", "Prochaine sortie pipi conseillée vers {h}": "Prochaine sortie hygiénique conseillée vers {h}", "Quand quelqu'un coche, note un pipi ou écrit un message.": "Quand quelqu'un coche, note un besoin ou écrit un message.", "Sortie pipi": "Sortie hygiénique", "Sorties pipi": "Sorties hygiéniques", "Une sortie pipi est conseillée maintenant": "Une sortie hygiénique est conseillée maintenant", "Utilisez le journal rapide sur Aujourd'hui (pipi, caca, balade…) : les tendances de la semaine apparaîtront ici.": "Utilisez le journal rapide sur Aujourd'hui (besoins, balade…) : les tendances de la semaine apparaîtront ici.", "pipi aujourd'hui": "petits besoins aujourd'hui", "{n} pipi": "petits besoins : {n}", "{n} caca": "grands besoins : {n}"};
 const T = (s, v) => { const dct = DICT(); let r = !dct && FRX[s] ? FRX[s] : dct ? (dct[s] != null ? dct[s] : (EN[s] != null && LANG !== "fr" ? EN[s] : s)) : s; if (v) r = r.replace(/\{(\w+)\}/g, (m, k) => v[k] != null ? v[k] : ""); return r; };
 const LOC = () => LANG === "en" ? "en-GB" : LANG === "hr" ? "hr-HR" : "fr-CH";
 const nf = x => LANG === "en" ? String(x) : String(x).replace(".", ",");
