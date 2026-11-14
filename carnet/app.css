@@ -1951,3 +1951,22 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 #tabs.scrubbing .tab.on::before{opacity:0!important}
 #tabs.scrubbing .tab svg{transition:none!important}
 .scrub-ind{transform-origin:center}
+
+/* colour palettes for the Aurora design (Réglages → Apparence) */
+:root{--g1:#FFB088;--g2:#FF7A5C;--g3:#F2456E;--g4:#B4235C;--on-grad:#FFFFFF;--acc-l:#D2334A;--acc-d:#FF8A70}
+.pal-sw[data-pal="corail"]{background:linear-gradient(135deg,#FFB088,#FF7A5C 45%,#F2456E 80%,#B4235C)}
+:root[data-pal="ocean"]{--g1:#8ADAFF;--g2:#3EA6FF;--g3:#2563EB;--g4:#1E3A8A;--on-grad:#FFFFFF;--acc-l:#1D5FD6;--acc-d:#62B6FF}
+.pal-sw[data-pal="ocean"]{background:linear-gradient(135deg,#8ADAFF,#3EA6FF 45%,#2563EB 80%,#1E3A8A)}
+:root[data-pal="violet"]{--g1:#D2C2FF;--g2:#A78BFA;--g3:#7C3AED;--g4:#4C1D95;--on-grad:#FFFFFF;--acc-l:#6D28D9;--acc-d:#B9A3FF}
+.pal-sw[data-pal="violet"]{background:linear-gradient(135deg,#D2C2FF,#A78BFA 45%,#7C3AED 80%,#4C1D95)}
+:root[data-pal="menthe"]{--g1:#9AF0C0;--g2:#3DD69A;--g3:#10B981;--g4:#047857;--on-grad:#03241A;--acc-l:#047857;--acc-d:#4BE0A2}
+.pal-sw[data-pal="menthe"]{background:linear-gradient(135deg,#9AF0C0,#3DD69A 45%,#10B981 80%,#047857)}
+:root[data-pal="or"]{--g1:#FAEBC6;--g2:#F1C76A;--g3:#DE9A42;--g4:#A65D24;--on-grad:#251507;--acc-l:#9A5718;--acc-d:#F1C76A}
+.pal-sw[data-pal="or"]{background:linear-gradient(135deg,#FAEBC6,#F1C76A 45%,#DE9A42 80%,#A65D24)}
+.pal-pick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:14px 12px 4px}
+.pal-o{display:grid;justify-items:center;gap:6px;border:0;background:none;font:inherit;color:var(--fg2);cursor:pointer;padding:4px 0}
+.pal-o small{font-size:12px;font-weight:600}
+.pal-sw{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 12px rgba(0,0,0,.18);transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .2s}
+.pal-o[aria-checked="true"] .pal-sw{box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--accent),0 6px 16px rgba(0,0,0,.2);transform:scale(1.04)}
+.pal-o[aria-checked="true"] small{color:var(--fg)}
+.pal-o:active .pal-sw{transform:scale(.88)}
