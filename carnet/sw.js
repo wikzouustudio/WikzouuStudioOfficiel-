@@ -1,5 +1,5 @@
 // Dogs Life service worker: opens without network, and shows family notifications even when the app is closed.
-const CACHE = "dogslife-v73";
+const CACHE = "dogslife-v74";
 const SHELL = ["./", "index.html", "firebase-bridge.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.png", "dog.bin"];
 const LIBS = ["www.gstatic.com", "cdnjs.cloudflare.com", "cdn.jsdelivr.net"]; // Firebase and three.js: versioned files, safe to keep
 
@@ -12,6 +12,7 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const req = e.request; if (req.method !== "GET") return;
   const url = new URL(req.url);
+  if (url.origin === location.origin && url.pathname.includes("/videos/")) return; // videos stream straight from the network (range requests)
   if (url.origin === location.origin) {
     // the app itself: newest version when online, the saved copy when offline
     e.respondWith(fetch(req, {cache: "no-cache"}).then(r => { if (r.ok) { const cp = r.clone(); caches.open(CACHE).then(c => c.put(req, cp)); } return r; })

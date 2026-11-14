@@ -1695,6 +1695,24 @@ body.chat-full #tabs{visibility:hidden}
 .cf-plus svg{width:20px;height:20px}.cf-plus img{width:100%;height:100%;object-fit:cover}
 .cf-send{flex:none;width:38px;height:38px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--accent);color:var(--on-grad,#fff)}
 :root[data-skin="aurora"] .cf-send{background:var(--grad)}
+
+/* install gate with tutorial videos */
+.ig .gate-in{max-width:420px}
+.ig-icon{width:84px;height:84px;margin:0 auto 18px;border-radius:22px;background:#fff;display:grid;place-items:center;box-shadow:0 14px 40px -10px rgba(241,199,106,.5)}
+.ig-icon img{width:82%}
+.ig-ch{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 16px}
+.ig-o{position:relative;border:0;border-radius:22px;background:var(--card);box-shadow:inset 0 0 0 1px var(--sep);padding:10px 10px 14px;display:grid;justify-items:center;gap:2px;color:var(--fg);font:inherit;cursor:pointer}
+.ig-o.on{box-shadow:inset 0 0 0 2px var(--accent)}
+.ig-th{position:relative;width:100%;aspect-ratio:9/12;border-radius:14px;overflow:hidden;background:#000;margin-bottom:8px}
+.ig-th img{width:100%;height:100%;object-fit:cover;object-position:50% 70%;opacity:.85}
+.ig-th i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(255,255,255,.92);color:#111;display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.ig-o b{font-size:17px}.ig-o small{font-size:13px;color:var(--fg2)}
+.ig-me{position:absolute;top:16px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--accent);color:var(--on-grad,#fff)}
+:root[data-skin="aurora"] .ig-me{background:var(--grad)}
+.ig-v{position:fixed;inset:0;z-index:9100;background:#000;display:grid;place-items:center;animation:fadeUp .3s cubic-bezier(.2,.8,.2,1) both}
+.ig-v.out{animation:dlLeave .26s ease both}
+.ig-v video{width:100%;height:100%;object-fit:contain;background:#000}
+.ig-x{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:14px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.16);backdrop-filter:blur(12px);color:#fff;display:grid;place-items:center}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1758,7 +1776,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "73"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "74"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2185,6 +2203,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"Votre téléphone": "Your phone", "Dogs Life est installée": "Dogs Life is installed", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Now open it from its icon on your home screen.", "Installez Dogs Life": "Install Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "To get notifications and open it full screen, install the app on your phone. Watch the 45-second tutorial:", "Installer maintenant": "Install now", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Once installed, always open Dogs Life from its icon: this screen won't show again.", "Fermer": "Close"}); Object.assign(HR, {"Votre téléphone": "Vaš telefon", "Dogs Life est installée": "Dogs Life je instaliran", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Sada ga otvorite preko ikone na početnom zaslonu.", "Installez Dogs Life": "Instalirajte Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "Za obavijesti i prikaz preko cijelog zaslona instalirajte aplikaciju na telefon. Pogledajte vodič od 45 sekundi:", "Installer maintenant": "Instaliraj sada", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Nakon instalacije uvijek otvarajte Dogs Life preko ikone: ovaj se zaslon više neće prikazivati.", "Fermer": "Zatvori"});
 Object.assign(EN, {"Touchez le bouton menu dans la barre d'adresse, puis « Partager »": "Tap the menu button in the address bar, then “Share”", "Touchez « Afficher plus », puis « Sur l'écran d'accueil »": "Tap “View More”, then “Add to Home Screen”", "Touchez « Ajouter »": "Tap “Add”", "Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.": "On older iOS versions: the Share button at the bottom of Safari."}); Object.assign(HR, {"Touchez le bouton menu dans la barre d'adresse, puis « Partager »": "Dodirnite gumb izbornika u adresnoj traci, pa „Dijeli”", "Touchez « Afficher plus », puis « Sur l'écran d'accueil »": "Dodirnite „Prikaži više”, pa „Dodaj na početni zaslon”", "Touchez « Ajouter »": "Dodirnite „Dodaj”", "Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.": "Na starijim verzijama iOS-a: gumb Dijeli na dnu Safarija."});
 Object.assign(EN, {"Message à la famille":"Message the family"}); Object.assign(HR, {"Message à la famille":"Poruka obitelji"});
 Object.assign(EN, {"Agrandir":"Expand","Réduire":"Close","Conversation ouverte en plein écran.":"Conversation open full screen.","Message":"Message"}); Object.assign(HR, {"Agrandir":"Povećaj","Réduire":"Zatvori","Conversation ouverte en plein écran.":"Razgovor je otvoren preko cijelog zaslona.","Message":"Poruka"});
@@ -5400,6 +5419,8 @@ const RPI_DOC = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h9l5 
 function pushGate(){
   const g = $("#gate-root"), cp = window.carnetPush;
   if (!SPLASH.gone || !S.readyAt || Date.now() - S.readyAt < 2000) { clearTimeout(S.pgT); S.pgT = setTimeout(pushGate, 2100); return; }
+  // on a phone, the app must be installed (home screen) before anything else: pick a tutorial video
+  if (S.mode === "db" && S.ready && !noAccess() && installNeeded()) { installGate(g); return; }
   const need = cp && S.mode === "db" && S.ready && !noAccess() && (cp.ios || (cp.available() && !cp.state()));
   if (!need) { if (g.innerHTML) { g.innerHTML = ""; document.body.classList.remove("gate-open"); } return; }
   const perm = cp.info ? cp.info().perm : "default", bell = `<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg>`;
@@ -5415,6 +5436,25 @@ function pushGate(){
   if (g.innerHTML !== h) g.innerHTML = h; document.body.classList.add("gate-open");
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pushGate(); });
+const STANDALONE = () => matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+const PHONE = () => { const ua = navigator.userAgent; return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ? "ios" : /Android/i.test(ua) ? "and" : ""; };
+const installNeeded = () => !S.preview && !STANDALONE() && !!PHONE();
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); S.bip = e; pushGate(); });
+window.addEventListener("appinstalled", () => { S.bip = null; S.installed = true; pushGate(); });
+function installGate(g){
+  const mine = PHONE(), phone = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.8"/><path d="M10.5 5h3"/></svg>';
+  const opt = (k, name, br) => `<button class="ig-o ${k === mine ? "on" : ""}" data-act="igPlay" data-v="${k}"><span class="ig-th"><img src="videos/install-${k === "ios" ? "iphone" : "android"}.jpg" alt=""><i><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5.5v13l11-6.5Z"/></svg></i></span><b>${name}</b><small>${br}</small>${k === mine ? `<span class="ig-me">${T("Votre téléphone")}</span>` : ""}</button>`;
+  const vid = S.igVideo ? `<div class="ig-v" role="dialog" aria-modal="true"><video src="videos/install-${S.igVideo === "ios" ? "iphone" : "android"}.mp4" poster="videos/install-${S.igVideo === "ios" ? "iphone" : "android"}.jpg" controls playsinline autoplay></video><button class="ig-x" data-act="igClose" aria-label="${T("Fermer")}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>` : "";
+  const h = `<div class="gate ig" role="dialog" aria-modal="true"><div class="gate-in">
+    <div class="ig-icon"><img src="icon-512.png" alt=""></div>
+    <h1>${T(S.installed ? "Dogs Life est installée" : "Installez Dogs Life")}</h1>
+    <p>${T(S.installed ? "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil." : "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :")}</p>
+    ${S.installed ? "" : `<div class="ig-ch">${opt("ios", "iPhone", "Safari")}${opt("and", "Android", "Chrome")}</div>`}
+    ${!S.installed && mine === "and" && S.bip ? `<button class="btn gate-btn" data-act="igInstall">${T("Installer maintenant")}</button>` : ""}
+    <p class="gate-small">${T("Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.")}</p>
+  </div>${vid}</div>`;
+  if (g.innerHTML !== h) g.innerHTML = h; document.body.classList.add("gate-open");
+}
 function notifPrompt(){
   if (window.carnetPush || NOTIF_ASKED || !dog() || S.dismissNotifAsk) return "";
   return `<div class="card ask"><div class="ask-h"><span class="ico" style="--c:var(--orange)"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg></span>
@@ -6669,6 +6709,9 @@ document.addEventListener("click", async e => {
         break; }
       if (m) await removeMember(m.id); ME = null; try { LS.del("carnet-me"); } catch(_){} render(); toast(T("Vous avez quitté la famille")); break; }
     case "delNote": await del("notes", el.dataset.id); break;
+    case "igPlay": S.igVideo = el.dataset.v; pushGate(); break;
+    case "igClose": { const v = document.querySelector(".ig-v"); if (v) { v.classList.add("out"); setTimeout(() => { S.igVideo = null; pushGate(); }, 260); } else { S.igVideo = null; pushGate(); } break; }
+    case "igInstall": if (S.bip) { const p = S.bip; S.bip = null; p.prompt(); try { const r = await p.userChoice; if (r && r.outcome === "accepted") S.installed = true; } catch(_) {} pushGate(); } break;
     case "chatFull": S.chatFull = true; render(); setTimeout(() => { const i = $("#n-text"); if (i && matchMedia("(hover:hover)").matches) i.focus(); }, 60); break;
     case "chatClose": S.chatFull = false; render(); break;
     case "sendNote": await sendNote(); break;
