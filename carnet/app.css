@@ -1974,3 +1974,21 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 :root[data-pal="indigo"]{--g1:#8CC8FF;--g2:#4D8DFF;--g3:#5B5BF0;--g4:#7B3FE4;--on-grad:#FFFFFF;--acc-l:#3B53DD;--acc-d:#86A8FF}
 .pal-sw[data-pal="indigo"]{background:linear-gradient(135deg,#8CC8FF,#4D8DFF 45%,#5B5BF0 80%,#7B3FE4)}
 .pal-pick{grid-template-columns:repeat(6,1fr);gap:2px}.pal-sw{width:40px;height:40px}
+
+/* ===== blue reflections: glass edges catch a tint of the palette, surfaces carry a soft sheen ===== */
+:root[data-skin="aurora"]{--refl:color-mix(in srgb,var(--g2) 10%,transparent);--refl2:color-mix(in srgb,var(--g4) 6%,transparent);
+  --edge-g:linear-gradient(155deg,color-mix(in srgb,var(--g1) 75%,var(--hl-a)) 0%,var(--hl-a) 22%,var(--hl-b) 55%,color-mix(in srgb,var(--g3) 35%,var(--hl-b)) 100%)}
+@media (prefers-color-scheme: dark){:root[data-skin="aurora"]:not([data-theme="light"]){--refl:color-mix(in srgb,var(--g2) 15%,transparent);--refl2:color-mix(in srgb,var(--g4) 10%,transparent);
+  --edge-g:linear-gradient(155deg,color-mix(in srgb,var(--g1) 55%,transparent) 0%,var(--hl-a) 24%,var(--hl-b) 55%,color-mix(in srgb,var(--g3) 40%,transparent) 100%)}}
+:root[data-skin="aurora"][data-theme="dark"]{--refl:color-mix(in srgb,var(--g2) 15%,transparent);--refl2:color-mix(in srgb,var(--g4) 10%,transparent);
+  --edge-g:linear-gradient(155deg,color-mix(in srgb,var(--g1) 55%,transparent) 0%,var(--hl-a) 24%,var(--hl-b) 55%,color-mix(in srgb,var(--g3) 40%,transparent) 100%)}
+:root[data-skin="aurora"]{--sheen:radial-gradient(130% 80% at 0% 0%,var(--refl),transparent 55%),radial-gradient(90% 70% at 100% 100%,var(--refl2),transparent 60%)}
+:root[data-skin="aurora"] .card:not(.hx):not(.lw),:root[data-skin="aurora"] .alert{background:var(--sheen) padding-box,linear-gradient(var(--cardS),var(--cardS)) padding-box,var(--edge-g) border-box}
+:root[data-skin="aurora"] .btn.ghost,:root[data-skin="aurora"] .pill,:root[data-skin="aurora"] .qk,:root[data-skin="aurora"] .hx-next,:root[data-skin="aurora"] .seg,:root[data-skin="aurora"] .opts span,:root[data-skin="aurora"] .when,:root[data-skin="aurora"] .tgl-row,:root[data-skin="aurora"] input.f,:root[data-skin="aurora"] select.f,:root[data-skin="aurora"] textarea.f,:root[data-skin="aurora"] .cf-mic,:root[data-skin="aurora"] .cf-plus{background:var(--sheen) padding-box,linear-gradient(var(--sf),var(--sf)) padding-box,var(--edge-g) border-box}
+:root[data-skin="aurora"] .tabbar{background:radial-gradient(80% 120% at 15% 0%,var(--refl),transparent 60%) padding-box,linear-gradient(var(--bar),var(--bar)) padding-box,var(--edge-g) border-box}
+:root[data-skin="aurora"] .sheet{background:radial-gradient(120% 40% at 20% 0%,var(--refl),transparent 70%),var(--sheet);border-top:1px solid color-mix(in srgb,var(--g1) 45%,var(--edge))}
+:root[data-skin="aurora"] .cf-h{background:radial-gradient(100% 140% at 10% 0%,var(--refl),transparent 70%),color-mix(in srgb,var(--bg) 82%,transparent)}
+:root[data-skin="aurora"] .mm-r,:root[data-skin="aurora"] .mm-l,:root[data-skin="aurora"] .aw,:root[data-skin="aurora"] .rec{background:var(--sheen),linear-gradient(var(--card),var(--card)),var(--bg)}
+/* buttons: a thin light streak across the top, like light on glass */
+:root[data-skin="aurora"] .btn:not(.ghost):not(.danger){box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.14),0 0 0 1px color-mix(in srgb,var(--g4) 35%,transparent),0 6px 18px color-mix(in srgb,var(--g3) 28%,transparent),0 1px 22px -6px color-mix(in srgb,var(--g1) 45%,transparent)}
+:root[data-skin="aurora"] .bell,:root[data-skin="aurora"] .gearbtn{box-shadow:inset 0 0 0 1px var(--hl-b),inset 0 1px 0 color-mix(in srgb,var(--g1) 60%,var(--hl-a)),0 0 14px -6px color-mix(in srgb,var(--g2) 60%,transparent)}
