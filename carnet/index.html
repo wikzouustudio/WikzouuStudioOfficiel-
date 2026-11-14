@@ -1861,15 +1861,15 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .rmap .maplibregl-ctrl-group button{width:36px;height:36px}
 @media (prefers-color-scheme:dark){.rmap .maplibregl-ctrl-group{background:rgba(40,40,44,.85)}.rmap .maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1)}}
 
-/* go for a walk: a switch, not a category */
-.go-walk{display:flex;align-items:center;gap:12px;width:100%;margin-top:14px;padding:10px 12px 10px 10px;border:0;border-radius:999px;font:inherit;color:var(--fg);text-align:left;cursor:pointer;background:var(--card);box-shadow:inset 0 0 0 .5px var(--sep);transition:background-color .3s,box-shadow .3s}
-:root[data-skin="aurora"] .go-walk{border:1px solid transparent;background:linear-gradient(var(--sf),var(--sf)) padding-box,var(--edge-g) border-box;box-shadow:none}
-.go-walk .gw-dot{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--green);background:color-mix(in srgb,var(--green) 16%,transparent);transition:background-color .3s,color .3s}
-.go-walk .gw-dot svg{width:21px;height:21px}
-.go-walk .main{flex:1;min-width:0;display:grid}.go-walk .t{font-weight:700;font-size:16px}.go-walk .s{font-size:12.5px;color:var(--fg2)}
-.go-walk .gw-sw{margin-left:4px}
-.go-walk.on .gw-dot{background:var(--green);color:#fff}
-.go-walk:active .gw-sw i{width:33px}
+/* go for a walk: one big button */
+.btn.go-walk{display:flex;align-items:center;gap:14px;width:100%;min-height:76px;margin-top:14px;padding:12px 16px 12px 12px;border:0;border-radius:22px;font:inherit;text-align:left;cursor:pointer;transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+:root[data-skin="classic"] .btn.go-walk{background:var(--green);color:#fff}
+.btn.go-walk:active,.btn.go-walk.on{transform:scale(.97)}
+.go-walk .gw-dot{flex:none;width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.go-walk .gw-dot svg{width:28px;height:28px}
+.go-walk .main{flex:1;min-width:0;display:grid}.go-walk .t{font-weight:800;font-size:19px;letter-spacing:-.01em}.go-walk .s{font-size:13px;font-weight:600;opacity:.75}
+.go-walk .gw-go{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.1)}
+.go-walk .gw-go svg{width:16px;height:16px}
 
 .sg-search{margin-top:10px;display:grid;gap:8px}.sg-search[hidden]{display:none}
 .sg-q{display:flex;gap:8px}.sg-q .f{flex:1;min-width:0}.sg-q .btn{flex:none}
@@ -1940,7 +1940,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "86"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "87"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -4898,7 +4898,7 @@ function walkNow(){ const w = getDay(ymd(new Date())).walk; return w && w.start 
 const walkBtnOff = () => gLS.g("dl-walkbtn-off") === "1";
 function liveWalk(){
   const w = walkNow();
-  if (!w) return walkBtnOff() || !canTick() ? "" : `<button class="go-walk" data-act="goWalk" role="switch" aria-checked="false"><span class="gw-dot">${I_ROUTE}</span><span class="main"><span class="t">${T("Sortir en balade")}</span><span class="s">${esc(T("GPS précis · avec {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></span><span class="switch gw-sw"><i></i></span></button>`;
+  if (!w) return walkBtnOff() || !canTick() ? "" : `<button class="btn go-walk" data-act="goWalk"><span class="gw-dot">${I_ROUTE}</span><span class="main"><span class="t">${T("Sortir en balade")}</span><span class="s">${esc(T("GPS précis · avec {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></span><span class="gw-go">${I.chevR}</span></button>`;
   const can = canTick(), m = memberOf(w.mid), min = Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000));
   setTimeout(() => { GPS.painted = 0; gpsPaint(); }, 0);
   return `<div class="card lw"><div class="lw-top"><span class="ql-pulse"></span><div class="main"><div class="lw-k">${T("Balade en cours")}${m ? " · " + esc(m.name) : ""}</div><div class="lw-t"><b class="num" id="walk-min">${min} min</b><span class="gps" id="walk-gps">${gpsLine(w) ? " · " + gpsLine(w) : ""}</span></div></div></div>
@@ -7421,9 +7421,8 @@ document.addEventListener("click", async e => {
     case "qlItem": case "qlAll": logSheet(); break;
     case "walkView": walkView(el.dataset.id); break;
     case "wxToggle": { try { localStorage.getItem("dl-wx-open") === "1" ? localStorage.removeItem("dl-wx-open") : localStorage.setItem("dl-wx-open", "1"); } catch(_) {} render(); break; }
-    case "goWalk": { const sw = el.querySelector(".switch"); if (sw) sw.classList.add("on"); el.classList.add("on"); el.setAttribute("aria-checked", "true");
-      try { if (navigator.vibrate) navigator.vibrate(10); } catch(_) {}
-      await new Promise(r => setTimeout(r, 380)); if (walkNow()) break;
+    case "goWalk": { el.classList.add("on"); try { if (navigator.vibrate) navigator.vibrate(10); } catch(_) {}
+      await new Promise(r => setTimeout(r, 220)); if (walkNow()) break;
       const st0 = new Date().toISOString(); gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}});
       toast(navigator.geolocation && !gpsOff() ? T("Balade lancée : gardez l'app ouverte pour mesurer le trajet") : T("Balade lancée : touchez Terminer au retour")); break; }
     case "walkBtnPref": { const on = el.getAttribute("aria-checked") !== "true"; gLS.s("dl-walkbtn-off", on ? null : "1"); render(); break; }
