@@ -1662,7 +1662,7 @@ input[type="time"].f::-webkit-datetime-edit{padding:0;line-height:46px}
 .exp-l{display:inline-flex;align-items:center;gap:5px}
 body.chat-full{overflow:hidden}
 body.chat-full #tabs{visibility:hidden}
-.cf{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;background:var(--bg);animation:fadeUp .22s cubic-bezier(.2,.8,.2,1) both}
+.cf{position:fixed;left:0;right:0;top:0;height:100%;z-index:60;display:flex;flex-direction:column;background:var(--bg);animation:fadeUp .22s cubic-bezier(.2,.8,.2,1) both}
 .cf-h{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 8px) 14px 10px;border-bottom:.5px solid var(--sep);background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
 .cf-t{flex:1;text-align:center;display:grid;line-height:1.2}.cf-t b{font-size:16px}.cf-t span{font-size:12.5px;color:var(--fg2)}
 .cf-x{width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);color:var(--fg);display:grid;place-items:center}
@@ -1672,8 +1672,9 @@ body.chat-full #tabs{visibility:hidden}
 .cf-in{display:flex;align-items:flex-end;gap:8px;padding:8px 12px calc(env(safe-area-inset-bottom) + 10px);border-top:.5px solid var(--sep);background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
 .cf-ph{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--fg2);overflow:hidden;cursor:pointer}
 .cf-ph svg{width:24px;height:24px}.cf-ph img{width:100%;height:100%;object-fit:cover}
-.cf-pill{flex:1;min-width:0;display:flex;align-items:center;gap:6px;min-height:38px;padding:3px 3px 3px 14px;border-radius:20px;background:var(--fill);box-shadow:inset 0 0 0 .5px var(--sep)}
-.cf-pill input{flex:1;min-width:0;border:0;background:none;color:var(--fg);font:inherit;font-size:16px;outline:none;padding:6px 0}
+.cf-pill{flex:1;min-width:0;display:flex;align-items:flex-end;gap:6px;min-height:38px;padding:3px 3px 3px 14px;border-radius:20px;background:var(--fill);box-shadow:inset 0 0 0 .5px var(--sep)}
+.cf-pill textarea{flex:1;min-width:0;border:0;background:none;color:var(--fg);font:inherit;font-size:16px;line-height:1.3;outline:none;padding:6px 0;resize:none;height:33px;max-height:120px;overflow-y:auto;display:block}
+.cf.kb .cf-in{padding-bottom:8px}
 .cf-send{flex:none;width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--accent);color:var(--on-grad,#fff)}
 :root[data-skin="aurora"] .cf-send{background:var(--grad)}
 </style>
@@ -1739,7 +1740,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "68"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "69"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -4398,10 +4399,16 @@ function syncChat(){
     root.innerHTML = `<div class="cf" role="dialog" aria-label="${T("Messages")}">
       <div class="cf-h"><button class="cf-x" data-act="chatClose" aria-label="${T("Réduire")}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="cf-t"><b>${T("Messages")}</b><span>${esc(T("La famille de {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></div><span style="width:36px"></span></div>
       <div class="cf-body"></div>
-      ${S.chatCanWrite ? `<form class="cf-in" data-form="note"><label class="cf-ph" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : QL.photo.i}</label><input type="file" id="n-photo" accept="image/*" hidden><div class="cf-pill"><input id="n-text" maxlength="240" placeholder="${T("Message")}" autocomplete="off" enterkeyhint="send"><button class="cf-send" type="submit" aria-label="${T("Envoyer")}">${I_UP}</button></div></form>`
+      ${S.chatCanWrite ? `<form class="cf-in" data-form="note"><label class="cf-ph" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : QL.photo.i}</label><input type="file" id="n-photo" accept="image/*" hidden><div class="cf-pill"><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message")}" autocomplete="off" enterkeyhint="send"></textarea><button class="cf-send" type="submit" aria-label="${T("Envoyer")}">${I_UP}</button></div></form>`
         : `<div class="cf-in s" style="color:var(--fg2);justify-content:center">${T("Rejoignez la famille pour écrire un message.")}</div>`}</div>`;
     document.body.classList.add("chat-full");
   }
+  if (!window.__cfVV && window.visualViewport) { window.__cfVV = true;
+    const fit = () => { const cf = document.querySelector("#chat-root .cf"), vv = window.visualViewport; if (!cf) return;
+      cf.style.height = vv.height + "px"; cf.style.top = vv.offsetTop + "px"; cf.classList.toggle("kb", vv.height < window.innerHeight - 120);
+      const b = cf.querySelector(".cf-body"); if (b) b.scrollTop = b.scrollHeight; };
+    visualViewport.addEventListener("resize", fit); visualViewport.addEventListener("scroll", fit); }
+  { const cf = root.querySelector(".cf"), vv = window.visualViewport; if (cf && vv) { cf.style.height = vv.height + "px"; cf.style.top = vv.offsetTop + "px"; } }
   const body = root.querySelector(".cf-body");
   if (body.dataset.h !== S.chatList) { body.dataset.h = S.chatList; body.innerHTML = S.chatList; }
 }
@@ -6829,7 +6836,7 @@ document.addEventListener("submit", async e => {
     const text = val("n-text"), photo = S.notePhoto; if (!text && !photo) return; const m = meMember(); S.notePhoto = null;
     const nId = newId(); await put("notes", nId, Object.assign({text, mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString()}, photo ? {photo} : {}));
     if (window.carnetNotify) window.carnetNotify("msg", {text: text || T("Photo"), who: m ? m.name : "", ev: nId});
-    setTimeout(() => { const i = $("#n-text"); if (i) { i.value = ""; i.focus(); } const ph = $("#chat-root #n-ph"); if (ph) ph.innerHTML = QL.photo.i; }, 30); return;
+    setTimeout(() => { const i = $("#n-text"); if (i) { i.value = ""; if (i.tagName === "TEXTAREA") i.style.height = "33px"; i.focus(); } const ph = $("#chat-root #n-ph"); if (ph) ph.innerHTML = QL.photo.i; }, 30); return;
   }
   if (f.dataset.form === "member") {
     const name = val("m-name"); if (!name) return; const fam = family();
@@ -6843,6 +6850,7 @@ document.addEventListener("submit", async e => {
   } else if (f.id === "sheet-form") { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
 });
 document.addEventListener("input", e => { const t = e.target;
+  if (t.id === "n-text" && t.tagName === "TEXTAREA") { t.style.height = "33px"; t.style.height = Math.min(120, t.scrollHeight) + "px"; }
   if (t.id === "x-title") { const c = extraCat(t.value), box = $("#x-info");
     if (c && !t.dataset.manual) { const r = document.querySelector(`input[name="x-cat"][value="${c}"]`); if (r && !r.checked) { r.checked = true; const h = $("#x-hero"); if (h) { h.innerHTML = CATS[c].icon; h.parentNode.style.setProperty("--c", CATS[c].color); } } }
     const cat = (document.querySelector('input[name="x-cat"]:checked') || {}).value; if (box) box.innerHTML = cat === "med" || cat === "soin" || c === "med" ? medInfoHTML(medInfo(t.value)) : ""; }
@@ -6896,7 +6904,8 @@ document.addEventListener("change", e => {
     fr.readAsDataURL(t.files[0]);
   }
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && sheetSave !== null) closeSheet();
+document.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && e.target.id === "n-text" && e.target.tagName === "TEXTAREA") { e.preventDefault(); e.target.form && e.target.form.requestSubmit(); return; }
+  if (e.key === "Escape" && sheetSave !== null) closeSheet();
   if (e.key === "Escape" && S.tuto != null) tutoEnd();
   if (e.key === "Enter" && S.wiz && e.target.id === "w-other") { e.preventDefault(); const b = document.querySelector('[data-act="wzAddOther"]'); b && b.click(); }
   else if (e.key === "Enter" && S.wiz && e.target.matches && e.target.matches("input[data-w]") && e.target.type !== "date") { e.preventDefault(); const b = $("#wiz-root .wz-next"); b && !b.disabled && b.click(); }
