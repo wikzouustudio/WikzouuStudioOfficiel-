@@ -1944,3 +1944,5 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .orbit-center{will-change:transform;animation:none}
 .orbit-center .avatar{transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
 .fam-orbit:active .orbit-center .avatar{transform:scale(.96)}
+
+.fam-orbit .orbit-center{z-index:10;position:relative}

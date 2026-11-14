@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "99"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "100"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5236,7 +5236,7 @@ function orbStep(now){
   const wt = RM() ? 0 : now / 1000, amp = RM() ? 0 : 11, ri = R + amp * Math.sin(wt * 2.4);
   orbs.forEach((o, i) => { const a = ((+o.dataset.a || 0) + ORB.th) * Math.PI / 180,
     x = Math.cos(a) * ri, y = Math.sin(a) * ri * .93, depth = (Math.sin(a) + 1) / 2;
-    o.style.transform = `translate(-50%,-50%) translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${(.9 + depth * .16).toFixed(3)})`; o.style.zIndex = depth > .5 ? 3 : 0; });
+    o.style.transform = `translate(-50%,-50%) translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${(.9 + depth * .16).toFixed(3)})`; o.style.zIndex = depth > .5 ? 2 : 1; });
   const c = document.querySelector(".orbit-center"); if (c) c.style.transform = `rotate(${ORB.tilt.toFixed(2)}deg) scale(${(1 + Math.abs(ORB.tilt) * .004).toFixed(3)})`;
   // a light tick each time someone passes the top, when spun fast (phones that can vibrate)
   const slot = Math.floor((ORB.th + 90) / (360 / n)); if (slot !== ORB.tick) { if (Math.abs(ORB.w) > 260) { try { if (navigator.vibrate) navigator.vibrate(3); } catch(_) {} } ORB.tick = slot; }
