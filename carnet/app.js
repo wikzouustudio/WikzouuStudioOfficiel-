@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "106"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "107"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5636,6 +5636,23 @@ function backDragBegin(pg){
   document.addEventListener("pointerup", end);
   document.addEventListener("pointercancel", () => { if (SC && SC.live) { const s = SC; paint.after = s; s.done = () => { paint.after = null; s.ind.remove(); s.box.classList.remove("scrubbing"); }; if (s.hot) s.hot.classList.remove("scrub-hot"); s.done(); } SC = null; });
 })();
+// iOS-style navigation bar: the big title hands over to a small blurred bar as you scroll,
+// and stretches a little when you pull past the top
+(() => { let bar = null, raf = 0;
+  const tick = () => { raf = 0; const h1 = document.querySelector("#view .top h1, #view .fam-hero h1");
+    if (!bar) { bar = document.createElement("div"); bar.id = "navmini"; bar.setAttribute("aria-hidden", "true"); bar.innerHTML = "<b></b>"; document.body.appendChild(bar); }
+    if (!h1 || !h1.offsetHeight || document.body.classList.contains("chat-full") || document.body.classList.contains("booting")) { bar.classList.remove("on"); bar.style.setProperty("--p", 0); return; }
+    let top = 0, e = h1; while (e) { top += e.offsetTop; e = e.offsetParent; }   // layout position: ignores the page's entrance animation
+    const y = window.scrollY, r = {bottom: top + h1.offsetHeight - y}, t = h1.textContent.trim();
+    if (bar.firstChild.textContent !== t) bar.firstChild.textContent = t;
+    const p = Math.max(0, Math.min(1, (-(r.bottom) + 46) / 30 + 1));   // 0 when the title is fully visible, 1 once it is under the bar
+    bar.style.setProperty("--p", p.toFixed(3)); bar.classList.toggle("on", p > .02);
+    h1.style.transform = y < 0 ? `scale(${(1 + Math.min(.08, -y / 900)).toFixed(3)})` : ""; h1.style.transformOrigin = "left bottom"; };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  addEventListener("scroll", kick, {passive: true}); addEventListener("resize", kick);
+  new MutationObserver(kick).observe(document.getElementById("view") || document.body, {childList: true});
+  setInterval(kick, 700);
+})();
 // switches: the knob can be dragged as well as tapped
 (() => { let SW = null;
   document.addEventListener("pointerdown", e => { const sw = e.target.closest(".switch"); if (!sw || !sw.querySelector("i")) return; SW = {sw, x0: e.clientX, on: sw.classList.contains("on"), moved: false, pos: 0}; });
@@ -5651,7 +5668,9 @@ document.addEventListener("click", async e => {
   const act = el.dataset.act;
   if (act === "sheetBg") { if (e.target === el) closeSheet(); return; }
   switch (act) {
-    case "go": { const [t, sub] = parseHash(el.dataset.tab); go(t, sub); break; }
+    case "go": { const [t, sub] = parseHash(el.dataset.tab);
+      if (el.classList.contains("tab") && t === S.tab) { if (S.sub) go(t, null); else window.scrollTo({top: 0, behavior: RM() ? "auto" : "smooth"}); break; }
+      go(t, sub); break; }
     case "goSub": if (el.classList.contains("ccard") && el.dataset.sub === "buddy" && !matchMedia("(prefers-reduced-motion: reduce)").matches) { el.classList.remove("blub"); void el.offsetWidth; el.classList.add("blub"); }
       go(el.dataset.tab, el.dataset.sub); break;
     case "subBack": go(S.tab, null); break;

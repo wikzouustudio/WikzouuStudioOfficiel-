@@ -1992,3 +1992,11 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 /* buttons: a thin light streak across the top, like light on glass */
 :root[data-skin="aurora"] .btn:not(.ghost):not(.danger){box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.14),0 0 0 1px color-mix(in srgb,var(--g4) 35%,transparent),0 6px 18px color-mix(in srgb,var(--g3) 28%,transparent),0 1px 22px -6px color-mix(in srgb,var(--g1) 45%,transparent)}
 :root[data-skin="aurora"] .bell,:root[data-skin="aurora"] .gearbtn{box-shadow:inset 0 0 0 1px var(--hl-b),inset 0 1px 0 color-mix(in srgb,var(--g1) 60%,var(--hl-a)),0 0 14px -6px color-mix(in srgb,var(--g2) 60%,transparent)}
+
+/* compact navigation bar that appears as the big title scrolls away */
+#navmini{position:fixed;left:0;right:0;top:0;z-index:15;height:calc(env(safe-area-inset-top,0px) + 44px);padding-top:env(safe-area-inset-top,0px);display:grid;place-items:center;pointer-events:none;
+  opacity:var(--p,0);background:color-mix(in srgb,var(--bg) 72%,transparent);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
+  box-shadow:0 .5px 0 color-mix(in srgb,var(--sep) calc(var(--p,0) * 100%),transparent)}
+#navmini b{font-family:var(--font-d);font-size:17px;font-weight:700;letter-spacing:-.01em;transform:translateY(calc((1 - var(--p,0)) * 8px));max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root[data-skin="aurora"] #navmini{background:radial-gradient(60% 140% at 20% 0%,var(--refl,transparent),transparent 70%),color-mix(in srgb,var(--bg) 70%,transparent)}
+body.chat-full #navmini,body.locked #navmini{display:none}
