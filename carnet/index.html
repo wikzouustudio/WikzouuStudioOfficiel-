@@ -1812,6 +1812,16 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .ml-home{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--accent);box-shadow:0 0 0 3px #fff,0 4px 12px rgba(0,0,0,.35)}
 :root[data-skin="aurora"] .ml-home{background:var(--grad)}
 .rmap.wmap{height:min(52vh,420px)}
+
+/* Apple-like map chrome */
+.rmap .maplibregl-ctrl-bottom-right{margin:0 6px 6px 0}
+.rmap .maplibregl-ctrl-attrib.maplibregl-compact{min-height:22px;min-width:22px;padding:0;margin:0;border-radius:11px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-size:10px;line-height:22px}
+:root[data-theme="dark"] .rmap .maplibregl-ctrl-attrib.maplibregl-compact{background:rgba(30,30,32,.72);color:#ccc}
+@media (prefers-color-scheme:dark){.rmap .maplibregl-ctrl-attrib.maplibregl-compact{background:rgba(30,30,32,.72);color:#ccc}.rmap .maplibregl-ctrl-attrib a{color:#ddd}.rmap .maplibregl-ctrl-attrib-button{filter:invert(1)}}
+.rmap .maplibregl-ctrl-attrib.maplibregl-compact-show{padding:0 26px 0 10px}
+.rmap .maplibregl-ctrl-attrib-button{width:22px;height:22px;background-size:16px}
+.rmap.wmap,.rmap.big{box-shadow:inset 0 0 0 .5px var(--sep),0 8px 24px rgba(0,0,0,.18)}
+.rmap .ml-box{border-radius:inherit;overflow:hidden}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1875,7 +1885,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "79"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "80"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3858,7 +3868,7 @@ function drawRoutes(box, routes, o){
     tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://${sub}.basemaps.cartocdn.com/rastertiles/${style}/${z}/${sx}/${ty}@2x.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
   const P = p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)];
   const order = routes.slice().sort((a, b) => (a.id === o.sel) - (b.id === o.sel));
-  const paths = order.map(r => { const d = "M" + r.pts.map(q => P(q).join(" ")).join("L"), on = r.id === o.sel, dim = o.sel && !on;
+  const paths = order.map(r => { const d = "M" + smoothPts(r.pts).map(q => P(q).join(" ")).join("L"), on = r.id === o.sel, dim = o.sel && !on;
     return `<g class="mr ${on ? "on" : ""} ${dim ? "dim" : ""}" data-act="mapRoute" data-id="${esc(r.id)}"><path d="${d}" class="mr-hit"/>${on ? `<path d="${d}" class="rt-halo"/>` : ""}<path d="${d}" class="mr-line"/></g>`; }).join("");
   const sel = routes.find(r => r.id === o.sel), ends = sel ? (() => { const a = P(sel.pts[0]), b = P(sel.pts[sel.pts.length - 1]); return `<circle cx="${a[0]}" cy="${a[1]}" r="6" class="rt-a"/><circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-b"/>`; })() : "";
   const hm = o.home ? (() => { const h = P(o.home); return `<g transform="translate(${h[0]} ${h[1]})"><circle r="11" class="mr-home"/><path d="M-5 1 0-4 5 1M-3.5 0v4.5h7V0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`; })() : "";
@@ -3875,8 +3885,53 @@ function mapLib(){
     document.head.appendChild(sc); });
   return MLP;
 }
-const mapStyleURL = () => "https://tiles.openfreemap.org/styles/" + (isDarkUI() ? "dark" : "liberty");
-const routesGeo = routes => ({type: "FeatureCollection", features: routes.filter(r => r.pts && r.pts.length > 1).map(r => ({type: "Feature", properties: {id: r.id}, geometry: {type: "LineString", coordinates: r.pts.map(q => [q[1], q[0]])}}))});
+const mapStyleURL = () => "liberty-" + (isDarkUI() ? "dark" : "light");
+// GPS points are a few seconds apart: round the corners so the route reads like a real walk
+function smoothPts(pts){
+  if (!pts || pts.length < 3) return pts || []; let p = pts.map(q => [q[0], q[1]]);
+  const it = p.length > 600 ? 1 : p.length > 200 ? 2 : 3;
+  for (let k = 0; k < it; k++) { const o = [p[0]];
+    for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; o.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); }
+    o.push(p[p.length - 1]); p = o; }
+  return p;
+}
+// recolour the OpenFreeMap "Liberty" map with an Apple Maps-like palette (light and dark)
+const MAP_PAL = {
+  light: {land: "#F7F5F1", res: "#F1EEE9", res2: "#F0ECEA", park: "#CFEBC1", wood: "#C3E3B1", sand: "#F4EBCF", ice: "#EEF4F7", water: "#A5D3F7", bld: "#E8E5E0", bldO: "#DCD8D2",
+    minor: "#FFFFFF", major: "#FFFFFF", roadC: "#DEDAD4", hwy: "#F7D36E", hwyC: "#E2B952", path: "#FFFFFF", rail: "#CDCAC4", bound: "#B9B6C2",
+    text: "#6E6E73", place: "#3A3A3C", waterT: "#4A86C0", poi: "#8E8E93", halo: "#FFFFFF", raster: .45},
+  dark: {land: "#232326", res: "#28282B", res2: "#2A2A2D", park: "#213A29", wood: "#1E3626", sand: "#36332B", ice: "#2B3034", water: "#16304A", bld: "#353538", bldO: "#2D2D30",
+    minor: "#3C3C40", major: "#4B4B50", roadC: "#2B2B2E", hwy: "#8A6D2E", hwyC: "#5A4820", path: "#3C3C40", rail: "#47474B", bound: "#5A5A60",
+    text: "#A1A1A6", place: "#D7D7DC", waterT: "#6F9FD0", poi: "#8E8E93", halo: "#1C1C1E", raster: .12}
+};
+function appleMap(st, dark){
+  const P = MAP_PAL[dark ? "dark" : "light"], set = (l, k, v) => { l.paint = l.paint || {}; l.paint[k] = v; };
+  (st.layers || []).forEach(l => { const id = l.id || "", t = l.type;
+    if (t === "background") set(l, "background-color", P.land);
+    else if (t === "raster") set(l, "raster-opacity", P.raster);
+    else if (t === "fill-extrusion") set(l, "fill-extrusion-color", P.bld);
+    else if (t === "fill") { let c = null;
+      if (/water/.test(id)) c = P.water; else if (/building/.test(id)) { c = P.bld; set(l, "fill-outline-color", P.bldO); }
+      else if (/wood/.test(id)) c = P.wood; else if (/park|grass|pitch|cemetery|track|wetland/.test(id)) c = P.park;
+      else if (/sand/.test(id)) c = P.sand; else if (/ice|glacier/.test(id)) c = P.ice;
+      else if (/residential/.test(id)) c = P.res; else if (/hospital|school|aeroway|road_area|pier/.test(id)) c = P.res2;
+      if (c) { set(l, "fill-color", c); if (!/building/.test(id) && l.paint["fill-outline-color"]) set(l, "fill-outline-color", c); } }
+    else if (t === "line") { let c;
+      if (/water/.test(id)) c = P.water; else if (/park/.test(id)) c = P.park; else if (/boundary/.test(id)) c = P.bound;
+      else if (/rail/.test(id)) c = P.rail; else if (/casing/.test(id)) c = /motorway/.test(id) ? P.hwyC : P.roadC;
+      else if (/path|pedestrian/.test(id)) c = P.path; else if (/motorway/.test(id)) c = P.hwy;
+      else if (/trunk|primary|secondary|tertiary|link/.test(id)) c = P.major; else if (/aeroway/.test(id)) c = P.res2; else c = P.minor;
+      set(l, "line-color", c); }
+    else if (t === "symbol" && l.layout && l.layout["text-field"]) {
+      set(l, "text-color", /water/.test(id) ? P.waterT : /poi/.test(id) ? P.poi : /place|state|country|continent/.test(id) ? P.place : P.text);
+      set(l, "text-halo-color", P.halo); if (l.paint["text-halo-width"] == null) set(l, "text-halo-width", 1.2); }
+  });
+  return st;
+}
+let MAP_STYLE = null;
+async function mapStyle(){ if (!MAP_STYLE) MAP_STYLE = fetch("https://tiles.openfreemap.org/styles/liberty").then(r => { if (!r.ok) throw new Error("style"); return r.json(); }).catch(e => { MAP_STYLE = null; throw e; });
+  return appleMap(JSON.parse(JSON.stringify(await MAP_STYLE)), isDarkUI()); }
+const routesGeo = routes => ({type: "FeatureCollection", features: routes.filter(r => r.pts && r.pts.length > 1).map(r => ({type: "Feature", properties: {id: r.id}, geometry: {type: "LineString", coordinates: smoothPts(r.pts).map(q => [q[1], q[0]])}}))});
 function endsGeo(routes, sel){ const r = routes.find(x => x.id === sel); if (!r || !r.pts.length) return {type: "FeatureCollection", features: []};
   const a = r.pts[0], b = r.pts[r.pts.length - 1];
   return {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [a[1], a[0]]}}, {type: "Feature", properties: {k: "b"}, geometry: {type: "Point", coordinates: [b[1], b[0]]}}]}; }
@@ -3891,8 +3946,8 @@ function liveMapSet(M, routes, o){
   if (!M.ready) return;
   map.getSource("r").setData(routesGeo(routes)); map.getSource("e").setData(endsGeo(routes, o.sel));
   const sel = o.sel || "";
-  map.setFilter("r-sel-c", ["==", ["get", "id"], sel]); map.setFilter("r-sel", ["==", ["get", "id"], sel]);
-  map.setPaintProperty("r-line", "line-opacity", sel ? .28 : .9);
+  map.setFilter("r-sel-c", ["==", ["get", "id"], sel]); map.getSource("rs").setData(routesGeo(routes.filter(r => r.id === sel)));
+  map.setPaintProperty("r-line", "line-opacity", sel ? .3 : .9); map.setPaintProperty("r-case", "line-opacity", sel ? .3 : .95);
   if (o.home && !M.homeMk) { const e = document.createElement("div"); e.className = "ml-home"; e.innerHTML = I_HOME.replace(/26/g, "16"); M.homeMk = new maplibregl.Marker({element: e}).setLngLat([o.home[1], o.home[0]]).addTo(map); }
   const key = sel + "|" + routes.length;
   if (M.fitKey !== key) { const b = mapBounds(routes, sel, o.home); if (b) map.fitBounds(b, {padding: 44, maxZoom: 17, duration: M.fitKey == null ? 0 : 650}); M.fitKey = key; }
@@ -3903,26 +3958,29 @@ async function liveMap(el, routes, o, M){
   M = M || {el, style: mapStyleURL()}; Object.assign(M, {ready: false, fitKey: null}); if (!M.routes) { M.routes = routes; M.o = o; }
   const static_ = () => { ML_FAIL = true; M.dead = true; el.innerHTML = ""; drawRoutes(el, M.routes, M.o); };
   if (ML_FAIL) { static_(); return null; }
-  try { gl = await mapLib(); } catch(_) { static_(); return null; }
+  let style; try { gl = await mapLib(); style = await mapStyle(); } catch(_) { static_(); return null; }
   el.innerHTML = ""; const box = document.createElement("div"); box.className = "ml-box"; el.appendChild(box);
-  try { M.map = new gl.Map({container: box, style: M.style, attributionControl: {compact: true}, dragRotate: false, pitchWithRotate: false, touchPitch: false, fadeDuration: 0}); }
+  try { M.map = new gl.Map({container: box, style, attributionControl: {compact: true}, dragRotate: false, pitchWithRotate: false, touchPitch: false, fadeDuration: 0}); }
   catch(_) { static_(); return null; }
   const map = M.map; map.touchZoomRotate.disableRotation();
-  const fail = setTimeout(() => { if (!M.ready && !M.dead) { try { map.remove(); } catch(_) {} static_(); } }, 9000);
+  const fail = setTimeout(() => { if (!M.ready && !M.dead) { try { map.remove(); } catch(_) {} static_(); } }, 12000);
   map.on("load", () => { clearTimeout(fail); if (M.dead) return; M.ready = true; M.fitKey = null;
     const dark = isDarkUI();
-    map.addSource("r", {type: "geojson", data: routesGeo(M.routes)}); map.addSource("e", {type: "geojson", data: endsGeo(M.routes, M.o.sel)});
+    map.addSource("r", {type: "geojson", data: routesGeo(M.routes)}); map.addSource("e", {type: "geojson", data: endsGeo(M.routes, M.o.sel)}); map.addSource("rs", {type: "geojson", lineMetrics: true, data: routesGeo(M.routes.filter(r => r.id === M.o.sel))});
     const lay = {"line-cap": "round", "line-join": "round"};
-    map.addLayer({id: "r-case", type: "line", source: "r", layout: lay, paint: {"line-color": dark ? "#0b0c10" : "#ffffff", "line-width": 7, "line-opacity": .55}});
-    map.addLayer({id: "r-line", type: "line", source: "r", layout: lay, paint: {"line-color": "#30D158", "line-width": 4, "line-opacity": .9}});
-    map.addLayer({id: "r-sel-c", type: "line", source: "r", layout: lay, filter: ["==", ["get", "id"], ""], paint: {"line-color": "#ffffff", "line-width": 10}});
-    map.addLayer({id: "r-sel", type: "line", source: "r", layout: lay, filter: ["==", ["get", "id"], ""], paint: {"line-color": "#FF9F0A", "line-width": 6}});
+    const W = (a, b) => ["interpolate", ["linear"], ["zoom"], 12, a, 17, b];
+    map.addLayer({id: "r-case", type: "line", source: "r", layout: lay, paint: {"line-color": dark ? "#0E3C73" : "#FFFFFF", "line-width": W(6, 11), "line-opacity": .95}});
+    map.addLayer({id: "r-line", type: "line", source: "r", layout: lay, paint: {"line-color": dark ? "#2E8BFF" : "#0A7CFF", "line-width": W(3.5, 7), "line-opacity": .9}});
+    map.addLayer({id: "r-sel-c", type: "line", source: "r", layout: lay, filter: ["==", ["get", "id"], ""], paint: {"line-color": "#FFFFFF", "line-width": W(9, 15), "line-blur": .5}});
+    map.addLayer({id: "r-sel", type: "line", source: "rs", layout: lay, paint: {"line-width": W(5, 9), "line-gradient": ["interpolate", ["linear"], ["line-progress"], 0, "#30D158", .5, "#0A84FF", 1, "#5E5CE6"]}});
     map.addLayer({id: "r-hit", type: "line", source: "r", layout: lay, paint: {"line-color": "#000", "line-width": 22, "line-opacity": 0}});
-    map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7, "circle-color": ["match", ["get", "k"], "a", "#30D158", "#FF453A"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 2.5}});
+    map.addLayer({id: "e-sh", type: "circle", source: "e", paint: {"circle-radius": 11, "circle-color": "#000", "circle-opacity": .18, "circle-blur": .8, "circle-translate": [0, 1.5]}});
+    map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7.5, "circle-color": ["match", ["get", "k"], "a", "#30D158", "#5E5CE6"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 3}});
+    const at = el.querySelector(".maplibregl-ctrl-attrib"); if (at) at.classList.remove("maplibregl-compact-show");
     map.on("click", "r-hit", e => { const f = e.features && e.features[0]; if (f && M.o.onPick) M.o.onPick(f.properties.id); });
     map.on("mouseenter", "r-hit", () => { map.getCanvas().style.cursor = "pointer"; }); map.on("mouseleave", "r-hit", () => { map.getCanvas().style.cursor = ""; });
     liveMapSet(M, M.routes, M.o); });
-  map.on("error", e => { if (!M.ready && e && e.error && /style|fetch|Failed/i.test(String(e.error.message || ""))) { clearTimeout(fail); if (M.dead) return; try { map.remove(); } catch(_) {} static_(); } });
+  map.on("error", () => {}); // a missing tile or icon is not fatal; only a map that never loads falls back (timer above)
   return M;
 }
 function liveMapDrop(M){ if (M && M.map) { try { M.map.remove(); } catch(_) {} } }
@@ -4776,7 +4834,7 @@ function drawRoute(box, pts, o){
   for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + W) / 256); tx++) for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + H) / 256); ty++) {
     if (ty < 0 || ty >= n) continue; const sx = ((tx % n) + n) % n, sub = "abcd"[(sx + ty) % 4];
     tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://${sub}.basemaps.cartocdn.com/rastertiles/${style}/${z}/${sx}/${ty}@2x.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
-  const xy = pts.map(p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)]), d = "M" + xy.map(q => q.join(" ")).join("L"), a = xy[0], b = xy[xy.length - 1];
+  const xy = pts.map(p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)]), d = "M" + smoothPts(pts).map(p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)].join(" ")).join("L"), a = xy[0], b = xy[xy.length - 1];
   box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
     <path d="${d}" class="rt-halo"/><path d="${d}" class="rt-line"/>
     <circle cx="${a[0]}" cy="${a[1]}" r="6" class="rt-a"/>${o.live ? `<circle cx="${b[0]}" cy="${b[1]}" r="11" class="rt-pulse"/><circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-me"/>` : `<circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-b"/>`}</svg>
