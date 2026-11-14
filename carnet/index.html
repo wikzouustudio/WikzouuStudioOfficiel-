@@ -1878,6 +1878,11 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .sg-r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--fill);font-size:14px;cursor:pointer}
 .sg-r input{accent-color:var(--accent);width:18px;height:18px;flex:none}
 .sug-from{font-size:12.5px;color:var(--fg3);margin-top:1px}
+
+@media (prefers-color-scheme:dark){.rmap-t img{filter:invert(.92) hue-rotate(180deg) brightness(.95) contrast(.9)}}
+:root[data-theme="dark"] .rmap-t img{filter:invert(.92) hue-rotate(180deg) brightness(.95) contrast(.9)}
+:root[data-theme="light"] .rmap-t img{filter:none}
+.rmap.walk-live{height:190px}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1941,7 +1946,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "88"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "89"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3926,14 +3931,14 @@ function drawRoutes(box, routes, o){
   const style = isDarkUI() ? "dark_all" : "voyager", tiles = [];
   for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + W) / 256); tx++) for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + H) / 256); ty++) {
     if (ty < 0 || ty >= n) continue; const sx = ((tx % n) + n) % n, sub = "abcd"[(sx + ty) % 4];
-    tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://${sub}.basemaps.cartocdn.com/rastertiles/${style}/${z}/${sx}/${ty}@2x.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
+    tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://tile.openstreetmap.org/${z}/${sx}/${ty}.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
   const P = p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)];
   const order = routes.slice().sort((a, b) => (a.id === o.sel) - (b.id === o.sel));
   const paths = order.map(r => { const d = "M" + smoothPts(r.pts).map(q => P(q).join(" ")).join("L"), on = r.id === o.sel, dim = o.sel && !on;
     return `<g class="mr ${on ? "on" : ""} ${dim ? "dim" : ""}" data-act="mapRoute" data-id="${esc(r.id)}"><path d="${d}" class="mr-hit"/>${on ? `<path d="${d}" class="rt-halo"/>` : ""}<path d="${d}" class="mr-line"/></g>`; }).join("");
   const sel = routes.find(r => r.id === o.sel), ends = sel ? (() => { const a = P(sel.pts[0]), b = P(sel.pts[sel.pts.length - 1]); return `<circle cx="${a[0]}" cy="${a[1]}" r="6" class="rt-a"/><circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-b"/>`; })() : "";
   const hm = o.home ? (() => { const h = P(o.home); return `<g transform="translate(${h[0]} ${h[1]})"><circle r="11" class="mr-home"/><path d="M-5 1 0-4 5 1M-3.5 0v4.5h7V0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`; })() : "";
-  box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}${ends}${hm}</svg><span class="rmap-c">© OpenStreetMap · © CARTO</span>`;
+  box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}${ends}${hm}</svg><span class="rmap-c">© OpenStreetMap</span>`;
 }
 // real, interactive map (MapLibre + OpenFreeMap: free, no key). Falls back to the static map if it can't start.
 let MLP = null;
@@ -3993,9 +3998,9 @@ let MAP_STYLE = null;
 async function mapStyle(){ if (!MAP_STYLE) MAP_STYLE = fetch("https://tiles.openfreemap.org/styles/liberty").then(r => { if (!r.ok) throw new Error("style"); return r.json(); }).catch(e => { MAP_STYLE = null; throw e; });
   return appleMap(JSON.parse(JSON.stringify(await MAP_STYLE)), isDarkUI()); }
 const routesGeo = routes => ({type: "FeatureCollection", features: routes.filter(r => r.pts && r.pts.length > 1).map(r => ({type: "Feature", properties: {id: r.id}, geometry: {type: "LineString", coordinates: smoothPts(r.pts).map(q => [q[1], q[0]])}}))});
-function endsGeo(routes, sel){ const r = routes.find(x => x.id === sel); if (!r || !r.pts.length) return {type: "FeatureCollection", features: []};
+function endsGeo(routes, sel, live){ const r = routes.find(x => x.id === sel); if (!r || !r.pts.length) return {type: "FeatureCollection", features: []};
   const a = r.pts[0], b = r.pts[r.pts.length - 1];
-  return {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [a[1], a[0]]}}, {type: "Feature", properties: {k: "b"}, geometry: {type: "Point", coordinates: [b[1], b[0]]}}]}; }
+  return {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [a[1], a[0]]}}, {type: "Feature", properties: {k: live ? "me" : "b"}, geometry: {type: "Point", coordinates: [b[1], b[0]]}}]}; }
 function mapBounds(routes, sel, home){
   const pts = routes.filter(r => !sel || r.id === sel).flatMap(r => r.pts).concat(home && !sel ? [home] : []); if (!pts.length) return null;
   let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const q of pts) { la0 = Math.min(la0, q[0]); la1 = Math.max(la1, q[0]); lo0 = Math.min(lo0, q[1]); lo1 = Math.max(lo1, q[1]); }
@@ -4005,9 +4010,9 @@ function mapBounds(routes, sel, home){
 function liveMapSet(M, routes, o){
   const map = M.map; M.routes = routes; M.o = o;
   if (!M.ready) return;
-  const sg = o.sug || null, sel = sg ? "" : (o.sel || "");
+  const sg = o.sug || null, sel = sg && !o.live ? "" : (o.sel || "");
   map.getSource("r").setData(routesGeo(routes));
-  map.getSource("e").setData(sg ? (sg.one ? endsGeo([{id: "s", pts: sg.pts}], "s") : {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [sg.pts[0][1], sg.pts[0][0]]}}]}) : endsGeo(routes, sel));
+  map.getSource("e").setData(o.live ? endsGeo(routes, sel, true) : sg ? (sg.one ? endsGeo([{id: "s", pts: sg.pts}], "s") : {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [sg.pts[0][1], sg.pts[0][0]]}}]}) : endsGeo(routes, sel));
   map.setFilter("r-sel-c", ["==", ["get", "id"], sel]); map.getSource("rs").setData(routesGeo(routes.filter(r => r.id === sel)));
   map.setPaintProperty("r-line", "line-opacity", sel || sg ? .28 : .9); map.setPaintProperty("r-case", "line-opacity", sel || sg ? .28 : .95);
   if (map.getSource("sg")) map.getSource("sg").setData(sg ? {type: "FeatureCollection", features: [{type: "Feature", properties: {}, geometry: {type: "LineString", coordinates: smoothPts(sg.pts).map(q => [q[1], q[0]])}}]} : {type: "FeatureCollection", features: []});
@@ -4016,6 +4021,11 @@ function liveMapSet(M, routes, o){
   if (M.poiKey !== sid) { (M.poiMk || []).forEach(m => m.remove()); M.poiMk = []; M.poiKey = sid;
     if (sg) sg.hl.filter(h => SUG_K[h.k] && h.k !== "trail").slice(0, 14).forEach(h => { const e = document.createElement("div"); e.className = "ml-poi"; e.style.setProperty("--c", SUG_K[h.k][1]); e.innerHTML = SUG_K[h.k][0]; e.title = h.name || T(SUG_K[h.k][2]);
       M.poiMk.push(new maplibregl.Marker({element: e}).setLngLat([h.p[1], h.p[0]]).addTo(map)); }); }
+  if (o.live) { const pts = routes[0].pts, last = pts[pts.length - 1];
+    if (M.fitKey == null) { const b = mapBounds(sg ? [{id: "s", pts: sg.pts.concat(pts)}] : routes, sg ? "s" : sel); if (b) map.fitBounds(b, {padding: 40, maxZoom: 17, duration: 0}); M.fitKey = "live"; }
+    else if (last) { const q = map.project([last[1], last[0]]), c = map.getContainer(), W = c.clientWidth, H = c.clientHeight;
+      if (q.x < W * .15 || q.x > W * .85 || q.y < H * .15 || q.y > H * .85) map.easeTo({center: [last[1], last[0]], duration: 800}); }
+    return; }
   const key = (sg ? "sug:" + sg.id : sel) + "|" + routes.length;
   if (M.fitKey !== key) { const b = sg ? mapBounds([{id: "s", pts: sg.pts}], "s") : mapBounds(routes, sel, o.home); if (b) map.fitBounds(b, {padding: 44, maxZoom: 17, duration: M.fitKey == null ? 0 : 650}); M.fitKey = key; }
 }
@@ -4047,8 +4057,9 @@ async function liveMap(el, routes, o, M){
     map.addLayer({id: "sg", type: "line", source: "sg", layout: lay, paint: {"line-color": "#5E5CE6", "line-width": W(4.5, 8)}});
     map.addLayer({id: "sg-dir", type: "symbol", source: "sg", layout: {"symbol-placement": "line", "symbol-spacing": 90, "text-field": "›", "text-size": 22, "text-keep-upright": false, "text-font": ["Noto Sans Bold"], "text-allow-overlap": true}, paint: {"text-color": "#FFFFFF"}});
     map.addLayer({id: "r-hit", type: "line", source: "r", layout: lay, paint: {"line-color": "#000", "line-width": 22, "line-opacity": 0}});
+    map.addLayer({id: "e-halo", type: "circle", source: "e", filter: ["==", ["get", "k"], "me"], paint: {"circle-radius": 18, "circle-color": "#0A84FF", "circle-opacity": .18}});
     map.addLayer({id: "e-sh", type: "circle", source: "e", paint: {"circle-radius": 11, "circle-color": "#000", "circle-opacity": .18, "circle-blur": .8, "circle-translate": [0, 1.5]}});
-    map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7.5, "circle-color": ["match", ["get", "k"], "a", "#30D158", "#5E5CE6"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 3}});
+    map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7.5, "circle-color": ["match", ["get", "k"], "a", "#30D158", "me", "#0A84FF", "#5E5CE6"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 3}});
     const at = el.querySelector(".maplibregl-ctrl-attrib"); if (at) at.classList.remove("maplibregl-compact-show");
     map.on("click", "r-hit", e => { const f = e.features && e.features[0]; if (f && M.o.onPick) M.o.onPick(f.properties.id); });
     map.on("mouseenter", "r-hit", () => { map.getCanvas().style.cursor = "pointer"; }); map.on("mouseleave", "r-hit", () => { map.getCanvas().style.cursor = ""; });
@@ -5054,12 +5065,20 @@ function gpsLine(w){
 }
 function gpsUI(){
   const e = document.getElementById("walk-gps"), w = walkNow(); if (e) { const l = gpsLine(w); e.innerHTML = l ? " · " + l : ""; }
-  if (Date.now() - GPS.painted > 12000) gpsPaint();
+  if (Date.now() - GPS.painted > (S.lw && S.lw.ready ? 4000 : 12000)) gpsPaint();
 }
 function gpsPaint(){
-  const box = document.getElementById("walk-map"), w = walkNow(); if (!box) return;
+  const box = document.getElementById("walk-map"), w = walkNow();
+  if (!w && S.lw) { liveMapDrop(S.lw); S.lw = null; }
+  if (!box) return;
   if (!w || GPS.start !== w.start || !GPS.pts.length) { box.hidden = true; return; }
-  GPS.painted = Date.now(); box.hidden = false; drawRoute(box, GPS.pts, {live: true});
+  GPS.painted = Date.now(); box.hidden = false;
+  const routes = [{id: "w", pts: GPS.pts}], o = {sel: "w", live: true, sug: S.sug || null};
+  if (S.lw && S.lw.style === mapStyleURL() && (!S.lw.dead || ML_FAIL)) { if (box !== S.lw.el) { box.replaceWith(S.lw.el); S.lw.el.hidden = false; }
+    if (S.lw.dead) { S.lw.el.innerHTML = ""; staticMap(S.lw.el, routes, o); return; }
+    if (S.lw.ready) { liveMapSet(S.lw, routes, o); S.lw.map.resize(); } else { S.lw.routes = routes; S.lw.o = o; } return; }
+  if (S.lw) liveMapDrop(S.lw);
+  S.lw = {el: box, style: mapStyleURL()}; liveMap(box, routes, o, S.lw);
 }
 // a clean static map: map tiles + the route drawn on top (no extra library)
 const isDarkUI = () => { const t = document.documentElement.dataset.theme; return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; };
@@ -5073,12 +5092,12 @@ function drawRoute(box, pts, o){
   const style = isDarkUI() ? "dark_all" : "voyager", tiles = [];
   for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + W) / 256); tx++) for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + H) / 256); ty++) {
     if (ty < 0 || ty >= n) continue; const sx = ((tx % n) + n) % n, sub = "abcd"[(sx + ty) % 4];
-    tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://${sub}.basemaps.cartocdn.com/rastertiles/${style}/${z}/${sx}/${ty}@2x.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
+    tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://tile.openstreetmap.org/${z}/${sx}/${ty}.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
   const xy = pts.map(p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)]), d = "M" + smoothPts(pts).map(p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)].join(" ")).join("L"), a = xy[0], b = xy[xy.length - 1];
   box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
     <path d="${d}" class="rt-halo"/><path d="${d}" class="rt-line"/>
     <circle cx="${a[0]}" cy="${a[1]}" r="6" class="rt-a"/>${o.live ? `<circle cx="${b[0]}" cy="${b[1]}" r="11" class="rt-pulse"/><circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-me"/>` : `<circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-b"/>`}</svg>
-    <span class="rmap-c">© OpenStreetMap · © CARTO</span>`;
+    <span class="rmap-c">© OpenStreetMap</span>`;
 }
 function walkView(id){
   const x = C.logs[id]; if (!x || !x.route) { logSheet(); return; }
