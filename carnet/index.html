@@ -1533,7 +1533,14 @@ body.intro .tabbar{animation:dl-tabin .7s cubic-bezier(.2,.9,.25,1.1) .35s both}
 :root[data-skin="aurora"] .card:not(.hx):not(.lw),:root[data-skin="aurora"] .alert{border:1px solid transparent;background:linear-gradient(var(--cardS),var(--cardS)) padding-box,var(--edge-g) border-box}
 /* secondary buttons, chips, pills, segmented, inputs */
 :root[data-skin="aurora"] .btn.ghost,:root[data-skin="aurora"] .pill,:root[data-skin="aurora"] .qk,:root[data-skin="aurora"] .hx-next,:root[data-skin="aurora"] .seg,:root[data-skin="aurora"] .opts span,:root[data-skin="aurora"] .when,:root[data-skin="aurora"] .tgl-row,:root[data-skin="aurora"] input.f,:root[data-skin="aurora"] select.f,:root[data-skin="aurora"] textarea.f{border:1px solid transparent;background:linear-gradient(var(--sf),var(--sf)) padding-box,var(--edge-g) border-box}
-:root[data-skin="aurora"] .opts input:checked+span,:root[data-skin="aurora"] .qk.on{border-color:transparent;background:var(--grad) padding-box,linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.08)) border-box}
+:root[data-skin="aurora"] .opts input:checked+span,:root[data-skin="aurora"] .qk.on{border-color:transparent;background:linear-gradient(color-mix(in srgb,var(--g2) 14%,var(--sf)),color-mix(in srgb,var(--g2) 14%,var(--sf))) padding-box,linear-gradient(160deg,var(--g1),var(--g3)) border-box;color:var(--accent);font-weight:650;box-shadow:none}
+:root[data-skin="aurora"] .sheet-h .save,:root[data-skin="aurora"] .sheet-h .save:hover{background:none!important;background-image:none!important;box-shadow:none!important;animation:none!important;padding:0;border-radius:0;color:var(--accent);font-weight:700;text-align:right}
+.opts span.mav{padding:0!important;border:0!important;background:var(--c)!important;box-shadow:none!important;gap:0;display:inline-grid}
+.opts span.mav.ph{background:var(--fill2)!important}
+.opts span.mav-w{padding:0!important;border:0!important;background:none!important}
+:root[data-skin="aurora"] .btn.danger{color:var(--red)!important;background:none!important;font-weight:650}
+input.f{min-width:0;max-width:100%;box-sizing:border-box}
+input[type="time"].f,input[type="date"].f{display:block;width:100%;-webkit-appearance:none;appearance:none}
 :root[data-skin="aurora"] .seg button.on{box-shadow:0 1px 3px rgba(0,0,0,.18),inset 0 1px 0 var(--hl-a)}
 :root[data-skin="aurora"] input.f:focus,:root[data-skin="aurora"] select.f:focus,:root[data-skin="aurora"] textarea.f:focus{background:linear-gradient(var(--sf),var(--sf)) padding-box,linear-gradient(135deg,var(--g2),var(--g3)) border-box}
 /* primary buttons: light rim on top, soft edge below */
@@ -1681,7 +1688,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "59"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "60"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
