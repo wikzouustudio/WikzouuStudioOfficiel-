@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "116"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "117"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -431,6 +431,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"Touchez pour explorer la carte": "Tap to explore the map", "Terminé": "Done", "Touchez pour ouvrir les messages": "Tap to open the messages"}); Object.assign(HR, {"Touchez pour explorer la carte": "Dodirnite za istraživanje karte", "Terminé": "Gotovo", "Touchez pour ouvrir les messages": "Dodirnite za otvaranje poruka"});
 Object.assign(EN, {"Aller": "Out", "Retour": "Back", "Demi-tour": "Turned back"}); Object.assign(HR, {"Aller": "Odlazak", "Retour": "Povratak", "Demi-tour": "Okret"});
 Object.assign(EN, {"Vous": "You", "Aucune garde prévue": "No sitting planned"}); Object.assign(HR, {"Vous": "Vi", "Aucune garde prévue": "Nema planiranog čuvanja"});
 Object.assign(EN, {"En direct": "Live", "Position il y a {n}": "Position {n} ago", "Dernière balade": "Last walk", "{n} a promené {d}": "{n} walked {d}", "Besoins": "Needs"}); Object.assign(HR, {"En direct": "Uživo", "Position il y a {n}": "Pozicija prije {n}", "Dernière balade": "Zadnja šetnja", "{n} a promené {d}": "{n} je prošetao/la {d}", "Besoins": "Potrebe"});
@@ -2288,7 +2289,7 @@ function walksMapView(){
     + (S.sugBusy ? `<div class="sug-busy">${T("Recherche des parcs, chemins et points d'eau autour de vous…")}</div>` : "")
     + (S.sugErr ? `<div class="sug-err">${esc(S.sugErr)}</div>` : "")
     + seg
-    + `<div class="rmap wmap" id="wm-map">${list.length || S.sug ? "" : `<div class="wm-empty">${I_MAP}<span>${T("Aucune balade suivie par GPS sur cette période.")}</span></div>`}</div>`
+    + `<div class="rmap wmap locked" id="wm-map" data-lock="${T("Touchez pour explorer la carte")}">${list.length || S.sug ? "" : `<div class="wm-empty">${I_MAP}<span>${T("Aucune balade suivie par GPS sur cette période.")}</span></div>`}</div>`
     + sugCard()
     + `<div class="wv-g" style="margin-top:12px">${st(list.length, T(list.length > 1 ? "balades" : "balade"))}${st(fmtKm(km), T("Distance"))}${st(min >= 60 ? Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0") : min + " min", T("Durée"))}</div>`
     + (list.length ? `<div class="sec"><div class="sec-h"><h2>${T("Trajets")}</h2></div><div class="card list">${rows}</div><div class="foot">${T("Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.")}</div></div>` : `<div class="foot" style="margin-top:14px">${T("Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.")}</div>`);
@@ -2996,7 +2997,7 @@ function liveWalk(){
   const can = canTick(), m = memberOf(w.mid), min = Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000));
   setTimeout(() => { GPS.painted = 0; gpsPaint(); }, 0);
   return `<div class="card lw"><div class="lw-top"><span class="ql-pulse"></span><div class="main"><div class="lw-k">${T("Balade en cours")}${m ? " · " + esc(m.name) : ""}</div><div class="lw-t"><b class="num" id="walk-min">${min} min</b><span class="gps" id="walk-gps">${gpsLine(w) ? " · " + gpsLine(w) : ""}</span></div></div></div>
-    <div class="rmap walk-live" id="walk-map" hidden></div>
+    <div class="rmap walk-live locked" id="walk-map" data-lock="${T("Touchez pour explorer la carte")}" hidden></div>
     ${can ? `<div class="lw-btns"><button class="btn ghost" data-act="walkCancel">${T("Annuler")}</button><button class="btn" data-act="walkEnd">${T("Terminer la balade")}</button></div>` : ""}</div>`;
 }
 function quickLog(){
@@ -3191,7 +3192,7 @@ function lastWalkCard(){
   const stat = (v, k) => `<div><b class="num">${v}</b><span>${k}</span></div>`;
   let leg = ""; if (l.route) { try { const sp = splitWalk(polyDec(l.route)); if (sp) leg = `<div class="ab-leg"><span class="ab out"><i></i>${T("Aller")} <b class="num">${fmtKm(sp.out)}</b></span><span class="ab turn"><i></i>${T("Demi-tour")}</span><span class="ab back"><i></i>${T("Retour")} <b class="num">${fmtKm(sp.back)}</b></span></div>`; } catch(_) {} }
   return `<div class="sec"><div class="sec-h"><h2>${T("Dernière balade")}</h2></div><div class="card lastw">
-    ${l.route ? `<div class="rmap lastw-map" id="fam-last-map" data-id="${esc(l.id)}"></div>${leg}` : ""}
+    ${l.route ? `<div class="rmap lastw-map locked" id="fam-last-map" data-lock="${T("Touchez pour explorer la carte")}" data-id="${esc(l.id)}"></div>${leg}` : ""}
     <button class="lastw-go" data-act="walkView" data-id="${esc(l.id)}"><div class="lastw-b">${m ? mav(m, 34) : ico("var(--green)", I_ROUTE)}<div class="main"><div class="t">${esc(who ? T("{n} a promené {d}", {n: who, d: (dog() || {}).name || T("votre chien")}) : T("Balade"))}</div><div class="s">${esc(when)}</div></div><span class="chev">${I.chevR}</span></div>
     <div class="lastw-s">${stat(l.dist ? fmtKm(l.dist) : "–", T("Distance"))}${stat((l.dur || "–") + " min", T("Durée"))}${stat(l.pee || l.poo ? `<span class="lastw-needs">${l.pee ? `<i style="--c:${QL.pipi.c}">${QL.pipi.i}</i>` : ""}${l.poo ? `<i style="--c:${QL.caca.c}">${QL.caca.i}</i>` : ""}</span>` : "–", T("Besoins"))}</div></button></div></div>`;
 }
@@ -3251,7 +3252,7 @@ function walkView(id){
   const day = parseYmd(x.date), when = cap(fmt(day, {weekday: "long", day: "numeric", month: "long"})) + " · " + esc(x.at);
   const st = (v, l) => `<div class="wv-s"><b class="num">${v}</b><span>${l}</span></div>`;
   openSheet(T("Balade"), `<div class="wv-when">${when}${who ? " · " + esc(who) : ""}</div>
-    <div class="rmap big" id="wv-map"></div>
+    <div class="rmap big locked" id="wv-map" data-lock="${T("Touchez pour explorer la carte")}"></div>
     <div class="wv-g">${st(fmtKm(x.dist), T("Distance"))}${st((x.dur || "–") + " min", T("Durée"))}${st(kmh ? kmh.toLocaleString(LANG === "en" ? "en" : "fr-CH", {maximumFractionDigits: 1}) + " km/h" : "–", T("Vitesse moy."))}</div>
     ${x.pee || x.poo ? `<div class="wv-tags">${x.pee ? `<span>${QL.pipi.i}${T("Pipi")}</span>` : ""}${x.poo ? `<span>${QL.caca.i}${T("Caca")}</span>` : ""}</div>` : ""}
     ${week.length > 1 ? `<div class="wv-week">${T("Ces 7 derniers jours : {k} en {n} balades suivies", {k: fmtKm(wkKm), n: week.length})}</div>` : ""}
@@ -3434,12 +3435,12 @@ function viewFamily(){
   // messages
   // messages: in the page, or full screen (own layer, see syncChat)
   const typ = typingHTML();
-  const msgList = ns.length || typ ? `<div class="msg-list" data-first="${esc((ns[0] || {}).id || "")}">` + typ + msgsHTML(ns.slice(0, 60)) + `</div>`
+  const msgList = ns.length || typ ? `<div class="msg-list" data-lock="${T("Touchez pour ouvrir les messages")}" data-first="${esc((ns[0] || {}).id || "")}">` + typ + msgsHTML(ns.slice(0, 60)) + `</div>`
         : `<div class="empty-s">${T("Pas encore de message. Laissez une consigne, un rappel ou une nouvelle de {n}.",{n:esc(d.name || T("votre chien"))})}</div>`;
   S.chatList = msgList; S.chatCanWrite = !!(me || S.mode !== "db");
   const composer = me || S.mode !== "db" ? `<div class="rp-slot"></div><form class="board-in" data-form="note"><button type="button" class="btn ghost round bd-mic" data-act="recStart" aria-label="${T("Message vocal")}">${I_MIC}</button><label class="btn ghost round" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : QL.photo.i}</label><input type="file" id="n-photo" accept="image/*" hidden><input class="f" id="n-text" maxlength="240" placeholder="${T("Un mot pour la famille…")}" autocomplete="off"><button class="btn round" type="submit" aria-label="${T("Envoyer")}">${I_SEND}</button></form>` : `<div class="s" style="color:var(--fg2);font-size:14px">${T("Rejoignez la famille pour écrire un message.")}</div>`;
   const board = `<div class="sec"><div class="sec-h"><h2>${T("Messages")}</h2><button class="link exp-l" data-act="chatFull">${I_EXPAND}${T("Agrandir")}</button></div><div class="card pad board">
-      ${S.chatFull ? `<div class="empty-s">${T("Conversation ouverte en plein écran.")}</div>` : composer + msgList}
+      ${S.chatFull ? `<div class="empty-s">${T("Conversation ouverte en plein écran.")}</div>` : composer + (ns.length ? `<div class="msg-wrap">${msgList}<button type="button" class="msg-open" data-act="chatFull"><span>${T("Touchez pour ouvrir les messages")}</span></button></div>` : msgList)}
     </div></div>`;
   // activity
   const act = `<div class="sec"><div class="sec-h"><h2>${T("Dernières activités")}</h2></div><div class="card list">${feed.length ? feed.map(f => { const c = f.q ? {color:f.q.c, icon:f.q.i} : (CATS[f.t.cat] || CATS.autre);
@@ -5745,6 +5746,18 @@ function backDragBegin(pg){
   document.addEventListener("pointerdown", e => { const t = e.target.closest(SEL); if (!t || t.disabled || t.closest(".maplibregl-map,#tabs,.seg,.switch,.fam-orbit")) return; off(); el = t; x0 = e.clientX; y0 = e.clientY; el.classList.add("is-press"); }, {passive: true});
   document.addEventListener("pointermove", e => { if (el && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) off(); }, {passive: true});
   ["pointerup", "pointercancel", "scroll"].forEach(t => document.addEventListener(t, off, {passive: true, capture: t === "scroll"}));
+})();
+// maps and the message list don't grab your scrolling: they stay blurred and still until you tap them
+(() => { let at = null;
+  const lock = el => { el.classList.add("locked"); const d = el.querySelector(".map-done"); if (d) d.remove(); };
+  document.addEventListener("click", e => {
+    const done = e.target.closest(".map-done"); if (done) { e.preventDefault(); e.stopPropagation(); lock(done.closest(".rmap")); return; }
+    const m = e.target.closest(".rmap.locked"); if (m) { e.preventDefault(); e.stopPropagation(); m.classList.remove("locked");
+      const b = document.createElement("button"); b.type = "button"; b.className = "map-done"; b.textContent = T("Terminé"); m.appendChild(b); at = {el: m, y: scrollY};
+      try { if (navigator.vibrate) navigator.vibrate(6); } catch(_) {} return; }
+  }, true);
+  // scrolling the page well away from an opened map closes it again
+  addEventListener("scroll", () => { if (at && at.el && !at.el.classList.contains("locked") && Math.abs(scrollY - at.y) > 160) { lock(at.el); at = null; } }, {passive: true});
 })();
 // switches: the knob can be dragged as well as tapped
 (() => { let SW = null;
