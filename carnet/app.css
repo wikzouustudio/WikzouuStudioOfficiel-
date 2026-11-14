@@ -2023,3 +2023,14 @@ details.fold[open]>summary .fold-chev{transform:rotate(90deg)}
 details.fold:not([open]){margin-bottom:-6px}
 .fold-tools{display:flex;justify-content:flex-end;margin:-2px 2px 8px}
 @media (prefers-reduced-motion: no-preference){details.fold[open]>.fold-b{animation:dlRise .4s cubic-bezier(.22,1.25,.36,1) both}}
+
+/* folded sections look like "Fin de journée" */
+details.fold>summary{list-style:none;cursor:pointer;-webkit-user-select:none;user-select:none;padding:14px 16px;margin:0;border-radius:0;display:flex}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary:active{background:var(--fill)}
+details.fold .eod-h .chev{color:var(--fg3);transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+details.fold[open] .eod-h .chev{transform:rotate(90deg)}
+details.fold .eod-h .t{font-weight:600;font-size:16px}
+details.fold:not([open]){margin-bottom:0}
+details.fold .fold-b{padding-top:12px}
+details.fold .fold-b>.card,details.fold .fold-b>.foot{margin-left:0;margin-right:0}

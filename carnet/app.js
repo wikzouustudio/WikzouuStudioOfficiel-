@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "110"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "111"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3137,12 +3137,18 @@ function gpsUI(){
   if (Date.now() - GPS.painted > (PM.lw && PM.lw.ready ? 4000 : 12000)) gpsPaint();
 }
 // sections that are useful now and then start folded; tap the header to open them (remembered per phone)
+const FOLD_IC = {
+  share: ["var(--teal)", '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="3.5" y="12" width="4" height="8.5" rx="1.4"/><rect x="10" y="7" width="4" height="13.5" rx="1.4"/><rect x="16.5" y="3.5" width="4" height="17" rx="1.4"/></svg>'],
+  members: ["var(--blue)", '<svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 19.5c.6-3.6 3.3-5.8 6.5-5.8s5.9 2.2 6.5 5.8c.1.6-.3 1-.9 1H3.4c-.6 0-1-.4-.9-1Z"/><circle cx="17" cy="9" r="2.8"/><path d="M16.2 13.9c2.8-.3 5 1.4 5.5 4.4.1.6-.3 1-.9 1h-3.6c-.2-2-.6-3.8-1-5.4Z"/></svg>'],
+  me: ["var(--purple)", '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="8" r="4.2"/><path d="M4 20c.7-4 3.9-6.6 8-6.6s7.3 2.6 8 6.6c.1.6-.3 1.1-.9 1.1H4.9c-.6 0-1-.5-.9-1.1Z"/></svg>'],
+  garde: ["var(--orange)", '<svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M12 2.5 4.5 5.4v5.7c0 4.6 3.1 8.7 7.5 10.4 4.4-1.7 7.5-5.8 7.5-10.4V5.4L12 2.5Zm-.1 6.1a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Zm-2.7 1.6a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Zm5.4 0a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2ZM12 12.6c1.3 0 2.6 1.3 3 2.4.3.8-.2 1.6-1.1 1.6-.6 0-1.1-.4-1.9-.4s-1.3.4-1.9.4c-.9 0-1.4-.8-1.1-1.6.4-1.1 1.7-2.4 3-2.4Z"/></svg>']};
 function foldSec(html, key, hint){
   const m = String(html || "").match(/^\s*<div class="sec"><div class="sec-h"><h2>([\s\S]*?)<\/h2>([\s\S]*?)<\/div>([\s\S]*)<\/div>\s*$/);
   if (!m) return html || "";
-  const open = gLS.g("dl-fold-" + key) === "1";
-  return `<details class="sec fold" data-fold="${key}" ${open ? "open" : ""}><summary class="sec-h fold-h"><h2>${m[1]}</h2><span class="fold-hint">${hint || ""}</span><span class="fold-chev" aria-hidden="true">${I.chevR}</span></summary>
-    <div class="fold-b">${m[2].trim() ? `<div class="fold-tools">${m[2]}</div>` : ""}${m[3]}</div></details>`;
+  const open = gLS.g("dl-fold-" + key) === "1", ic = FOLD_IC[key] || ["var(--accent)", I.dot];
+  // same look as "Fin de journée": a card with an icon, a title, a short summary and a chevron
+  return `<div class="sec"><details class="eod fold" data-fold="${key}" ${open ? "open" : ""}><summary class="eod-h"><span class="ico" style="--c:${ic[0]}">${ic[1]}</span><div class="main"><div class="t">${m[1]}</div><div class="s">${hint || ""}</div></div><span class="chev">${I.chevR}</span></summary>
+    <div class="eod-b fold-b">${m[2].trim() ? `<div class="fold-tools">${m[2]}</div>` : ""}${m[3]}</div></details></div>`;
 }
 document.addEventListener("toggle", e => { const d = e.target; if (d && d.classList && d.classList.contains("fold")) { gLS.s("dl-fold-" + d.dataset.fold, d.open ? "1" : null); S.lastHTML = ""; } }, true);
 // Famille: the most recent walk, always visible (map, distance, time, who); tap for the details
