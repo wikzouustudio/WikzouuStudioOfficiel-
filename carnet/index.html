@@ -1540,7 +1540,11 @@ body.intro .tabbar{animation:dl-tabin .7s cubic-bezier(.2,.9,.25,1.1) .35s both}
 .opts span.mav-w{padding:0!important;border:0!important;background:none!important}
 :root[data-skin="aurora"] .btn.danger{color:var(--red)!important;background:none!important;font-weight:650}
 input.f{min-width:0;max-width:100%;box-sizing:border-box}
-input[type="time"].f,input[type="date"].f{display:block;width:100%;-webkit-appearance:none;appearance:none}
+input[type="date"].f{display:block;width:100%;-webkit-appearance:none;appearance:none}
+input[type="time"].f{display:inline-block;align-self:flex-start;justify-self:start;width:auto;min-width:120px;max-width:100%;height:46px;min-height:0;padding:0 14px;line-height:46px;text-align:left;-webkit-appearance:none;appearance:none;font-variant-numeric:tabular-nums}
+input[type="time"].f.wz-time{width:100%}
+input[type="time"].f::-webkit-date-and-time-value{text-align:left;margin:0;line-height:46px;min-height:0}
+input[type="time"].f::-webkit-datetime-edit{padding:0;line-height:46px}
 :root[data-skin="aurora"] .seg button.on{box-shadow:0 1px 3px rgba(0,0,0,.18),inset 0 1px 0 var(--hl-a)}
 :root[data-skin="aurora"] input.f:focus,:root[data-skin="aurora"] select.f:focus,:root[data-skin="aurora"] textarea.f:focus{background:linear-gradient(var(--sf),var(--sf)) padding-box,linear-gradient(135deg,var(--g2),var(--g3)) border-box}
 /* primary buttons: light rim on top, soft edge below */
@@ -1688,7 +1692,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "60"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "61"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
