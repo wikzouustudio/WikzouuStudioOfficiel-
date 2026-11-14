@@ -164,17 +164,17 @@ async function push(env, family, t, msg) {
 
 /* ---------- texts ---------- */
 const L = {
-  fr: {test: "Notification envoyée par le serveur ✓", soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
+  fr: {week: "📊 Le bilan de la semaine est prêt", weekBody: "Moyennes, tendances et un programme adapté pour la semaine prochaine de {n}.", test: "Notification envoyée par le serveur ✓", soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
     warn: "Météo à éviter pour la balade de {h}", better: "Mieux vers {h} : {i} {t}°, {p} % de pluie.", earlier: "Avancez-la ?", later: "Décalez-la ?", alsoBetter: "mieux vers {h}",
     ideal: "Temps idéal pour une balade", goOut: "Parfait pour sortir {n}", dryUntil: "sec jusqu'à", rain: "pluie probable", hot: "chaud, gardez-la courte", cold: "froid", nice: "temps idéal",
     tomorrow: "Demain", in1h: "Dans 1 heure", at: "à", recap: "Pas encore fait aujourd'hui", more: "et {n} autre(s)", food: "Croquettes bientôt finies", foodDays: "Il en reste pour environ {n} jour(s).",
     k: {pipi: "Pipi", caca: "Caca", balade: "Balade", accident: "Accident", eau: "Eau", friandise: "Friandise", sieste: "Sieste", jeu: "Jeu", vomi: "Vomissement", photo: "Photo"}},
-  en: {test: "Notification sent by the server ✓", soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
+  en: {week: "📊 Your weekly summary is ready", weekBody: "Averages, trends and a plan for {n}'s next week.", test: "Notification sent by the server ✓", soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
     warn: "Bad weather for the {h} walk", better: "Better around {h}: {i} {t}°, {p}% rain.", earlier: "Go earlier?", later: "Go later?", alsoBetter: "better around {h}",
     ideal: "Perfect weather for a walk", goOut: "A great time to take {n} out", dryUntil: "dry until", rain: "rain likely", hot: "hot, keep it short", cold: "cold", nice: "ideal weather",
     tomorrow: "Tomorrow", in1h: "In 1 hour", at: "at", recap: "Not done yet today", more: "and {n} more", food: "Food running low", foodDays: "About {n} day(s) left.",
     k: {pipi: "Pee", caca: "Poo", balade: "Walk", accident: "Accident", eau: "Water", friandise: "Treat", sieste: "Nap", jeu: "Play", vomi: "Vomiting", photo: "Photo"}},
-  hr: {test: "Obavijest poslana s poslužitelja ✓", soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
+  hr: {week: "📊 Tjedni sažetak je spreman", weekBody: "Prosjeci, trendovi i plan za sljedeći tjedan ({n}).", test: "Obavijest poslana s poslužitelja ✓", soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
     warn: "Loše vrijeme za šetnju u {h}", better: "Bolje oko {h}: {i} {t}°, {p} % kiše.", earlier: "Ranije?", later: "Kasnije?", alsoBetter: "bolje oko {h}",
     ideal: "Idealno vrijeme za šetnju", goOut: "Savršeno za izlazak ({n})", dryUntil: "suho do", rain: "moguća kiša", hot: "vruće, neka bude kratko", cold: "hladno", nice: "idealno vrijeme",
     tomorrow: "Sutra", in1h: "Za 1 sat", at: "u", recap: "Danas još nije napravljeno", more: "i još {n}", food: "Hrana pri kraju", foodDays: "Ostalo je za otprilike {n} dan(a).",
@@ -311,6 +311,9 @@ async function remindFamily(env, fid, when) {
     if (daily) { const since = Math.max(0, Math.round((Date.parse(n.ds) - Date.parse(food.opened)) / 86400000)), left = (food.bagKg * 1000 - since * daily) / daily;
       if (left > 0 && left <= 3) await send("daily", everyone, l => ({title: `🦴 ${l.food}`, body: l.foodDays.replace("{n}", Math.max(1, Math.floor(left)))}), `food-${n.ds}`, "alerte"); }
   }
+
+  // Sunday 19:00: the weekly summary is ready
+  if (n.wd === 0 && at(19 * 60)) await send("daily", everyone, l => ({title: l.week, body: dogName ? l.weekBody.replace("{n}", dogName) : l.weekBody.replace(" {n}", "")}), `week-${n.ds}`, "rappel", "sante/semaine");
 
   // 3:00: tidy the notification centre (read ones after 7 days, all after 30 days)
   if (at(3 * 60)) {
