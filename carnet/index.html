@@ -1720,7 +1720,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "65"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "66"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2147,6 +2147,8 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"La date de fin est déjà passée.":"The end date has already passed."}); Object.assign(HR, {"La date de fin est déjà passée.":"Datum završetka je već prošao."});
+Object.assign(EN, {"Personne n'a le rôle « Garde » dans la famille. Invitez la personne qui garde le chien avec ce rôle, puis choisissez-la ici.": "Nobody in the family has the “Sitter” role. Invite the person looking after the dog with that role, then pick them here.", "Inviter une personne en garde": "Invite a sitter", "Le dernier jour passé, la personne qui garde perd l'accès à la famille. Votre nom et votre téléphone (fiche « Vous ») lui sont donnés comme contact.": "Once the last day has passed, the sitter loses access to the family. Your name and phone (your “You” card) are given as the contact.", "Choisissez la personne qui garde le chien.": "Choose who is looking after the dog.", "Indiquez les dates de garde.": "Enter the dates.", "Garde terminée": "Dog-sitting over", "Date de garde terminée : accès à la famille retiré.": "Dog-sitting dates are over: access to the family removed.", "Merci d'avoir gardé {n} !": "Thanks for looking after {n}!", "garde terminée": "over"}); Object.assign(HR, {"Personne n'a le rôle « Garde » dans la famille. Invitez la personne qui garde le chien avec ce rôle, puis choisissez-la ici.": "Nitko u obitelji nema ulogu „Čuvanje”. Pozovite osobu koja čuva psa s tom ulogom, pa je odaberite ovdje.", "Inviter une personne en garde": "Pozovi čuvara", "Le dernier jour passé, la personne qui garde perd l'accès à la famille. Votre nom et votre téléphone (fiche « Vous ») lui sont donnés comme contact.": "Nakon zadnjeg dana čuvar gubi pristup obitelji. Vaše ime i telefon (kartica „Vi”) daju mu se kao kontakt.", "Choisissez la personne qui garde le chien.": "Odaberite tko čuva psa.", "Indiquez les dates de garde.": "Upišite datume čuvanja.", "Garde terminée": "Čuvanje završeno", "Date de garde terminée : accès à la famille retiré.": "Čuvanje je završeno: pristup obitelji je uklonjen.", "Merci d'avoir gardé {n} !": "Hvala što ste čuvali {n}!", "garde terminée": "završeno"});
 Object.assign(EN, {"Notifications, style, langue, widget, aide":"Notifications, style, language, widget, help"}); Object.assign(HR, {"Notifications, style, langue, widget, aide":"Obavijesti, stil, jezik, widget, pomoć"});
 Object.assign(EN, {"{n} activit\u00e9s": "{n} activities", "{n} pass\u00e9e(s)": "{n} past"}); Object.assign(HR, {"{n} activités": "Aktivnosti: {n}", "{n} passée(s)": "prošlo: {n}"});
 Object.assign(HR, {"Compte": "Račun", "Connecté sur cet appareil": "Prijavljeni na ovom uređaju", "Se déconnecter": "Odjava"});
@@ -3382,24 +3384,45 @@ function gardeSection(){
   return `<div class="sec"><div class="sec-h"><h2>${T("Chien sous garde")}</h2>${canEdit()?`<button class="link" data-act="editGarde">${T("Modifier")}</button>`:""}</div>
   <div class="card list">
     <div class="row"><span class="t" style="flex:none;width:118px">${T("Dates")}</span><span class="main val" style="${when?"":"color:var(--fg3)"}">${esc(when || "—")}</span></div>
-    <div class="row"><span class="t" style="flex:none;width:118px">${T("Gardé par")}</span><span class="main val" style="${g.sitterName?"":"color:var(--fg3)"}">${esc(g.sitterName || "—")}</span></div>
+    <div class="row"><span class="t" style="flex:none;width:118px">${T("Gardé par")}</span><span class="main val" style="${g.sitterName?"":"color:var(--fg3)"}">${g.sitterId && (C.members || {})[g.sitterId] ? mav((C.members || {})[g.sitterId], 20) + " " : ""}${esc(g.sitterName ? g.sitterName + (g.ended ? " · " + T("garde terminée") : "") : "—")}</span></div>
     <div class="row"><span class="t" style="flex:none;width:118px">${T("Consignes")}</span><span class="main val" style="${g.instructions?"":"color:var(--fg3)"};white-space:pre-wrap;text-align:left">${esc(g.instructions || "—")}</span></div>
     <button class="row" data-act="previewOn"><span class="main t" style="color:var(--accent)">${T("Voir comme la personne qui garde")}</span><span class="chev">${I.chevR}</span></button>
   </div>
   <div class="foot">${T("Invitez-la depuis Famille avec le rôle « Garde » : elle pourra cocher les tâches et remplir le journal, mais pas modifier la fiche, la routine ni les traitements.")}</div></div>`;
 }
 function gardeSheet(){
-  const g = garde();
+  const g = garde(), sit = family().filter(m => m.role === "garde"), me = meMember() || {};
+  const pick = sit.length ? `<div class="opts">${sit.map(m => `<label><input type="radio" name="g-sit" value="${esc(m.id)}" ${g.sitterId === m.id || sit.length === 1 ? "checked" : ""}><span>${mav(m, 18)}${esc(m.name)}</span></label>`).join("")}</div>`
+    : `<div class="hint" style="margin-top:0">${T("Personne n'a le rôle « Garde » dans la famille. Invitez la personne qui garde le chien avec ce rôle, puis choisissez-la ici.")}</div><button type="button" class="btn ghost" style="width:100%" data-act="inviteGarde">${T("Inviter une personne en garde")}</button>`;
   openSheet(T("Chien sous garde"), `
-    <div class="two"><div class="fg"><label for="g-from">${T("Du")}</label><input class="f" type="date" id="g-from" value="${esc(g.from||"")}"></div><div class="fg"><label for="g-to">${T("Au")}</label><input class="f" type="date" id="g-to" value="${esc(g.to||"")}"></div></div>
-    <div class="fg"><label for="g-sitter">${T("Gardé par")}</label><input class="f" id="g-sitter" value="${esc(g.sitterName||"")}" placeholder="${T("Nom")}"></div>
-    <div class="two"><div class="fg"><label for="g-owner">${T("Propriétaire")}</label><input class="f" id="g-owner" value="${esc(g.ownerName||"")}" placeholder="${T("Nom")}"></div><div class="fg"><label for="g-phone">${T("Téléphone")}</label><input class="f num" type="tel" id="g-phone" value="${esc(g.ownerPhone||"")}" placeholder="079 …"></div></div>
-    <div class="fg"><label for="g-instr">${T("Consignes")}</label><textarea class="f" id="g-instr" placeholder="${T("Clés, codes, où est la nourriture, ce qu'il n'a pas le droit de faire…")}">${esc(g.instructions||"")}</textarea></div>`,
+    <div class="fg"><span class="lab">${T("Gardé par")}</span>${pick}</div>
+    <div class="two"><div class="fg"><label for="g-from">${T("Du")}</label><input class="f" type="date" id="g-from" value="${esc(g.ended ? "" : g.from || "")}"></div><div class="fg"><label for="g-to">${T("Au")}</label><input class="f" type="date" id="g-to" value="${esc(g.ended ? "" : g.to || "")}"></div></div>
+    <div class="fg"><label for="g-instr">${T("Consignes")}</label><textarea class="f" id="g-instr" placeholder="${T("Clés, codes, où est la nourriture, ce qu'il n'a pas le droit de faire…")}">${esc(g.instructions||"")}</textarea></div>
+    <div class="hint">${T("Le dernier jour passé, la personne qui garde perd l'accès à la famille. Votre nom et votre téléphone (fiche « Vous ») lui sont donnés comme contact.")}</div>`,
   () => {
+    const sid = (document.querySelector('input[name="g-sit"]:checked') || {}).value || "", m = family().find(x => x.id === sid);
     const from = val("g-from"), to = val("g-to");
-    if (from && to && to < from) { toast(T("La date de fin précède la date de début.")); return false; }
-    put("config","garde",{from, to, sitterName: val("g-sitter"), ownerName: val("g-owner"), ownerPhone: val("g-phone"), instructions: (document.getElementById("g-instr")||{}).value || ""});
+    if (!m) { toast(T("Choisissez la personne qui garde le chien.")); return false; }
+    if (!from || !to) { toast(T("Indiquez les dates de garde.")); return false; }
+    if (to < from) { toast(T("La date de fin précède la date de début.")); return false; }
+    if (to < ymd(new Date())) { toast(T("La date de fin est déjà passée.")); return false; }
+    put("config","garde",{from, to, sitterId: m.id, sitterName: m.name, ownerName: me.name || "", ownerPhone: me.phone || "", instructions: (document.getElementById("g-instr")||{}).value || "", ended: false});
   });
+}
+// once the last day of the garde is over, the sitter loses access to the family
+const gardeOver = () => { const g = garde(); return !!(g.to && g.to < ymd(new Date())); };
+let gardeDone = false;
+function gardeExpiry(){
+  if (gardeDone || S.mode !== "db" || !S.ready || S.preview || !gardeOver()) return;
+  const g = garde();
+  if (S.sitterRole && (!g.sitterId || g.sitterId === ME)) { gardeDone = true; const m = meMember(); if (window.carnetLeave) window.carnetLeave(m ? m.name : "", "garde"); return; }
+  if (canEdit() && g.sitterId && !g.ended) { gardeDone = true; const m = (C.members || {})[g.sitterId];
+    (async () => { try { if (m && m.role === "garde") { if (m.uid) await del("access", m.uid); await removeMember(g.sitterId); }
+      await put("config", "garde", Object.assign({}, g, {ended: true})); } catch(e) { console.warn(e); } })(); }
+}
+function viewGardeEnded(){
+  return `<div class="lock"><div class="join-ic" style="margin-bottom:18px">${I.cal}</div><h1>${T("Garde terminée")}</h1>
+    <p>${T("Date de garde terminée : accès à la famille retiré.")}</p><p style="color:var(--fg2)">${T("Merci d'avoir gardé {n} !", {n: esc((dog() || {}).name || T("le chien"))})}</p></div>`;
 }
 
 /* ---------- buddy: a little dog that mirrors the real one ---------- */
@@ -3673,9 +3696,9 @@ function familySection(){
 const ART_URL = SITE ? location.origin + location.pathname : "https://claude.ai/artifact/5WVU6oZS2Gzi53rfMeXpHR";
 const inviteText = () => { const d = dog() || {}; return T("Rejoins le carnet de {n} sur Dogs Life : ouvre ce lien, choisis ton prénom et coche les balades et repas quand tu t'en occupes.",{n:d.name || T("notre chien")}); };
 const MAX_FAMILY = 100;
-function inviteForm(){
+function inviteForm(role){
   if (family().length + invites().length >= MAX_FAMILY) { toast(T("Une famille compte au maximum {n} membres.", {n: MAX_FAMILY})); return; }
-  S.invRole = "famille";
+  S.invRole = role || "famille";
   openSheet(T("Ajouter quelqu'un"), `<div class="hint" style="margin:0 0 12px">${T("Choisissez son rôle : le carnet crée un code à lui donner. Avec ce code, elle rejoint la famille depuis son propre compte.")}</div>
     <div class="role-g" id="iv-role">${ROLES.map(([k, l, d]) => `<button type="button" class="role-c ${k === S.invRole ? "on" : ""}" data-act="invRole" data-v="${k}"><i class="wz-radio"></i><div><b>${T(l)}</b><span>${T(d)}</span></div></button>`).join("")}</div>`,
     () => { newInviteCode(S.invRole); });
@@ -6206,7 +6229,7 @@ setInterval(() => { if (SPLASH.gone) return; const g = document.getElementById("
 // the bridge asks to close its screen once signed in: keep the loading screen until the data is really there
 window.__dlHold = root => { if (SPLASH.gone) return false; if (!root.querySelector(".g-spin")) root.innerHTML = '<div class="gate"><div class="g-in"><div class="g-logo"><img src="icon-512.png" width="104" height="104" alt="Dogs Life"></div><h1>Dogs Life</h1><div class="g-spin"><svg class="g-ecg" viewBox="0 0 150 40" aria-hidden="true"><path d="M2 22h40l6-10 8 22 8-30 7 18h20c4 0 6-6 10-6s6 6 10 6h37"/></svg></div></div></div>'; document.body.classList.add("gated"); SPLASH.t0 = Math.min(SPLASH.t0, Date.now()); setTimeout(splashCheck, 50); return true; };
 function render(skipNames){
-  setTimeout(() => { splashCheck(); pushGate(); inboxStart(); bellInject(); if (SPLASH.gone) setTimeout(whatsNew, 1600); if (S.openNid && window.carnetInbox && S.mode === "db" && S.ready) { window.carnetInbox.read(S.openNid); S.openNid = null; } }, 0);
+  setTimeout(() => { gardeExpiry(); splashCheck(); pushGate(); inboxStart(); bellInject(); if (SPLASH.gone) setTimeout(whatsNew, 1600); if (S.openNid && window.carnetInbox && S.mode === "db" && S.ready) { window.carnetInbox.read(S.openNid); S.openNid = null; } }, 0);
   const v = $("#view");
   document.documentElement.lang = LANG;
   const active = document.activeElement, keepNote = active && active.id && /^(INPUT|TEXTAREA)$/.test(active.tagName) && active.type !== "file" && v.contains(active) ? {id: active.id, v: active.value, s: active.selectionStart} : null;
@@ -6220,7 +6243,8 @@ function render(skipNames){
   if (S.editProfile && S.tab === "chien" && v.querySelector("#p-name")) { renderTabs(); return; }
   const pa = live("pageAnim");
   if (!tabList().some(x => x[0] === S.tab)) { S.tab = "aujourdhui"; S.sub = null; }
-  const view = {planning:viewPlanning, sante:viewHealth, famille:viewFamilyTab, chien:viewChien, garde:viewGarde}[S.tab] || viewToday;
+  const view = S.sitterRole && !S.preview && S.mode === "db" && S.ready && gardeOver() && (!garde().sitterId || garde().sitterId === ME) ? viewGardeEnded
+    : {planning:viewPlanning, sante:viewHealth, famille:viewFamilyTab, chien:viewChien, garde:viewGarde}[S.tab] || viewToday;
   const html = `<div class="page ${pa ? pa.cls : ""}">` + view() + `</div>`;
   if (html === S.lastHTML && v.firstElementChild) { renderTabs(); renderJoin(); return; }
   const ml0 = v.querySelector(".msg-list"), mlKeep = ml0 ? {top: ml0.scrollTop, first: ml0.dataset.first} : null;
@@ -6568,7 +6592,7 @@ document.addEventListener("click", async e => {
         break; }
       if (m) await removeMember(m.id); ME = null; try { LS.del("carnet-me"); } catch(_){} render(); toast(T("Vous avez quitté la famille")); break; }
     case "delNote": await del("notes", el.dataset.id); break;
-    case "closeSettings": go("chien"); break;
+    case "closeSettings": go("famille"); break;
     case "editFood": foodSheet(); break;
     case "newBag": { const f = C.config.food; if (!f) break; if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer : nouveau sac aujourd'hui"); break; }
       await put("config", "food", Object.assign({}, f, {opened: ymd(new Date())})); toast(T("Nouveau sac enregistré")); break; }
@@ -6631,6 +6655,7 @@ document.addEventListener("click", async e => {
     case "buddyHelp": buddyHelp(el.dataset.k); break;
     case "badgeHelp": badgeHelp(el.dataset.k); break;
     case "editGarde": gardeSheet(); break;
+    case "inviteGarde": closeSheet(); setTimeout(() => inviteForm("garde"), 280); break;
     case "previewOn": S.preview = true; S.tab = "garde"; S.pageAnim = {cls:"enter-u", until: Date.now() + 500}; render(); window.scrollTo(0,0); break;
     case "previewOff": S.preview = false; S.tab = "famille"; S.sub = null; S.pageAnim = {cls:"enter-u", until: Date.now() + 500}; render(); window.scrollTo(0,0); break;
     case "petBuddy": S.buddyJump = {until: Date.now() + 900}; try { if (navigator.vibrate) navigator.vibrate(8); } catch(_){} render(true); setTimeout(() => render(true), 950); break;
@@ -6845,7 +6870,7 @@ function useAccount(id){
   try { PER_USER.forEach(k => { const old = localStorage.getItem(k); if (old !== null) { if (localStorage.getItem(LS.k(k)) === null) localStorage.setItem(LS.k(k), old); localStorage.removeItem(k); } }); } catch(_) {}
   ME = LS.get("carnet-me"); CUR = LS.get("carnet-dog") || "main";
   const n = LS.get("carnet-notif"); NOTIF_ASKED = n !== null; NOTIF = n === "1"; SOUND = LS.get("carnet-sound") !== "0";
-  try { const lf = sessionStorage.getItem("dl-left"); if (lf) { sessionStorage.removeItem("dl-left"); setTimeout(() => toast(T(lf === "removed" ? "Vous ne faites plus partie de cette famille" : "Vous avez quitté la famille")), 1200); } } catch(_) {}
+  try { const lf = sessionStorage.getItem("dl-left"); if (lf) { sessionStorage.removeItem("dl-left"); setTimeout(() => lf === "garde" ? openSheet(T("Garde terminée"), `<p style="margin:4px 0 8px;font-size:16px;line-height:1.45">${T("Date de garde terminée : accès à la famille retiré.")}</p>`, () => {}) : toast(T(lf === "removed" ? "Vous ne faites plus partie de cette famille" : "Vous avez quitté la famille")), 1200); } } catch(_) {}
 }
 /* ---------- boot ---------- */
 (function(){ const [t, sub] = parseHash(location.hash.slice(1)); if (t) { S.tab = t; S.sub = sub; } })();

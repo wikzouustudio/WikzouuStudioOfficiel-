@@ -379,7 +379,7 @@ window.carnetLeave = async (name, removed) => {
   // forget everything this phone kept about the old family: chosen profile, dog, read messages, walk in progress, offline copy
   try { const drop = ["carnet-me@", "carnet-dog@", "carnet-notes-seen@", "dl-push@"].map(k => k + UID);
     Object.keys(localStorage).forEach(k => { if (drop.includes(k) || k.startsWith("dl-gps@")) localStorage.removeItem(k); });
-    localStorage.setItem("dl-fid@" + UID, fid); sessionStorage.setItem("dl-left", removed ? "removed" : "1"); } catch(_) {}
+    localStorage.setItem("dl-fid@" + UID, fid); sessionStorage.setItem("dl-left", removed === "garde" ? "garde" : removed ? "removed" : "1"); } catch(_) {}
   try { await terminate(fs); await clearIndexedDbPersistence(fs); } catch(e) { console.warn(e); }
   location.reload();
   return "ok";
