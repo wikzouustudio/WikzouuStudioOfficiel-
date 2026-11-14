@@ -1934,3 +1934,13 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .tab.scrub-hot{color:var(--fg)!important}.tab.scrub-hot svg{color:var(--accent)!important;transform:translateY(-2px) scale(1.12);transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
 .seg button.scrub-hot{font-weight:600}
 #tabs.scrubbing .tab{transform:none!important;transition:none!important}
+
+/* family orbit: driven by touch + physics */
+.fam-orbit{touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
+.fam-orbit:active{cursor:grabbing}
+.orbit-ring{animation:none!important}
+.orbit-ring .orb{will-change:transform}
+.orbit-ring .orb>.mav{animation:orbBreath 3s ease-in-out infinite!important}
+.orbit-center{will-change:transform;animation:none}
+.orbit-center .avatar{transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.fam-orbit:active .orbit-center .avatar{transform:scale(.96)}

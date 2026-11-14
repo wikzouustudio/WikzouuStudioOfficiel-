@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "96"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "97"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3332,7 +3332,7 @@ function viewFamily(){
   try { if (ns[0]) LS.set("carnet-notes-seen", ns[0].at || ""); } catch(_){}
   const hero = `<div class="fam-hero">
       <div class="fam-orbit"><div class="orbit-center">${avatarHTML(d, "lg")}</div>
-        <div class="orbit-ring">${fam.slice(0, 8).map((m, i) => `<button class="orb" data-act="memberSheet" data-id="${esc(m.id)}" style="--a:${(i / Math.min(8, fam.length)) * 360 - 90}deg" aria-label="${esc(m.name)}">${mav(m, 46)}</button>`).join("")}</div></div>
+        <div class="orbit-ring">${fam.slice(0, 8).map((m, i) => `<button class="orb" data-act="memberSheet" data-id="${esc(m.id)}" data-a="${(i / Math.min(8, fam.length)) * 360 - 90}" style="--a:${(i / Math.min(8, fam.length)) * 360 - 90}deg" aria-label="${esc(m.name)}">${mav(m, 46)}</button>`).join("")}</div></div>
       <h1>${T("La famille de {n}",{n:esc(d.name || T("votre chien"))})}</h1>
       <div class="s">${fam.length ? T("{n} membre(s)",{n:fam.length}) + ` · <span class="online-n"><i></i>${esc(T("{n} en ligne",{n:onlineCount()}))}</span>` : T("Personne pour l'instant")}</div></div>`;
   // me
@@ -5217,9 +5217,43 @@ function render(skipNames){
 }
 // keep the orbit turning smoothly across re-renders: phase comes from the clock
 function msgFade(el){ el.classList.toggle("more-below", el.scrollHeight - el.scrollTop - el.clientHeight > 8); el.classList.toggle("more-above", el.scrollTop > 8); }
-function syncOrbit(){ const o = document.querySelector(".orbit-ring"); if (!o) return; const ph = -((Date.now() / 1000) % 24);
-  o.style.animationDelay = ph + "s"; o.querySelectorAll(".orb > .mav").forEach(x => x.style.animationDelay = ph + "s, " + ph + "s");
-  const c = document.querySelector(".orbit-center .avatar"); if (c) c.style.animationDelay = ph + "s"; }
+// the family orbit is a little physics toy: it drifts on its own, you can grab it, spin it, flick it,
+// it keeps your momentum, slows down with friction and settles back to its calm drift in your direction
+const ORB = {th: -((Date.now() / 1000) % 24) * 15, w: 15, dir: 1, drag: null, raf: 0, last: 0, r: 0, rv: 0, tilt: 0, tv: 0, tick: 0};
+function syncOrbit(){ if (!ORB.raf && document.querySelector(".orbit-ring")) { ORB.last = performance.now(); ORB.raf = requestAnimationFrame(orbStep); } }
+function orbStep(now){
+  const ring = document.querySelector(".orbit-ring"); if (!ring) { ORB.raf = 0; return; }
+  const dt = Math.min(.05, (now - ORB.last) / 1000); ORB.last = now;
+  const calm = RM() ? 0 : 15 * ORB.dir;
+  if (!ORB.drag) { ORB.w += (calm - ORB.w) * (1 - Math.exp(-dt * 1.3)); ORB.th += ORB.w * dt; }
+  // centrifugal stretch and a wobble of the dog in the middle, both on springs
+  const spin = Math.min(1, Math.abs(ORB.w) / 900), rt = spin * 16 + (ORB.drag ? 5 : 0);
+  ORB.rv += (-(170) * (ORB.r - rt) - 18 * ORB.rv) * dt; ORB.r += ORB.rv * dt;
+  const tt = Math.max(-14, Math.min(14, ORB.w * .02));
+  ORB.tv += (-(140) * (ORB.tilt - tt) - 12 * ORB.tv) * dt; ORB.tilt += ORB.tv * dt;
+  const R = 95 + ORB.r, orbs = ring.querySelectorAll(".orb"), n = orbs.length || 1;
+  orbs.forEach(o => { const a = ((+o.dataset.a || 0) + ORB.th) * Math.PI / 180, x = Math.cos(a) * R, y = Math.sin(a) * R * .93, depth = (Math.sin(a) + 1) / 2;
+    o.style.transform = `translate(-50%,-50%) translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${(.9 + depth * .16).toFixed(3)})`; o.style.zIndex = depth > .5 ? 3 : 0; });
+  const c = document.querySelector(".orbit-center"); if (c) c.style.transform = `rotate(${ORB.tilt.toFixed(2)}deg) scale(${(1 + Math.abs(ORB.tilt) * .004).toFixed(3)})`;
+  // a light tick each time someone passes the top, when spun fast (phones that can vibrate)
+  const slot = Math.floor((ORB.th + 90) / (360 / n)); if (slot !== ORB.tick) { if (Math.abs(ORB.w) > 260) { try { if (navigator.vibrate) navigator.vibrate(3); } catch(_) {} } ORB.tick = slot; }
+  ORB.raf = requestAnimationFrame(orbStep);
+}
+(() => {
+  const ang = (e, box) => { const r = box.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI; };
+  document.addEventListener("pointerdown", e => { const box = e.target.closest(".fam-orbit"); if (!box || e.button) return;
+    ORB.drag = {box, a0: ang(e, box), th0: ORB.th, moved: false, id: e.pointerId, hist: [[performance.now(), ORB.th]]}; ORB.w = 0; });
+  document.addEventListener("pointermove", e => { const d = ORB.drag; if (!d || e.pointerId !== d.id) return;
+    let da = ang(e, d.box) - d.a0; da = ((da + 540) % 360) - 180;
+    if (!d.moved && Math.abs(da) < 4) return; if (!d.moved) { d.moved = true; try { d.box.setPointerCapture(e.pointerId); } catch(_) {} }
+    d.a0 += da; ORB.th += da; const t = performance.now(); d.hist.push([t, ORB.th]); while (d.hist.length > 2 && t - d.hist[0][0] > 90) d.hist.shift(); });
+  const up = e => { const d = ORB.drag; if (!d) return; ORB.drag = null;
+    if (!d.moved) { ORB.w = 0; return; }
+    const a = d.hist[0], b = d.hist[d.hist.length - 1], dt = (b[0] - a[0]) / 1000; ORB.w = dt > 0 ? Math.max(-1600, Math.min(1600, (b[1] - a[1]) / dt)) : 0;
+    if (Math.abs(ORB.w) > 20) ORB.dir = Math.sign(ORB.w);
+    const stop = ev => { ev.stopPropagation(); ev.preventDefault(); }; document.addEventListener("click", stop, {capture: true}); setTimeout(() => document.removeEventListener("click", stop, {capture: true}), 350); };
+  document.addEventListener("pointerup", up); document.addEventListener("pointercancel", up);
+})();
 async function joined(name){
   S.joinForce = false; S.joinRole = null;
   try { await put("notes", newId(), {kind:"join", name, text: name + " a rejoint la famille", mid: ME || "", uid: S.me || "", at: new Date().toISOString()}); } catch(_) {}
