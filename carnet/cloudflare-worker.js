@@ -164,18 +164,18 @@ async function push(env, family, t, msg) {
 
 /* ---------- texts ---------- */
 const L = {
-  fr: {week: "📊 Le bilan de la semaine est prêt", weekBody: "Moyennes, tendances et un programme adapté pour la semaine prochaine de {n}.", test: "Notification envoyée par le serveur ✓", soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
-    warn: "Météo à éviter pour la balade de {h}", better: "Mieux vers {h} : {i} {t}°, {p} % de pluie.", earlier: "Avancez-la ?", later: "Décalez-la ?", alsoBetter: "mieux vers {h}",
+  fr: {week: "Le bilan de la semaine est prêt", weekBody: "Moyennes, tendances et un programme adapté pour la semaine prochaine de {n}.", test: "Notification envoyée par le serveur", soon: "Dans 5 min", late: "Toujours à faire", for: "pour", notYet: "n'est pas encore cochée.", did: "a fait", wrote: "Nouveau message de",
+    warn: "Météo à éviter pour la balade de {h}", better: "Mieux vers {h} : {t}°, {p} % de pluie.", earlier: "Avancez-la ?", later: "Décalez-la ?", alsoBetter: "mieux vers {h}",
     ideal: "Temps idéal pour une balade", goOut: "Parfait pour sortir {n}", dryUntil: "sec jusqu'à", rain: "pluie probable", hot: "chaud, gardez-la courte", cold: "froid", nice: "temps idéal",
     tomorrow: "Demain", in1h: "Dans 1 heure", at: "à", recap: "Pas encore fait aujourd'hui", more: "et {n} autre(s)", food: "Croquettes bientôt finies", foodDays: "Il en reste pour environ {n} jour(s).",
     k: {pipi: "Petit besoin", caca: "Grand besoin", balade: "Balade", accident: "Accident", eau: "Eau", friandise: "Friandise", sieste: "Sieste", jeu: "Jeu", vomi: "Vomissement", photo: "Photo"}},
-  en: {week: "📊 Your weekly summary is ready", weekBody: "Averages, trends and a plan for {n}'s next week.", test: "Notification sent by the server ✓", soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
-    warn: "Bad weather for the {h} walk", better: "Better around {h}: {i} {t}°, {p}% rain.", earlier: "Go earlier?", later: "Go later?", alsoBetter: "better around {h}",
+  en: {week: "Your weekly summary is ready", weekBody: "Averages, trends and a plan for {n}'s next week.", test: "Notification sent by the server", soon: "In 5 min", late: "Still to do", for: "for", notYet: "hasn't been ticked yet.", did: "did", wrote: "New message from",
+    warn: "Bad weather for the {h} walk", better: "Better around {h}: {t}°, {p}% rain.", earlier: "Go earlier?", later: "Go later?", alsoBetter: "better around {h}",
     ideal: "Perfect weather for a walk", goOut: "A great time to take {n} out", dryUntil: "dry until", rain: "rain likely", hot: "hot, keep it short", cold: "cold", nice: "ideal weather",
     tomorrow: "Tomorrow", in1h: "In 1 hour", at: "at", recap: "Not done yet today", more: "and {n} more", food: "Food running low", foodDays: "About {n} day(s) left.",
     k: {pipi: "Pee", caca: "Poo", balade: "Walk", accident: "Accident", eau: "Water", friandise: "Treat", sieste: "Nap", jeu: "Play", vomi: "Vomiting", photo: "Photo"}},
-  hr: {week: "📊 Tjedni sažetak je spreman", weekBody: "Prosjeci, trendovi i plan za sljedeći tjedan ({n}).", test: "Obavijest poslana s poslužitelja ✓", soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
-    warn: "Loše vrijeme za šetnju u {h}", better: "Bolje oko {h}: {i} {t}°, {p} % kiše.", earlier: "Ranije?", later: "Kasnije?", alsoBetter: "bolje oko {h}",
+  hr: {week: "Tjedni sažetak je spreman", weekBody: "Prosjeci, trendovi i plan za sljedeći tjedan ({n}).", test: "Obavijest poslana s poslužitelja", soon: "Za 5 min", late: "Još za napraviti", for: "za", notYet: "još nije označeno.", did: "je obavio/la", wrote: "Nova poruka od",
+    warn: "Loše vrijeme za šetnju u {h}", better: "Bolje oko {h}: {t}°, {p} % kiše.", earlier: "Ranije?", later: "Kasnije?", alsoBetter: "bolje oko {h}",
     ideal: "Idealno vrijeme za šetnju", goOut: "Savršeno za izlazak ({n})", dryUntil: "suho do", rain: "moguća kiša", hot: "vruće, neka bude kratko", cold: "hladno", nice: "idealno vrijeme",
     tomorrow: "Sutra", in1h: "Za 1 sat", at: "u", recap: "Danas još nije napravljeno", more: "i još {n}", food: "Hrana pri kraju", foodDays: "Ostalo je za otprilike {n} dan(a).",
     k: {pipi: "Piškenje", caca: "Kakanje", balade: "Šetnja", accident: "Nezgoda", eau: "Voda", friandise: "Poslastica", sieste: "Drijemež", jeu: "Igra", vomi: "Povraćanje", photo: "Fotografija"}}
@@ -228,7 +228,6 @@ function localNow(tz, when) {
 }
 const toMin = t => { const [h, m] = String(t || "0:0").split(":").map(Number); return h * 60 + (m || 0); };
 const hm = m => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
-const wxIcon = c => c <= 1 ? "☀️" : c === 2 ? "🌤️" : c === 3 ? "☁️" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "❄️" : c >= 95 ? "⛈️" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "🌧️" : "🌤️";
 async function weather(cfg) {
   if (!cfg || cfg.lat == null) return null;
   try { const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${+cfg.lat}&longitude=${+cfg.lon}&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&timezone=auto&forecast_days=1`);
@@ -244,7 +243,7 @@ function betterHour(w, T, fromMin) { const H0 = Math.floor(T / 60), cur = wxScor
   for (let H = Math.max(7, Math.ceil((fromMin + 10) / 60)); H <= 21; H++) { if (H === H0 || Math.abs(H - H0) > 3) continue; const x = w(H), sc = wxScore(x);
     if (sc < cur - 20 && sc < 25 && (!best || sc < best.sc || (sc === best.sc && Math.abs(H - H0) < Math.abs(best.H - H0)))) best = {H, sc, x}; }
   return best; }
-const wxNote = (x, l) => !x ? "" : x.p >= 60 ? ` · 🌧️ ${l.rain} (${x.p} %)` : x.f >= 28 ? ` · 🥵 ${Math.round(x.f)}°, ${l.hot}` : x.t <= 0 ? ` · 🥶 ${Math.round(x.t)}°, ${l.cold}` : x.c <= 2 && x.p < 20 ? ` · ${wxIcon(x.c)} ${Math.round(x.t)}°, ${l.nice}` : ` · ${wxIcon(x.c)} ${Math.round(x.t)}°`;
+const wxNote = (x, l) => !x ? "" : x.p >= 60 ? ` · ${l.rain} (${x.p} %)` : x.f >= 28 ? ` · ${Math.round(x.f)}°, ${l.hot}` : x.t <= 0 ? ` · ${Math.round(x.t)}°, ${l.cold}` : x.c <= 2 && x.p < 20 ? ` · ${Math.round(x.t)}°, ${l.nice}` : ` · ${Math.round(x.t)}°`;
 
 async function remindFamily(env, fid, when) {
   const ctx = await familyCtx(env, fid), tokens = ctx.tokens.filter(t => t.token && t.on !== false);
@@ -274,8 +273,8 @@ async function remindFamily(env, fid, when) {
     // 2 hours ahead: the weather will be bad at walk time and a better hour exists -> suggest it
     if (walk && at(T - 120)) { const w = await getWx(), x = w && w(Math.floor(T / 60));
       if (x && wxScore(x) >= 45) { const b = betterHour(w, T, n.min);
-        if (b) await send("weather", forWho(task.who), l => ({title: `${wxIcon(x.c)} ${l.warn.replace("{h}", task.time)}`,
-          body: l.better.replace("{h}", hm(b.H * 60)).replace("{i}", wxIcon(b.x.c)).replace("{t}", Math.round(b.x.t)).replace("{p}", b.x.p) + " " + (b.H * 60 < T ? l.earlier : l.later)}), `wx-${task.key}-${n.ds}`, "alerte"); } }
+        if (b) await send("weather", forWho(task.who), l => ({title: l.warn.replace("{h}", task.time),
+          body: l.better.replace("{h}", hm(b.H * 60)).replace("{t}", Math.round(b.x.t)).replace("{p}", b.x.p) + " " + (b.H * 60 < T ? l.earlier : l.later)}), `wx-${task.key}-${n.ds}`, "alerte"); } }
     const soon = at(T - EARLY_MIN), late = at(T + LATE_MIN); if (!soon && !late) continue;
     const w = soon && walk ? await getWx() : null, x = w ? w(Math.floor(T / 60)) : null, b = x && wxScore(x) >= 45 ? betterHour(w, T, n.min) : null;
     await send("tasks", forWho(task.who), l => { const dn = task.dog === "main" && dogName ? ` ${l.for} ${dogName}` : "";
@@ -296,7 +295,7 @@ async function remindFamily(env, fid, when) {
     const ok = x && x.c <= 2 && x.p < 15 && x.f >= 10 && x.f <= 24 && [1, 2].every(k => { const y = w(H + k); return y && y.p < 25; });
     if (ok) { let dry = H + 2; while (dry < 21 && w(dry + 1) && w(dry + 1).p < 25) dry++;
       await patchDocAdmin(env, `families/${fid}/config/notify`, {wxDay: n.ds});
-      await send("weather", everyone, l => ({title: `${wxIcon(x.c)} ${l.ideal}`, body: `${dogName ? l.goOut.replace("{n}", dogName) + " · " : ""}${Math.round(x.t)}° · ${l.dryUntil} ${hm((dry + 1) * 60)}`}), `wxday-${n.ds}`, "alerte"); }
+      await send("weather", everyone, l => ({title: l.ideal, body: `${dogName ? l.goOut.replace("{n}", dogName) + " · " : ""}${Math.round(x.t)}° · ${l.dryUntil} ${hm((dry + 1) * 60)}`}), `wxday-${n.ds}`, "alerte"); }
   }
 
   // evening recap at 20:30: what's still not ticked today
@@ -309,7 +308,7 @@ async function remindFamily(env, fid, when) {
   if (food && +food.bagKg && food.opened && at(9 * 60)) {
     let daily = +food.daily; if (!daily) { const m = String((dogCfg && dogCfg.ration) || "").match(/(\d+(?:[.,]\d+)?)\s*g/i); daily = m ? +m[1].replace(",", ".") : 0; }
     if (daily) { const since = Math.max(0, Math.round((Date.parse(n.ds) - Date.parse(food.opened)) / 86400000)), left = (food.bagKg * 1000 - since * daily) / daily;
-      if (left > 0 && left <= 3) await send("daily", everyone, l => ({title: `🦴 ${l.food}`, body: l.foodDays.replace("{n}", Math.max(1, Math.floor(left)))}), `food-${n.ds}`, "alerte"); }
+      if (left > 0 && left <= 3) await send("daily", everyone, l => ({title: l.food, body: l.foodDays.replace("{n}", Math.max(1, Math.floor(left)))}), `food-${n.ds}`, "alerte"); }
   }
 
   // Sunday 19:00: the weekly summary is ready
