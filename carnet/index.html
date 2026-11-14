@@ -1716,6 +1716,14 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .ig-v.out{animation:dlLeave .26s ease both}
 .ig-v video{width:100%;height:100%;object-fit:contain;background:#000}
 .ig-x{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:14px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.16);backdrop-filter:blur(12px);color:#fff;display:grid;place-items:center}
+
+/* presence */
+.online-n{display:inline-flex;align-items:center;gap:5px;color:var(--green)}
+.online-n i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 25%,transparent);animation:pres 2.4s ease-in-out infinite}
+@keyframes pres{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--green) 8%,transparent)}}
+.pres{position:relative;display:inline-flex;flex:none}
+.pdot{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2.5px var(--card)}
+.on-t{color:var(--green);font-weight:600}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1779,7 +1787,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "75"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "76"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2206,6 +2214,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"{n} membre(s)": "{n} member(s)", "{n} en ligne": "{n} online", "En ligne": "Online", "Vu {t}": "Seen {t}"}); Object.assign(HR, {"{n} membre(s)": "Članova: {n}", "{n} en ligne": "{n} na mreži", "En ligne": "Na mreži", "Vu {t}": "Viđen/a {t}"});
 Object.assign(EN, {"Votre téléphone": "Your phone", "Dogs Life est installée": "Dogs Life is installed", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Now open it from its icon on your home screen.", "Installez Dogs Life": "Install Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "To get notifications and open it full screen, install the app on your phone. Watch the 45-second tutorial:", "Installer maintenant": "Install now", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Once installed, always open Dogs Life from its icon: this screen won't show again.", "Fermer": "Close"}); Object.assign(HR, {"Votre téléphone": "Vaš telefon", "Dogs Life est installée": "Dogs Life je instaliran", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Sada ga otvorite preko ikone na početnom zaslonu.", "Installez Dogs Life": "Instalirajte Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "Za obavijesti i prikaz preko cijelog zaslona instalirajte aplikaciju na telefon. Pogledajte vodič od 45 sekundi:", "Installer maintenant": "Instaliraj sada", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Nakon instalacije uvijek otvarajte Dogs Life preko ikone: ovaj se zaslon više neće prikazivati.", "Fermer": "Zatvori"});
 Object.assign(EN, {"Touchez le bouton menu dans la barre d'adresse, puis « Partager »": "Tap the menu button in the address bar, then “Share”", "Touchez « Afficher plus », puis « Sur l'écran d'accueil »": "Tap “View More”, then “Add to Home Screen”", "Touchez « Ajouter »": "Tap “Add”", "Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.": "On older iOS versions: the Share button at the bottom of Safari."}); Object.assign(HR, {"Touchez le bouton menu dans la barre d'adresse, puis « Partager »": "Dodirnite gumb izbornika u adresnoj traci, pa „Dijeli”", "Touchez « Afficher plus », puis « Sur l'écran d'accueil »": "Dodirnite „Prikaži više”, pa „Dodaj na početni zaslon”", "Touchez « Ajouter »": "Dodirnite „Dodaj”", "Sur une version plus ancienne d'iOS : bouton Partager en bas de Safari.": "Na starijim verzijama iOS-a: gumb Dijeli na dnu Safarija."});
 Object.assign(EN, {"Message à la famille":"Message the family"}); Object.assign(HR, {"Message à la famille":"Poruka obitelji"});
@@ -3706,6 +3715,19 @@ function syncMe(){ const fam = family(), mine = S.me && fam.find(m => m.uid === 
   const mm = memberOf(ME); S.sitterRole = !!(mm && mm.role === "garde" && !S.isOwner); }
 const meMember = () => memberOf(ME);
 const roleLabel = m => m && m.role === "garde" ? T("Garde") : T("Famille");
+// presence: each open app says "I'm here" on its own member card every minute; seen in the last 2.5 min = online
+const ONLINE_MS = 150000;
+const isOnline = m => !!(m && m.seen && Date.now() - m.seen < ONLINE_MS);
+const onlineCount = () => family().filter(isOnline).length;
+function presenceBeat(force, away){
+  if (S.mode !== "db" || !S.ready || S.preview) return; const m = myMember(); if (!m || !(C.members || {})[m.id]) return;
+  if (!away && document.visibilityState !== "visible") return;
+  if (!force && !away && Date.now() - (S.lastBeat || 0) < 60000) return; S.lastBeat = away ? 0 : Date.now();
+  put("members", m.id, Object.assign({}, C.members[m.id], {seen: away ? Date.now() - ONLINE_MS : Date.now()}));
+}
+setInterval(() => { presenceBeat(); if (S.tab === "famille" && !S.sub) render(true); }, 30000);
+document.addEventListener("visibilitychange", () => presenceBeat(true, document.visibilityState !== "visible"));
+const presDot = m => isOnline(m) ? '<i class="pdot" aria-hidden="true"></i>' : "";
 const myMember = () => S.me ? family().find(m => m.uid === S.me) || null : meMember();
 S.avatars = S.avatars || {};
 const memberPhoto = m => (m && (m.photo || (m.uid && S.avatars[m.uid]))) || "";
@@ -4447,7 +4469,7 @@ function syncChat(){
     const card = document.querySelector("#view .board"), cr = card ? card.getBoundingClientRect() : null;
     root.style.setProperty("--oy", cr ? Math.round(cr.top + cr.height / 2) + "px" : "60%");
     root.innerHTML = `<div class="cf-back" aria-hidden="true"></div><div class="cf" role="dialog" aria-modal="true" aria-label="${T("Messages")}">
-      <div class="cf-h"><button class="cf-x" data-act="chatClose" aria-label="${T("Réduire")}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="cf-t"><b>${T("Messages")}</b><span>${esc(T("La famille de {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></div><span style="width:36px"></span></div>
+      <div class="cf-h"><button class="cf-x" data-act="chatClose" aria-label="${T("Réduire")}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="cf-t"><b>${T("Messages")}</b><span>${esc(T("La famille de {n}", {n: (dog() || {}).name || T("votre chien")}))} · <span class="online-n"><i></i>${esc(T("{n} en ligne", {n: onlineCount()}))}</span></span></div><span style="width:36px"></span></div>
       <div class="cf-body"></div>
       ${S.chatCanWrite ? `<div class="cf-in"><div class="cf-box"><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message à la famille")}" autocomplete="off" enterkeyhint="send"></textarea><div class="cf-row"><label class="cf-plus" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : I_PLUS}</label><input type="file" id="n-photo" accept="image/*" hidden><button class="cf-send" type="button" data-act="sendNote" aria-label="${T("Envoyer")}">${I_UP}</button></div></div></div>`
         : `<div class="cf-in s" style="color:var(--fg2);justify-content:center">${T("Rejoignez la famille pour écrire un message.")}</div>`}</div>`;
@@ -4514,7 +4536,7 @@ function viewFamily(){
       <div class="fam-orbit"><div class="orbit-center">${avatarHTML(d, "lg")}</div>
         <div class="orbit-ring">${fam.slice(0, 8).map((m, i) => `<button class="orb" data-act="memberSheet" data-id="${esc(m.id)}" style="--a:${(i / Math.min(8, fam.length)) * 360 - 90}deg" aria-label="${esc(m.name)}">${mav(m, 46)}</button>`).join("")}</div></div>
       <h1>${T("La famille de {n}",{n:esc(d.name || T("votre chien"))})}</h1>
-      <div class="s">${fam.length ? T("{n} membre(s) · {j} connecté(s) au carnet",{n:fam.length, j:joined}) : T("Personne pour l'instant")}</div></div>`;
+      <div class="s">${fam.length ? T("{n} membre(s)",{n:fam.length}) + ` · <span class="online-n"><i></i>${esc(T("{n} en ligne",{n:onlineCount()}))}</span>` : T("Personne pour l'instant")}</div></div>`;
   // me
   const meCard = me ? `<div class="card pad fam-me"><div class="fam-me-h">${mav(me, 52)}<div class="main"><div class="eyebrow" style="margin:0">${T("Vous")}</div><div class="t">${esc(me.name)}</div><div class="s">${esc(roleLabel(me))}${me.phone ? " · " + esc(me.phone) : ""}</div></div></div>
       <div class="fam-btns"><button class="btn ghost" data-act="memberSheet" data-id="${esc(me.id)}">${T("Modifier")}</button><button class="btn ghost danger-t" data-act="leaveFam">${T("Quitter")}</button></div></div>`
@@ -4543,7 +4565,7 @@ function viewFamily(){
       : `<div class="empty-s pad">${T("Les tâches cochées apparaîtront ici, avec le prénom de qui les a faites.")}</div>`}</div></div>`;
   // members
   const members = `<div class="sec"><div class="sec-h"><h2>${T("Membres")}</h2></div><div class="card list">
-      ${fam.map(m => `<div class="row"><button class="rowbtn" data-act="memberSheet" data-id="${esc(m.id)}">${mav(m, 34)}<div class="main"><div class="t">${esc(m.name)}</div><div class="s">${m.signedOut ? `<span class="warn-t">${T("Déconnecté(e) de l'app")}</span> · ` : ""}${esc(roleLabel(m))} · ${m.id === ME ? T("C'est vous") : m.uid ? (m.since > 1e12 ? T("A rejoint le {d}",{d:fmt(new Date(m.since),{day:"numeric",month:"short"})}) : T("A rejoint")) : T("Pas encore rejoint")}</div></div></button>
+      ${fam.map(m => `<div class="row"><button class="rowbtn" data-act="memberSheet" data-id="${esc(m.id)}"><span class="pres">${mav(m, 34)}${presDot(m)}</span><div class="main"><div class="t">${esc(m.name)}</div><div class="s">${isOnline(m) ? `<span class="on-t">${T("En ligne")}</span> · ` : m.seen ? esc(T("Vu {t}", {t: relTime(new Date(m.seen).toISOString())})) + " · " : ""}${m.signedOut ? `<span class="warn-t">${T("Déconnecté(e) de l'app")}</span> · ` : ""}${esc(roleLabel(m))} · ${m.id === ME ? T("C'est vous") : m.uid ? (m.since > 1e12 ? T("A rejoint le {d}",{d:fmt(new Date(m.since),{day:"numeric",month:"short"})}) : T("A rejoint")) : T("Pas encore rejoint")}</div></div></button>
         ${m.phone ? `<a class="callbtn" href="tel:${esc(m.phone.replace(/[^+0-9]/g, ""))}" aria-label="${T("Appeler {n}",{n:esc(m.name)})}">${I_PHONE}</a>` : ""}<span class="chev">${I.chevR}</span></div>`).join("")}
       ${invites().map(v => `<button class="row inv-row" data-act="${canEdit() ? "inviteMenu" : ""}" data-id="${esc(v.id)}"><span class="mav" style="--c:var(--fill2);color:var(--fg2);width:34px;height:34px;font-size:15px">#</span><div class="main"><div class="t">${esc(T("Code {r} en attente",{r:T(v.role === "garde" ? "Garde" : "Famille")}))}</div><div class="s">${esc(T("Expire dans {n} j",{n:daysLeft(v)}))}${v.byName ? " · " + esc(T("par {n}",{n:v.byName})) : ""}</div></div>
         ${canEdit() ? `<span class="chev">${I.chevR}</span>` : ""}</button>`).join("")}
@@ -6380,7 +6402,7 @@ function render(skipNames){
   if (ml1) { if (mlKeep && mlKeep.first === ml1.dataset.first) ml1.scrollTop = mlKeep.top; msgFade(ml1); ml1.addEventListener("scroll", () => msgFade(ml1), {passive:true}); }
   mountBuddy();
   if (keepNote) { const n = document.getElementById(keepNote.id); if (n && n !== active) { n.value = keepNote.v; n.focus(); try { n.setSelectionRange(keepNote.s, keepNote.s); } catch(e){} } }
-  renderTabs(); syncChat();
+  renderTabs(); syncChat(); presenceBeat();
   if (!skipNames) { resolveNames(); resolveAvatars(); }
   syncOrbit();
   renderJoin();
