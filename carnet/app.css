@@ -2076,3 +2076,8 @@ details.fold[open] .fold-b>.card:first-child,details.fold[open] .fold-b>.sec:fir
 details.fold[open] .fold-b>.card:first-child::before{content:none}
 @media (prefers-reduced-motion: no-preference){details.fold[open] .fold-b{animation:dlMerge .38s cubic-bezier(.22,1.2,.36,1) both!important;transform-origin:top}}
 @keyframes dlMerge{from{opacity:0;transform:scaleY(.94)}to{opacity:1;transform:none}}
+
+.lastw .lastw-go{display:block;width:100%;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;padding:0}
+.lastw .lastw-go.is-press{transform:none!important;filter:none;background:var(--fill)!important}
+.lastw-s div{align-content:center;min-height:56px}
+.lastw-needs{display:inline-flex;gap:6px;align-items:center}.lastw-needs i{display:grid;place-items:center;color:var(--c)}.lastw-needs svg{width:20px;height:20px}

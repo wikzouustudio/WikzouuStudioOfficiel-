@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "114"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "115"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3179,8 +3179,8 @@ function lastWalkCard(){
   let leg = ""; if (l.route) { try { const sp = splitWalk(polyDec(l.route)); if (sp) leg = `<div class="ab-leg"><span class="ab out"><i></i>${T("Aller")} <b class="num">${fmtKm(sp.out)}</b></span><span class="ab turn"><i></i>${T("Demi-tour")}</span><span class="ab back"><i></i>${T("Retour")} <b class="num">${fmtKm(sp.back)}</b></span></div>`; } catch(_) {} }
   return `<div class="sec"><div class="sec-h"><h2>${T("Dernière balade")}</h2></div><div class="card lastw">
     ${l.route ? `<div class="rmap lastw-map" id="fam-last-map" data-id="${esc(l.id)}"></div>${leg}` : ""}
-    <button class="lastw-b" data-act="walkView" data-id="${esc(l.id)}">${m ? mav(m, 34) : ico("var(--green)", I_ROUTE)}<div class="main"><div class="t">${esc(who ? T("{n} a promené {d}", {n: who, d: (dog() || {}).name || T("votre chien")}) : T("Balade"))}</div><div class="s">${esc(when)}</div></div><span class="chev">${I.chevR}</span></div>
-    <button class="lastw-s" data-act="walkView" data-id="${esc(l.id)}">${stat(l.dist ? fmtKm(l.dist) : "–", T("Distance"))}${stat((l.dur || "–") + " min", T("Durée"))}${stat(l.pee || l.poo ? [l.pee ? T("Pipi") : "", l.poo ? T("Caca") : ""].filter(Boolean).join(" + ") : "–", T("Besoins"))}</button></div></div>`;
+    <button class="lastw-go" data-act="walkView" data-id="${esc(l.id)}"><div class="lastw-b">${m ? mav(m, 34) : ico("var(--green)", I_ROUTE)}<div class="main"><div class="t">${esc(who ? T("{n} a promené {d}", {n: who, d: (dog() || {}).name || T("votre chien")}) : T("Balade"))}</div><div class="s">${esc(when)}</div></div><span class="chev">${I.chevR}</span></div>
+    <div class="lastw-s">${stat(l.dist ? fmtKm(l.dist) : "–", T("Distance"))}${stat((l.dur || "–") + " min", T("Durée"))}${stat(l.pee || l.poo ? `<span class="lastw-needs">${l.pee ? `<i style="--c:${QL.pipi.c}">${QL.pipi.i}</i>` : ""}${l.poo ? `<i style="--c:${QL.caca.c}">${QL.caca.i}</i>` : ""}</span>` : "–", T("Besoins"))}</div></button></div></div>`;
 }
 function paintFamLast(){
   const box = document.getElementById("fam-last-map"); if (!box) { if (PM.fl && !(S.tab === "famille" && !S.sub)) dropMap("fl"); return; }
@@ -5727,7 +5727,7 @@ function backDragBegin(pg){
 })();
 // buttons react the moment a finger lands (iPhone delays :active), and spring back when it lifts
 (() => { let el = null, x0 = 0, y0 = 0;
-  const SEL = "button,.row[data-act],[data-act].card,.ccard,.qk,.pill,.opts label,.dayb,.ql-b,.alert,.mr-row,.sug-cta,.lastw-b,.lastw-s";
+  const SEL = "button,.row[data-act],[data-act].card,.ccard,.qk,.pill,.opts label,.dayb,.ql-b,.alert,.mr-row,.sug-cta";
   const off = () => { if (el) { el.classList.remove("is-press"); el = null; } };
   document.addEventListener("pointerdown", e => { const t = e.target.closest(SEL); if (!t || t.disabled || t.closest(".maplibregl-map,#tabs,.seg,.switch,.fam-orbit")) return; off(); el = t; x0 = e.clientX; y0 = e.clientY; el.classList.add("is-press"); }, {passive: true});
   document.addEventListener("pointermove", e => { if (el && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) off(); }, {passive: true});
