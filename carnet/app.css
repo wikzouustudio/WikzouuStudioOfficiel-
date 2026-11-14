@@ -2000,3 +2000,13 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 #navmini b{font-family:var(--font-d);font-size:17px;font-weight:700;letter-spacing:-.01em;transform:translateY(calc((1 - var(--p,0)) * 8px));max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 :root[data-skin="aurora"] #navmini{background:radial-gradient(60% 140% at 20% 0%,var(--refl,transparent),transparent 70%),color-mix(in srgb,var(--bg) 70%,transparent)}
 body.chat-full #navmini,body.locked #navmini{display:none}
+
+/* live walk + last walk in Famille */
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#FF3B30;margin:0 5px 1px 0;vertical-align:middle;box-shadow:0 0 0 0 rgba(255,59,48,.6);animation:liveDot 1.4s ease-out infinite}
+@keyframes liveDot{0%{box-shadow:0 0 0 0 rgba(255,59,48,.55)}100%{box-shadow:0 0 0 9px rgba(255,59,48,0)}}
+.lastw{display:block;width:100%;padding:0;border:0;font:inherit;color:var(--fg);text-align:left;cursor:pointer;overflow:hidden}
+.rmap.lastw-map{height:150px;border-radius:0;pointer-events:none}
+.lastw-b{display:flex;align-items:center;gap:12px;padding:12px 14px 4px}.lastw-b .main{flex:1;min-width:0}.lastw-b .t{font-weight:700}.lastw-b .s{font-size:13px;color:var(--fg2)}.lastw-b .chev{color:var(--fg3)}
+.lastw-s{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 14px 14px}
+.lastw-s div{display:grid;gap:1px;padding:8px 10px;border-radius:12px;background:var(--fill)}
+.lastw-s b{font-size:16px}.lastw-s span{font-size:11.5px;color:var(--fg2)}

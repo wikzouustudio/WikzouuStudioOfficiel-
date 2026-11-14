@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "107"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "108"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -431,6 +431,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"En direct": "Live", "Position il y a {n}": "Position {n} ago", "Dernière balade": "Last walk", "{n} a promené {d}": "{n} walked {d}", "Besoins": "Needs"}); Object.assign(HR, {"En direct": "Uživo", "Position il y a {n}": "Pozicija prije {n}", "Dernière balade": "Zadnja šetnja", "{n} a promené {d}": "{n} je prošetao/la {d}", "Besoins": "Potrebe"});
 Object.assign(EN, {"Indigo":"Indigo"}); Object.assign(HR, {"Indigo":"Indigo"});
 Object.assign(EN, {"Couleurs": "Colours", "Corail": "Coral", "Océan": "Ocean", "Violet": "Violet", "Menthe": "Mint", "Or": "Gold"}); Object.assign(HR, {"Couleurs": "Boje", "Corail": "Koralj", "Océan": "Ocean", "Violet": "Ljubičasta", "Menthe": "Metvica", "Or": "Zlatna"});
 Object.assign(EN, {"Tout se manipule au doigt": "Everything moves with your finger", "Fiches et chat se ferment en les glissant vers le bas, et se rattrapent même en pleine fermeture. Glissez la semaine pour changer de semaine, et le bord gauche de l'écran pour revenir en arrière.": "Sheets and the chat close by swiping down, and can be caught even while closing. Swipe the week to change week, and from the left edge to go back.", "Animations à ressort": "Spring animations", "Les mouvements suivent votre doigt, gardent votre élan et rebondissent naturellement. Les pages arrivent de haut en bas, plus rien ne fait attendre.": "Motion follows your finger, keeps your momentum and bounces naturally. Pages arrive from top to bottom, and nothing makes you wait.", "Plusieurs chiens, une balade": "Several dogs, one walk", "En fin de balade, cochez les chiens qui étaient là et ce que chacun a fait : la balade de chacun est notée et cochée.": "At the end of a walk, tick the dogs who came and what each one did: each dog's walk is logged and ticked off.", "App plus rapide": "Faster app", "L'app est découpée en fichiers que le téléphone garde en mémoire : elle s'ouvre plus vite.": "The app is split into files your phone keeps: it opens faster.", "Balades proposées sur mesure": "Tailored walk suggestions", "Choisissez boucle ou aller simple, le terrain (forêt ou ville) et le point de départ : votre position, la maison ou n'importe quelle adresse.": "Pick a loop or one way, the terrain (woods or town) and the start: your location, home or any address.", "Mise à jour : tout se manipule au doigt. Voici tout ce qui change.": "Update: everything moves with your finger. Here's everything new."}); Object.assign(HR, {"Tout se manipule au doigt": "Sve se pomiče prstom", "Fiches et chat se ferment en les glissant vers le bas, et se rattrapent même en pleine fermeture. Glissez la semaine pour changer de semaine, et le bord gauche de l'écran pour revenir en arrière.": "Kartice i chat zatvaraju se povlačenjem prema dolje i mogu se uhvatiti i dok se zatvaraju. Povucite tjedan za promjenu tjedna, a s lijevog ruba za povratak.", "Animations à ressort": "Animacije s oprugom", "Les mouvements suivent votre doigt, gardent votre élan et rebondissent naturellement. Les pages arrivent de haut en bas, plus rien ne fait attendre.": "Pokreti prate prst, zadržavaju zamah i prirodno odskaču. Stranice dolaze odozgo prema dolje i ništa vas ne tjera da čekate.", "Plusieurs chiens, une balade": "Više pasa, jedna šetnja", "En fin de balade, cochez les chiens qui étaient là et ce que chacun a fait : la balade de chacun est notée et cochée.": "Na kraju šetnje označite pse koji su bili tu i što je svaki napravio: šetnja svakog psa se bilježi i označava.", "App plus rapide": "Brža aplikacija", "L'app est découpée en fichiers que le téléphone garde en mémoire : elle s'ouvre plus vite.": "Aplikacija je podijeljena u datoteke koje telefon pamti: otvara se brže.", "Balades proposées sur mesure": "Prilagođene predložene šetnje", "Choisissez boucle ou aller simple, le terrain (forêt ou ville) et le point de départ : votre position, la maison ou n'importe quelle adresse.": "Odaberite krug ili jedan smjer, teren (šuma ili grad) i polazište: vaša lokacija, kuća ili bilo koja adresa.", "Mise à jour : tout se manipule au doigt. Voici tout ce qui change.": "Ažuriranje: sve se pomiče prstom. Evo što je novo."});
@@ -3083,8 +3084,10 @@ function gpsPos(p){
   GPS.pts.push(pt); GPS.state = "ok"; gpsSave(); if (GPS.pts.length === 1) GPS.painted = 0; gpsUI();
   // let the family follow the distance (at most every 45 s)
   const w = walkNow(), dist = Math.round(routeLen(GPS.pts));
-  if (w && w.start === GPS.start && Date.now() - GPS.synced > 45000 && dist - GPS.syncedD >= 50) { GPS.synced = Date.now(); GPS.syncedD = dist;
-    setDay(ymd(new Date()), {walk: Object.assign({}, w, {dist})}).catch(() => {}); }
+  // the family follows along live: current position and the track so far, at most every 8 s (only inside the family)
+  if (w && w.start === GPS.start && Date.now() - GPS.synced > 8000) { GPS.synced = Date.now(); GPS.syncedD = dist;
+    const tail = GPS.pts.length > 400 ? GPS.pts.filter((q, i) => i % Math.ceil(GPS.pts.length / 400) === 0 || i === GPS.pts.length - 1) : GPS.pts;
+    setDay(ymd(new Date()), {walk: Object.assign({}, w, {dist, live: {p: [pt[0], pt[1]], t: Date.now(), r: polyEnc(tail)}})}).catch(() => {}); }
 }
 function gpsStop(keepState){ if (GPS.watch != null) { try { navigator.geolocation.clearWatch(GPS.watch); } catch(_) {} } GPS.watch = null;
   if (GPS.lock) { try { GPS.lock.release(); } catch(_) {} GPS.lock = null; } if (!keepState) GPS.state = ""; }
@@ -3124,24 +3127,51 @@ function gpsLine(w){
     if (GPS.state === "weak" && !d) return T("Signal GPS faible");
     return d ? `<b class="num">${d}</b>` : T("GPS actif");
   }
+  if (w && w.live && w.live.t) { const ago = Math.max(0, Math.round((Date.now() - w.live.t) / 1000));
+    return (w.dist ? `<b class="num">${fmtKm(w.dist)}</b> · ` : "") + `<span class="live-dot"></span>${ago < 25 ? T("En direct") : T("Position il y a {n}", {n: ago < 90 ? ago + " s" : Math.round(ago / 60) + " min"})}`; }
   return w && w.dist ? `<b class="num">${fmtKm(w.dist)}</b>` : "";
 }
 function gpsUI(){
   const e = document.getElementById("walk-gps"), w = walkNow(); if (e) { const l = gpsLine(w); e.innerHTML = l ? " · " + l : ""; }
-  if (Date.now() - GPS.painted > (S.lw && S.lw.ready ? 4000 : 12000)) gpsPaint();
+  if (Date.now() - GPS.painted > (PM.lw && PM.lw.ready ? 4000 : 12000)) gpsPaint();
 }
+// Famille: the most recent walk, always visible (map, distance, time, who); tap for the details
+function lastWalkCard(){
+  const all = Object.entries(C.logs || {}).map(([id, l]) => Object.assign({id}, l)).filter(l => l.k === "balade" && (l.dog || "main") === dogId()).sort((a, b) => (b.date + (b.at || "")).localeCompare(a.date + (a.at || "")));
+  const l = all[0]; if (!l) return "";
+  const m = memberOf(l.mid), who = (m && m.name) || l.byName || "", when = dayWord(l.date) + (l.at ? " · " + l.at : "");
+  const stat = (v, k) => `<div><b class="num">${v}</b><span>${k}</span></div>`;
+  return `<div class="sec"><div class="sec-h"><h2>${T("Dernière balade")}</h2></div><button class="card lastw" data-act="walkView" data-id="${esc(l.id)}">
+    ${l.route ? `<div class="rmap lastw-map" id="fam-last-map" data-id="${esc(l.id)}"></div>` : ""}
+    <div class="lastw-b">${m ? mav(m, 34) : ico("var(--green)", I_ROUTE)}<div class="main"><div class="t">${esc(who ? T("{n} a promené {d}", {n: who, d: (dog() || {}).name || T("votre chien")}) : T("Balade"))}</div><div class="s">${esc(when)}</div></div><span class="chev">${I.chevR}</span></div>
+    <div class="lastw-s">${stat(l.dist ? fmtKm(l.dist) : "–", T("Distance"))}${stat((l.dur || "–") + " min", T("Durée"))}${stat(l.pee || l.poo ? [l.pee ? T("Pipi") : "", l.poo ? T("Caca") : ""].filter(Boolean).join(" + ") : "–", T("Besoins"))}</div></button></div>`;
+}
+function paintFamLast(){
+  const box = document.getElementById("fam-last-map"); if (!box) { if (PM.fl && !(S.tab === "famille" && !S.sub)) dropMap("fl"); return; }
+  const l = (C.logs || {})[box.dataset.id]; if (!l || !l.route) return;
+  let pts = []; try { pts = polyDec(l.route); } catch(_) {}
+  if (pts.length) persistMap("fl", box, [{id: "x", pts}], {sel: "x"});
+}
+// maps that survive re-renders: the live map element is moved into the freshly drawn card instead of being rebuilt
+const PM = {};
+function persistMap(key, box, routes, o){
+  let m = PM[key];
+  if (m && m.style === mapStyleURL() && (!m.dead || ML_FAIL)) { if (box !== m.el) { box.replaceWith(m.el); m.el.hidden = false; }
+    if (m.dead) { m.el.innerHTML = ""; staticMap(m.el, routes, o); return; }
+    if (m.ready) { liveMapSet(m, routes, o); m.map.resize(); } else { m.routes = routes; m.o = o; } return; }
+  if (m) liveMapDrop(m);
+  PM[key] = m = {el: box, style: mapStyleURL()}; liveMap(box, routes, o, m);
+}
+function dropMap(key){ if (PM[key]) { liveMapDrop(PM[key]); delete PM[key]; } }
 function gpsPaint(){
   const box = document.getElementById("walk-map"), w = walkNow();
-  if (!w && S.lw) { liveMapDrop(S.lw); S.lw = null; }
+  if (!w) dropMap("lw");
   if (!box) return;
-  if (!w || GPS.start !== w.start || !GPS.pts.length) { box.hidden = true; return; }
+  let pts = null; const mine = w && GPS.start === w.start && GPS.pts.length;
+  if (mine) pts = GPS.pts; else if (w && w.live && w.live.r) { try { pts = polyDec(w.live.r); } catch(_) { pts = null; } if (pts && w.live.p) pts = pts.concat([w.live.p]); }
+  if (!w || !pts || !pts.length) { box.hidden = true; return; }
   GPS.painted = Date.now(); box.hidden = false;
-  const routes = [{id: "w", pts: GPS.pts}], o = {sel: "w", live: true, sug: S.sug || null};
-  if (S.lw && S.lw.style === mapStyleURL() && (!S.lw.dead || ML_FAIL)) { if (box !== S.lw.el) { box.replaceWith(S.lw.el); S.lw.el.hidden = false; }
-    if (S.lw.dead) { S.lw.el.innerHTML = ""; staticMap(S.lw.el, routes, o); return; }
-    if (S.lw.ready) { liveMapSet(S.lw, routes, o); S.lw.map.resize(); } else { S.lw.routes = routes; S.lw.o = o; } return; }
-  if (S.lw) liveMapDrop(S.lw);
-  S.lw = {el: box, style: mapStyleURL()}; liveMap(box, routes, o, S.lw);
+  persistMap("lw", box, [{id: "w", pts}], {sel: "w", live: true, sug: mine ? S.sug || null : null});
 }
 // a clean static map: map tiles + the route drawn on top (no extra library)
 const isDarkUI = () => { const t = document.documentElement.dataset.theme; return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; };
@@ -3182,7 +3212,9 @@ function walkView(id){
 }
 setInterval(() => { const w = walkNow();
   if (w && GPS.watch == null && GPS.state !== "denied" && gLS.g(gpsKey(w.start)) != null) gpsBegin(w.start);   // app reopened during a walk
-  else if (!w && GPS.start && GPS.watch != null) gpsDrop(); }, 4000);
+  else if (!w && GPS.start && GPS.watch != null) gpsDrop();
+  if (w && GPS.start !== w.start && document.getElementById("walk-map")) { gpsPaint(); gpsUI(); }   // someone else's walk: follow it live
+  if (!w && PM.lw) dropMap("lw"); }, 4000);
 async function endWalk(){
   const w = walkNow(); if (!w) return; const ds = ymd(new Date()), m = meMember();
   const start = new Date(w.start), dur = Math.max(1, Math.round((Date.now() - start) / 60000));
@@ -3372,7 +3404,7 @@ function viewFamily(){
       ${canEdit() || S.mode !== "db" ? `<button class="row" data-act="invite"><span class="ico" style="--c:var(--blue)">${I_PLUS}</span><span class="main t" style="color:var(--accent)">${T("Ajouter quelqu'un")}</span><span class="chev">${I.chevR}</span></button>` : ""}
     </div><div class="foot">${T("Chaque personne a son propre compte. « Ajouter quelqu'un » crée un code avec le rôle choisi ; la personne l'entre avec son compte et rejoint la famille.") + " " + T("Famille : voit et coche tout. Garde : la personne qui garde le chien, elle voit la fiche de garde et coche les tâches.")}</div></div>`;
   return `${pageHead(T("Famille"), "", `<button class="gearbtn" data-act="goSub" data-tab="famille" data-sub="reglages" aria-label="${T("Réglages")}">${I_GEAR.replace('width="18" height="18"', 'width="21" height="21"')}</button>`)}
-    ${hero}${board}${today}${shareSection()}${members}<div class="sec">${meCard}</div>`;
+    ${hero}${walkNow() ? `<div class="sec">${liveWalk()}</div>` : lastWalkCard()}${board}${today}${shareSection()}${members}<div class="sec">${meCard}</div>`;
 }
 function memberSheet(id){
   const m = memberOf(id); if (!m) return;
@@ -5217,6 +5249,7 @@ function render(skipNames){
   mountBuddy();
   if (keepNote) { const n = document.getElementById(keepNote.id); if (n && n !== active) { n.value = keepNote.v; n.focus(); try { n.setSelectionRange(keepNote.s, keepNote.s); } catch(e){} } }
   renderTabs(); syncChat(); presenceBeat(); replyBar(); chatSeen(); if (S.tab === "chien" && S.sub === "carte") requestAnimationFrame(paintWalksMap); else if (S.wm) { liveMapDrop(S.wm); S.wm = null; }
+  requestAnimationFrame(paintFamLast);
   if (!skipNames) { resolveNames(); resolveAvatars(); }
   syncOrbit();
   renderJoin();
@@ -5645,7 +5678,8 @@ function backDragBegin(pg){
     let top = 0, e = h1; while (e) { top += e.offsetTop; e = e.offsetParent; }   // layout position: ignores the page's entrance animation
     const y = window.scrollY, r = {bottom: top + h1.offsetHeight - y}, t = h1.textContent.trim();
     if (bar.firstChild.textContent !== t) bar.firstChild.textContent = t;
-    const p = Math.max(0, Math.min(1, (-(r.bottom) + 46) / 30 + 1));   // 0 when the title is fully visible, 1 once it is under the bar
+    const barH = bar.offsetHeight || 44, start = top - barH + h1.offsetHeight * .5;   // fade in once half the title has slid under the bar
+    const p = y <= 0 ? 0 : Math.max(0, Math.min(1, (y - start) / 24));
     bar.style.setProperty("--p", p.toFixed(3)); bar.classList.toggle("on", p > .02);
     h1.style.transform = y < 0 ? `scale(${(1 + Math.min(.08, -y / 900)).toFixed(3)})` : ""; h1.style.transformOrigin = "left bottom"; };
   const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
