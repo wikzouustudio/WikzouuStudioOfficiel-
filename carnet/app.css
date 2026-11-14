@@ -1901,3 +1901,21 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .wk-dog .wk-who input{width:20px;height:20px;accent-color:var(--green);flex:none}
 .wk-dog .wk-av{width:30px;height:30px;font-size:13px}
 .wk-dog:not(.on) .opts{pointer-events:none}
+
+/* ===== direct manipulation: JS springs drive sheets and the chat (no keyframes to wait for) ===== */
+.sheet,.scrim,.scrim.closing,.scrim.closing .sheet,:root[data-skin] .sheet{animation:none!important}
+.scrim{--sa:.38;background:rgba(0,0,0,calc(var(--sa) * var(--sp,1)))!important}
+:root[data-skin="aurora"] .scrim{-webkit-backdrop-filter:blur(calc(6px * var(--sp,1)));backdrop-filter:blur(calc(6px * var(--sp,1)))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .scrim{--sa:.6}}
+:root[data-theme="dark"] .scrim{--sa:.6}
+.scrim.closing{pointer-events:none}.scrim.closing .sheet{pointer-events:auto}
+.sheet{will-change:transform;overscroll-behavior:contain}
+.cf,.cf-back,.cf.out,.cf-back.out{animation:none!important}
+.cf.out,.cf-back.out{pointer-events:none}
+.cf{will-change:transform,opacity}
+.week{clip-path:inset(-14px 0 -14px 0)}
+.days{will-change:transform;touch-action:pan-y}
+.toast{touch-action:none;cursor:grab}
+.switch{touch-action:pan-y}
+.switch.sw-half{background:var(--green)}
+#view .page{will-change:auto}

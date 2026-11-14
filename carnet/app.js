@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "92"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "93"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3255,11 +3255,11 @@ const I_UP = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke
 function syncChat(){
   let root = document.getElementById("chat-root");
   const on = S.chatFull && S.tab === "famille" && !S.sub;
-  if (!on) { if (root && root.querySelector(".cf:not(.out)")) { const tok = syncChat.tok = (syncChat.tok || 0) + 1;
+  if (!on) { if (root && root.querySelector(".cf:not(.out)") && !CH.closing) {
       root.querySelectorAll(".cf,.cf-back").forEach(x => x.classList.add("out"));
       document.body.classList.remove("chat-full"); document.documentElement.classList.remove("chat-full");
-      setTimeout(() => { if (syncChat.tok === tok && !S.chatFull) root.innerHTML = ""; }, 300); } return; }
-  if (root && root.querySelector(".cf.out")) { syncChat.tok = (syncChat.tok || 0) + 1; root.innerHTML = ""; }
+      chatCloseAnim(() => { if (!S.chatFull) root.innerHTML = ""; }); } return; }
+  if (root && root.querySelector(".cf.out")) { root.querySelectorAll(".cf,.cf-back").forEach(x => x.classList.remove("out")); document.body.classList.add("chat-full"); document.documentElement.classList.add("chat-full"); CH.closing = false; springStop(CH.y); CH.y.x = 0; chatOpenAnim(); }   // reopened mid-close: reverse
   if (!root) { root = document.createElement("div"); root.id = "chat-root"; document.body.appendChild(root); }
   if (!root.firstChild) {
     const card = document.querySelector("#view .board"), cr = card ? card.getBoundingClientRect() : null;
@@ -3270,6 +3270,7 @@ function syncChat(){
       ${S.chatCanWrite ? `<div class="cf-in"><div class="cf-box"><div class="rp-slot"></div><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message à la famille")}" autocomplete="off" enterkeyhint="send"></textarea><div class="cf-row"><label class="cf-plus" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : I_PLUS}</label><input type="file" id="n-photo" accept="image/*" hidden><span style="flex:1"></span><button class="cf-mic" type="button" data-act="recStart" aria-label="${T("Message vocal")}">${I_MIC}</button><button class="cf-send" type="button" data-act="sendNote" aria-label="${T("Envoyer")}">${I_UP}</button></div></div></div>`
         : `<div class="cf-in s" style="color:var(--fg2);justify-content:center">${T("Rejoignez la famille pour écrire un message.")}</div>`}</div>`;
     document.body.classList.add("chat-full"); document.documentElement.classList.add("chat-full");
+    CH.p.x = 0; CH.y.x = 0; springStop(CH.p); springStop(CH.y); chatPaint(); chatOpenAnim();
   }
   if (!window.__cfVV && window.visualViewport) { window.__cfVV = true;
     const fit = () => { const cf = document.querySelector("#chat-root .cf"), vv = window.visualViewport; if (!cf) return;
@@ -5242,9 +5243,12 @@ function openSheet(title, body, onSave, onDelete){
   $("#sheet-root").innerHTML = `<div class="scrim" data-act="sheetBg"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
     <div class="sheet-h"><button class="cancel" data-act="sheetClose">${T("Annuler")}</button><b>${esc(title)}</b><button class="save" data-act="sheetSave">${T("OK")}</button></div>
     <form id="sheet-form">${body}${onDelete?`<button type="button" class="btn danger" data-act="sheetDel" style="width:100%;margin-top:6px">${T("Supprimer")}</button>`:""}</form></div></div>`;
+  springStop(SH.st); SH.st.v = 0; sheetOpenAnim();
   const f = $("#sheet-form input, #sheet-form select"); if (f) setTimeout(()=>f.focus(), 50);
 }
-function closeSheet(){ sheetSave = sheetDelete = null; const sc = $("#sheet-root .scrim"); if (!sc) return; const tok = ++sheetTok; sc.classList.add("closing"); setTimeout(() => { if (tok === sheetTok) { $("#sheet-root").innerHTML = ""; if (S.wvMap) { liveMapDrop(S.wvMap); S.wvMap = null; } } }, 220); }
+function closeSheet(v){ const save = sheetSave, delf = sheetDelete; sheetSave = sheetDelete = null; const sc = $("#sheet-root .scrim"); if (!sc) return;
+  const tok = ++sheetTok, sh = sc.querySelector(".sheet"), H = sh ? sh.offsetHeight + 30 : 700; sc.classList.add("closing"); SH.undo = {save, del: delf};
+  springTo(SH.st, H, {k: 340, z: 1, v0: typeof v === "number" ? Math.max(v, 0) : undefined, eps: 2, onUpdate: sheetPaint, onDone: () => { if (tok === sheetTok) { $("#sheet-root").innerHTML = ""; SH.undo = null; if (S.wvMap) { liveMapDrop(S.wvMap); S.wvMap = null; } } }}); }
 const val = id => { const e = document.getElementById(id); return e ? e.value.trim() : ""; };
 
 function routineSheet(r){
@@ -5429,13 +5433,134 @@ async function clearAll(){
   for (const col of ["routine","meds","weights","appts","days"]) for (const id of Object.keys(C[col])) await del(col, id);
   await del("config","dog"); S.confirmClear = false; render();
 }
+// ===================== direct manipulation =====================
+// Every moving surface is a spring you can grab at any moment: it follows the finger 1:1,
+// keeps its velocity when released, and can be thrown back the other way mid-flight.
+const RM = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+function springTo(st, to, o){
+  cancelAnimationFrame(st.raf); if (o.v0 != null) st.v = o.v0;
+  const k = o.k || 380, c = 2 * Math.sqrt(k) * (o.z == null ? .86 : o.z); let last = performance.now(); st.to = to;
+  if (RM()) { st.x = to; st.v = 0; o.onUpdate(to); st.raf = 0; o.onDone && o.onDone(); return; }
+  const step = now => { const dt = Math.min(.034, Math.max(.001, (now - last) / 1000)); last = now;
+    for (let i = 0; i < 4; i++) { const h = dt / 4, a = -k * (st.x - to) - c * st.v; st.v += a * h; st.x += st.v * h; }
+    if (Math.abs(st.v) < 6 && Math.abs(st.x - to) < (o.eps || .4)) { st.x = to; st.v = 0; st.raf = 0; o.onUpdate(to); o.onDone && o.onDone(); return; }
+    o.onUpdate(st.x); st.raf = requestAnimationFrame(step); };
+  st.raf = requestAnimationFrame(step);
+}
+const springStop = st => { cancelAnimationFrame(st.raf); st.raf = 0; };
+function veloTrack(){ const s = []; return {add(v){ const t = performance.now(); s.push([t, v]); while (s.length > 2 && t - s[0][0] > 90) s.shift(); },
+  get(){ if (s.length < 2) return 0; const a = s[0], b = s[s.length - 1], dt = b[0] - a[0]; return dt > 0 ? (b[1] - a[1]) / dt * 1000 : 0; }}; }
+const rubber = (d, dim) => (1 - 1 / (d * .55 / dim + 1)) * dim;
+
+// ---- sheets: rise on a spring, drag down to dismiss, catch them while they close ----
+const SH = {st: {x: 0, v: 0, raf: 0}, undo: null};
+function sheetEls(){ const sc = $("#sheet-root .scrim"); return {sc, sh: sc && sc.querySelector(".sheet")}; }
+function sheetPaint(x){ const {sc, sh} = sheetEls(); if (!sh) return; const H = sh.offsetHeight || 1;
+  sh.style.transform = Math.abs(x) > .2 ? `translate3d(0,${x.toFixed(1)}px,0)` : ""; sc.style.setProperty("--sp", Math.max(0, Math.min(1, 1 - x / H)).toFixed(3)); }
+function sheetOpenAnim(){ const {sh} = sheetEls(); if (!sh) return; SH.undo = null;
+  SH.st.x = sh.offsetHeight + 24; sheetPaint(SH.st.x);
+  springTo(SH.st, 0, {k: 270, z: .8, onUpdate: sheetPaint}); }
+
+// ---- full-screen chat: grows from the messages card, drag the header down to close ----
+const CH = {p: {x: 0, v: 0, raf: 0}, y: {x: 0, v: 0, raf: 0}, closing: false};
+function chatPaint(){ const r = document.getElementById("chat-root"), cf = r && r.querySelector(".cf"), bk = r && r.querySelector(".cf-back"); if (!cf) return;
+  const p = CH.p.x, y = Math.max(0, CH.y.x), H = window.innerHeight || 800;
+  cf.style.transform = `translate3d(0,${y.toFixed(1)}px,0) scale(${Math.min(1.015, .9 + .1 * p).toFixed(4)})`;
+  cf.style.opacity = Math.max(0, Math.min(1, p * 1.5)).toFixed(3);
+  cf.style.borderRadius = Math.max(0, Math.min(34, (1 - Math.min(1, p)) * 28 + y / 10)).toFixed(1) + "px";
+  if (bk) bk.style.opacity = (Math.max(0, Math.min(1, p)) * (1 - Math.min(1, y / H))).toFixed(3); }
+function chatOpenAnim(){ if (!CH.p.raf && CH.p.x > .99) return; CH.closing = false; CH.y.x = 0; springTo(CH.p, 1, {k: 300, z: .8, eps: .002, onUpdate: chatPaint}); }
+function chatCloseAnim(done){ CH.closing = true; springTo(CH.p, 0, {k: 420, z: 1, eps: .002, onUpdate: chatPaint, onDone: () => { CH.closing = false; done && done(); }}); }
+
+// ---- one gesture recogniser for touch (and mouse on sheet/chat headers) ----
+const GX = {g: null};
+function gStart(x, y, tg){ GX.g = {x0: x, y0: y, tg, kind: null, vy: veloTrack(), vx: veloTrack()}; }
+function gDecide(g, dx, dy){
+  const tg = g.tg, vert = Math.abs(dy) > Math.abs(dx) * 1.1, horiz = Math.abs(dx) > Math.abs(dy) * 1.1;
+  if (tg.closest(".maplibregl-map,.rmap,input[type=range],.switch,.msg .bub,.buddy3d,canvas")) return null;
+  const {sc, sh} = sheetEls();
+  if (sh && sh.contains(tg) && vert && (dy > 0 || SH.st.x > 1)) { const head = tg.closest(".sheet-h") || (g.y0 - sh.getBoundingClientRect().top < 40);
+    if (head || sh.scrollTop <= 0) return sheetDragBegin(sc, sh); return null; }
+  const cf = document.querySelector("#chat-root .cf");
+  if (cf && tg.closest("#chat-root .cf-h") && vert && dy > 0) return chatDragBegin();
+  const to = tg.closest("#toast-root .toast"); if (to && vert) return toastDragBegin(to);
+  if (sc || cf) return null;
+  const days = tg.closest("#view .week .days"); if (days && horiz) return weekDragBegin(days);
+  if (g.x0 < 26 && S.sub && horiz && dx > 0) { const pg = document.querySelector("#view .page"); if (pg) return backDragBegin(pg); }
+  return null;
+}
+function gMove(x, y, ev){
+  const g = GX.g; if (!g) return; const dx = x - g.x0, dy = y - g.y0; g.vx.add(x); g.vy.add(y);
+  if (!g.kind) { if (Math.hypot(dx, dy) < 7) return; g.kind = gDecide(g, dx, dy) || "none"; }
+  if (g.kind === "none") return;
+  if (ev && ev.cancelable) ev.preventDefault();
+  g.kind.move(dx, dy);
+}
+function gEnd(){ const g = GX.g; GX.g = null; if (g && g.kind && g.kind !== "none") g.kind.end(g.vx.get(), g.vy.get()); }
+document.addEventListener("touchstart", e => { if (e.touches.length === 1) gStart(e.touches[0].clientX, e.touches[0].clientY, e.target); else { gEnd(); } }, {passive: true});
+document.addEventListener("touchmove", e => { if (GX.g && e.touches.length === 1) gMove(e.touches[0].clientX, e.touches[0].clientY, e); }, {passive: false});
+document.addEventListener("touchend", gEnd, {passive: true}); document.addEventListener("touchcancel", gEnd, {passive: true});
+document.addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && e.button === 0 && e.target.closest(".sheet-h,#chat-root .cf-h,#toast-root .toast,#view .week .days")) gStart(e.clientX, e.clientY, e.target); });
+document.addEventListener("pointermove", e => { if (e.pointerType === "mouse" && GX.g) gMove(e.clientX, e.clientY, e); });
+document.addEventListener("pointerup", e => { if (e.pointerType === "mouse" && GX.g) { const moved = GX.g.kind && GX.g.kind !== "none"; gEnd(); if (moved) { const stop = ev => { ev.stopPropagation(); ev.preventDefault(); }; document.addEventListener("click", stop, {capture: true, once: true}); setTimeout(() => document.removeEventListener("click", stop, true), 300); } } });
+
+function sheetDragBegin(sc, sh){
+  if (sc.classList.contains("closing") && SH.undo) { sheetTok++; sc.classList.remove("closing"); sheetSave = SH.undo.save; sheetDelete = SH.undo.del; SH.undo = null; }   // caught while closing: it's yours again
+  springStop(SH.st); const base = SH.st.x, H = sh.offsetHeight || 600;
+  return {move(dx, dy){ let x = base + dy; if (x < 0) x = -rubber(-x, H); SH.st.x = x; sheetPaint(x); },
+    end(vx, vy){ const x = SH.st.x; if (x + vy * .18 > H * .38 && vy > -200) closeSheet(vy); else springTo(SH.st, 0, {k: 300, z: .78, v0: vy, onUpdate: sheetPaint}); }};
+}
+function chatDragBegin(){
+  springStop(CH.y); const base = CH.y.x, H = window.innerHeight || 800;
+  return {move(dx, dy){ let y = base + dy; if (y < 0) y = -rubber(-y, 120); CH.y.x = Math.max(0, y); chatPaint(); },
+    end(vx, vy){ const y = CH.y.x;
+      if (y + vy * .2 > H * .28 && vy > -200) { CH.closing = true; S.chatFull = false; document.body.classList.remove("chat-full"); document.documentElement.classList.remove("chat-full");
+        springTo(CH.y, H, {k: 360, z: 1, v0: Math.max(vy, 600), eps: 1, onUpdate: chatPaint, onDone: () => { CH.closing = false; const r = document.getElementById("chat-root"); if (r && !S.chatFull) r.innerHTML = ""; CH.y.x = 0; CH.p.x = 0; } });
+        render(); }
+      else springTo(CH.y, 0, {k: 320, z: .8, v0: vy, onUpdate: chatPaint}); }};
+}
+function toastDragBegin(to){
+  clearTimeout(toast._t); const st = {x: 0, v: 0, raf: 0}, paint = y => { to.style.transform = `translate(-50%,${y.toFixed(1)}px)`; to.style.opacity = Math.max(0, 1 - Math.abs(y) / 140).toFixed(3); };
+  to.style.animation = "none";
+  return {move(dx, dy){ st.x = dy > 0 ? dy : -rubber(-dy, 80) * 1.4; paint(st.x); },
+    end(vx, vy){ if (Math.abs(st.x) > 36 || Math.abs(vy) > 420) springTo(st, st.x >= 0 ? 160 : -160, {k: 300, z: 1, v0: vy, onUpdate: paint, onDone: () => to.remove()});
+      else springTo(st, 0, {k: 380, z: .75, v0: vy, onUpdate: paint, onDone: () => { toast._t = setTimeout(() => leave(to), 1800); }}); }};
+}
+function weekDragBegin(days){
+  const W = days.offsetWidth || 300, st = {x: 0, v: 0, raf: 0}, paint = x => { days.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`; days.style.opacity = (1 - Math.min(.6, Math.abs(x) / W)).toFixed(3); };
+  return {move(dx){ st.x = dx; paint(dx); },
+    end(vx){ const dir = st.x + vx * .2 < -W * .28 ? 1 : st.x + vx * .2 > W * .28 ? -1 : 0;
+      if (!dir) return springTo(st, 0, {k: 380, z: .8, v0: vx, onUpdate: paint, onDone: () => { days.style.transform = days.style.opacity = ""; }});
+      springTo(st, -dir * W, {k: 420, z: 1, v0: vx, eps: 2, onUpdate: paint, onDone: () => {
+        S.pageAnim = null; S.sel = ymd(addDays(parseYmd(S.sel), dir * 7)); render();
+        const nd = document.querySelector("#view .week .days"); if (!nd) return; const st2 = {x: dir * W * .45, v: vx * .6, raf: 0};
+        const p2 = x => { nd.style.transform = Math.abs(x) > .3 ? `translate3d(${x.toFixed(1)}px,0,0)` : ""; nd.style.opacity = (1 - Math.min(.6, Math.abs(x) / W)).toFixed(3); };
+        p2(st2.x); springTo(st2, 0, {k: 300, z: .82, onUpdate: p2}); } }); }};
+}
+function backDragBegin(pg){
+  const W = window.innerWidth || 390, st = {x: 0, v: 0, raf: 0}, paint = x => { pg.style.transform = x > .3 ? `translate3d(${x.toFixed(1)}px,0,0)` : ""; pg.style.boxShadow = x > 1 ? "-12px 0 30px rgba(0,0,0,.18)" : ""; };
+  pg.style.animation = "none"; [...pg.children].forEach(ch => { ch.style.animation = "none"; });
+  return {move(dx){ st.x = Math.max(0, dx); paint(st.x); },
+    end(vx){ if (st.x + vx * .2 > W * .35 && vx > -200) springTo(st, W, {k: 380, z: 1, v0: Math.max(vx, 300), eps: 2, onUpdate: paint, onDone: () => { S.pageAnim = null; go(S.tab, null); }});
+      else springTo(st, 0, {k: 380, z: .85, v0: vx, onUpdate: paint}); }};
+}
+// switches: the knob can be dragged as well as tapped
+(() => { let SW = null;
+  document.addEventListener("pointerdown", e => { const sw = e.target.closest(".switch"); if (!sw || !sw.querySelector("i")) return; SW = {sw, x0: e.clientX, on: sw.classList.contains("on"), moved: false, pos: 0}; });
+  document.addEventListener("pointermove", e => { if (!SW) return; const dx = e.clientX - SW.x0; if (!SW.moved && Math.abs(dx) < 4) return; SW.moved = true;
+    const pos = Math.max(0, Math.min(20, (SW.on ? 20 : 0) + dx)); SW.pos = pos; const k = SW.sw.querySelector("i"); k.style.transition = "none"; k.style.transform = `translateX(${pos}px)`; SW.sw.classList.toggle("sw-half", pos > 10); });
+  const up = () => { if (!SW) return; const s = SW; SW = null; const k = s.sw.querySelector("i"); k.style.transition = ""; k.style.transform = ""; s.sw.classList.remove("sw-half"); if (!s.moved) return;
+    const stop = ev => { ev.stopPropagation(); ev.preventDefault(); }; s.sw.addEventListener("click", stop, {capture: true});
+    setTimeout(() => { s.sw.removeEventListener("click", stop, {capture: true}); if ((s.pos > 10) !== s.on) s.sw.click(); }, 40); };
+  document.addEventListener("pointerup", up); document.addEventListener("pointercancel", () => { if (SW) { const k = SW.sw.querySelector("i"); k.style.transition = ""; k.style.transform = ""; SW.sw.classList.remove("sw-half"); SW = null; } });
+})();
 document.addEventListener("click", async e => {
   const el = e.target.closest("[data-act]"); if (!el) return;
   const act = el.dataset.act;
   if (act === "sheetBg") { if (e.target === el) closeSheet(); return; }
   switch (act) {
     case "go": { const [t, sub] = parseHash(el.dataset.tab); go(t, sub); break; }
-    case "goSub": if (el.classList.contains("ccard") && el.dataset.sub === "buddy" && !matchMedia("(prefers-reduced-motion: reduce)").matches) { el.classList.remove("blub"); void el.offsetWidth; el.classList.add("blub"); await new Promise(r => setTimeout(r, 260)); }
+    case "goSub": if (el.classList.contains("ccard") && el.dataset.sub === "buddy" && !matchMedia("(prefers-reduced-motion: reduce)").matches) { el.classList.remove("blub"); void el.offsetWidth; el.classList.add("blub"); }
       go(el.dataset.tab, el.dataset.sub); break;
     case "subBack": go(S.tab, null); break;
     case "planSeg": S.plan = el.dataset.v; S.pageAnim = {cls:"enter-u", until: Date.now() + 400}; render(); break;
@@ -5506,7 +5631,7 @@ document.addEventListener("click", async e => {
       el.parentNode.querySelectorAll(".qk").forEach(b => b.classList.toggle("on", b === el)); break; }
     case "extraAdd": if (canEdit()) extraSheet({date: el.dataset.d || S.sel}); break;
     case "extraEdit": { const x = C.extras[el.dataset.id]; if (x && canEdit()) extraSheet(Object.assign({id: el.dataset.id}, x)); break; }
-    case "factsRefresh": { const ds = el.dataset.d; S.factsBusy = ds; render(); await new Promise(r => setTimeout(r, 450)); S.factsBusy = null; (S.factsAt = S.factsAt || {})[ds] = Date.now(); render(); toast(T("Bilan régénéré avec les dernières infos")); break; }
+    case "factsRefresh": { const ds = el.dataset.d; S.factsBusy = ds; S.factsBusy = null; (S.factsAt = S.factsAt || {})[ds] = Date.now(); render(); toast(T("Bilan régénéré avec les dernières infos")); break; }
     case "hTab": S.hTab = el.dataset.v; S.pageAnim = {cls:"enter-u", until: Date.now() + 400}; render(); break;
     case "hTabGo": { const v = el.dataset.v; if (v === "rdv") { S.plan = "rdv"; go("planning"); } else go("sante", v === "suivi" ? "croissance" : v); break; }
     case "scrollTimeline": { const t = document.getElementById("timeline"); if (t) t.scrollIntoView({behavior:"smooth", block:"start"}); break; }
@@ -5523,7 +5648,7 @@ document.addEventListener("click", async e => {
     case "walkView": walkView(el.dataset.id); break;
     case "wxToggle": { try { localStorage.getItem("dl-wx-open") === "1" ? localStorage.removeItem("dl-wx-open") : localStorage.setItem("dl-wx-open", "1"); } catch(_) {} render(); break; }
     case "goWalk": { el.classList.add("on"); try { if (navigator.vibrate) navigator.vibrate(10); } catch(_) {}
-      await new Promise(r => setTimeout(r, 220)); if (walkNow()) break;
+      if (walkNow()) break;
       const st0 = new Date().toISOString(); gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}});
       toast(navigator.geolocation && !gpsOff() ? T("Balade lancée : gardez l'app ouverte pour mesurer le trajet") : T("Balade lancée : touchez Terminer au retour")); break; }
     case "walkBtnPref": { const on = el.getAttribute("aria-checked") !== "true"; gLS.s("dl-walkbtn-off", on ? null : "1"); render(); break; }
