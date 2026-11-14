@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "111"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "112"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -431,6 +431,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"Aller": "Out", "Retour": "Back", "Demi-tour": "Turned back"}); Object.assign(HR, {"Aller": "Odlazak", "Retour": "Povratak", "Demi-tour": "Okret"});
 Object.assign(EN, {"Vous": "You", "Aucune garde prévue": "No sitting planned"}); Object.assign(HR, {"Vous": "Vi", "Aucune garde prévue": "Nema planiranog čuvanja"});
 Object.assign(EN, {"En direct": "Live", "Position il y a {n}": "Position {n} ago", "Dernière balade": "Last walk", "{n} a promené {d}": "{n} walked {d}", "Besoins": "Needs"}); Object.assign(HR, {"En direct": "Uživo", "Position il y a {n}": "Pozicija prije {n}", "Dernière balade": "Zadnja šetnja", "{n} a promené {d}": "{n} je prošetao/la {d}", "Besoins": "Potrebe"});
 Object.assign(EN, {"Indigo":"Indigo"}); Object.assign(HR, {"Indigo":"Indigo"});
@@ -2063,9 +2064,21 @@ let MAP_STYLE = null;
 async function mapStyle(){ if (!MAP_STYLE) MAP_STYLE = fetch("https://tiles.openfreemap.org/styles/liberty").then(r => { if (!r.ok) throw new Error("style"); return r.json(); }).catch(e => { MAP_STYLE = null; throw e; });
   return appleMap(JSON.parse(JSON.stringify(await MAP_STYLE)), isDarkUI()); }
 const routesGeo = routes => ({type: "FeatureCollection", features: routes.filter(r => r.pts && r.pts.length > 1).map(r => ({type: "Feature", properties: {id: r.id}, geometry: {type: "LineString", coordinates: smoothPts(r.pts).map(q => [q[1], q[0]])}}))});
+// where the walk turned back: the point farthest from the start; returns the share of the distance done by then
+function splitWalk(pts){
+  if (!pts || pts.length < 4) return null; let k = 0, far = 0; for (let i = 1; i < pts.length; i++) { const d = gDist(pts[0], pts[i]); if (d > far) { far = d; k = i; } }
+  const sp = smoothPts(pts); let tot = 0, at = 0; const kk = Math.round(k / (pts.length - 1) * (sp.length - 1));
+  for (let i = 1; i < sp.length; i++) { const d = gDist(sp[i - 1], sp[i]); tot += d; if (i <= kk) at += d; }
+  if (!tot || far < 40) return null; const f = Math.max(.05, Math.min(.95, at / tot));
+  return {f, k, turn: pts[k], out: at, back: tot - at, loop: gDist(pts[0], pts[pts.length - 1]) < 120};
+}
+const GRAD_DEF = ["interpolate", ["linear"], ["line-progress"], 0, "#30D158", .5, "#0A84FF", 1, "#5E5CE6"];
+const gradSplit = f => ["interpolate", ["linear"], ["line-progress"], 0, "#30D158", f - .002, "#40C8E0", f, "#FF9F0A", 1, "#FF375F"];
 function endsGeo(routes, sel, live){ const r = routes.find(x => x.id === sel); if (!r || !r.pts.length) return {type: "FeatureCollection", features: []};
   const a = r.pts[0], b = r.pts[r.pts.length - 1];
-  return {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [a[1], a[0]]}}, {type: "Feature", properties: {k: live ? "me" : "b"}, geometry: {type: "Point", coordinates: [b[1], b[0]]}}]}; }
+  const fs = [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [a[1], a[0]]}}, {type: "Feature", properties: {k: live ? "me" : "b"}, geometry: {type: "Point", coordinates: [b[1], b[0]]}}];
+  const sp = !live && r.split ? splitWalk(r.pts) : null; if (sp) fs.push({type: "Feature", properties: {k: "t"}, geometry: {type: "Point", coordinates: [sp.turn[1], sp.turn[0]]}});
+  return {type: "FeatureCollection", features: fs}; }
 function mapBounds(routes, sel, home){
   const pts = routes.filter(r => !sel || r.id === sel).flatMap(r => r.pts).concat(home && !sel ? [home] : []); if (!pts.length) return null;
   let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const q of pts) { la0 = Math.min(la0, q[0]); la1 = Math.max(la1, q[0]); lo0 = Math.min(lo0, q[1]); lo1 = Math.max(lo1, q[1]); }
@@ -2079,6 +2092,7 @@ function liveMapSet(M, routes, o){
   map.getSource("r").setData(routesGeo(routes));
   map.getSource("e").setData(o.live ? endsGeo(routes, sel, true) : sg ? (sg.one ? endsGeo([{id: "s", pts: sg.pts}], "s") : {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [sg.pts[0][1], sg.pts[0][0]]}}]}) : endsGeo(routes, sel));
   map.setFilter("r-sel-c", ["==", ["get", "id"], sel]); map.getSource("rs").setData(routesGeo(routes.filter(r => r.id === sel)));
+  { const r0 = routes.find(r => r.id === sel), sp = r0 && r0.split && !o.live ? splitWalk(r0.pts) : null; map.setPaintProperty("r-sel", "line-gradient", sp ? gradSplit(sp.f) : GRAD_DEF); }
   map.setPaintProperty("r-line", "line-opacity", sel || sg ? .28 : .9); map.setPaintProperty("r-case", "line-opacity", sel || sg ? .28 : .95);
   if (map.getSource("sg")) map.getSource("sg").setData(sg ? {type: "FeatureCollection", features: [{type: "Feature", properties: {}, geometry: {type: "LineString", coordinates: smoothPts(sg.pts).map(q => [q[1], q[0]])}}]} : {type: "FeatureCollection", features: []});
   if (o.home && !M.homeMk) { const e = document.createElement("div"); e.className = "ml-home"; e.innerHTML = I_HOME.replace(/26/g, "16"); M.homeMk = new maplibregl.Marker({element: e}).setLngLat([o.home[1], o.home[0]]).addTo(map); }
@@ -2088,11 +2102,11 @@ function liveMapSet(M, routes, o){
       M.poiMk.push(new maplibregl.Marker({element: e}).setLngLat([h.p[1], h.p[0]]).addTo(map)); }); }
   if (o.live) { const pts = routes[0].pts, last = pts[pts.length - 1];
     if (M.fitKey == null) { const b = mapBounds(sg ? [{id: "s", pts: sg.pts.concat(pts)}] : routes, sg ? "s" : sel); if (b) map.fitBounds(b, {padding: 40, maxZoom: 17, duration: 0}); M.fitKey = "live"; }
-    else if (last) { const q = map.project([last[1], last[0]]), c = map.getContainer(), W = c.clientWidth, H = c.clientHeight;
+    else if (last && Date.now() - (M.touched || 0) > 25000) { const q = map.project([last[1], last[0]]), c = map.getContainer(), W = c.clientWidth, H = c.clientHeight;
       if (q.x < W * .15 || q.x > W * .85 || q.y < H * .15 || q.y > H * .85) map.easeTo({center: [last[1], last[0]], duration: 800}); }
     return; }
   const key = (sg ? "sug:" + sg.id : sel) + "|" + routes.length;
-  if (M.fitKey !== key) { const b = sg ? mapBounds([{id: "s", pts: sg.pts}], "s") : mapBounds(routes, sel, o.home); if (b) map.fitBounds(b, {padding: 44, maxZoom: 17, duration: M.fitKey == null ? 0 : 650}); M.fitKey = key; }
+  if (M.fitKey !== key && !(M.fitKey != null && Date.now() - (M.touched || 0) < 1500)) { const b = sg ? mapBounds([{id: "s", pts: sg.pts}], "s") : mapBounds(routes, sel, o.home); if (b) map.fitBounds(b, {padding: 44, maxZoom: 17, duration: M.fitKey == null ? 0 : 650}); M.fitKey = key; }
 }
 const staticMap = (el, routes, o) => o && o.sug ? drawRoutes(el, routes.concat([{id: "__sug", pts: o.sug.pts}]), Object.assign({}, o, {sel: "__sug"})) : drawRoutes(el, routes, o);
 let ML_FAIL = false;
@@ -2106,6 +2120,9 @@ async function liveMap(el, routes, o, M){
   try { M.map = new gl.Map({container: box, style, attributionControl: {compact: true}, dragRotate: false, pitchWithRotate: false, touchPitch: false, fadeDuration: 0}); }
   catch(_) { static_(); return null; }
   const map = M.map; map.touchZoomRotate.disableRotation();
+  // once you move or zoom the map yourself, it stops re-centring for a while
+  const mine = e => { if (e && e.originalEvent) M.touched = Date.now(); };
+  map.on("dragstart", mine); map.on("zoomstart", mine); map.on("pitchstart", mine);
   if (o.locate) { try { map.addControl(new gl.GeolocateControl({positionOptions: {enableHighAccuracy: true}, trackUserLocation: true, showAccuracyCircle: false}), "top-right"); } catch(_) {} }
   const fail = setTimeout(() => { if (!M.ready && !M.dead) { try { map.remove(); } catch(_) {} static_(); } }, 12000);
   map.on("load", () => { clearTimeout(fail); if (M.dead) return; M.ready = true; M.fitKey = null;
@@ -2124,7 +2141,7 @@ async function liveMap(el, routes, o, M){
     map.addLayer({id: "r-hit", type: "line", source: "r", layout: lay, paint: {"line-color": "#000", "line-width": 22, "line-opacity": 0}});
     map.addLayer({id: "e-halo", type: "circle", source: "e", filter: ["==", ["get", "k"], "me"], paint: {"circle-radius": 18, "circle-color": "#0A84FF", "circle-opacity": .18}});
     map.addLayer({id: "e-sh", type: "circle", source: "e", paint: {"circle-radius": 11, "circle-color": "#000", "circle-opacity": .18, "circle-blur": .8, "circle-translate": [0, 1.5]}});
-    map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7.5, "circle-color": ["match", ["get", "k"], "a", "#30D158", "me", "#0A84FF", "#5E5CE6"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 3}});
+    map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7.5, "circle-color": ["match", ["get", "k"], "a", "#30D158", "me", "#0A84FF", "t", "#FF9F0A", "#5E5CE6"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 3}});
     const at = el.querySelector(".maplibregl-ctrl-attrib"); if (at) at.classList.remove("maplibregl-compact-show");
     map.on("click", "r-hit", e => { const f = e.features && e.features[0]; if (f && M.o.onPick) M.o.onPick(f.properties.id); });
     map.on("mouseenter", "r-hit", () => { map.getCanvas().style.cursor = "pointer"; }); map.on("mouseleave", "r-hit", () => { map.getCanvas().style.cursor = ""; });
@@ -3157,16 +3174,17 @@ function lastWalkCard(){
   const l = all[0]; if (!l) return "";
   const m = memberOf(l.mid), who = (m && m.name) || l.byName || "", when = dayWord(l.date) + (l.at ? " · " + l.at : "");
   const stat = (v, k) => `<div><b class="num">${v}</b><span>${k}</span></div>`;
-  return `<div class="sec"><div class="sec-h"><h2>${T("Dernière balade")}</h2></div><button class="card lastw" data-act="walkView" data-id="${esc(l.id)}">
-    ${l.route ? `<div class="rmap lastw-map" id="fam-last-map" data-id="${esc(l.id)}"></div>` : ""}
-    <div class="lastw-b">${m ? mav(m, 34) : ico("var(--green)", I_ROUTE)}<div class="main"><div class="t">${esc(who ? T("{n} a promené {d}", {n: who, d: (dog() || {}).name || T("votre chien")}) : T("Balade"))}</div><div class="s">${esc(when)}</div></div><span class="chev">${I.chevR}</span></div>
-    <div class="lastw-s">${stat(l.dist ? fmtKm(l.dist) : "–", T("Distance"))}${stat((l.dur || "–") + " min", T("Durée"))}${stat(l.pee || l.poo ? [l.pee ? T("Pipi") : "", l.poo ? T("Caca") : ""].filter(Boolean).join(" + ") : "–", T("Besoins"))}</div></button></div>`;
+  let leg = ""; if (l.route) { try { const sp = splitWalk(polyDec(l.route)); if (sp) leg = `<div class="ab-leg"><span class="ab out"><i></i>${T("Aller")} <b class="num">${fmtKm(sp.out)}</b></span><span class="ab turn"><i></i>${T("Demi-tour")}</span><span class="ab back"><i></i>${T("Retour")} <b class="num">${fmtKm(sp.back)}</b></span></div>`; } catch(_) {} }
+  return `<div class="sec"><div class="sec-h"><h2>${T("Dernière balade")}</h2></div><div class="card lastw">
+    ${l.route ? `<div class="rmap lastw-map" id="fam-last-map" data-id="${esc(l.id)}"></div>${leg}` : ""}
+    <button class="lastw-b" data-act="walkView" data-id="${esc(l.id)}">${m ? mav(m, 34) : ico("var(--green)", I_ROUTE)}<div class="main"><div class="t">${esc(who ? T("{n} a promené {d}", {n: who, d: (dog() || {}).name || T("votre chien")}) : T("Balade"))}</div><div class="s">${esc(when)}</div></div><span class="chev">${I.chevR}</span></div>
+    <button class="lastw-s" data-act="walkView" data-id="${esc(l.id)}">${stat(l.dist ? fmtKm(l.dist) : "–", T("Distance"))}${stat((l.dur || "–") + " min", T("Durée"))}${stat(l.pee || l.poo ? [l.pee ? T("Pipi") : "", l.poo ? T("Caca") : ""].filter(Boolean).join(" + ") : "–", T("Besoins"))}</button></div></div>`;
 }
 function paintFamLast(){
   const box = document.getElementById("fam-last-map"); if (!box) { if (PM.fl && !(S.tab === "famille" && !S.sub)) dropMap("fl"); return; }
   const l = (C.logs || {})[box.dataset.id]; if (!l || !l.route) return;
   let pts = []; try { pts = polyDec(l.route); } catch(_) {}
-  if (pts.length) persistMap("fl", box, [{id: "x", pts}], {sel: "x"});
+  if (pts.length) persistMap("fl", box, [{id: "x", pts, split: true}], {sel: "x"});
 }
 // maps that survive re-renders: the live map element is moved into the freshly drawn card instead of being rebuilt
 const PM = {};
@@ -3224,7 +3242,8 @@ function walkView(id){
     ${week.length > 1 ? `<div class="wv-week">${T("Ces 7 derniers jours : {k} en {n} balades suivies", {k: fmtKm(wkKm), n: week.length})}</div>` : ""}
     <div class="foot" style="margin:10px 4px 0">${T("Le trajet n'est visible que par votre famille.")}</div>`, null);
   liveMapDrop(S.wvMap); S.wvMap = null;
-  requestAnimationFrame(() => { const b = document.getElementById("wv-map"); if (b) liveMap(b, [{id: "w", pts}], {sel: "w"}).then(M => { S.wvMap = M; }); });
+  requestAnimationFrame(() => { const b = document.getElementById("wv-map"); if (b) liveMap(b, [{id: "w", pts, split: true}], {sel: "w"}).then(M => { S.wvMap = M; });
+    const sp = splitWalk(pts); if (b && sp) b.insertAdjacentHTML("afterend", `<div class="ab-leg" style="margin:-6px 0 12px"><span class="ab out"><i></i>${T("Aller")} <b class="num">${fmtKm(sp.out)}</b></span><span class="ab turn"><i></i>${T("Demi-tour")}</span><span class="ab back"><i></i>${T("Retour")} <b class="num">${fmtKm(sp.back)}</b></span></div>`); });
 }
 setInterval(() => { const w = walkNow();
   if (w && GPS.watch == null && GPS.state !== "denied" && gLS.g(gpsKey(w.start)) != null) gpsBegin(w.start);   // app reopened during a walk
@@ -5703,6 +5722,14 @@ function backDragBegin(pg){
   addEventListener("scroll", kick, {passive: true}); addEventListener("resize", kick);
   new MutationObserver(kick).observe(document.getElementById("view") || document.body, {childList: true});
   setInterval(kick, 700);
+})();
+// buttons react the moment a finger lands (iPhone delays :active), and spring back when it lifts
+(() => { let el = null, x0 = 0, y0 = 0;
+  const SEL = "button,.row[data-act],[data-act].card,.ccard,.qk,.pill,.opts label,.dayb,.ql-b,.alert,.mr-row,.sug-cta,.lastw-b,.lastw-s";
+  const off = () => { if (el) { el.classList.remove("is-press"); el = null; } };
+  document.addEventListener("pointerdown", e => { const t = e.target.closest(SEL); if (!t || t.disabled || t.closest(".maplibregl-map,#tabs,.seg,.switch,.fam-orbit")) return; off(); el = t; x0 = e.clientX; y0 = e.clientY; el.classList.add("is-press"); }, {passive: true});
+  document.addEventListener("pointermove", e => { if (el && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) off(); }, {passive: true});
+  ["pointerup", "pointercancel", "scroll"].forEach(t => document.addEventListener(t, off, {passive: true, capture: t === "scroll"}));
 })();
 // switches: the knob can be dragged as well as tapped
 (() => { let SW = null;

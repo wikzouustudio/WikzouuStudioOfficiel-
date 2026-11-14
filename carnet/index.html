@@ -6,8 +6,8 @@
 <script>
 // no pinch or double-tap zoom: it's an app, not a page (iOS ignores user-scalable=no, so block the gestures too)
 ["gesturestart","gesturechange","gestureend"].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault();},{passive:false});});
-document.addEventListener("touchmove",function(e){if(e.scale!==undefined&&e.scale!==1)e.preventDefault();},{passive:false});
-var __lastTouch=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-__lastTouch<300&&!(e.target.closest&&e.target.closest("input,textarea,select,[contenteditable]")))e.preventDefault();__lastTouch=n;},{passive:false});
+document.addEventListener("touchmove",function(e){if(e.scale!==undefined&&e.scale!==1&&!(e.target.closest&&e.target.closest(".maplibregl-map")))e.preventDefault();},{passive:false});
+var __lastTouch=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-__lastTouch<300&&!(e.target.closest&&e.target.closest("input,textarea,select,[contenteditable],.maplibregl-map")))e.preventDefault();__lastTouch=n;},{passive:false});
 </script>
 <script>try{var k=localStorage.getItem("dl-skin");document.documentElement.dataset.skin=k==="classic"?"classic":"aurora";var p=localStorage.getItem("dl-pal");if(p)document.documentElement.dataset.pal=p;}catch(e){document.documentElement.dataset.skin="aurora";}</script>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://www.gstatic.com https://cdnjs.cloudflare.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://dogs-life.radanovicvik.workers.dev https://tiles.openfreemap.org https://overpass-api.de https://overpass.kumi.systems https://routing.openstreetmap.de https://photon.komoot.io; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src https://dogs-life-official-web.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
@@ -34,9 +34,9 @@ window.CARNET_SITE = true;
 </script>
 <script type="module" src="firebase-bridge.js"></script>
 <title>Dogs Life</title>
-<link rel="preload" href="app.js?v=111" as="script">
+<link rel="preload" href="app.js?v=112" as="script">
 <link rel="preload" href="fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="app.css?v=111">
+<link rel="stylesheet" href="app.css?v=112">
 <style>
 /* sign-in gate (site only) */
 body.gated .wrap, body.gated .tabbar{display:none}
@@ -92,7 +92,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 <div id="gate-root"></div>
 <div id="tuto-root"></div>
 
-<script src="app.js?v=111"></script>
+<script src="app.js?v=112"></script>
 
 </body>
 </html>
