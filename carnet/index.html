@@ -1868,8 +1868,9 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .go-walk .gw-dot{flex:none;width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
 .go-walk .gw-dot svg{width:28px;height:28px}
 .go-walk .main{flex:1;min-width:0;display:grid}.go-walk .t{font-weight:800;font-size:19px;letter-spacing:-.01em}.go-walk .s{font-size:13px;font-weight:600;opacity:.75}
-.go-walk .gw-go{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.1)}
-.go-walk .gw-go svg{width:16px;height:16px}
+.go-walk .gw-go{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#1C1C1E;box-shadow:0 4px 12px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.15)}
+.go-walk .gw-go svg{width:20px;height:20px;margin-left:2px}
+:root[data-skin="classic"] .go-walk .gw-go{background:#fff;color:var(--green)}
 
 .sg-search{margin-top:10px;display:grid;gap:8px}.sg-search[hidden]{display:none}
 .sg-q{display:flex;gap:8px}.sg-q .f{flex:1;min-width:0}.sg-q .btn{flex:none}
@@ -1940,7 +1941,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "87"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "88"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -4898,7 +4899,7 @@ function walkNow(){ const w = getDay(ymd(new Date())).walk; return w && w.start 
 const walkBtnOff = () => gLS.g("dl-walkbtn-off") === "1";
 function liveWalk(){
   const w = walkNow();
-  if (!w) return walkBtnOff() || !canTick() ? "" : `<button class="btn go-walk" data-act="goWalk"><span class="gw-dot">${I_ROUTE}</span><span class="main"><span class="t">${T("Sortir en balade")}</span><span class="s">${esc(T("GPS précis · avec {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></span><span class="gw-go">${I.chevR}</span></button>`;
+  if (!w) return walkBtnOff() || !canTick() ? "" : `<button class="btn go-walk" data-act="goWalk"><span class="gw-dot">${I_ROUTE}</span><span class="main"><span class="t">${T("Sortir en balade")}</span><span class="s">${esc(T("GPS précis · avec {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></span><span class="gw-go"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.2 4.9c-.9-.5-2 .1-2 1.2v11.8c0 1 1.1 1.7 2 1.2l10-5.9c.9-.5.9-1.8 0-2.4Z"/></svg></span></button>`;
   const can = canTick(), m = memberOf(w.mid), min = Math.max(0, Math.round((Date.now() - Date.parse(w.start)) / 60000));
   setTimeout(() => { GPS.painted = 0; gpsPaint(); }, 0);
   return `<div class="card lw"><div class="lw-top"><span class="ql-pulse"></span><div class="main"><div class="lw-k">${T("Balade en cours")}${m ? " · " + esc(m.name) : ""}</div><div class="lw-t"><b class="num" id="walk-min">${min} min</b><span class="gps" id="walk-gps">${gpsLine(w) ? " · " + gpsLine(w) : ""}</span></div></div></div>
