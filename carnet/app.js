@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "98"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "99"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5232,9 +5232,9 @@ function orbStep(now){
   const tt = Math.max(-14, Math.min(14, ORB.w * .02));
   ORB.tv += (-(140) * (ORB.tilt - tt) - 12 * ORB.tv) * dt; ORB.tilt += ORB.tv * dt;
   const R = 95 + ORB.r, orbs = ring.querySelectorAll(".orb"), n = orbs.length || 1;
-  // a wave runs around the circle: each face drifts away from the dog and back, one after the other
-  const wt = RM() ? 0 : now / 1000, amp = RM() ? 0 : 11;
-  orbs.forEach((o, i) => { const a = ((+o.dataset.a || 0) + ORB.th) * Math.PI / 180, ri = R + amp * Math.sin(wt * 2.4 - i * (Math.PI * 2 / n) * (n > 2 ? 1 : .5)),
+  // all the faces breathe together: away from the dog, then back, in one smooth wave
+  const wt = RM() ? 0 : now / 1000, amp = RM() ? 0 : 11, ri = R + amp * Math.sin(wt * 2.4);
+  orbs.forEach((o, i) => { const a = ((+o.dataset.a || 0) + ORB.th) * Math.PI / 180,
     x = Math.cos(a) * ri, y = Math.sin(a) * ri * .93, depth = (Math.sin(a) + 1) / 2;
     o.style.transform = `translate(-50%,-50%) translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${(.9 + depth * .16).toFixed(3)})`; o.style.zIndex = depth > .5 ? 3 : 0; });
   const c = document.querySelector(".orbit-center"); if (c) c.style.transform = `rotate(${ORB.tilt.toFixed(2)}deg) scale(${(1 + Math.abs(ORB.tilt) * .004).toFixed(3)})`;
