@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "109"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "110"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -911,7 +911,7 @@ function viewToday(){
   </div>`;
   // end of day: log + summary, open in the evening or once something is filled
   const filled = day.appetite || day.energy || day.stool || day.note;
-  const eodOpen = S.eod != null ? S.eod : (sel < today || new Date().getHours() >= 17 || !!filled);
+  const eodOpen = S.eod != null ? S.eod : false;   // closed until you open it
   const eodSum = [day.appetite && T("Appétit") + " " + T(day.appetite === "Moyen" ? "Moyen (appétit)" : day.appetite).toLowerCase(), day.energy && T("Énergie") + " " + T(day.energy).toLowerCase(), day.stool && T("Selles") + " " + T(day.stool).toLowerCase()].filter(Boolean).join(" · ");
   const eod = `<div class="sec eod ${eodOpen?"open":""}"><button class="eod-h" data-act="eod" aria-expanded="${eodOpen}"><span class="ico" style="--c:var(--purple)"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z"/></svg></span>
       <div class="main"><div class="t">${T("Fin de journée")}</div><div class="s">${eodSum ? esc(eodSum) : T("Journal et bilan, à remplir le soir")}</div></div><span class="chev">${I.chevR}</span></button>
