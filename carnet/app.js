@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "102"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "103"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5604,7 +5604,6 @@ function backDragBegin(pg){
       const ic = b.querySelector("svg"); if (ic) ic.style.transform = k ? `translateY(${(-3 * k).toFixed(2)}px) scale(${(1 + .2 * k).toFixed(3)})` : ""; }); }
   function aim(sc, fx){ const br = sc.box.getBoundingClientRect(), lo = br.left + 4 + sc.w / 2, hi = br.right - 4 - sc.w / 2;
     let x = fx; if (x < lo) x = lo - rubber(lo - x, 60); else if (x > hi) x = hi + rubber(x - hi, 60);
-    const n = nearest(sc.box, Math.max(lo, Math.min(hi, fx))); if (n) { const r = n.getBoundingClientRect(), cx = r.left + r.width / 2; x += (cx - x) * .28; }   // soft magnet
     return x; }
   document.addEventListener("pointerdown", e => { if (e.button) return; const box = e.target.closest("#tabs,.seg"); if (!box || !e.target.closest("button")) return;
     if (paint.after) { springStop(paint.after.st); paint.after.done(); }
@@ -5615,8 +5614,10 @@ function backDragBegin(pg){
       const ind = document.createElement("i"); ind.className = "scrub-ind " + (tabs(box) ? "t" : "s");
       ind.style.width = cr.width + "px"; ind.style.height = cr.height + "px"; ind.style.top = (cr.top - br.top) + "px";
       box.appendChild(ind); box.classList.add("scrubbing"); SC.ind = ind; SC.w = cr.width; SC.st.x = cr.left + cr.width / 2; try { box.setPointerCapture(e.pointerId); } catch(_) {} }
-    SC.fx = e.clientX; const to = aim(SC, e.clientX);
-    springTo(SC.st, to, {k: 900, z: .72, eps: .2, onUpdate: paint});
+    // the lens sits exactly under the finger (stretching with the finger's speed)
+    const t = performance.now(), to = aim(SC, e.clientX); if (SC.lt) SC.st.v = SC.st.v * .5 + (to - SC.st.x) / Math.max(1, t - SC.lt) * 1000 * .5;
+    SC.lt = t; SC.fx = e.clientX; springStop(SC.st); SC.st.x = to; paint();
+    if (!SC.dec) { const sc = SC, dec = () => { if (SC !== sc || !sc.live) { sc.dec = 0; return; } if (performance.now() - sc.lt > 40) { sc.st.v *= .8; paint(); } sc.dec = requestAnimationFrame(dec); }; SC.dec = requestAnimationFrame(dec); }
     const hot = nearest(SC.box, e.clientX); if (hot !== SC.hot) { if (SC.hot) SC.hot.classList.remove("scrub-hot"); hot.classList.add("scrub-hot"); SC.hot = hot; try { if (navigator.vibrate) navigator.vibrate(4); } catch(_) {} } });
   const end = e => { if (!SC) return; const s = SC; SC = null; if (!s.live) return;
     const pick = s.hot || nearest(s.box, s.fx); if (s.hot) s.hot.classList.remove("scrub-hot");
