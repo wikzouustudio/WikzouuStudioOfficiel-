@@ -2064,3 +2064,15 @@ details.fold>summary.eod-h:active,details.fold>summary.eod-h.is-press{filter:bri
 details.fold .fold-b.eod-b{background:none!important;border-top:0!important;padding:12px 0 0!important;animation:none}
 @media (prefers-reduced-motion: no-preference){details.fold[open] .fold-b{animation:dlRise .4s cubic-bezier(.22,1.25,.36,1) both!important}}
 details.fold .fold-tools{margin:0 4px 8px}
+
+/* an open section: header and content become one card */
+details.fold:not([open]) .fold-tools{display:none}
+details.fold .fold-tools{flex:none;margin:0 2px 0 0;display:flex;align-items:center}
+details.fold .fold-tools .link,details.fold .fold-tools button{font-size:14px;font-weight:600;color:var(--accent);background:none;border:0;padding:6px 4px}
+details.fold .fold-tools .foot{display:none}
+details.fold[open]>summary.eod-h{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;border-bottom-width:0!important;box-shadow:none}
+details.fold[open] .fold-b{padding-top:0!important}
+details.fold[open] .fold-b>.card:first-child,details.fold[open] .fold-b>.sec:first-child>.card:first-child{margin-top:0!important;border-top-left-radius:0!important;border-top-right-radius:0!important;border-top-width:0!important;box-shadow:0 .5px 0 var(--sep) inset}
+details.fold[open] .fold-b>.card:first-child::before{content:none}
+@media (prefers-reduced-motion: no-preference){details.fold[open] .fold-b{animation:dlMerge .38s cubic-bezier(.22,1.2,.36,1) both!important;transform-origin:top}}
+@keyframes dlMerge{from{opacity:0;transform:scaleY(.94)}to{opacity:1;transform:none}}

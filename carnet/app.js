@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "113"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "114"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3164,9 +3164,11 @@ function foldSec(html, key, hint){
   if (!m) return html || "";
   const open = gLS.g("dl-fold-" + key) === "1", ic = FOLD_IC[key] || ["var(--accent)", I.dot];
   // same look as "Fin de journée": a card with an icon, a title, a short summary and a chevron
-  return `<div class="sec"><details class="eod fold" data-fold="${key}" ${open ? "open" : ""}><summary class="eod-h"><span class="ico" style="--c:${ic[0]}">${ic[1]}</span><div class="main"><div class="t">${m[1]}</div><div class="s">${hint || ""}</div></div><span class="chev">${I.chevR}</span></summary>
-    <div class="eod-b fold-b">${m[2].trim() ? `<div class="fold-tools">${m[2]}</div>` : ""}${m[3]}</div></details></div>`;
+  return `<div class="sec"><details class="eod fold" data-fold="${key}" ${open ? "open" : ""}><summary class="eod-h"><span class="ico" style="--c:${ic[0]}">${ic[1]}</span><div class="main"><div class="t">${m[1]}</div><div class="s">${hint || ""}</div></div>${m[2].trim() ? `<span class="fold-tools">${m[2]}</span>` : ""}<span class="chev">${I.chevR}</span></summary>
+    <div class="eod-b fold-b">${m[3]}</div></details></div>`;
 }
+// a button inside a folded header (e.g. "Modifier") acts on its own, without folding the section
+document.addEventListener("click", e => { const b = e.target.closest("summary [data-act]"); if (b) e.preventDefault(); }, true);
 document.addEventListener("toggle", e => { const d = e.target; if (d && d.classList && d.classList.contains("fold")) { gLS.s("dl-fold-" + d.dataset.fold, d.open ? "1" : null); S.lastHTML = ""; } }, true);
 // Famille: the most recent walk, always visible (map, distance, time, who); tap for the details
 function lastWalkCard(){
