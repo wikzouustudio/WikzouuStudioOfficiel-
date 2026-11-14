@@ -2050,3 +2050,17 @@ details.fold .fold-b>.card,details.fold .fold-b>.foot{margin-left:0;margin-right
 .is-press{transform:scale(.95)!important;filter:brightness(.9);transition:transform .07s ease-out,filter .07s!important}
 .btn.is-press{transform:scale(.94)!important}
 .row.is-press,.mr-row.is-press,.lastw-b.is-press,.lastw-s.is-press{transform:none!important;background-color:var(--fill)!important;filter:none}
+
+/* sheet header: no solid band any more, just a soft fade so text scrolling underneath stays readable */
+.sheet-h,:root[data-skin="aurora"] .sheet-h{background:none!important;isolation:isolate}
+.sheet-h::before{content:"";position:absolute;left:-24px;right:-24px;top:-30px;bottom:-16px;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,var(--sheet,var(--bg)) 0%,var(--sheet,var(--bg)) 52%,color-mix(in srgb,var(--sheet,var(--bg)) 0%,transparent) 100%)}
+:root[data-skin="aurora"] .sheet::before{position:relative;z-index:2}
+/* folded sections: only the header is a card; once open, the content sits on the page as itself (no box around boxes) */
+details.fold.eod{background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;overflow:visible!important}
+details.fold>summary.eod-h{background:var(--card);border-radius:14px;box-shadow:var(--shadow)}
+:root[data-skin="aurora"] details.fold>summary.eod-h{border:1px solid transparent;border-radius:22px;background:var(--sheen,none) padding-box,linear-gradient(var(--cardS,var(--card)),var(--cardS,var(--card))) padding-box,var(--edge-g) border-box}
+details.fold>summary.eod-h:active,details.fold>summary.eod-h.is-press{filter:brightness(.92)}
+details.fold .fold-b.eod-b{background:none!important;border-top:0!important;padding:12px 0 0!important;animation:none}
+@media (prefers-reduced-motion: no-preference){details.fold[open] .fold-b{animation:dlRise .4s cubic-bezier(.22,1.25,.36,1) both!important}}
+details.fold .fold-tools{margin:0 4px 8px}
