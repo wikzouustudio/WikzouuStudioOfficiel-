@@ -2081,3 +2081,15 @@ details.fold[open] .fold-b>.card:first-child::before{content:none}
 .lastw .lastw-go.is-press{transform:none!important;filter:none;background:var(--fill)!important}
 .lastw-s div{align-content:center;min-height:56px}
 .lastw-needs{display:inline-flex;gap:6px;align-items:center}.lastw-needs i{display:grid;place-items:center;color:var(--c)}.lastw-needs svg{width:20px;height:20px}
+
+/* merged section = ONE glass surface: one sheen, one edge, the parts inside are transparent */
+details.fold .fold-b{overflow:hidden;animation:none!important}
+:root[data-skin="aurora"] details.fold[open]{border:1px solid transparent!important;border-radius:22px!important;overflow:hidden!important;
+  background:var(--sheen,none) padding-box,linear-gradient(var(--cardS,var(--card)),var(--cardS,var(--card))) padding-box,var(--edge-g) border-box!important}
+:root:not([data-skin="aurora"]) details.fold[open]{background:var(--card)!important;border-radius:14px!important;box-shadow:var(--shadow)!important;overflow:hidden!important}
+details.fold[open]>summary.eod-h,:root[data-skin="aurora"] details.fold[open]>summary.eod-h{background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+details.fold[open] .fold-b>.card:first-child,:root[data-skin="aurora"] details.fold[open] .fold-b>.card:first-child{background:none!important;border:0!important;border-radius:0!important;box-shadow:inset 0 .5px 0 var(--sep)!important;margin:0!important}
+details.fold[open] .fold-b>.foot{margin:0;padding:10px 16px 14px;border-top:.5px solid var(--sep)}
+details.fold[open] .fold-b>.card.pad{padding:14px 16px}
+details.fold[data-closing] .eod-h .chev{transform:none!important}
+details.fold .eod-h .chev{transition:transform .45s cubic-bezier(.34,1.56,.64,1)!important}

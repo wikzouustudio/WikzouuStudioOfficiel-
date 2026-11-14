@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "115"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "116"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3169,6 +3169,19 @@ function foldSec(html, key, hint){
 }
 // a button inside a folded header (e.g. "Modifier") acts on its own, without folding the section
 document.addEventListener("click", e => { const b = e.target.closest("summary [data-act]"); if (b) e.preventDefault(); }, true);
+// open / close with a smooth height animation that can be reversed mid-way
+document.addEventListener("click", e => {
+  const sm = e.target.closest("details.fold > summary"); if (!sm || e.target.closest("summary [data-act]")) return;
+  e.preventDefault(); const d = sm.parentElement, b = d.querySelector(".fold-b"); if (!b) { d.open = !d.open; return; }
+  if (RM()) { d.open = !(d.open && !d.dataset.closing); delete d.dataset.closing; return; }
+  const cur = d.open ? b.getBoundingClientRect().height : 0; if (d._anim) { d._anim.cancel(); d._anim = null; }
+  if (!d.open || d.dataset.closing) { delete d.dataset.closing; d.open = true; const to = b.scrollHeight;
+    d._anim = b.animate([{height: cur + "px", opacity: cur ? 1 : 0, transform: cur ? "none" : "translateY(-6px)"}, {height: to + "px", opacity: 1, transform: "none"}], {duration: 460, easing: "cubic-bezier(.2,1.15,.35,1)"});
+    d._anim.onfinish = () => { d._anim = null; }; }
+  else { d.dataset.closing = "1";
+    d._anim = b.animate([{height: cur + "px", opacity: 1}, {height: "0px", opacity: 0}], {duration: 300, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards"});
+    d._anim.onfinish = () => { d._anim = null; d.open = false; delete d.dataset.closing; b.getAnimations().forEach(a => a.cancel()); }; }
+}, true);
 document.addEventListener("toggle", e => { const d = e.target; if (d && d.classList && d.classList.contains("fold")) { gLS.s("dl-fold-" + d.dataset.fold, d.open ? "1" : null); S.lastHTML = ""; } }, true);
 // Famille: the most recent walk, always visible (map, distance, time, who); tap for the details
 function lastWalkCard(){
