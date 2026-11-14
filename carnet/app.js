@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "94"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "95"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5483,7 +5483,7 @@ const GX = {g: null};
 function gStart(x, y, tg){ GX.g = {x0: x, y0: y, tg, kind: null, vy: veloTrack(), vx: veloTrack()}; }
 function gDecide(g, dx, dy){
   const tg = g.tg, vert = Math.abs(dy) > Math.abs(dx) * 1.1, horiz = Math.abs(dx) > Math.abs(dy) * 1.1;
-  if (tg.closest(".maplibregl-map,.rmap,input[type=range],.switch,.msg .bub,.buddy3d,canvas")) return null;
+  if (tg.closest(".maplibregl-map,.rmap,input[type=range],.switch,.msg .bub,.buddy3d,canvas,.seg,.tabbar")) return null;
   const {sc, sh} = sheetEls();
   if (sh && sh.contains(tg) && vert && (dy > 0 || SH.st.x > 1)) { const head = tg.closest(".sheet-h") || (g.y0 - sh.getBoundingClientRect().top < 40);
     if (head || sh.scrollTop <= 0) return sheetDragBegin(sc, sh); return null; }
@@ -5550,6 +5550,27 @@ function backDragBegin(pg){
     end(vx){ if (st.x + vx * .2 > W * .35 && vx > -200) springTo(st, W, {k: 380, z: 1, v0: Math.max(vx, 300), eps: 2, onUpdate: paint, onDone: () => { S.pageAnim = null; go(S.tab, null); }});
       else springTo(st, 0, {k: 380, z: .85, v0: vx, onUpdate: paint}); }};
 }
+// tab bar and segmented controls: slide your finger across, the highlight follows it, lift to pick
+(() => { let SC = null;
+  const itemsOf = box => [...box.children].filter(x => x.tagName === "BUTTON" && x.offsetWidth);
+  const at = (box, x) => { const its = itemsOf(box); return its.find(b => { const r = b.getBoundingClientRect(); return x >= r.left && x <= r.right; }) || (x < box.getBoundingClientRect().left + 10 ? its[0] : its[its.length - 1]); };
+  document.addEventListener("pointerdown", e => { if (e.button) return; const box = e.target.closest("#tabs,.seg"); if (!box || !e.target.closest("button")) return;
+    SC = {box, x0: e.clientX, y0: e.clientY, on: false, id: e.pointerId}; });
+  document.addEventListener("pointermove", e => { if (!SC || e.pointerId !== SC.id) return; const dx = e.clientX - SC.x0;
+    if (!SC.on) { if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - SC.y0)) return; SC.on = true;
+      const box = SC.box, cur = box.querySelector("button.on") || itemsOf(box)[0], br = box.getBoundingClientRect(), cr = cur.getBoundingClientRect();
+      const ind = document.createElement("i"); ind.className = "scrub-ind " + (box.id === "tabs" ? "t" : "s");
+      ind.style.width = cr.width + "px"; ind.style.height = cr.height + "px"; ind.style.top = (cr.top - br.top) + "px";
+      box.appendChild(ind); box.classList.add("scrubbing"); SC.ind = ind; SC.w = cr.width; SC.br = br; try { box.setPointerCapture(e.pointerId); } catch(_) {} }
+    const br = SC.br, x = Math.max(br.left + 4, Math.min(br.right - 4 - SC.w, e.clientX - SC.w / 2)) - br.left;
+    SC.ind.style.transform = `translate3d(${x.toFixed(1)}px,0,0) scale(1.06,1.08)`;
+    const hot = at(SC.box, e.clientX); if (hot !== SC.hot) { if (SC.hot) SC.hot.classList.remove("scrub-hot"); hot.classList.add("scrub-hot"); SC.hot = hot; try { if (navigator.vibrate) navigator.vibrate(4); } catch(_) {} } });
+  const end = e => { if (!SC) return; const s = SC; SC = null; if (!s.on) return;
+    const pick = s.hot; if (s.hot) s.hot.classList.remove("scrub-hot"); s.ind.remove(); s.box.classList.remove("scrubbing");
+    const stop = ev => { ev.stopPropagation(); ev.preventDefault(); }; document.addEventListener("click", stop, {capture: true});
+    setTimeout(() => { document.removeEventListener("click", stop, {capture: true}); if (pick && !(pick.classList.contains("on") && pick.getAttribute("aria-current") !== null && false)) pick.click(); }, 0); };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", e => { if (SC && SC.on) { SC.ind.remove(); SC.box.classList.remove("scrubbing"); if (SC.hot) SC.hot.classList.remove("scrub-hot"); } SC = null; });
+})();
 // switches: the knob can be dragged as well as tapped
 (() => { let SW = null;
   document.addEventListener("pointerdown", e => { const sw = e.target.closest(".switch"); if (!sw || !sw.querySelector("i")) return; SW = {sw, x0: e.clientX, on: sw.classList.contains("on"), moved: false, pos: 0}; });

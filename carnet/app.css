@@ -1919,3 +1919,17 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .switch{touch-action:pan-y}
 .switch.sw-half{background:var(--green)}
 #view .page{will-change:auto}
+
+/* scrubbing the tab bar / segmented controls */
+#tabs,.seg{position:relative}
+.tabbar{touch-action:none}.seg{touch-action:pan-y}
+.scrub-ind{position:absolute;left:0;pointer-events:none;z-index:0;will-change:transform}
+.scrub-ind.t{border-radius:22px;background:var(--accent-soft,color-mix(in srgb,var(--accent) 18%,transparent));box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--accent) 40%,transparent),0 6px 18px rgba(0,0,0,.18)}
+.scrub-ind.s{border-radius:9px;background:var(--card);box-shadow:0 2px 10px rgba(0,0,0,.25)}
+:root[data-skin="aurora"] .scrub-ind.s{border-radius:11px}
+.tabbar .tab,.seg button{position:relative;z-index:1}
+.scrubbing .tab.on::before{opacity:0}
+#tabs.scrubbing .tab.on:not(.scrub-hot){color:var(--fg2)!important}#tabs.scrubbing .tab.on:not(.scrub-hot) svg{transform:none!important;filter:none!important;color:inherit!important}
+.scrubbing button.on{background:transparent!important;box-shadow:none!important}
+.tab.scrub-hot{color:var(--fg)!important}.tab.scrub-hot svg{color:var(--accent)!important;transform:translateY(-2px) scale(1.12);transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.seg button.scrub-hot{font-weight:600}
