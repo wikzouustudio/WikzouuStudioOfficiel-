@@ -1670,12 +1670,14 @@ body.chat-full #tabs{visibility:hidden}
 .cf-body .msg-list{max-height:none;overflow:visible;display:flex;flex-direction:column-reverse;gap:12px;-webkit-mask-image:none!important;mask-image:none!important;margin:0;padding:0}
 .cf-body .empty-s{text-align:center;margin:auto 0}
 .cf-in{display:flex;align-items:flex-end;gap:8px;padding:8px 12px calc(env(safe-area-inset-bottom) + 10px);border-top:.5px solid var(--sep);background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
-.cf-ph{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--fg2);overflow:hidden;cursor:pointer}
-.cf-ph svg{width:24px;height:24px}.cf-ph img{width:100%;height:100%;object-fit:cover}
-.cf-pill{flex:1;min-width:0;display:flex;align-items:flex-end;gap:6px;min-height:38px;padding:3px 3px 3px 14px;border-radius:20px;background:var(--fill);box-shadow:inset 0 0 0 .5px var(--sep)}
-.cf-pill textarea{flex:1;min-width:0;border:0;background:none;color:var(--fg);font:inherit;font-size:16px;line-height:1.3;outline:none;padding:6px 0;resize:none;height:33px;max-height:120px;overflow-y:auto;display:block}
-.cf.kb .cf-in{padding-bottom:8px}
-.cf-send{flex:none;width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--accent);color:var(--on-grad,#fff)}
+.cf-in{padding:8px 10px calc(env(safe-area-inset-bottom) + 8px)!important;border-top:0!important;background:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;display:block!important}
+.cf-box{border-radius:26px;background:var(--fill);box-shadow:inset 0 0 0 .5px var(--sep),0 -6px 24px -12px rgba(0,0,0,.5);padding:12px 10px 10px 16px;display:grid;gap:8px}
+.cf-box textarea{width:100%;border:0;background:none;color:var(--fg);font:inherit;font-size:17px;line-height:1.35;outline:none;padding:0;resize:none;min-height:24px;max-height:140px;overflow-y:auto;display:block}
+.cf-box textarea::placeholder{color:var(--fg3)}
+.cf-row{display:flex;align-items:center;justify-content:space-between}
+.cf-plus{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--fg);background:var(--fill2);overflow:hidden;cursor:pointer;margin-left:-6px}
+.cf-plus svg{width:20px;height:20px}.cf-plus img{width:100%;height:100%;object-fit:cover}
+.cf-send{flex:none;width:38px;height:38px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--accent);color:var(--on-grad,#fff)}
 :root[data-skin="aurora"] .cf-send{background:var(--grad)}
 </style>
 <style>
@@ -1740,7 +1742,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "69"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "70"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2167,6 +2169,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"Message à la famille":"Message the family"}); Object.assign(HR, {"Message à la famille":"Poruka obitelji"});
 Object.assign(EN, {"Agrandir":"Expand","Réduire":"Close","Conversation ouverte en plein écran.":"Conversation open full screen.","Message":"Message"}); Object.assign(HR, {"Agrandir":"Povećaj","Réduire":"Zatvori","Conversation ouverte en plein écran.":"Razgovor je otvoren preko cijelog zaslona.","Message":"Poruka"});
 Object.assign(EN, {"La date de fin est déjà passée.":"The end date has already passed."}); Object.assign(HR, {"La date de fin est déjà passée.":"Datum završetka je već prošao."});
 Object.assign(EN, {"Personne n'a le rôle « Garde » dans la famille. Invitez la personne qui garde le chien avec ce rôle, puis choisissez-la ici.": "Nobody in the family has the “Sitter” role. Invite the person looking after the dog with that role, then pick them here.", "Inviter une personne en garde": "Invite a sitter", "Le dernier jour passé, la personne qui garde perd l'accès à la famille. Votre nom et votre téléphone (fiche « Vous ») lui sont donnés comme contact.": "Once the last day has passed, the sitter loses access to the family. Your name and phone (your “You” card) are given as the contact.", "Choisissez la personne qui garde le chien.": "Choose who is looking after the dog.", "Indiquez les dates de garde.": "Enter the dates.", "Garde terminée": "Dog-sitting over", "Date de garde terminée : accès à la famille retiré.": "Dog-sitting dates are over: access to the family removed.", "Merci d'avoir gardé {n} !": "Thanks for looking after {n}!", "garde terminée": "over"}); Object.assign(HR, {"Personne n'a le rôle « Garde » dans la famille. Invitez la personne qui garde le chien avec ce rôle, puis choisissez-la ici.": "Nitko u obitelji nema ulogu „Čuvanje”. Pozovite osobu koja čuva psa s tom ulogom, pa je odaberite ovdje.", "Inviter une personne en garde": "Pozovi čuvara", "Le dernier jour passé, la personne qui garde perd l'accès à la famille. Votre nom et votre téléphone (fiche « Vous ») lui sont donnés comme contact.": "Nakon zadnjeg dana čuvar gubi pristup obitelji. Vaše ime i telefon (kartica „Vi”) daju mu se kao kontakt.", "Choisissez la personne qui garde le chien.": "Odaberite tko čuva psa.", "Indiquez les dates de garde.": "Upišite datume čuvanja.", "Garde terminée": "Čuvanje završeno", "Date de garde terminée : accès à la famille retiré.": "Čuvanje je završeno: pristup obitelji je uklonjen.", "Merci d'avoir gardé {n} !": "Hvala što ste čuvali {n}!", "garde terminée": "završeno"});
@@ -4399,7 +4402,7 @@ function syncChat(){
     root.innerHTML = `<div class="cf" role="dialog" aria-label="${T("Messages")}">
       <div class="cf-h"><button class="cf-x" data-act="chatClose" aria-label="${T("Réduire")}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="cf-t"><b>${T("Messages")}</b><span>${esc(T("La famille de {n}", {n: (dog() || {}).name || T("votre chien")}))}</span></div><span style="width:36px"></span></div>
       <div class="cf-body"></div>
-      ${S.chatCanWrite ? `<form class="cf-in" data-form="note"><label class="cf-ph" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : QL.photo.i}</label><input type="file" id="n-photo" accept="image/*" hidden><div class="cf-pill"><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message")}" autocomplete="off" enterkeyhint="send"></textarea><button class="cf-send" type="submit" aria-label="${T("Envoyer")}">${I_UP}</button></div></form>`
+      ${S.chatCanWrite ? `<div class="cf-in"><div class="cf-box"><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message à la famille")}" autocomplete="off" enterkeyhint="send"></textarea><div class="cf-row"><label class="cf-plus" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : I_PLUS}</label><input type="file" id="n-photo" accept="image/*" hidden><button class="cf-send" type="button" data-act="sendNote" aria-label="${T("Envoyer")}">${I_UP}</button></div></div></div>`
         : `<div class="cf-in s" style="color:var(--fg2);justify-content:center">${T("Rejoignez la famille pour écrire un message.")}</div>`}</div>`;
     document.body.classList.add("chat-full");
   }
@@ -6643,6 +6646,7 @@ document.addEventListener("click", async e => {
     case "delNote": await del("notes", el.dataset.id); break;
     case "chatFull": S.chatFull = true; render(); setTimeout(() => { const i = $("#n-text"); if (i && matchMedia("(hover:hover)").matches) i.focus(); }, 60); break;
     case "chatClose": S.chatFull = false; render(); break;
+    case "sendNote": await sendNote(); break;
     case "closeSettings": go("famille"); break;
     case "editFood": foodSheet(); break;
     case "newBag": { const f = C.config.food; if (!f) break; if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer : nouveau sac aujourd'hui"); break; }
@@ -6830,14 +6834,15 @@ document.addEventListener("click", async e => {
     case "loadSample": await seedSample(); break;
   }
 });
+async function sendNote(){
+  const text = val("n-text"), photo = S.notePhoto; if (!text && !photo) return; const m = meMember(); S.notePhoto = null;
+  const nId = newId(); await put("notes", nId, Object.assign({text, mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString()}, photo ? {photo} : {}));
+  if (window.carnetNotify) window.carnetNotify("msg", {text: text || T("Photo"), who: m ? m.name : "", ev: nId});
+  setTimeout(() => { const i = $("#n-text"); if (i) { i.value = ""; if (i.tagName === "TEXTAREA") i.style.height = ""; i.focus(); } const ph = $("#chat-root #n-ph"); if (ph) ph.innerHTML = I_PLUS; }, 30);
+}
 document.addEventListener("submit", async e => {
   const f = e.target; e.preventDefault();
-  if (f.dataset.form === "note") {
-    const text = val("n-text"), photo = S.notePhoto; if (!text && !photo) return; const m = meMember(); S.notePhoto = null;
-    const nId = newId(); await put("notes", nId, Object.assign({text, mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString()}, photo ? {photo} : {}));
-    if (window.carnetNotify) window.carnetNotify("msg", {text: text || T("Photo"), who: m ? m.name : "", ev: nId});
-    setTimeout(() => { const i = $("#n-text"); if (i) { i.value = ""; if (i.tagName === "TEXTAREA") i.style.height = "33px"; i.focus(); } const ph = $("#chat-root #n-ph"); if (ph) ph.innerHTML = QL.photo.i; }, 30); return;
-  }
+  if (f.dataset.form === "note") { await sendNote(); return; }
   if (f.dataset.form === "member") {
     const name = val("m-name"); if (!name) return; const fam = family();
     if (fam.some(m => m.name.toLowerCase() === name.toLowerCase())) { toast(T("Ce prénom est déjà dans la famille.")); return; }
@@ -6850,7 +6855,7 @@ document.addEventListener("submit", async e => {
   } else if (f.id === "sheet-form") { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
 });
 document.addEventListener("input", e => { const t = e.target;
-  if (t.id === "n-text" && t.tagName === "TEXTAREA") { t.style.height = "33px"; t.style.height = Math.min(120, t.scrollHeight) + "px"; }
+  if (t.id === "n-text" && t.tagName === "TEXTAREA") { t.style.height = "auto"; t.style.height = Math.min(140, t.scrollHeight) + "px"; }
   if (t.id === "x-title") { const c = extraCat(t.value), box = $("#x-info");
     if (c && !t.dataset.manual) { const r = document.querySelector(`input[name="x-cat"][value="${c}"]`); if (r && !r.checked) { r.checked = true; const h = $("#x-hero"); if (h) { h.innerHTML = CATS[c].icon; h.parentNode.style.setProperty("--c", CATS[c].color); } } }
     const cat = (document.querySelector('input[name="x-cat"]:checked') || {}).value; if (box) box.innerHTML = cat === "med" || cat === "soin" || c === "med" ? medInfoHTML(medInfo(t.value)) : ""; }
@@ -6904,7 +6909,7 @@ document.addEventListener("change", e => {
     fr.readAsDataURL(t.files[0]);
   }
 });
-document.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && e.target.id === "n-text" && e.target.tagName === "TEXTAREA") { e.preventDefault(); e.target.form && e.target.form.requestSubmit(); return; }
+document.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && e.target.id === "n-text" && e.target.tagName === "TEXTAREA") { e.preventDefault(); sendNote(); return; }
   if (e.key === "Escape" && sheetSave !== null) closeSheet();
   if (e.key === "Escape" && S.tuto != null) tutoEnd();
   if (e.key === "Enter" && S.wiz && e.target.id === "w-other") { e.preventDefault(); const b = document.querySelector('[data-act="wzAddOther"]'); b && b.click(); }
