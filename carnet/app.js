@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "101"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "102"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -5155,7 +5155,10 @@ function renderTabs(){
   const t = tabList();
   const tb = live("tabBounce");
   const th = t.map(([id,l,ic]) => `<button class="tab ${S.tab===id?"on":""} ${tb && tb.id===id?"bounce":""}" data-act="go" data-tab="${id}" aria-current="${S.tab===id?"page":"false"}">${ic}<span>${T(l)}</span></button>`).join("");
-  if (th !== S.lastTabs) { S.lastTabs = th; const el = $("#tabs"); el.style.gridTemplateColumns = `repeat(${t.length},1fr)`; el.innerHTML = th; }
+  if (th !== S.lastTabs) { S.lastTabs = th; const el = $("#tabs"), cur = [...el.querySelectorAll(".tab")];
+    if (cur.length === t.length && cur.every((b, i) => b.dataset.tab === t[i][0] && b.lastElementChild && b.lastElementChild.textContent === T(t[i][1]))) {
+      cur.forEach((b, i) => { const id = t[i][0], on = S.tab === id; b.classList.toggle("on", on); b.classList.toggle("bounce", !!(tb && tb.id === id)); b.setAttribute("aria-current", on ? "page" : "false"); });
+    } else { el.style.gridTemplateColumns = `repeat(${t.length},1fr)`; el.innerHTML = th; } }
 }
 
 // ---- splash: stays until the family's data is really there, then the page comes in piece by piece (once) ----
@@ -5587,31 +5590,47 @@ function backDragBegin(pg){
     end(vx){ if (st.x + vx * .2 > W * .35 && vx > -200) springTo(st, W, {k: 380, z: 1, v0: Math.max(vx, 300), eps: 2, onUpdate: paint, onDone: () => { S.pageAnim = null; go(S.tab, null); }});
       else springTo(st, 0, {k: 380, z: .85, v0: vx, onUpdate: paint}); }};
 }
-// tab bar and segmented controls: slide your finger across, the highlight follows it, lift to pick
+// tab bar and segmented controls: slide your finger across. The highlight is a little spring-loaded lens:
+// it chases your finger, stretches with speed, is pulled toward the nearest choice, rubber-bands at the ends,
+// the icons swell as it passes, and on release it glides into place on the choice you picked.
 (() => { let SC = null;
   const itemsOf = box => [...box.children].filter(x => x.tagName === "BUTTON" && x.offsetWidth);
-  const at = (box, x) => { const its = itemsOf(box); return its.find(b => { const r = b.getBoundingClientRect(); return x >= r.left && x <= r.right; }) || (x < box.getBoundingClientRect().left + 10 ? its[0] : its[its.length - 1]); };
+  const nearest = (box, x) => { let best = null, bd = 1e9; itemsOf(box).forEach(b => { const r = b.getBoundingClientRect(), d = Math.abs(x - (r.left + r.width / 2)); if (d < bd) { bd = d; best = b; } }); return best; };
+  const tabs = box => box.id === "tabs";
+  function paint(){ const sc = SC || paint.after; if (!sc) return; const br = sc.box.getBoundingClientRect(), v = sc.st.v;
+    const stretch = Math.min(.32, Math.abs(v) / 2600), sx = (sc.live ? 1.06 : 1) + stretch, sy = (sc.live ? 1.08 : 1) - stretch * .35;
+    sc.ind.style.transform = `translate3d(${(sc.st.x - br.left - sc.w / 2).toFixed(1)}px,0,0) scale(${sx.toFixed(3)},${sy.toFixed(3)})`;
+    if (tabs(sc.box)) itemsOf(sc.box).forEach(b => { const r = b.getBoundingClientRect(), d = Math.abs(sc.st.x - (r.left + r.width / 2)) / r.width, k = sc.live ? Math.max(0, 1 - d) : 0;
+      const ic = b.querySelector("svg"); if (ic) ic.style.transform = k ? `translateY(${(-3 * k).toFixed(2)}px) scale(${(1 + .2 * k).toFixed(3)})` : ""; }); }
+  function aim(sc, fx){ const br = sc.box.getBoundingClientRect(), lo = br.left + 4 + sc.w / 2, hi = br.right - 4 - sc.w / 2;
+    let x = fx; if (x < lo) x = lo - rubber(lo - x, 60); else if (x > hi) x = hi + rubber(x - hi, 60);
+    const n = nearest(sc.box, Math.max(lo, Math.min(hi, fx))); if (n) { const r = n.getBoundingClientRect(), cx = r.left + r.width / 2; x += (cx - x) * .28; }   // soft magnet
+    return x; }
   document.addEventListener("pointerdown", e => { if (e.button) return; const box = e.target.closest("#tabs,.seg"); if (!box || !e.target.closest("button")) return;
-    SC = {box, x0: e.clientX, y0: e.clientY, on: false, id: e.pointerId}; });
+    if (paint.after) { springStop(paint.after.st); paint.after.done(); }
+    SC = {box, x0: e.clientX, y0: e.clientY, live: false, id: e.pointerId, st: {x: 0, v: 0, raf: 0}}; });
   document.addEventListener("pointermove", e => { if (!SC || e.pointerId !== SC.id) return; const dx = e.clientX - SC.x0;
-    if (!SC.on) { if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - SC.y0)) return; SC.on = true;
+    if (!SC.live) { if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - SC.y0)) return; SC.live = true;
       const box = SC.box, cur = box.querySelector("button.on") || itemsOf(box)[0], br = box.getBoundingClientRect(), cr = cur.getBoundingClientRect();
-      const ind = document.createElement("i"); ind.className = "scrub-ind " + (box.id === "tabs" ? "t" : "s");
+      const ind = document.createElement("i"); ind.className = "scrub-ind " + (tabs(box) ? "t" : "s");
       ind.style.width = cr.width + "px"; ind.style.height = cr.height + "px"; ind.style.top = (cr.top - br.top) + "px";
-      box.appendChild(ind); box.classList.add("scrubbing"); SC.ind = ind; SC.w = cr.width; SC.br = br; try { box.setPointerCapture(e.pointerId); } catch(_) {} }
-    const br = SC.br, x = Math.max(br.left + 4, Math.min(br.right - 4 - SC.w, e.clientX - SC.w / 2)) - br.left;
-    SC.ind.style.transform = `translate3d(${x.toFixed(1)}px,0,0) scale(1.06,1.08)`;
-    const hot = at(SC.box, e.clientX); if (hot !== SC.hot) { if (SC.hot) SC.hot.classList.remove("scrub-hot"); hot.classList.add("scrub-hot"); SC.hot = hot; try { if (navigator.vibrate) navigator.vibrate(4); } catch(_) {} } });
-  const end = e => { if (!SC) return; const s = SC; SC = null; if (!s.on) return;
-    const pick = s.hot; if (s.hot) s.hot.classList.remove("scrub-hot"); s.ind.remove(); s.box.classList.remove("scrubbing");
-    // the browser may still send its own click (late on iPhone, on the wrong button): swallow every click for a moment,
-    // except the one we send to the button you lifted your finger on
+      box.appendChild(ind); box.classList.add("scrubbing"); SC.ind = ind; SC.w = cr.width; SC.st.x = cr.left + cr.width / 2; try { box.setPointerCapture(e.pointerId); } catch(_) {} }
+    SC.fx = e.clientX; const to = aim(SC, e.clientX);
+    springTo(SC.st, to, {k: 900, z: .72, eps: .2, onUpdate: paint});
+    const hot = nearest(SC.box, e.clientX); if (hot !== SC.hot) { if (SC.hot) SC.hot.classList.remove("scrub-hot"); hot.classList.add("scrub-hot"); SC.hot = hot; try { if (navigator.vibrate) navigator.vibrate(4); } catch(_) {} } });
+  const end = e => { if (!SC) return; const s = SC; SC = null; if (!s.live) return;
+    const pick = s.hot || nearest(s.box, s.fx); if (s.hot) s.hot.classList.remove("scrub-hot");
+    // glide into place, keep the lens until it has landed (the tab bar is updated in place, so it survives the change)
+    s.live = false; paint.after = s;
+    s.done = () => { if (paint.after !== s) return; paint.after = null; s.ind.remove(); s.box.classList.remove("scrubbing"); itemsOf(s.box).forEach(b => { const ic = b.querySelector("svg"); if (ic) ic.style.transform = ""; }); };
+    if (pick) { const r = pick.getBoundingClientRect(); springTo(s.st, r.left + r.width / 2, {k: 520, z: .62, eps: .3, onUpdate: paint, onDone: s.done}); } else s.done();
+    if (!tabs(s.box)) setTimeout(s.done, 0);   // segmented controls are redrawn with the page: their own pop takes over
     let pass = pick; const stop = ev => { if (pass && ev.target === pass) { pass = null; return; } ev.stopPropagation(); ev.preventDefault(); };
     document.addEventListener("click", stop, {capture: true}); setTimeout(() => document.removeEventListener("click", stop, {capture: true}), 450);
     if (pick && !pick.classList.contains("on")) pick.click(); else pass = null; };
-  // while sliding, the page must not scroll or bounce (iPhone would otherwise cancel the gesture)
-  document.addEventListener("touchmove", e => { if (SC && SC.on && e.cancelable) e.preventDefault(); }, {passive: false});
-  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", e => { if (SC && SC.on) { SC.ind.remove(); SC.box.classList.remove("scrubbing"); if (SC.hot) SC.hot.classList.remove("scrub-hot"); } SC = null; });
+  document.addEventListener("touchmove", e => { if (SC && SC.live && e.cancelable) e.preventDefault(); }, {passive: false});
+  document.addEventListener("pointerup", end);
+  document.addEventListener("pointercancel", () => { if (SC && SC.live) { const s = SC; paint.after = s; s.done = () => { paint.after = null; s.ind.remove(); s.box.classList.remove("scrubbing"); }; if (s.hot) s.hot.classList.remove("scrub-hot"); s.done(); } SC = null; });
 })();
 // switches: the knob can be dragged as well as tapped
 (() => { let SW = null;

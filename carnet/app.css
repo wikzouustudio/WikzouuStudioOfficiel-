@@ -1946,3 +1946,8 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .fam-orbit:active .orbit-center .avatar{transform:scale(.96)}
 
 .fam-orbit .orbit-center{z-index:10;position:relative}
+
+/* lens: the real highlight hides until the sliding one has landed */
+#tabs.scrubbing .tab.on::before{opacity:0!important}
+#tabs.scrubbing .tab svg{transition:none!important}
+.scrub-ind{transform-origin:center}
