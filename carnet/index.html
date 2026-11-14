@@ -1734,6 +1734,76 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .typ-n{font-size:13px;color:var(--fg2)}
 .typ-av{display:inline-flex;flex:none}.typ-av .mav+.mav{margin-left:-8px;box-shadow:0 0 0 2px var(--card)}
 .msg.typing{animation:msgIn .3s cubic-bezier(.2,.9,.25,1) both}
+
+/* chat: reactions, replies, voice, seen */
+.m-col{display:grid;gap:4px;min-width:0;flex:1}
+.msg .bub{transition:transform .18s ease;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.msg .bub.swipe-ok{box-shadow:inset 3px 0 0 var(--accent)}
+.m-reacts{display:flex;gap:4px;flex-wrap:wrap;margin-top:-10px;padding-left:10px;position:relative;z-index:1}
+.m-rc{display:inline-flex;align-items:center;gap:3px;height:26px;padding:0 7px;border-radius:13px;border:0;background:var(--card);box-shadow:0 0 0 2px var(--bg),inset 0 0 0 1px var(--sep);color:var(--fg)}
+.m-rc svg{width:16px;height:16px}.m-rc b{font-size:12px}
+.m-rc.mine{box-shadow:0 0 0 2px var(--bg),inset 0 0 0 1.5px var(--accent)}
+.m-quote{display:grid;text-align:left;gap:1px;width:100%;margin:6px 0 2px;padding:6px 10px;border:0;border-left:3px solid var(--accent);border-radius:8px;background:var(--fill);color:var(--fg2);font:inherit;font-size:13px}
+.m-quote b{color:var(--accent);font-size:12.5px}.m-quote span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-seen{font-size:11.5px;color:var(--fg3);display:flex;align-items:center;gap:5px;justify-content:flex-end;padding-right:6px}
+.m-seen-av{display:inline-flex}.m-seen-av .mav+.mav{margin-left:-5px;box-shadow:0 0 0 1.5px var(--bg)}
+.m-voice{--p:0%;display:flex;align-items:center;gap:10px;margin-top:6px;min-width:190px}
+.m-play{flex:none;width:34px;height:34px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--accent);color:var(--on-grad,#fff)}
+:root[data-skin="aurora"] .m-play{background:var(--grad)}
+.m-wave{flex:1;height:26px;display:flex;align-items:center;gap:2px;-webkit-mask-image:linear-gradient(90deg,#000 var(--p),rgba(0,0,0,.35) var(--p));mask-image:linear-gradient(90deg,#000 var(--p),rgba(0,0,0,.35) var(--p))}
+.m-voice:not(.playing) .m-wave{-webkit-mask-image:none;mask-image:none;opacity:.6}
+.m-wave i{flex:1;border-radius:2px;background:var(--fg)}
+.m-dur{font-size:12px;color:var(--fg2)}
+.mm-bg{position:fixed;inset:0;z-index:9400;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:cfBack .2s ease both}
+.mm{position:fixed;left:50%;z-index:9401;transform:translateX(-50%);display:grid;gap:10px;width:min(330px,calc(100% - 32px));animation:mmIn .28s cubic-bezier(.2,.9,.25,1.2) both}
+@keyframes mmIn{from{opacity:0;transform:translateX(-50%) scale(.85)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+.mm-r{display:flex;justify-content:space-between;padding:8px 10px;border-radius:30px;background:linear-gradient(var(--card),var(--card)),var(--bg);box-shadow:0 14px 40px rgba(0,0,0,.45),inset 0 0 0 1px var(--sep)}
+.mm-r button{width:46px;height:46px;border-radius:50%;border:0;background:none;display:grid;place-items:center;transition:transform .15s}
+.mm-r button svg{width:30px;height:30px}.mm-r button:active{transform:scale(1.25)}.mm-r button.on{background:var(--fill)}
+.mm-l{border-radius:18px;background:linear-gradient(var(--card),var(--card)),var(--bg);overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.45),inset 0 0 0 1px var(--sep)}
+.mm-l button{display:flex;align-items:center;gap:14px;width:100%;height:50px;padding:0 18px;border:0;background:none;color:var(--fg);font:inherit;font-size:16px;border-top:.5px solid var(--sep)}
+.mm-l button:first-child{border-top:0}.mm-l button.danger{color:var(--red)}
+.rp-bar{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:6px;border-radius:12px;background:var(--fill);border-left:3px solid var(--accent)}
+.rp-bar div{flex:1;min-width:0;display:grid;font-size:13px}.rp-bar b{color:var(--accent)}.rp-bar span{color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-bar button{border:0;background:none;color:var(--fg2);font-size:22px;line-height:1;padding:0 4px}
+.cf-mic{flex:none;width:38px;height:38px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--fill2);color:var(--fg);margin-right:8px}
+.board-in .bd-mic svg{width:20px;height:20px}
+.rec{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:9300;display:flex;align-items:center;gap:12px;padding:10px 10px 10px 18px;border-radius:30px;background:linear-gradient(var(--card),var(--card)),var(--bg);box-shadow:0 16px 40px rgba(0,0,0,.5),inset 0 0 0 1px var(--sep);animation:fadeUp .25s ease both}
+.rec-dot{width:11px;height:11px;border-radius:50%;background:#ff3b30;animation:pres 1s ease-in-out infinite}
+.rec b{font-size:17px}.rec-h{flex:1;font-size:13px;color:var(--fg2)}
+.rec-x{border:0;background:none;color:var(--fg2);font:inherit;font-size:15px}
+.rec-s{width:42px;height:42px;border-radius:50%;border:0;background:var(--accent);color:var(--on-grad,#fff);display:grid;place-items:center}
+:root[data-skin="aurora"] .rec-s{background:var(--grad)}
+.msg.blink .bub{animation:dl-blink 1s ease 1}
+
+/* birthday / arrival */
+.party{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;margin-top:14px;padding:16px;border-radius:20px;color:#fff;background:linear-gradient(135deg,#ff5f8f,#ff9f45 60%,#ffd166);box-shadow:0 10px 28px rgba(255,95,143,.3);animation:fadeUp .4s ease both}
+.party.arrival{background:linear-gradient(135deg,#2bb673,#2fb7d9 60%,#7c6cff);box-shadow:0 10px 28px rgba(47,183,217,.3)}
+.party-i{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.22)}
+.party .main{flex:1;min-width:0;position:relative;z-index:1}.party-t{font-weight:800;font-size:17px}.party-s{font-size:14px;opacity:.92;margin-top:2px}
+.party-n{font-size:40px;font-weight:800;opacity:.9;position:relative;z-index:1}
+.party-c{position:absolute;inset:0;pointer-events:none}
+.party-c b{position:absolute;top:-10px;left:var(--x);width:6px;height:10px;border-radius:2px;background:hsl(var(--h) 90% 75%);animation:confet 3.2s linear var(--d) infinite}
+@keyframes confet{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(130px) rotate(540deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.party-c{display:none}}
+/* walks map */
+.ccard.cc-wide{grid-column:1/-1;flex-direction:row;justify-content:flex-start;gap:12px;padding:14px 16px;text-align:left}
+.cc-wide .cc-wt{flex:1;min-width:0}.cc-wide .chev{color:var(--fg3)}
+.rmap.wmap{height:340px;border-radius:18px}
+.wm-empty{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:8px;color:var(--fg3);font-size:14px;text-align:center;padding:20px}
+.mr-hit{fill:none;stroke:transparent;stroke-width:18;pointer-events:stroke;cursor:pointer}
+.rmap-s .mr{pointer-events:auto}
+.rmap.wmap .rmap-s{pointer-events:auto}
+.mr-line{fill:none;stroke:var(--green);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;opacity:.75;pointer-events:none}
+.mr.on .mr-line{stroke:var(--orange);stroke-width:5.5;opacity:1}
+.mr.dim .mr-line{opacity:.22}
+.mr-home{fill:var(--accent);stroke:#fff;stroke-width:2}
+.mr-row.on{background:var(--fill)}.mr-row .chev{font-size:13px;color:var(--accent)}
+/* automatic walk prompt */
+.aw{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 92px);z-index:9200;display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:center;padding:14px;border-radius:22px;background:linear-gradient(var(--card),var(--card)),var(--bg);box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 0 0 1px var(--sep);animation:fadeUp .3s cubic-bezier(.2,.9,.25,1.1) both;max-width:520px;margin:0 auto}
+.aw .main{display:grid;gap:2px;font-size:14px;color:var(--fg2)}.aw .main b{font-size:16px;color:var(--fg)}
+.aw-b{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.aw-b .btn{width:100%}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1797,7 +1867,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "77"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "78"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2224,6 +2294,8 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"Arrivé(e) le": "Arrived on", "Joyeux anniversaire {n} !": "Happy birthday {n}!", "Jour d'arrivée de {n}": "{n}'s arrival day", "{n} a {y} ans aujourd'hui.": "{n} turns {y} today.", "{n} a {y} an aujourd'hui.": "{n} turns {y} today.", "Il y a {y} ans, {n} arrivait dans la famille.": "{y} years ago, {n} joined the family.", "Il y a {y} an, {n} arrivait dans la famille.": "{y} year ago, {n} joined the family.", "Carte des balades": "Walks map", "7 jours": "7 days", "30 jours": "30 days", "Tout": "All", "Aucune balade suivie par GPS sur cette période.": "No GPS-tracked walk in this period.", "balades": "walks", "balade": "walk", "Trajets": "Routes", "Détails": "Details", "Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.": "Tap a route to see it on the map, tap again for details.", "Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.": "Start a walk from Today: with GPS on, the route shows up here.", "{n} trajets sur 30 jours · {k}": "{n} routes in 30 days · {k}", "Les trajets GPS de vos balades": "The GPS routes of your walks", "Balade détectée": "Walk detected", "De retour à la maison": "Back home", "Vous venez de quitter la maison. Démarrer la balade de {n} ?": "You just left home. Start {n}'s walk?", "Terminer la balade et cocher « {t} » ?": "End the walk and tick off “{t}”?", "Terminer la balade de {n} ?": "End {n}'s walk?", "Pas maintenant": "Not now", "Démarrer": "Start", "Terminer": "End", "Balade lancée": "Walk started", "Position introuvable : autorisez la localisation pour Dogs Life.": "Location not found: allow location for Dogs Life.", "Maison enregistrée à cet endroit": "Home saved at this spot", "Détecter les balades": "Detect walks", "Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Fonctionne quand l'app est ouverte.": "When you leave home, the app offers to start the walk. When you come back, it offers to end it and tick off the task. Nothing happens without your OK. Works while the app is open.", "La maison est ici (redéfinir)": "Home is here (set again)"}); Object.assign(HR, {"Arrivé(e) le": "Stigao/la", "Joyeux anniversaire {n} !": "Sretan rođendan, {n}!", "Jour d'arrivée de {n}": "Dan dolaska: {n}", "{n} a {y} ans aujourd'hui.": "{n} danas puni {y}.", "{n} a {y} an aujourd'hui.": "{n} danas puni {y}.", "Il y a {y} ans, {n} arrivait dans la famille.": "Prije {y} god. {n} je stigao/la u obitelj.", "Il y a {y} an, {n} arrivait dans la famille.": "Prije {y} god. {n} je stigao/la u obitelj.", "Carte des balades": "Karta šetnji", "7 jours": "7 dana", "30 jours": "30 dana", "Tout": "Sve", "Aucune balade suivie par GPS sur cette période.": "Nema GPS šetnji u ovom razdoblju.", "balades": "šetnje", "balade": "šetnja", "Trajets": "Rute", "Détails": "Detalji", "Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.": "Dodirnite rutu za prikaz na karti, ponovno za detalje.", "Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.": "Pokrenite šetnju s Danas: uz GPS ruta se dodaje ovdje.", "{n} trajets sur 30 jours · {k}": "{n} ruta u 30 dana · {k}", "Les trajets GPS de vos balades": "GPS rute vaših šetnji", "Balade détectée": "Otkrivena šetnja", "De retour à la maison": "Natrag kući", "Vous venez de quitter la maison. Démarrer la balade de {n} ?": "Upravo ste izašli iz kuće. Pokrenuti šetnju ({n})?", "Terminer la balade et cocher « {t} » ?": "Završiti šetnju i označiti „{t}“?", "Terminer la balade de {n} ?": "Završiti šetnju ({n})?", "Pas maintenant": "Ne sada", "Démarrer": "Pokreni", "Terminer": "Završi", "Balade lancée": "Šetnja pokrenuta", "Position introuvable : autorisez la localisation pour Dogs Life.": "Lokacija nije pronađena: dopustite lokaciju za Dogs Life.", "Maison enregistrée à cet endroit": "Dom spremljen na ovom mjestu", "Détecter les balades": "Otkrivanje šetnji", "Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Fonctionne quand l'app est ouverte.": "Kad izađete iz kuće, aplikacija predlaže početak šetnje. Po povratku predlaže završetak i označavanje zadatka. Ništa bez vašeg pristanka. Radi dok je aplikacija otvorena.", "La maison est ici (redéfinir)": "Dom je ovdje (ponovno postavi)"});
+Object.assign(EN, {"Vu par": "Seen by", "Envoyé": "Sent", "Répondre": "Reply", "Réponse à {n}": "Replying to {n}", "Message vocal": "Voice message", "Écouter": "Play", "Les messages vocaux ne sont pas pris en charge sur cet appareil.": "Voice messages aren't supported on this device.", "Autorisez le micro pour envoyer un message vocal.": "Allow the microphone to send a voice message.", "Message vocal trop long.": "Voice message too long.", "Enregistrement… 60 s max": "Recording… 60 s max", "Lecture impossible.": "Can't play this.", "Copié": "Copied"}); Object.assign(HR, {"Vu par": "Vidjeli", "Envoyé": "Poslano", "Répondre": "Odgovori", "Réponse à {n}": "Odgovor za {n}", "Message vocal": "Glasovna poruka", "Écouter": "Slušaj", "Les messages vocaux ne sont pas pris en charge sur cet appareil.": "Glasovne poruke nisu podržane na ovom uređaju.", "Autorisez le micro pour envoyer un message vocal.": "Dopustite mikrofon za glasovnu poruku.", "Message vocal trop long.": "Glasovna poruka je preduga.", "Enregistrement… 60 s max": "Snimanje… najviše 60 s", "Lecture impossible.": "Reprodukcija nije moguća.", "Copié": "Kopirano"});
 Object.assign(EN, {"{n} écrit…":"{n} is typing…"}); Object.assign(HR, {"{n} écrit…":"{n} piše…"});
 Object.assign(EN, {"{n} membre(s)": "{n} member(s)", "{n} en ligne": "{n} online", "En ligne": "Online", "Vu {t}": "Seen {t}"}); Object.assign(HR, {"{n} membre(s)": "Članova: {n}", "{n} en ligne": "{n} na mreži", "En ligne": "Na mreži", "Vu {t}": "Viđen/a {t}"});
 Object.assign(EN, {"Votre téléphone": "Your phone", "Dogs Life est installée": "Dogs Life is installed", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Now open it from its icon on your home screen.", "Installez Dogs Life": "Install Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "To get notifications and open it full screen, install the app on your phone. Watch the 45-second tutorial:", "Installer maintenant": "Install now", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Once installed, always open Dogs Life from its icon: this screen won't show again.", "Fermer": "Close"}); Object.assign(HR, {"Votre téléphone": "Vaš telefon", "Dogs Life est installée": "Dogs Life je instaliran", "Ouvrez-la maintenant depuis son icône sur votre écran d'accueil.": "Sada ga otvorite preko ikone na početnom zaslonu.", "Installez Dogs Life": "Instalirajte Dogs Life", "Pour recevoir les notifications et l'ouvrir en plein écran, installez l'app sur votre téléphone. Regardez le tuto en 45 secondes :": "Za obavijesti i prikaz preko cijelog zaslona instalirajte aplikaciju na telefon. Pogledajte vodič od 45 sekundi:", "Installer maintenant": "Instaliraj sada", "Une fois installée, ouvrez toujours Dogs Life depuis son icône : cet écran ne s'affichera plus.": "Nakon instalacije uvijek otvarajte Dogs Life preko ikone: ovaj se zaslon više neće prikazivati.", "Fermer": "Zatvori"});
@@ -2708,6 +2780,7 @@ function viewToday(){
   </div>
   ${isToday ? notifPrompt() : ""}
   ${isToday && [0, 1].includes(new Date().getDay()) ? `<button class="card wk-cta wk-today" data-act="go" data-tab="sante/semaine"><span class="ico" style="--c:var(--accent)">${I.cal || ""}</span><div class="main"><div class="t">${T(new Date().getDay() === 0 ? "Le bilan de la semaine est prêt" : "Le bilan de la semaine dernière")}</div><div class="s">${T("Moyennes, tendances et un programme adapté pour la semaine prochaine")}</div></div><span class="chev">›</span></button>` : ""}
+  ${isToday ? partyCard(d) : ""}
   ${quickLog()}
   ${alerts}
   ${weatherCard()}
@@ -2867,6 +2940,7 @@ const PF = [
     {k:"breed",l:"Race",t:"pick",opts:BREEDS,search:true},
     {k:"sex",l:"Sexe",t:"seg",opts:OPT.sex},
     {k:"birth",l:"Né(e) le",t:"date"},
+    {k:"arrival",l:"Arrivé(e) le",t:"date"},
     {k:"size",l:"Gabarit",t:"seg",opts:OPT.size,when:d => !breedKey(d.breed)},
     {k:"sterilized",l:"Stérilisé(e)",t:"seg",opts:OPT.ster},
     {k:"chip",l:"N° de puce",t:"text",ph:"756 …",copy:true}]],
@@ -3739,6 +3813,229 @@ function presenceBeat(force, away){
 setInterval(() => { presenceBeat(); if (S.tab === "famille" && !S.sub) render(true); }, 30000);
 document.addEventListener("visibilitychange", () => { presenceBeat(true, document.visibilityState !== "visible"); if (document.visibilityState !== "visible") typingBeat(true); });
 document.addEventListener("focusout", e => { if (e.target && e.target.id === "n-text") setTimeout(() => { if (document.activeElement && document.activeElement.id === "n-text") return; typingBeat(true); }, 400); });
+// ---------- birthday and "arrival day" ----------
+const I_CAKE = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7"/><path d="M5 16.5c1.2 0 1.8-1 3.5-1s2.3 1 3.5 1 1.8-1 3.5-1 2.3 1 3.5 1"/><path d="M12 12V8M8 12V9M16 12V9"/><path d="M12 5.8c.8 0 1.2-.6 1.2-1.3 0-.9-1.2-2-1.2-2s-1.2 1.1-1.2 2c0 .7.4 1.3 1.2 1.3Z" fill="currentColor"/></svg>';
+const I_HOME = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M12 17.3s-3-1.8-3-3.8a1.6 1.6 0 0 1 3-.8 1.6 1.6 0 0 1 3 .8c0 2-3 3.8-3 3.8Z" fill="currentColor" stroke="none"/></svg>';
+const I_MAP = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z"/><path d="M9 4v14M15 6v14"/></svg>';
+function partyDays(d){
+  if (!d) return []; const t = new Date(), md = ymd(t).slice(5), y = t.getFullYear(), out = [];
+  [["birth", I_CAKE], ["arrival", I_HOME]].forEach(([k, ic]) => { const v = d[k]; if (!v || v.slice(5) !== md) return; const n = y - +v.slice(0, 4); if (n >= 1) out.push({k, n, ic}); });
+  return out;
+}
+function partyCard(d){
+  return partyDays(d).map(p => { const nm = esc(d.name || T("votre chien"));
+    const t = p.k === "birth" ? T("Joyeux anniversaire {n} !", {n: nm}) : T("Jour d'arrivée de {n}", {n: nm});
+    const s = p.k === "birth" ? T(p.n > 1 ? "{n} a {y} ans aujourd'hui." : "{n} a {y} an aujourd'hui.", {n: nm, y: p.n}) : T(p.n > 1 ? "Il y a {y} ans, {n} arrivait dans la famille." : "Il y a {y} an, {n} arrivait dans la famille.", {n: nm, y: p.n});
+    return `<div class="party ${p.k}"><span class="party-i">${p.ic}</span><div class="main"><div class="party-t">${t}</div><div class="party-s">${s}</div></div><span class="party-n num">${p.n}</span><i class="party-c" aria-hidden="true">${Array.from({length: 14}, (_, i) => `<b style="--x:${(i * 37) % 100}%;--d:${(i % 7) * .35}s;--h:${(i * 53) % 360}"></b>`).join("")}</i></div>`; }).join("");
+}
+
+// ---------- map of all walks ----------
+function walkLogs(days){
+  const from = days ? ymd(addDays(new Date(), -(days - 1))) : "";
+  return Object.entries(C.logs || {}).map(([id, l]) => Object.assign({id}, l)).filter(l => l.k === "balade" && l.route && (l.dog || "main") === dogId() && (!from || l.date >= from))
+    .sort((a, b) => (b.date + b.at).localeCompare(a.date + a.at));
+}
+function drawRoutes(box, routes, o){
+  o = o || {}; const W = box.clientWidth || 340, H = box.clientHeight || 320, pad = 30;
+  const X = (lon, z) => (lon + 180) / 360 * 256 * 2 ** z;
+  const Y = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 256 * 2 ** z; };
+  const fit = routes.filter(r => !o.sel || r.id === o.sel).flatMap(r => r.pts).concat(o.home ? [o.home] : []);
+  if (!fit.length) { box.innerHTML = ""; return; }
+  let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const p of fit) { la0 = Math.min(la0, p[0]); la1 = Math.max(la1, p[0]); lo0 = Math.min(lo0, p[1]); lo1 = Math.max(lo1, p[1]); }
+  let z = 18; while (z > 3 && (X(lo1, z) - X(lo0, z) > W - 2 * pad || Y(la0, z) - Y(la1, z) > H - 2 * pad)) z--;
+  const cx = (X(lo0, z) + X(lo1, z)) / 2, cy = (Y(la0, z) + Y(la1, z)) / 2, ox = cx - W / 2, oy = cy - H / 2, n = 2 ** z;
+  const style = isDarkUI() ? "dark_all" : "voyager", tiles = [];
+  for (let tx = Math.floor(ox / 256); tx <= Math.floor((ox + W) / 256); tx++) for (let ty = Math.floor(oy / 256); ty <= Math.floor((oy + H) / 256); ty++) {
+    if (ty < 0 || ty >= n) continue; const sx = ((tx % n) + n) % n, sub = "abcd"[(sx + ty) % 4];
+    tiles.push(`<img alt="" draggable="false" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://${sub}.basemaps.cartocdn.com/rastertiles/${style}/${z}/${sx}/${ty}@2x.png" style="left:${Math.round(tx * 256 - ox)}px;top:${Math.round(ty * 256 - oy)}px">`); }
+  const P = p => [(X(p[1], z) - ox).toFixed(1), (Y(p[0], z) - oy).toFixed(1)];
+  const order = routes.slice().sort((a, b) => (a.id === o.sel) - (b.id === o.sel));
+  const paths = order.map(r => { const d = "M" + r.pts.map(q => P(q).join(" ")).join("L"), on = r.id === o.sel, dim = o.sel && !on;
+    return `<g class="mr ${on ? "on" : ""} ${dim ? "dim" : ""}" data-act="mapRoute" data-id="${esc(r.id)}"><path d="${d}" class="mr-hit"/>${on ? `<path d="${d}" class="rt-halo"/>` : ""}<path d="${d}" class="mr-line"/></g>`; }).join("");
+  const sel = routes.find(r => r.id === o.sel), ends = sel ? (() => { const a = P(sel.pts[0]), b = P(sel.pts[sel.pts.length - 1]); return `<circle cx="${a[0]}" cy="${a[1]}" r="6" class="rt-a"/><circle cx="${b[0]}" cy="${b[1]}" r="6.5" class="rt-b"/>`; })() : "";
+  const hm = o.home ? (() => { const h = P(o.home); return `<g transform="translate(${h[0]} ${h[1]})"><circle r="11" class="mr-home"/><path d="M-5 1 0-4 5 1M-3.5 0v4.5h7V0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`; })() : "";
+  box.innerHTML = `<div class="rmap-t">${tiles.join("")}</div><svg class="rmap-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}${ends}${hm}</svg><span class="rmap-c">© OpenStreetMap · © CARTO</span>`;
+}
+function walksMapView(){
+  const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f), d = dog() || {};
+  if (S.mapSel && !list.some(l => l.id === S.mapSel)) S.mapSel = null;
+  const km = list.reduce((a, l) => a + (+l.dist || 0), 0), min = list.reduce((a, l) => a + (+l.dur || 0), 0);
+  const st = (v, l) => `<div class="wv-s"><b class="num">${v}</b><span>${l}</span></div>`;
+  const seg = `<div class="seg" role="group" style="margin:4px 0 12px">${[[7, "7 jours"], [30, "30 jours"], ["all", "Tout"]].map(([v, l]) => `<button class="${String(f) === String(v) ? "on" : ""}" data-act="mapF" data-v="${v}" aria-pressed="${String(f) === String(v)}">${T(l)}</button>`).join("")}</div>`;
+  const rows = list.slice(0, 80).map(l => { const m = memberOf(l.mid), on = l.id === S.mapSel;
+    return `<button class="row mr-row ${on ? "on" : ""}" data-act="mapPick" data-id="${esc(l.id)}"><span class="ico" style="--c:${on ? "var(--orange)" : "var(--green)"}">${QL.balade ? QL.balade.i : I.paw}</span><div class="main"><div class="t">${esc(cap(fmt(parseYmd(l.date), {weekday: "short", day: "numeric", month: "short"})))} · ${esc(l.at || "")}</div><div class="s">${[fmtKm(l.dist || 0), l.dur ? l.dur + " min" : "", (m && m.name) || l.byName || ""].filter(Boolean).map(esc).join(" · ")}</div></div><span class="chev">${on ? T("Détails") : I.chevR}</span></button>`; }).join("");
+  return subBar(d.name || T("Chien")) + pageHead(T("Carte des balades"), d.name) + seg
+    + `<div class="rmap wmap" id="wm-map">${list.length ? "" : `<div class="wm-empty">${I_MAP}<span>${T("Aucune balade suivie par GPS sur cette période.")}</span></div>`}</div>`
+    + `<div class="wv-g" style="margin-top:12px">${st(list.length, T(list.length > 1 ? "balades" : "balade"))}${st(fmtKm(km), T("Distance"))}${st(min >= 60 ? Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0") : min + " min", T("Durée"))}</div>`
+    + (list.length ? `<div class="sec"><div class="sec-h"><h2>${T("Trajets")}</h2></div><div class="card list">${rows}</div><div class="foot">${T("Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.")}</div></div>` : `<div class="foot" style="margin-top:14px">${T("Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.")}</div>`);
+}
+function paintWalksMap(){
+  const box = document.getElementById("wm-map"); if (!box) return; const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f); if (!list.length) return;
+  const aw = awCfg();
+  drawRoutes(box, list.map(l => ({id: l.id, pts: polyDec(l.route)})), {sel: S.mapSel, home: aw.home});
+}
+
+// ---------- automatic walk detection (asks before doing anything) ----------
+const awCfg = () => { try { return JSON.parse(gLS.g("dl-autowalk") || "{}") || {}; } catch(_) { return {}; } };
+const awSet = c => gLS.s("dl-autowalk", JSON.stringify(c));
+const AW = {watch: null, away: 0, near: 0, first: 0, snooze: 0, asked: "", mine: ""};
+function walkTask(ds, start){
+  const st = dayStats(ds), sm = toMin(hhmm(start));
+  return st.tasks.filter(t => t.cat === "balade" && !st.done[t.key] && Math.abs(toMin(t.time) - sm) <= 120).sort((a, b) => Math.abs(toMin(a.time) - sm) - Math.abs(toMin(b.time) - sm))[0] || null;
+}
+function awTick(){
+  const c = awCfg(), want = !!(c.on && c.home && navigator.geolocation && S.ready && document.visibilityState === "visible");
+  if (want && AW.watch == null) AW.watch = navigator.geolocation.watchPosition(awPos, () => {}, {enableHighAccuracy: true, maximumAge: 5000, timeout: 30000});
+  else if (!want && AW.watch != null) { try { navigator.geolocation.clearWatch(AW.watch); } catch(_) {} AW.watch = null; AW.away = AW.near = 0; }
+}
+function awPos(p){
+  const c = awCfg(), k = p && p.coords; if (!c.on || !c.home || !k || k.accuracy > 70) return;
+  const d = gDist(c.home, [k.latitude, k.longitude]), w = walkNow(), now = Date.now();
+  if (d > 150) { AW.away++; AW.near = 0; if (AW.away === 1) AW.first = p.timestamp || now; }
+  else if (d < 60) { AW.near++; AW.away = 0; if (!w) AW.snooze = 0; }
+  if (now < AW.snooze || document.getElementById("aw-card")) return;
+  if (!w && AW.away >= 2 && AW.asked !== "start") { AW.asked = "start"; awAsk("start"); }
+  else if (w && AW.near >= 2 && AW.asked !== "end" && now - Date.parse(w.start) > 3 * 60000 && (w.mid === (ME || "") || AW.mine === w.start)) { AW.asked = "end"; awAsk("end"); }
+  if (!w && AW.near) AW.asked = AW.asked === "start" ? "" : AW.asked;
+  if (w && AW.away) AW.asked = AW.asked === "end" ? "" : AW.asked;
+}
+function awAsk(kind){
+  let r = document.getElementById("aw-root"); if (!r) { r = document.createElement("div"); r.id = "aw-root"; document.body.appendChild(r); }
+  const d = dog() || {}, nm = esc(d.name || T("votre chien")), w = walkNow();
+  const tsk = kind === "end" && w ? walkTask(ymd(new Date()), new Date(w.start)) : null;
+  const t = kind === "start" ? T("Balade détectée") : T("De retour à la maison");
+  const s = kind === "start" ? T("Vous venez de quitter la maison. Démarrer la balade de {n} ?", {n: nm}) : tsk ? T("Terminer la balade et cocher « {t} » ?", {t: esc(tsk.title)}) : T("Terminer la balade de {n} ?", {n: nm});
+  r.innerHTML = `<div class="aw" id="aw-card" role="alertdialog" aria-label="${esc(t)}"><span class="ico" style="--c:var(--green)">${kind === "start" ? (QL.balade ? QL.balade.i : I.paw) : I_HOME.replace(/26/g, "22")}</span><div class="main"><b>${t}</b><span>${s}</span></div>
+    <div class="aw-b"><button class="btn ghost" data-act="awNo">${T("Pas maintenant")}</button><button class="btn" data-act="awYes" data-k="${kind}">${T(kind === "start" ? "Démarrer" : "Terminer")}</button></div></div>`;
+  try { if (navigator.vibrate) navigator.vibrate([12, 60, 12]); } catch(_) {}
+  if (SOUND && typeof chime === "function") { try { chime(); } catch(_) {} }
+}
+function awClose(){ const r = document.getElementById("aw-root"), c = r && r.firstElementChild; if (c) leave(c, () => { r.innerHTML = ""; }); }
+async function awYes(kind){
+  awClose();
+  if (kind === "start") { if (walkNow()) return; const st0 = new Date(Math.min(Date.now(), AW.first || Date.now())).toISOString(); AW.mine = st0;
+    gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}}); toast(T("Balade lancée")); }
+  else if (walkNow()) walkSheet();
+}
+async function awSetHome(){
+  if (!navigator.geolocation) return false;
+  const p = await new Promise(res => navigator.geolocation.getCurrentPosition(res, () => res(null), {enableHighAccuracy: true, timeout: 20000, maximumAge: 0}));
+  if (!p) { toast(T("Position introuvable : autorisez la localisation pour Dogs Life.")); return false; }
+  awSet(Object.assign(awCfg(), {home: [+p.coords.latitude.toFixed(6), +p.coords.longitude.toFixed(6)]})); toast(T("Maison enregistrée à cet endroit")); return true;
+}
+setInterval(awTick, 4000); document.addEventListener("visibilitychange", awTick);
+// ---------- chat: messages with reactions, replies, voice notes and "seen by" ----------
+const REACTS = {"heart": ["#FF4D6D", "<svg viewBox=\"0 0 24 24\"><path fill=\"#FF4D6D\" d=\"M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2Z\"/></svg>"], "like": ["#F1C76A", "<svg viewBox=\"0 0 24 24\"><path fill=\"#F1C76A\" d=\"M7 10v10H4.5A1.5 1.5 0 0 1 3 18.5v-7A1.5 1.5 0 0 1 4.5 10H7Zm2 10V9.6l3.4-6a1.9 1.9 0 0 1 3.5 1.3L15.2 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H9Z\"/></svg>"], "haha": ["#FFC53D", "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"#FFC53D\"/><path d=\"M8 9.5h.01M16 9.5h.01\" stroke=\"#5a3d00\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><path d=\"M6.8 13h10.4a5.2 5.2 0 0 1-10.4 0Z\" fill=\"#5a3d00\"/></svg>"], "wow": ["#FFC53D", "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"#FFC53D\"/><circle cx=\"8.6\" cy=\"9.6\" r=\"1.4\" fill=\"#5a3d00\"/><circle cx=\"15.4\" cy=\"9.6\" r=\"1.4\" fill=\"#5a3d00\"/><ellipse cx=\"12\" cy=\"15.4\" rx=\"2.3\" ry=\"2.9\" fill=\"#5a3d00\"/></svg>"], "paw": ["#30D158", "<svg viewBox=\"0 0 24 24\" fill=\"#30D158\"><ellipse cx=\"5.1\" cy=\"10.4\" rx=\"2.1\" ry=\"2.6\" transform=\"rotate(-20 5.1 10.4)\"/><ellipse cx=\"9.2\" cy=\"5.7\" rx=\"2.2\" ry=\"2.8\" transform=\"rotate(-7 9.2 5.7)\"/><ellipse cx=\"14.8\" cy=\"5.7\" rx=\"2.2\" ry=\"2.8\" transform=\"rotate(7 14.8 5.7)\"/><ellipse cx=\"18.9\" cy=\"10.4\" rx=\"2.1\" ry=\"2.6\" transform=\"rotate(20 18.9 10.4)\"/><path d=\"M12 11.1c2.4 0 4.7 2.6 5.8 4.8 1 2 .3 4.2-1.9 4.5-1.4.2-2.4-.6-3.9-.6s-2.5.8-3.9.6c-2.2-.3-2.9-2.5-1.9-4.5 1.1-2.2 3.4-4.8 5.8-4.8Z\"/></svg>"]};
+const I_MIC = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
+const myUid = () => S.me || ME || "local";
+const fmtSec = s => Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0");
+function msgsHTML(list){
+  const me = myMember(), lastMine = list.find(n => !n.kind && ((n.mid && n.mid === ME) || (S.me && n.uid === S.me)));
+  return list.map(n => {
+    if (n.kind === "join" || n.kind === "leave") return `<div class="msg-sys">${mav(memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, 22)}<span>${esc(T(n.kind === "join" ? "{n} a rejoint la famille" : "{n} a quitté la famille",{n:n.name || "?"}))} · ${esc(relTime(n.at))}</span></div>`;
+    const m = memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, mine = (n.mid && n.mid === ME) || (S.me && n.uid === S.me);
+    const rs = Object.entries(n.reacts || {}).filter(([, k]) => REACTS[k]), cnt = {}; rs.forEach(([, k]) => { cnt[k] = (cnt[k] || 0) + 1; });
+    const myR = (n.reacts || {})[myUid()];
+    const reacts = rs.length ? `<div class="m-reacts">${Object.entries(cnt).map(([k, c]) => `<button class="m-rc ${myR === k ? "mine" : ""}" data-act="msgReact" data-id="${esc(n.id)}" data-k="${k}">${REACTS[k][1]}${c > 1 ? `<b class="num">${c}</b>` : ""}</button>`).join("")}</div>` : "";
+    const q = n.replyTo ? `<button class="m-quote" data-act="msgJump" data-id="${esc(n.replyTo.id || "")}"><b>${esc(n.replyTo.name || "")}</b><span>${esc(n.replyTo.text || T("Message"))}</span></button>` : "";
+    const voice = n.audio ? `<div class="m-voice" data-id="${esc(n.id)}"><button class="m-play" data-act="voicePlay" data-id="${esc(n.id)}" aria-label="${T("Écouter")}"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5.5v13l11-6.5Z"/></svg></button><span class="m-wave">${Array.from({length: 22}, (_, i) => `<i style="height:${30 + Math.round(60 * Math.abs(Math.sin(i * 1.7 + (n.dur || 3))))}%"></i>`).join("")}</span><span class="num m-dur">${fmtSec(n.dur || 0)}</span></div>` : "";
+    let seen = "";
+    if (lastMine && n.id === lastMine.id) { const t = Date.parse(n.at) || 0, by = family().filter(x => (!me || x.id !== me.id) && x.readAt && x.readAt >= t);
+      seen = `<div class="m-seen">${by.length ? `${T("Vu par")} <span class="m-seen-av">${by.slice(0, 5).map(x => mav(x, 16)).join("")}</span>${by.length > 5 ? " +" + (by.length - 5) : ""}` : T("Envoyé")}</div>`; }
+    return `<div class="msg ${mine ? "mine" : ""}" data-mid="${esc(n.id)}" id="msg-${esc(n.id)}">${mav(m, 28)}<div class="m-col"><div class="bub" data-act="msgMenu" data-id="${esc(n.id)}"><div class="msg-h"><b>${esc(m.name)}</b><span>${esc(relTime(n.at))}</span></div>${q}${n.text ? `<div class="msg-t ${n.kind === "report" ? "rep" : ""}">${esc(n.text)}</div>` : ""}${voice}${n.photo ? `<img class="msg-ph" src="${esc(n.photo)}" alt="" data-act="photoView" data-src="${esc(n.photo)}">` : ""}</div>${reacts}${seen}</div></div>`;
+  }).join("");
+}
+// long press / tap on a bubble: react, reply, copy, delete
+function msgMenu(id, at){
+  const n = (C.notes || {})[id]; if (!n) return; const mine = (n.mid && n.mid === ME) || (S.me && n.uid === S.me), myR = (n.reacts || {})[myUid()];
+  let r = document.getElementById("mm-root"); if (!r) { r = document.createElement("div"); r.id = "mm-root"; document.body.appendChild(r); }
+  const y = Math.max(90, Math.min(window.innerHeight - 260, at ? at.top : window.innerHeight / 2));
+  r.innerHTML = `<div class="mm-bg" data-act="mmClose"></div><div class="mm" style="top:${y}px">
+    <div class="mm-r">${Object.entries(REACTS).map(([k, v]) => `<button class="${myR === k ? "on" : ""}" data-act="msgReact" data-id="${esc(id)}" data-k="${k}" aria-label="${k}">${v[1]}</button>`).join("")}</div>
+    <div class="mm-l"><button data-act="msgReply" data-id="${esc(id)}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 6 6v1"/></svg>${T("Répondre")}</button>
+    ${n.text ? `<button data-act="msgCopy" data-id="${esc(id)}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>${T("Copier")}</button>` : ""}
+    ${mine || canEdit() ? `<button class="danger" data-act="msgDel" data-id="${esc(id)}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>${T("Supprimer")}</button>` : ""}</div></div>`;
+  try { if (navigator.vibrate) navigator.vibrate(8); } catch(_) {}
+}
+function mmClose(){ const r = document.getElementById("mm-root"); if (r && r.firstChild) leave(r.querySelector(".mm"), () => { r.innerHTML = ""; }); const bg = r && r.querySelector(".mm-bg"); if (bg) bg.classList.add("dl-leave"); }
+async function msgReact(id, k){
+  const n = (C.notes || {})[id]; if (!n) return; const reacts = Object.assign({}, n.reacts || {}), u = myUid();
+  if (reacts[u] === k) delete reacts[u]; else reacts[u] = k;
+  await put("notes", id, Object.assign({}, n, {reacts}));
+}
+function setReply(id){
+  const n = (C.notes || {})[id]; if (!n) return; const m = memberOf(n.mid) || {name: n.name || ""};
+  S.replyTo = {id, name: m.name || n.name || "", text: (n.text || (n.audio ? T("Message vocal") : n.photo ? T("Photo") : "")).slice(0, 80)};
+  replyBar(); const i = $("#n-text"); if (i) i.focus();
+}
+function replyBar(){
+  const h = S.replyTo ? `<div class="rp-bar"><div><b>${esc(T("Réponse à {n}", {n: S.replyTo.name}))}</b><span>${esc(S.replyTo.text)}</span></div><button type="button" data-act="replyX" aria-label="${T("Annuler")}">×</button></div>` : "";
+  document.querySelectorAll(".rp-slot").forEach(x => { x.innerHTML = h; });
+}
+// seen by: my member card remembers when I last looked at the conversation
+function chatSeen(){
+  if (S.mode !== "db" || !S.ready || document.visibilityState !== "visible") return;
+  if (!(S.chatFull || (S.tab === "famille" && !S.sub))) return;
+  const m = myMember(); if (!m || !(C.members || {})[m.id]) return;
+  const last = Object.values(C.notes || {}).reduce((a, n) => Math.max(a, Date.parse(n.at) || 0), 0);
+  if (!last || (C.members[m.id].readAt || 0) >= last || Date.now() - (S.lastSeenW || 0) < 4000) return;
+  S.lastSeenW = Date.now(); put("members", m.id, Object.assign({}, C.members[m.id], {readAt: Date.now()}));
+}
+// voice notes: recorded on the phone (max 60 s), stored with the message
+const REC = {mr: null, chunks: [], t0: 0, timer: null, stream: null};
+async function recStart(){
+  if (REC.mr) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) { toast(T("Les messages vocaux ne sont pas pris en charge sur cet appareil.")); return; }
+  try { REC.stream = await navigator.mediaDevices.getUserMedia({audio: true}); } catch(_) { toast(T("Autorisez le micro pour envoyer un message vocal.")); return; }
+  const type = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"].find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+  try { REC.mr = new MediaRecorder(REC.stream, Object.assign({audioBitsPerSecond: 24000}, type ? {mimeType: type} : {})); } catch(_) { REC.mr = new MediaRecorder(REC.stream); }
+  REC.chunks = []; REC.t0 = Date.now(); REC.cancel = false;
+  REC.mr.ondataavailable = e => { if (e.data && e.data.size) REC.chunks.push(e.data); };
+  REC.mr.onstop = recDone; REC.mr.start(250);
+  recUI(); REC.timer = setInterval(() => { recUI(); if (Date.now() - REC.t0 > 60000) recStop(false); }, 250);
+}
+function recStop(cancel){ if (!REC.mr) return; REC.cancel = !!cancel; clearInterval(REC.timer); try { REC.mr.stop(); } catch(_) { recDone(); } }
+async function recDone(){
+  const mr = REC.mr, dur = Math.max(1, Math.round((Date.now() - REC.t0) / 1000)), cancel = REC.cancel; REC.mr = null;
+  try { REC.stream.getTracks().forEach(t => t.stop()); } catch(_) {}
+  recUI();
+  if (cancel || !REC.chunks.length) return;
+  const blob = new Blob(REC.chunks, {type: (mr && mr.mimeType) || "audio/mp4"});
+  if (blob.size > 700000) { toast(T("Message vocal trop long.")); return; }
+  const audio = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob); });
+  await sendNote({audio, dur});
+}
+function recUI(){
+  let r = document.getElementById("rec-root"); if (!r) { r = document.createElement("div"); r.id = "rec-root"; document.body.appendChild(r); }
+  if (!REC.mr) { if (r.firstChild) leave(r.firstElementChild, () => { r.innerHTML = ""; }); return; }
+  const sec = (Date.now() - REC.t0) / 1000, h = `<div class="rec"><span class="rec-dot"></span><b class="num">${fmtSec(sec)}</b><span class="rec-h">${T("Enregistrement… 60 s max")}</span><button class="rec-x" data-act="recCancel">${T("Annuler")}</button><button class="rec-s" data-act="recSend" aria-label="${T("Envoyer")}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div>`;
+  if (!r.firstChild) r.innerHTML = h; else { const b = r.querySelector(".rec b"); if (b) b.textContent = fmtSec(sec); }
+}
+const VO = {a: null, id: null};
+function voicePlay(id){
+  const n = (C.notes || {})[id]; if (!n || !n.audio) return;
+  if (VO.id === id && VO.a) { if (VO.a.paused) VO.a.play(); else VO.a.pause(); return; }
+  if (VO.a) { VO.a.pause(); voiceUI(VO.id, 0, false); }
+  VO.a = new Audio(n.audio); VO.id = id;
+  VO.a.ontimeupdate = () => voiceUI(id, VO.a.duration ? VO.a.currentTime / VO.a.duration : 0, !VO.a.paused);
+  VO.a.onpause = () => voiceUI(id, VO.a.duration ? VO.a.currentTime / VO.a.duration : 0, false);
+  VO.a.onplay = () => voiceUI(id, 0, true);
+  VO.a.onended = () => { voiceUI(id, 0, false); VO.a = null; VO.id = null; };
+  VO.a.play().catch(() => toast(T("Lecture impossible.")));
+}
+function voiceUI(id, p, playing){ document.querySelectorAll(`.m-voice[data-id="${CSS.escape(id)}"]`).forEach(v => { v.style.setProperty("--p", Math.round(p * 100) + "%"); v.classList.toggle("playing", playing);
+  const b = v.querySelector(".m-play"); if (b) b.innerHTML = playing ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5.5v13l11-6.5Z"/></svg>'; }); }
+// press and hold a bubble (or swipe it to the right to reply)
+(() => { let tm = null, sx = 0, sy = 0, tgt = null, moved = false;
+  document.addEventListener("pointerdown", e => { const b = e.target.closest(".msg .bub"); if (!b || e.target.closest("button,img,a")) return; tgt = b; sx = e.clientX; sy = e.clientY; moved = false;
+    tm = setTimeout(() => { tm = null; if (!moved && tgt) { S.mmLong = Date.now(); msgMenu(tgt.dataset.id, tgt.getBoundingClientRect()); } }, 420); });
+  document.addEventListener("pointermove", e => { if (!tgt) return; const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { moved = true; clearTimeout(tm); tgt.style.transform = ""; tgt = null; return; }
+    if (dx > 6) { moved = true; clearTimeout(tm); tgt.style.transform = `translateX(${Math.min(70, dx * .6)}px)`; tgt.classList.toggle("swipe-ok", dx > 70); } });
+  const end = e => { clearTimeout(tm); if (tgt) { const dx = e.clientX - sx; tgt.style.transform = ""; tgt.classList.remove("swipe-ok"); if (dx > 70) { S.mmLong = Date.now(); setReply(tgt.dataset.id); } } tgt = null; };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
+  document.addEventListener("contextmenu", e => { const b = e.target.closest(".msg .bub"); if (b) { e.preventDefault(); msgMenu(b.dataset.id, b.getBoundingClientRect()); } });
+})();
 // typing bubble: whoever is writing a message shows "…" to the others for a few seconds
 const TYPING_MS = 6000;
 const typers = () => { const me = myMember(); return family().filter(m => m.typing && Date.now() - m.typing < TYPING_MS && (!me || m.id !== me.id)); };
@@ -4436,8 +4733,7 @@ async function endWalk(){
   const g = gpsFinish(w);
   await put("logs", newId(), Object.assign({date: ds, dog: dogId(), k:"balade", at: hhmm(start), dur, mid: w.mid || ME || "", by: S.me || null, byName: m ? m.name : "", pee: !!S.walkPee, poo: !!S.walkPoo}, g));
   // tick the scheduled walk closest to when it started
-  const st = dayStats(ds), sm = toMin(hhmm(start));
-  const tsk = st.tasks.filter(t => t.cat === "balade" && !st.done[t.key] && Math.abs(toMin(t.time) - sm) <= 120).sort((a, b) => Math.abs(toMin(a.time) - sm) - Math.abs(toMin(b.time) - sm))[0];
+  const tsk = walkTask(ds, start);
   if (tsk) await setTick(ds, tsk.key, true, hhmm(start));
   S.walkPee = S.walkPoo = false;
   await setDay(ds, {walk: null});
@@ -4496,7 +4792,7 @@ function syncChat(){
     root.innerHTML = `<div class="cf-back" aria-hidden="true"></div><div class="cf" role="dialog" aria-modal="true" aria-label="${T("Messages")}">
       <div class="cf-h"><button class="cf-x" data-act="chatClose" aria-label="${T("Réduire")}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="cf-t"><b>${T("Messages")}</b><span>${esc(T("La famille de {n}", {n: (dog() || {}).name || T("votre chien")}))} · <span class="online-n"><i></i>${esc(T("{n} en ligne", {n: onlineCount()}))}</span></span></div><span style="width:36px"></span></div>
       <div class="cf-body"></div>
-      ${S.chatCanWrite ? `<div class="cf-in"><div class="cf-box"><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message à la famille")}" autocomplete="off" enterkeyhint="send"></textarea><div class="cf-row"><label class="cf-plus" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : I_PLUS}</label><input type="file" id="n-photo" accept="image/*" hidden><button class="cf-send" type="button" data-act="sendNote" aria-label="${T("Envoyer")}">${I_UP}</button></div></div></div>`
+      ${S.chatCanWrite ? `<div class="cf-in"><div class="cf-box"><div class="rp-slot"></div><textarea id="n-text" rows="1" maxlength="240" placeholder="${T("Message à la famille")}" autocomplete="off" enterkeyhint="send"></textarea><div class="cf-row"><label class="cf-plus" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : I_PLUS}</label><input type="file" id="n-photo" accept="image/*" hidden><span style="flex:1"></span><button class="cf-mic" type="button" data-act="recStart" aria-label="${T("Message vocal")}">${I_MIC}</button><button class="cf-send" type="button" data-act="sendNote" aria-label="${T("Envoyer")}">${I_UP}</button></div></div></div>`
         : `<div class="cf-in s" style="color:var(--fg2);justify-content:center">${T("Rejoignez la famille pour écrire un message.")}</div>`}</div>`;
     document.body.classList.add("chat-full"); document.documentElement.classList.add("chat-full");
   }
@@ -4511,7 +4807,7 @@ function syncChat(){
 }
 const I_SEND = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3.3 11.1 19.6 3.6c1-.5 2 .5 1.6 1.5L13.8 21.4c-.5 1.1-2 1-2.3-.1l-1.6-6.2a1 1 0 0 0-.7-.7l-6.2-1.6c-1.1-.3-1.2-1.8-.1-2.3Z"/></svg>';
 const I_PHONE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6.7 2.6c.6-.2 1.3 0 1.6.6l1.9 3.6c.3.6.2 1.3-.3 1.8L8.4 10c1.2 2.4 3.2 4.4 5.6 5.6l1.4-1.5c.5-.5 1.2-.6 1.8-.3l3.6 1.9c.6.3.8 1 .6 1.6l-.8 2.4c-.3.9-1.2 1.6-2.2 1.5C10 20.6 3.4 14 2.8 5.6c-.1-1 .6-1.9 1.5-2.2l2.4-.8Z"/></svg>';
-const notes = () => Object.entries(C.notes || {}).map(([id, n]) => ({id, ...n})).filter(n => n.text || n.photo).sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+const notes = () => Object.entries(C.notes || {}).map(([id, n]) => ({id, ...n})).filter(n => n.text || n.photo || n.audio || n.kind).sort((a, b) => (b.at || "").localeCompare(a.at || ""));
 // who ticked a done entry
 function doneBy(x){
   if (!x) return null; const fam = family();
@@ -4576,12 +4872,10 @@ function viewFamily(){
   // messages
   // messages: in the page, or full screen (own layer, see syncChat)
   const typ = typingHTML();
-  const msgList = ns.length || typ ? `<div class="msg-list" data-first="${esc((ns[0] || {}).id || "")}">` + typ + ns.slice(0, 60).map(n => { if (n.kind === "join" || n.kind === "leave") return `<div class="msg-sys">${mav(memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}, 22)}<span>${esc(T(n.kind === "join" ? "{n} a rejoint la famille" : "{n} a quitté la famille",{n:n.name || "?"}))} · ${esc(relTime(n.at))}</span></div>`;
-        const m = memberOf(n.mid) || {name:n.name || "?", color:"var(--gray)"}; const mine = (n.mid && n.mid === ME) || (S.me && n.uid === S.me);
-        return `<div class="msg ${mine ? "mine" : ""}">${mav(m, 28)}<div class="bub"><div class="msg-h"><b>${esc(m.name)}</b><span>${esc(relTime(n.at))}</span></div>${n.text ? `<div class="msg-t ${n.kind === "report" ? "rep" : ""}">${esc(n.text)}</div>` : ""}${n.photo ? `<img class="msg-ph" src="${esc(n.photo)}" alt="" data-act="photoView" data-src="${esc(n.photo)}">` : ""}</div>${mine || canEdit() ? `<button class="msg-x" data-act="delNote" data-id="${esc(n.id)}" aria-label="${T("Supprimer")}">×</button>` : ""}</div>`; }).join("") + `</div>`
+  const msgList = ns.length || typ ? `<div class="msg-list" data-first="${esc((ns[0] || {}).id || "")}">` + typ + msgsHTML(ns.slice(0, 60)) + `</div>`
         : `<div class="empty-s">${T("Pas encore de message. Laissez une consigne, un rappel ou une nouvelle de {n}.",{n:esc(d.name || T("votre chien"))})}</div>`;
   S.chatList = msgList; S.chatCanWrite = !!(me || S.mode !== "db");
-  const composer = me || S.mode !== "db" ? `<form class="board-in" data-form="note"><label class="btn ghost round" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : QL.photo.i}</label><input type="file" id="n-photo" accept="image/*" hidden><input class="f" id="n-text" maxlength="240" placeholder="${T("Un mot pour la famille…")}" autocomplete="off"><button class="btn round" type="submit" aria-label="${T("Envoyer")}">${I_SEND}</button></form>` : `<div class="s" style="color:var(--fg2);font-size:14px">${T("Rejoignez la famille pour écrire un message.")}</div>`;
+  const composer = me || S.mode !== "db" ? `<div class="rp-slot"></div><form class="board-in" data-form="note"><button type="button" class="btn ghost round bd-mic" data-act="recStart" aria-label="${T("Message vocal")}">${I_MIC}</button><label class="btn ghost round" for="n-photo" aria-label="${T("Ajouter une photo")}" id="n-ph">${S.notePhoto ? `<img src="${esc(S.notePhoto)}" alt="">` : QL.photo.i}</label><input type="file" id="n-photo" accept="image/*" hidden><input class="f" id="n-text" maxlength="240" placeholder="${T("Un mot pour la famille…")}" autocomplete="off"><button class="btn round" type="submit" aria-label="${T("Envoyer")}">${I_SEND}</button></form>` : `<div class="s" style="color:var(--fg2);font-size:14px">${T("Rejoignez la famille pour écrire un message.")}</div>`;
   const board = `<div class="sec"><div class="sec-h"><h2>${T("Messages")}</h2><button class="link exp-l" data-act="chatFull">${I_EXPAND}${T("Agrandir")}</button></div><div class="card pad board">
       ${S.chatFull ? `<div class="empty-s">${T("Conversation ouverte en plein écran.")}</div>` : composer + msgList}
     </div></div>`;
@@ -5319,6 +5613,7 @@ function viewHealth(){
 function viewChien(){
   if (S.sub === "buddy") return subBar((dog() || {}).name || T("Chien")) + viewBuddy();
   if (S.sub === "education") return eduView();
+  if (S.sub === "carte") return walksMapView();
   return viewProfile();
 }
 function chienCards(){
@@ -5326,6 +5621,7 @@ function chienCards(){
   return `<div class="ccards">
     <button class="ccard" data-act="goSub" data-tab="chien" data-sub="buddy"><div class="cc-art"><div class="cc-rings">${activityRings([b.health, b.happy, b.fed])}${avatarHTML(dog() || {}, "cc-av")}</div></div><div class="cc-t">${T("Compagnon")}</div><div class="cc-s">${esc(T(STAGES[b.stage][1]))}</div></button>
     <button class="ccard" data-act="goSub" data-tab="chien" data-sub="education"><div class="cc-art"><div style="position:relative;width:64px;height:64px">${ring(es.n / es.t, 64, 8, "var(--purple)")}<b class="num edu-n" style="font-size:18px">${es.n}<small>/${es.t}</small></b></div></div><div class="cc-t">${T("Éducation")}</div><div class="cc-s">${cmds().length ? esc(T("{n} commande(s) · {f} fiable(s)",{n:cmds().length, f:cmds().filter(c => cmdStats(c).level === "fiable").length})) : now[0] ? esc(T("Ensuite : {s}",{s:T(now[0][1])})) : T("Tout est acquis")}</div></button>
+    <button class="ccard cc-wide" data-act="goSub" data-tab="chien" data-sub="carte"><span class="ico" style="--c:var(--green)">${I_MAP}</span><div class="cc-wt"><div class="cc-t">${T("Carte des balades")}</div><div class="cc-s">${(() => { const l = walkLogs(30), km = l.reduce((a, x) => a + (+x.dist || 0), 0); return l.length ? T("{n} trajets sur 30 jours · {k}", {n: l.length, k: fmtKm(km)}) : T("Les trajets GPS de vos balades"); })()}</div></div><span class="chev">${I.chevR}</span></button>
   </div>`;
 }
 // settings and account: about the person using the app, so they live in Famille
@@ -5550,6 +5846,7 @@ function notifSection(){
     ${window.carnetPush ? "" : `<div class="row"><div class="main"><div class="t">${T("Alertes à l'heure des tâches")}</div><div class="s">${T("Bannière et vibration quand une tâche arrive, tant que le carnet est ouvert.")}</div></div><button class="switch ${NOTIF?"on":""}" data-act="toggleNotif" role="switch" aria-checked="${NOTIF}" aria-label="${T("Alertes à l'heure des tâches")}"><i></i></button></div>`}
     <div class="row"><div class="main"><div class="t">${T("Son")}</div></div><button class="switch ${SOUND?"on":""}" data-act="toggleSound" role="switch" aria-checked="${SOUND}" aria-label="${T("Son")}"><i></i></button></div>
     ${navigator.geolocation ? `<div class="row"><div class="main"><div class="t">${T("Suivre les balades par GPS")}</div><div class="s">${T("Distance et trajet mesurés sur ce téléphone pendant la balade.")}</div></div><button class="switch ${gpsOff() ? "" : "on"}" data-act="gpsPref" role="switch" aria-checked="${!gpsOff()}" aria-label="${T("Suivre les balades par GPS")}"><i></i></button></div>` : ""}
+    ${navigator.geolocation ? (() => { const c = awCfg(); return `<div class="row"><div class="main"><div class="t">${T("Détecter les balades")}</div><div class="s">${T("Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Fonctionne quand l'app est ouverte.")}</div></div><button class="switch ${c.on ? "on" : ""}" data-act="awPref" role="switch" aria-checked="${!!c.on}" aria-label="${T("Détecter les balades")}"><i></i></button></div>${c.on ? `<button class="row" data-act="awHome"><span class="main t" style="color:var(--accent)">${T("La maison est ici (redéfinir)")}</span></button>` : ""}`; })() : ""}
     ${window.carnetPush ? "" : `<button class="row" data-act="testNotif"><span class="main t" style="color:var(--accent)">${T("Tester une alerte")}</span></button>`}
     ${window.carnetPush && window.carnetPush.available() ? `<div class="row"><div class="main"><div class="t">${T("Notifications sur ce téléphone")}</div><div class="s">${T("Même app fermée : les tâches à l'heure et ce que fait la famille.")}</div></div>${window.carnetPush.state() ? `<span class="pill" style="color:var(--green)">${T("Activées")}</span>` : `<button class="switch" data-act="togglePush" role="switch" aria-checked="false" aria-label="${T("Notifications sur ce téléphone")}"><i></i></button>`}</div>
       ${window.carnetPush.state() && window.carnetPush.prefs ? (() => { const pr = window.carnetPush.prefs();
@@ -6428,7 +6725,7 @@ function render(skipNames){
   if (ml1) { if (mlKeep && mlKeep.first === ml1.dataset.first) ml1.scrollTop = mlKeep.top; msgFade(ml1); ml1.addEventListener("scroll", () => msgFade(ml1), {passive:true}); }
   mountBuddy();
   if (keepNote) { const n = document.getElementById(keepNote.id); if (n && n !== active) { n.value = keepNote.v; n.focus(); try { n.setSelectionRange(keepNote.s, keepNote.s); } catch(e){} } }
-  renderTabs(); syncChat(); presenceBeat();
+  renderTabs(); syncChat(); presenceBeat(); replyBar(); chatSeen(); if (S.tab === "chien" && S.sub === "carte") requestAnimationFrame(paintWalksMap);
   if (!skipNames) { resolveNames(); resolveAvatars(); }
   syncOrbit();
   renderJoin();
@@ -6773,6 +7070,26 @@ document.addEventListener("click", async e => {
     case "chatFull": S.chatFull = true; render(); setTimeout(() => { const i = $("#n-text"); if (i && matchMedia("(hover:hover)").matches) i.focus(); }, 60); break;
     case "chatClose": S.chatFull = false; render(); break;
     case "sendNote": await sendNote(); break;
+    case "msgMenu": if (Date.now() - (S.mmLong || 0) < 600) break; msgMenu(el.dataset.id, el.getBoundingClientRect()); break;
+    case "mmClose": mmClose(); break;
+    case "msgReact": mmClose(); await msgReact(el.dataset.id, el.dataset.k); break;
+    case "msgReply": mmClose(); setReply(el.dataset.id); break;
+    case "replyX": S.replyTo = null; replyBar(); break;
+    case "msgCopy": { mmClose(); const n = (C.notes || {})[el.dataset.id]; if (n && n.text) { try { await navigator.clipboard.writeText(n.text); toast(T("Copié")); } catch(_) {} } break; }
+    case "msgDel": mmClose(); await del("notes", el.dataset.id); break;
+    case "msgJump": { const t = document.querySelector(`#chat-root #msg-${CSS.escape(el.dataset.id)}`) || document.getElementById("msg-" + el.dataset.id); if (t) { t.scrollIntoView({block: "center", behavior: "smooth"}); t.classList.remove("blink"); void t.offsetWidth; t.classList.add("blink"); } break; }
+    case "recStart": recStart(); break;
+    case "mapF": S.mapF = el.dataset.v === "all" ? "all" : +el.dataset.v; S.mapSel = null; render(); break;
+    case "mapRoute": case "mapPick": if (act === "mapPick" && S.mapSel === el.dataset.id) { walkView(el.dataset.id); break; } S.mapSel = S.mapSel === el.dataset.id && act === "mapRoute" ? null : el.dataset.id; render(); if (act === "mapPick") { const m = document.getElementById("wm-map"); if (m) m.scrollIntoView({block: "center", behavior: "smooth"}); } break;
+    case "awPref": { const on = el.getAttribute("aria-checked") !== "true", c = awCfg();
+      if (on) { if (!c.home && !(await awSetHome())) break; awSet(Object.assign(awCfg(), {on: true})); } else awSet(Object.assign(c, {on: false}));
+      render(); awTick(); break; }
+    case "awHome": await awSetHome(); render(); break;
+    case "awYes": await awYes(el.dataset.k); break;
+    case "awNo": AW.snooze = Date.now() + 15 * 60000; awClose(); break;
+    case "recCancel": recStop(true); break;
+    case "recSend": recStop(false); break;
+    case "voicePlay": voicePlay(el.dataset.id); break;
     case "closeSettings": go("famille"); break;
     case "editFood": foodSheet(); break;
     case "newBag": { const f = C.config.food; if (!f) break; if (!el.dataset.confirm) { el.dataset.confirm = "1"; el.textContent = T("Confirmer : nouveau sac aujourd'hui"); break; }
@@ -6960,10 +7277,13 @@ document.addEventListener("click", async e => {
     case "loadSample": await seedSample(); break;
   }
 });
-async function sendNote(){
-  const text = val("n-text"), photo = S.notePhoto; if (!text && !photo) return; typingBeat(true); const m = meMember(); S.notePhoto = null;
-  const nId = newId(); await put("notes", nId, Object.assign({text, mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString()}, photo ? {photo} : {}));
-  if (window.carnetNotify) window.carnetNotify("msg", {text: text || T("Photo"), who: m ? m.name : "", ev: nId});
+async function sendNote(extra){
+  extra = extra || {};
+  const text = extra.audio ? "" : val("n-text"), photo = extra.audio ? null : S.notePhoto; if (!text && !photo && !extra.audio) return; typingBeat(true);
+  if (S.replyTo) { extra.replyTo = S.replyTo; S.replyTo = null; replyBar(); } const m = meMember(); S.notePhoto = null;
+  const nId = newId(); await put("notes", nId, Object.assign({text, mid: ME || "", uid: S.me || "", name: m ? m.name : "", at: new Date().toISOString()}, photo ? {photo} : {}, extra));
+  if (window.carnetNotify) window.carnetNotify("msg", {text: text || (extra.audio ? T("Message vocal") + " · " + fmtSec(extra.dur || 0) : T("Photo")), who: m ? m.name : "", ev: nId});
+  if (extra.audio) return;
   setTimeout(() => { const i = $("#n-text"); if (i) { i.value = ""; if (i.tagName === "TEXTAREA") i.style.height = ""; i.focus(); } const ph = $("#chat-root #n-ph"); if (ph) ph.innerHTML = I_PLUS; }, 30);
 }
 document.addEventListener("submit", async e => {

@@ -122,6 +122,8 @@ service cloud.firestore {
       function sitterUpdate(col, docId) {
         return col in ['days', 'ticks', 'logs', 'train']
           || (col == 'notes' && resource.data.get('uid', '') == me())
+          // anyone in the family may react to a message (only the reactions change)
+          || (col == 'notes' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reacts']))
           || (col == 'config' && docId in ['food', 'weather'])
           || (col == 'members' && resource.data.get('uid', '') == me());
       }
