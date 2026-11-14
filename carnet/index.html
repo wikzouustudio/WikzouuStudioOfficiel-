@@ -10,7 +10,7 @@ document.addEventListener("touchmove",function(e){if(e.scale!==undefined&&e.scal
 var __lastTouch=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-__lastTouch<300&&!(e.target.closest&&e.target.closest("input,textarea,select,[contenteditable]")))e.preventDefault();__lastTouch=n;},{passive:false});
 </script>
 <script>try{var k=localStorage.getItem("dl-skin");document.documentElement.dataset.skin=k==="classic"?"classic":"aurora";}catch(e){document.documentElement.dataset.skin="aurora";}</script>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://www.gstatic.com https://cdnjs.cloudflare.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://dogs-life.radanovicvik.workers.dev https://tiles.openfreemap.org; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src https://dogs-life-official-web.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://www.gstatic.com https://cdnjs.cloudflare.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://dogs-life.radanovicvik.workers.dev https://tiles.openfreemap.org https://overpass-api.de https://overpass.kumi.systems https://routing.openstreetmap.de; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src https://dogs-life-official-web.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="Le carnet de votre chien : routine du jour, santé, vaccins, croissance, éducation et famille.">
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
@@ -1836,6 +1836,30 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
 .cf-send{width:40px;height:40px}.cf-mic,.cf-plus{width:40px;height:40px}
 .m-play{width:36px;height:36px}
 @media (prefers-reduced-motion: reduce){:root[data-skin="aurora"] .cf-send,:root[data-skin="aurora"] .m-play,:root[data-skin="aurora"] .rec-s{animation:none}}
+
+/* walk ideas */
+.sug-cta{display:flex;align-items:center;gap:12px;width:100%;margin:4px 0 12px;padding:14px 16px;border:0;font:inherit;color:var(--fg);text-align:left;cursor:pointer}
+.sug-cta .main{flex:1;min-width:0}.sug-cta .t{font-weight:700}.sug-cta .s{font-size:13px;color:var(--fg2);margin-top:1px}.sug-cta .chev{color:var(--fg3)}
+.sug-cta:disabled{opacity:.75}
+.sug-spin{width:20px;height:20px;border-radius:50%;border:2.5px solid var(--fill2);border-top-color:#5E5CE6;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sug-busy,.sug-err{font-size:13.5px;color:var(--fg2);margin:-4px 4px 12px}.sug-err{color:var(--red)}
+.sug-card{margin-top:12px;padding:14px 16px;display:grid;gap:10px;animation:fadeUp .3s ease both}
+.sug-h{display:flex;align-items:flex-start;gap:10px}.sug-h>div{flex:1;min-width:0}
+.sug-t{font-weight:750;font-size:17px}.sug-m{font-size:14px;color:var(--fg2);margin-top:2px}
+.sug-x{flex:none;width:30px;height:30px;border-radius:50%;border:0;background:var(--fill);color:var(--fg2);font-size:20px;line-height:1}
+.sug-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sug-chip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:14px;font-size:13px;font-weight:600;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--fg)}
+.sug-chip svg{color:var(--c)}.sug-chip b{color:var(--c)}
+.sug-n{font-size:13.5px;color:var(--fg2)}
+.sug-b{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.sug-b .btn{width:100%}
+.sug-src{font-size:11px;color:var(--fg3)}
+.ml-poi{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--c);box-shadow:0 0 0 2.5px #fff,0 3px 10px rgba(0,0,0,.3)}
+.ml-poi svg{width:14px;height:14px}
+.rmap .maplibregl-ctrl-top-right{margin:8px 8px 0 0}
+.rmap .maplibregl-ctrl-group{border-radius:12px;overflow:hidden;background:rgba(255,255,255,.85);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.rmap .maplibregl-ctrl-group button{width:36px;height:36px}
+@media (prefers-color-scheme:dark){.rmap .maplibregl-ctrl-group{background:rgba(40,40,44,.85)}.rmap .maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1)}}
 </style>
 <style>
 /* sign-in gate (site only) */
@@ -1899,7 +1923,7 @@ body.gated .wrap, body.gated .tabbar{display:none}
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "81"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "82"; const APP_RELEASE = "1.1"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -2326,6 +2350,7 @@ Object.assign(EN, {"fait en moyenne à {t} ({n} fois)":"done on average at {t} (
 Object.assign(EN, {"jamais faite le {d} depuis 4 semaines": "never done on {d} for 4 weeks", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "nobody's around at {o}; someone usually is around {t}", "Nouveaux jours": "New days", "Appliquer": "Apply", "Appliquer les {n} changements": "Apply the {n} changes", "Appliquer le changement": "Apply the change", "{n} changement(s) appliqué(s)": "{n} change(s) applied", "« {t} » mise à jour": "“{t}” updated", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Highlighted changes follow what you really did: real times, days when the task is never done, moments when someone is around. Walk lengths are your averages, adjusted to the breed guide.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Some tasks are often missed, but there aren't enough recorded days yet to suggest a better time. Tap them on Today to assign them to someone.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Not enough recorded days this week to suggest changes yet.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "{n} day(s) with nothing recorded are not counted."}); Object.assign(HR, {"jamais faite le {d} depuis 4 semaines": "nikad obavljeno ({d}) već 4 tjedna", "à {o}, personne n'est là ; quelqu'un est actif vers {t}": "u {o} nitko nije tu; netko je obično aktivan oko {t}", "Nouveaux jours": "Novi dani", "Appliquer": "Primijeni", "Appliquer les {n} changements": "Primijeni {n} promjena", "Appliquer le changement": "Primijeni promjenu", "{n} changement(s) appliqué(s)": "Primijenjeno promjena: {n}", "« {t} » mise à jour": "„{t}” ažurirano", "Les changements en surbrillance suivent ce que vous avez vraiment fait : horaires réels, jours où la tâche n'est jamais faite, moments où quelqu'un est là. Les durées de balade sont vos moyennes, ajustées au repère de la race.": "Istaknute promjene prate ono što ste stvarno radili: stvarna vremena, dane kad se zadatak nikad ne obavi i trenutke kad je netko tu. Trajanja šetnji su vaši prosjeci, prilagođeni pasmini.", "Certaines tâches sont souvent oubliées, mais il n'y a pas encore assez de jours notés pour proposer un meilleur horaire. Touchez-les sur Aujourd'hui pour les attribuer à quelqu'un.": "Neki se zadaci često zaborave, ali još nema dovoljno zabilježenih dana za prijedlog boljeg vremena. Dodirnite ih na Danas i dodijelite nekome.", "Pas encore assez de jours notés cette semaine pour proposer des changements.": "Ovaj tjedan još nema dovoljno zabilježenih dana za prijedloge.", "{n} jour(s) sans rien de noté ne sont pas comptés.": "Dani bez ikakvog zapisa ({n}) se ne računaju."});
 Object.assign(EN, {"de {a} à {b}":"from {a} to {b}"}); Object.assign(HR, {"de {a} à {b}":"od {a} do {b}"});
 Object.assign(EN, {"Une famille compte au maximum {n} membres.":"A family can have at most {n} members."}); Object.assign(HR, {"Une famille compte au maximum {n} membres.":"Obitelj može imati najviše {n} članova."});
+Object.assign(EN, {"Proposer une balade": "Suggest a walk", "Une boucle adaptée à {n}, autour de vous": "A loop around you, suited to {n}", "Recherche des parcs, chemins et points d'eau autour de vous…": "Looking for parks, paths and water points around you…", "Chiot de {m} mois : environ 5 minutes par mois d'âge.": "{m}-month-old puppy: about 5 minutes per month of age.", "Chien âgé : une balade plus courte et tranquille.": "Older dog: a shorter, calmer walk.", "Chien adulte : environ 45 minutes.": "Adult dog: about 45 minutes.", "Boucle par {p}": "Loop via {p}", "Boucle autour de vous": "Loop around you", "Impossible de préparer une balade pour le moment. Vérifiez la connexion et réessayez.": "Couldn't prepare a walk right now. Check the connection and try again.", "Durée": "Duration", "conseillé": "suggested", "Le parcours doit passer par": "The route should go past", "Un parc à chiens": "A dog park", "Un point d'eau potable": "A drinking water point", "Départ": "Start", "Ma position": "My location", "La maison": "Home", "L'app cherche les parcs, forêts, parcs à chiens et points d'eau autour de vous (OpenStreetMap), tient compte de la météo et trace une boucle à pied pour {n}.": "The app looks for parks, woods, dog parks and water points around you (OpenStreetMap), checks the weather and plans a walking loop for {n}.", "Il fait {t}° : parcours à l'ombre privilégié, évitez le bitume chaud et emportez de l'eau.": "It's {t}°: shady paths preferred, avoid hot pavement and bring water.", "Il fait {t}° : attention au gel et au sel sur les pattes.": "It's {t}°: watch out for ice and salt on the paws.", "Il pleut en ce moment.": "It's raining right now.", "Durée réduite à cause de la chaleur.": "Shorter because of the heat.", "Fermer": "Close", "Pas de parc repéré sur ce trajet : il suit les chemins piétons les plus proches.": "No park found on this route: it follows the nearest footpaths.", "Autre idée": "Another idea", "Balade en cours": "Walk in progress", "Démarrer la balade": "Start the walk", "Données OpenStreetMap · itinéraire FOSSGIS · météo Open-Meteo": "OpenStreetMap data · FOSSGIS routing · Open-Meteo weather", "Balade lancée : suivez le tracé violet": "Walk started: follow the purple route", "Parc à chiens": "Dog park", "Eau potable": "Drinking water", "Sachets pour chien": "Dog bags", "Parc": "Park", "Forêt": "Woods", "Eau": "Water"}); Object.assign(HR, {"Proposer une balade": "Predloži šetnju", "Une boucle adaptée à {n}, autour de vous": "Krug u blizini, prilagođen za {n}", "Recherche des parcs, chemins et points d'eau autour de vous…": "Tražim parkove, staze i izvore vode u blizini…", "Chiot de {m} mois : environ 5 minutes par mois d'âge.": "Štene od {m} mj.: oko 5 minuta po mjesecu starosti.", "Chien âgé : une balade plus courte et tranquille.": "Stariji pas: kraća i mirnija šetnja.", "Chien adulte : environ 45 minutes.": "Odrasli pas: oko 45 minuta.", "Boucle par {p}": "Krug preko: {p}", "Boucle autour de vous": "Krug u blizini", "Impossible de préparer une balade pour le moment. Vérifiez la connexion et réessayez.": "Trenutno nije moguće pripremiti šetnju. Provjerite vezu i pokušajte ponovno.", "Durée": "Trajanje", "conseillé": "preporučeno", "Le parcours doit passer par": "Ruta treba proći pored", "Un parc à chiens": "Park za pse", "Un point d'eau potable": "Izvor pitke vode", "Départ": "Polazak", "Ma position": "Moja lokacija", "La maison": "Kuća", "L'app cherche les parcs, forêts, parcs à chiens et points d'eau autour de vous (OpenStreetMap), tient compte de la météo et trace une boucle à pied pour {n}.": "Aplikacija traži parkove, šume, parkove za pse i izvore vode u blizini (OpenStreetMap), uzima u obzir vrijeme i crta pješački krug za {n}.", "Il fait {t}° : parcours à l'ombre privilégié, évitez le bitume chaud et emportez de l'eau.": "{t}°: prednost hladovini, izbjegavajte vrući asfalt i ponesite vodu.", "Il fait {t}° : attention au gel et au sel sur les pattes.": "{t}°: pazite na led i sol na šapama.", "Il pleut en ce moment.": "Trenutno pada kiša.", "Durée réduite à cause de la chaleur.": "Skraćeno zbog vrućine.", "Fermer": "Zatvori", "Pas de parc repéré sur ce trajet : il suit les chemins piétons les plus proches.": "Na ovoj ruti nema parka: prati najbliže pješačke staze.", "Autre idée": "Druga ideja", "Balade en cours": "Šetnja u tijeku", "Démarrer la balade": "Pokreni šetnju", "Données OpenStreetMap · itinéraire FOSSGIS · météo Open-Meteo": "Podaci OpenStreetMap · ruta FOSSGIS · vrijeme Open-Meteo", "Balade lancée : suivez le tracé violet": "Šetnja pokrenuta: pratite ljubičastu rutu", "Parc à chiens": "Park za pse", "Eau potable": "Pitka voda", "Sachets pour chien": "Vrećice za pse", "Parc": "Park", "Forêt": "Šuma", "Eau": "Voda"});
 Object.assign(EN, {"Arrivé(e) le": "Arrived on", "Joyeux anniversaire {n} !": "Happy birthday {n}!", "Jour d'arrivée de {n}": "{n}'s arrival day", "{n} a {y} ans aujourd'hui.": "{n} turns {y} today.", "{n} a {y} an aujourd'hui.": "{n} turns {y} today.", "Il y a {y} ans, {n} arrivait dans la famille.": "{y} years ago, {n} joined the family.", "Il y a {y} an, {n} arrivait dans la famille.": "{y} year ago, {n} joined the family.", "Carte des balades": "Walks map", "7 jours": "7 days", "30 jours": "30 days", "Tout": "All", "Aucune balade suivie par GPS sur cette période.": "No GPS-tracked walk in this period.", "balades": "walks", "balade": "walk", "Trajets": "Routes", "Détails": "Details", "Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.": "Tap a route to see it on the map, tap again for details.", "Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.": "Start a walk from Today: with GPS on, the route shows up here.", "{n} trajets sur 30 jours · {k}": "{n} routes in 30 days · {k}", "Les trajets GPS de vos balades": "The GPS routes of your walks", "Balade détectée": "Walk detected", "De retour à la maison": "Back home", "Vous venez de quitter la maison. Démarrer la balade de {n} ?": "You just left home. Start {n}'s walk?", "Terminer la balade et cocher « {t} » ?": "End the walk and tick off “{t}”?", "Terminer la balade de {n} ?": "End {n}'s walk?", "Pas maintenant": "Not now", "Démarrer": "Start", "Terminer": "End", "Balade lancée": "Walk started", "Position introuvable : autorisez la localisation pour Dogs Life.": "Location not found: allow location for Dogs Life.", "Maison enregistrée à cet endroit": "Home saved at this spot", "Détecter les balades": "Detect walks", "Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Fonctionne quand l'app est ouverte.": "When you leave home, the app offers to start the walk. When you come back, it offers to end it and tick off the task. Nothing happens without your OK. Works while the app is open.", "La maison est ici (redéfinir)": "Home is here (set again)"}); Object.assign(HR, {"Arrivé(e) le": "Stigao/la", "Joyeux anniversaire {n} !": "Sretan rođendan, {n}!", "Jour d'arrivée de {n}": "Dan dolaska: {n}", "{n} a {y} ans aujourd'hui.": "{n} danas puni {y}.", "{n} a {y} an aujourd'hui.": "{n} danas puni {y}.", "Il y a {y} ans, {n} arrivait dans la famille.": "Prije {y} god. {n} je stigao/la u obitelj.", "Il y a {y} an, {n} arrivait dans la famille.": "Prije {y} god. {n} je stigao/la u obitelj.", "Carte des balades": "Karta šetnji", "7 jours": "7 dana", "30 jours": "30 dana", "Tout": "Sve", "Aucune balade suivie par GPS sur cette période.": "Nema GPS šetnji u ovom razdoblju.", "balades": "šetnje", "balade": "šetnja", "Trajets": "Rute", "Détails": "Detalji", "Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.": "Dodirnite rutu za prikaz na karti, ponovno za detalje.", "Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.": "Pokrenite šetnju s Danas: uz GPS ruta se dodaje ovdje.", "{n} trajets sur 30 jours · {k}": "{n} ruta u 30 dana · {k}", "Les trajets GPS de vos balades": "GPS rute vaših šetnji", "Balade détectée": "Otkrivena šetnja", "De retour à la maison": "Natrag kući", "Vous venez de quitter la maison. Démarrer la balade de {n} ?": "Upravo ste izašli iz kuće. Pokrenuti šetnju ({n})?", "Terminer la balade et cocher « {t} » ?": "Završiti šetnju i označiti „{t}“?", "Terminer la balade de {n} ?": "Završiti šetnju ({n})?", "Pas maintenant": "Ne sada", "Démarrer": "Pokreni", "Terminer": "Završi", "Balade lancée": "Šetnja pokrenuta", "Position introuvable : autorisez la localisation pour Dogs Life.": "Lokacija nije pronađena: dopustite lokaciju za Dogs Life.", "Maison enregistrée à cet endroit": "Dom spremljen na ovom mjestu", "Détecter les balades": "Otkrivanje šetnji", "Quand vous quittez la maison, l'app propose de démarrer la balade. Au retour, elle propose de la terminer et de cocher la tâche. Rien ne se fait sans votre accord. Fonctionne quand l'app est ouverte.": "Kad izađete iz kuće, aplikacija predlaže početak šetnje. Po povratku predlaže završetak i označavanje zadatka. Ništa bez vašeg pristanka. Radi dok je aplikacija otvorena.", "La maison est ici (redéfinir)": "Dom je ovdje (ponovno postavi)"});
 Object.assign(EN, {"Vu par": "Seen by", "Envoyé": "Sent", "Répondre": "Reply", "Réponse à {n}": "Replying to {n}", "Message vocal": "Voice message", "Écouter": "Play", "Les messages vocaux ne sont pas pris en charge sur cet appareil.": "Voice messages aren't supported on this device.", "Autorisez le micro pour envoyer un message vocal.": "Allow the microphone to send a voice message.", "Message vocal trop long.": "Voice message too long.", "Enregistrement… 60 s max": "Recording… 60 s max", "Lecture impossible.": "Can't play this.", "Copié": "Copied"}); Object.assign(HR, {"Vu par": "Vidjeli", "Envoyé": "Poslano", "Répondre": "Odgovori", "Réponse à {n}": "Odgovor za {n}", "Message vocal": "Glasovna poruka", "Écouter": "Slušaj", "Les messages vocaux ne sont pas pris en charge sur cet appareil.": "Glasovne poruke nisu podržane na ovom uređaju.", "Autorisez le micro pour envoyer un message vocal.": "Dopustite mikrofon za glasovnu poruku.", "Message vocal trop long.": "Glasovna poruka je preduga.", "Enregistrement… 60 s max": "Snimanje… najviše 60 s", "Lecture impossible.": "Reprodukcija nije moguća.", "Copié": "Kopirano"});
 Object.assign(EN, {"{n} écrit…":"{n} is typing…"}); Object.assign(HR, {"{n} écrit…":"{n} piše…"});
@@ -3958,25 +3983,33 @@ function mapBounds(routes, sel, home){
 function liveMapSet(M, routes, o){
   const map = M.map; M.routes = routes; M.o = o;
   if (!M.ready) return;
-  map.getSource("r").setData(routesGeo(routes)); map.getSource("e").setData(endsGeo(routes, o.sel));
-  const sel = o.sel || "";
+  const sg = o.sug || null, sel = sg ? "" : (o.sel || "");
+  map.getSource("r").setData(routesGeo(routes));
+  map.getSource("e").setData(sg ? {type: "FeatureCollection", features: [{type: "Feature", properties: {k: "a"}, geometry: {type: "Point", coordinates: [sg.pts[0][1], sg.pts[0][0]]}}]} : endsGeo(routes, sel));
   map.setFilter("r-sel-c", ["==", ["get", "id"], sel]); map.getSource("rs").setData(routesGeo(routes.filter(r => r.id === sel)));
-  map.setPaintProperty("r-line", "line-opacity", sel ? .3 : .9); map.setPaintProperty("r-case", "line-opacity", sel ? .3 : .95);
+  map.setPaintProperty("r-line", "line-opacity", sel || sg ? .28 : .9); map.setPaintProperty("r-case", "line-opacity", sel || sg ? .28 : .95);
+  if (map.getSource("sg")) map.getSource("sg").setData(sg ? {type: "FeatureCollection", features: [{type: "Feature", properties: {}, geometry: {type: "LineString", coordinates: smoothPts(sg.pts).map(q => [q[1], q[0]])}}]} : {type: "FeatureCollection", features: []});
   if (o.home && !M.homeMk) { const e = document.createElement("div"); e.className = "ml-home"; e.innerHTML = I_HOME.replace(/26/g, "16"); M.homeMk = new maplibregl.Marker({element: e}).setLngLat([o.home[1], o.home[0]]).addTo(map); }
-  const key = sel + "|" + routes.length;
-  if (M.fitKey !== key) { const b = mapBounds(routes, sel, o.home); if (b) map.fitBounds(b, {padding: 44, maxZoom: 17, duration: M.fitKey == null ? 0 : 650}); M.fitKey = key; }
+  const sid = sg ? sg.id : "";
+  if (M.poiKey !== sid) { (M.poiMk || []).forEach(m => m.remove()); M.poiMk = []; M.poiKey = sid;
+    if (sg) sg.hl.filter(h => SUG_K[h.k]).slice(0, 14).forEach(h => { const e = document.createElement("div"); e.className = "ml-poi"; e.style.setProperty("--c", SUG_K[h.k][1]); e.innerHTML = SUG_K[h.k][0]; e.title = h.name || T(SUG_K[h.k][2]);
+      M.poiMk.push(new maplibregl.Marker({element: e}).setLngLat([h.p[1], h.p[0]]).addTo(map)); }); }
+  const key = (sg ? "sug:" + sg.id : sel) + "|" + routes.length;
+  if (M.fitKey !== key) { const b = sg ? mapBounds([{id: "s", pts: sg.pts}], "s") : mapBounds(routes, sel, o.home); if (b) map.fitBounds(b, {padding: 44, maxZoom: 17, duration: M.fitKey == null ? 0 : 650}); M.fitKey = key; }
 }
+const staticMap = (el, routes, o) => o && o.sug ? drawRoutes(el, routes.concat([{id: "__sug", pts: o.sug.pts}]), Object.assign({}, o, {sel: "__sug"})) : drawRoutes(el, routes, o);
 let ML_FAIL = false;
 async function liveMap(el, routes, o, M){
   o = o || {}; let gl;
   M = M || {el, style: mapStyleURL()}; Object.assign(M, {ready: false, fitKey: null}); if (!M.routes) { M.routes = routes; M.o = o; }
-  const static_ = () => { ML_FAIL = true; M.dead = true; el.innerHTML = ""; drawRoutes(el, M.routes, M.o); };
+  const static_ = () => { ML_FAIL = true; M.dead = true; el.innerHTML = ""; staticMap(el, M.routes, M.o); };
   if (ML_FAIL) { static_(); return null; }
   let style; try { gl = await mapLib(); style = await mapStyle(); } catch(_) { static_(); return null; }
   el.innerHTML = ""; const box = document.createElement("div"); box.className = "ml-box"; el.appendChild(box);
   try { M.map = new gl.Map({container: box, style, attributionControl: {compact: true}, dragRotate: false, pitchWithRotate: false, touchPitch: false, fadeDuration: 0}); }
   catch(_) { static_(); return null; }
   const map = M.map; map.touchZoomRotate.disableRotation();
+  if (o.locate) { try { map.addControl(new gl.GeolocateControl({positionOptions: {enableHighAccuracy: true}, trackUserLocation: true, showAccuracyCircle: false}), "top-right"); } catch(_) {} }
   const fail = setTimeout(() => { if (!M.ready && !M.dead) { try { map.remove(); } catch(_) {} static_(); } }, 12000);
   map.on("load", () => { clearTimeout(fail); if (M.dead) return; M.ready = true; M.fitKey = null;
     const dark = isDarkUI();
@@ -3987,6 +4020,10 @@ async function liveMap(el, routes, o, M){
     map.addLayer({id: "r-line", type: "line", source: "r", layout: lay, paint: {"line-color": dark ? "#2E8BFF" : "#0A7CFF", "line-width": W(3.5, 7), "line-opacity": .9}});
     map.addLayer({id: "r-sel-c", type: "line", source: "r", layout: lay, filter: ["==", ["get", "id"], ""], paint: {"line-color": "#FFFFFF", "line-width": W(9, 15), "line-blur": .5}});
     map.addLayer({id: "r-sel", type: "line", source: "rs", layout: lay, paint: {"line-width": W(5, 9), "line-gradient": ["interpolate", ["linear"], ["line-progress"], 0, "#30D158", .5, "#0A84FF", 1, "#5E5CE6"]}});
+    map.addSource("sg", {type: "geojson", data: {type: "FeatureCollection", features: []}});
+    map.addLayer({id: "sg-c", type: "line", source: "sg", layout: lay, paint: {"line-color": "#FFFFFF", "line-width": W(8, 14)}});
+    map.addLayer({id: "sg", type: "line", source: "sg", layout: lay, paint: {"line-color": "#5E5CE6", "line-width": W(4.5, 8)}});
+    map.addLayer({id: "sg-dir", type: "symbol", source: "sg", layout: {"symbol-placement": "line", "symbol-spacing": 90, "text-field": "›", "text-size": 22, "text-keep-upright": false, "text-font": ["Noto Sans Bold"], "text-allow-overlap": true}, paint: {"text-color": "#FFFFFF"}});
     map.addLayer({id: "r-hit", type: "line", source: "r", layout: lay, paint: {"line-color": "#000", "line-width": 22, "line-opacity": 0}});
     map.addLayer({id: "e-sh", type: "circle", source: "e", paint: {"circle-radius": 11, "circle-color": "#000", "circle-opacity": .18, "circle-blur": .8, "circle-translate": [0, 1.5]}});
     map.addLayer({id: "e-pt", type: "circle", source: "e", paint: {"circle-radius": 7.5, "circle-color": ["match", ["get", "k"], "a", "#30D158", "#5E5CE6"], "circle-stroke-color": "#ffffff", "circle-stroke-width": 3}});
@@ -3998,6 +4035,108 @@ async function liveMap(el, routes, o, M){
   return M;
 }
 function liveMapDrop(M){ if (M && M.map) { try { M.map.remove(); } catch(_) {} } }
+// ---------- walk ideas: a loop around you, built from OpenStreetMap data ----------
+const I_ROUTE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18.5" r="2.2"/><circle cx="18" cy="5.5" r="2.2"/><path d="M8.2 18.5H16a3.2 3.2 0 0 0 0-6.4H8a3.2 3.2 0 0 1 0-6.4h7.8"/></svg>';
+const I_TREE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2.5c-3 0-5.2 2.4-5.2 5.2 0 .5.1 1 .2 1.4A4.6 4.6 0 0 0 9.5 17.5H11V21a1 1 0 0 0 2 0v-3.5h1.5A4.6 4.6 0 0 0 17 9.1c.1-.4.2-.9.2-1.4 0-2.8-2.2-5.2-5.2-5.2Z"/></svg>';
+const I_BAG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 7V6a5 5 0 0 1 10 0v1h1.2a1 1 0 0 1 1 .9l1 12a1 1 0 0 1-1 1.1H4.8a1 1 0 0 1-1-1.1l1-12a1 1 0 0 1 1-.9H7Zm2 0h6V6a3 3 0 0 0-6 0v1Z"/></svg>';
+const I_WAVE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 9c2 0 2-1.5 4.5-1.5S9.5 9 12 9s2-1.5 4.5-1.5S18.5 9 21 9M3 15c2 0 2-1.5 4.5-1.5S9.5 15 12 15s2-1.5 4.5-1.5S18.5 15 21 15"/></svg>';
+const I_DROP2 = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2.8s-6.5 7-6.5 11.4a6.5 6.5 0 0 0 13 0C18.5 9.8 12 2.8 12 2.8Z"/></svg>';
+const I_PAW2 = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><ellipse cx="5.1" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.2" cy="5.7" rx="2.2" ry="2.8"/><ellipse cx="14.8" cy="5.7" rx="2.2" ry="2.8"/><ellipse cx="18.9" cy="10.4" rx="2.1" ry="2.6"/><path d="M12 11.1c2.4 0 4.7 2.6 5.8 4.8 1 2 .3 4.2-1.9 4.5-1.4.2-2.4-.6-3.9-.6s-2.5.8-3.9.6c-2.2-.3-2.9-2.5-1.9-4.5 1.1-2.2 3.4-4.8 5.8-4.8Z"/></svg>';
+const SUG_K = {dogpark: [I_PAW2, "#FF9F0A", "Parc à chiens"], water: [I_DROP2, "#0A84FF", "Eau potable"], bags: [I_BAG, "#8E8E93", "Sachets pour chien"], park: [I_TREE, "#30D158", "Parc"], wood: [I_TREE, "#248A3D", "Forêt"], lake: [I_WAVE, "#64D2FF", "Eau"]};
+const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
+const SUGC = {};
+function dogWalkAdvice(){
+  const d = dog() || {}, ay = ageYears(d.birth);
+  if (ay != null && ay < 1) { const m = Math.max(2, Math.floor(ay * 12)); return {min: Math.min(30, Math.max(10, 5 * m)), why: T("Chiot de {m} mois : environ 5 minutes par mois d'âge.", {m})}; }
+  if (ay != null && ay >= 9) return {min: 30, why: T("Chien âgé : une balade plus courte et tranquille.")};
+  return {min: 45, why: T("Chien adulte : environ 45 minutes.")};
+}
+const geoMove = (p, m, deg) => { const R = 6371000, b = deg * Math.PI / 180, la = p[0] * Math.PI / 180, lo = p[1] * Math.PI / 180, d = m / R;
+  const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b)), lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+  return [la2 * 180 / Math.PI, lo2 * 180 / Math.PI]; };
+const geoBearing = (a, b) => { const r = Math.PI / 180, y = Math.sin((b[1] - a[1]) * r) * Math.cos(b[0] * r), x = Math.cos(a[0] * r) * Math.sin(b[0] * r) - Math.sin(a[0] * r) * Math.cos(b[0] * r) * Math.cos((b[1] - a[1]) * r); return (Math.atan2(y, x) / r + 360) % 360; };
+async function sugWeather(p){
+  try { const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p[0].toFixed(3)}&longitude=${p[1].toFixed(3)}&current=temperature_2m,precipitation&timezone=auto`); const c = (await r.json()).current || {};
+    return c.temperature_2m == null ? null : {t: Math.round(c.temperature_2m), p: +c.precipitation || 0}; } catch(_) { return null; }
+}
+async function sugPois(start, R){
+  const key = start[0].toFixed(3) + "," + start[1].toFixed(3) + "," + R; if (SUGC[key]) return SUGC[key];
+  const a = `(around:${R},${start[0].toFixed(6)},${start[1].toFixed(6)})`;
+  const q = `[out:json][timeout:25];(nwr["leisure"~"^(park|dog_park|nature_reserve|garden)$"]${a};nwr["landuse"~"^(forest|meadow|recreation_ground)$"]${a};nwr["natural"="wood"]${a};nwr["natural"="water"]["name"]${a};node["amenity"="drinking_water"]${a};node["vending"="excrement_bags"]${a};node["amenity"="dog_toilet"]${a};);out center tags 500;`;
+  let j = null;
+  for (const u of OVERPASS) { try { const r = await fetch(u, {method: "POST", body: "data=" + encodeURIComponent(q), headers: {"Content-Type": "application/x-www-form-urlencoded"}}); if (r.ok) { j = await r.json(); break; } } catch(_) {} }
+  if (!j) throw new Error("overpass");
+  const out = (j.elements || []).map(e => { const t = e.tags || {}, c = e.center || (e.lat != null ? {lat: e.lat, lon: e.lon} : null); if (!c) return null; let k = null;
+    if (t.leisure === "dog_park") k = "dogpark"; else if (t.amenity === "drinking_water") k = "water"; else if (t.vending === "excrement_bags" || t.amenity === "dog_toilet") k = "bags";
+    else if (/^(park|garden|nature_reserve)$/.test(t.leisure || "") || t.landuse === "recreation_ground") k = "park";
+    else if (t.landuse === "forest" || t.natural === "wood") k = "wood"; else if (t.landuse === "meadow") k = t.name ? "park" : null; else if (t.natural === "water") k = "lake";
+    return k ? {k, name: t.name || "", p: [c.lat, c.lon], area: e.type !== "node"} : null; }).filter(Boolean);
+  SUGC[key] = out; return out;
+}
+async function footRoute(way){
+  const u = "https://routing.openstreetmap.de/routed-foot/route/v1/driving/" + way.map(p => p[1].toFixed(6) + "," + p[0].toFixed(6)).join(";") + "?overview=full&geometries=geojson";
+  const r = await fetch(u); if (!r.ok) throw new Error("route"); const rt = ((await r.json()).routes || [])[0]; if (!rt) throw new Error("route");
+  return {dist: rt.distance, pts: rt.geometry.coordinates.map(c => [c[1], c[0]])};
+}
+async function planWalk(o){
+  const start = o.start, target = o.min * 70, R = Math.round(Math.min(4000, Math.max(700, target * .6)));
+  const pois = await sugPois(start, R), w = {dogpark: 3, park: 2.2, wood: 2.4, lake: 1.6};
+  let r0 = target / 3.3, best = null;
+  for (let n = 0; n < 4; n++) {
+    const cand = pois.filter(p => w[p.k]).map(p => { const d = gDist(start, p.p);
+      return {p, d, b: geoBearing(start, p.p), s: w[p.k] * (p.name ? 1.3 : 1) * (o.hot && (p.k === "wood" || p.k === "lake") ? 1.6 : 1) * (o.dogpark && p.k === "dogpark" ? 4 : 1) / (1 + Math.abs(d - r0) / r0 * 2.5)}; })
+      .filter(c => c.d > 120 && c.d < r0 * 1.8).sort((a, b) => b.s - a.s);
+    let way;
+    const A = cand.length ? cand[(o.seed || 0) % Math.min(cand.length, 5)] : null;
+    if (A) { const B = cand.filter(c => c !== A && gDist(c.p.p, A.p.p) > r0 * .45).map(c => { const da = Math.abs(((c.b - A.b + 540) % 360) - 180); return {c, sc: c.s * (da > 45 && da < 150 ? 1.5 : da >= 150 ? .35 : .2)}; }).sort((x, y) => y.sc - x.sc)[0];
+      way = [start, A.p.p, B ? B.c.p.p : geoMove(start, r0, A.b + ((o.seed || 0) % 2 ? -100 : 100)), start]; }
+    else { const b0 = ((o.seed || 0) * 73 + 20) % 360; way = [start, geoMove(start, r0, b0), geoMove(start, r0, b0 + 110), start]; }
+    if (o.water) { const wt = pois.filter(p => p.k === "water").map(p => ({p, d: Math.min(...way.slice(1, -1).map(x => gDist(x, p.p)))})).sort((a, b) => a.d - b.d)[0]; if (wt && wt.d < r0 * .6) way.splice(2, 0, wt.p.p); }
+    const rt = await footRoute(way); rt.pen = Math.abs(rt.dist - target) / target + (A ? 0 : .6); if (!best || rt.pen < best.pen) best = rt;
+    if (rt.dist > target * (A ? 1.45 : 1.3)) r0 *= .78; else if (rt.dist < target * .65) r0 *= 1.3; else break;
+  }
+  const near = (p, lim) => { for (let i = 0; i < best.pts.length; i += 2) if (gDist(best.pts[i], p) < lim) return true; return false; };
+  const seen = new Set(), hl = pois.filter(p => near(p.p, p.area ? 200 : 45)).filter(p => { const k = p.k + "|" + (p.name || p.p.join()); if (seen.has(k)) return false; seen.add(k); return true; });
+  const named = hl.filter(h => h.name && /dogpark|park|wood|lake/.test(h.k)).sort((a, b) => (w[b.k] || 0) - (w[a.k] || 0))[0];
+  return {id: "s" + Date.now(), pts: best.pts, dist: Math.round(best.dist), min: Math.max(5, Math.round(best.dist / 70)), hl, title: named ? T("Boucle par {p}", {p: named.name}) : T("Boucle autour de vous"), start};
+}
+async function runSuggest(o){
+  S.sugBusy = true; S.sugErr = ""; S.mapSel = null; render();
+  try {
+    let start = o.from === "home" ? awCfg().home : null;
+    if (!start && navigator.geolocation) start = await new Promise(res => navigator.geolocation.getCurrentPosition(p => res([p.coords.latitude, p.coords.longitude]), () => res(null), {enableHighAccuracy: true, timeout: 15000, maximumAge: 60000}));
+    start = start || awCfg().home; if (!start) throw new Error(T("Position introuvable : autorisez la localisation pour Dogs Life."));
+    const wx = await sugWeather(start), hot = !!(wx && wx.t >= 26), min = hot ? Math.min(o.min, 30) : o.min;
+    const plan = await planWalk(Object.assign({}, o, {start, min, hot}));
+    S.sug = Object.assign(plan, {wx, capped: hot && o.min > 30, opts: o});
+  } catch(e) { S.sugErr = e && e.message && !/overpass|route|fetch|failed|network|load/i.test(e.message) ? e.message : T("Impossible de préparer une balade pour le moment. Vérifiez la connexion et réessayez."); }
+  S.sugBusy = false; render();
+}
+function sugSheet(){
+  const adv = dogWalkAdvice(), last = (S.sug && S.sug.opts) || {}, cur = last.min || adv.min, d = dog() || {};
+  const mins = [...new Set([15, 20, 30, 45, 60, 90, adv.min])].sort((a, b) => a - b);
+  openSheet(T("Proposer une balade"), `<div class="fg"><span class="lab">${T("Durée")}</span><div class="opts">${mins.map(m => `<label><input type="radio" name="sg-min" value="${m}" ${m === cur ? "checked" : ""}><span>${m} min${m === adv.min ? " · " + T("conseillé") : ""}</span></label>`).join("")}</div><div class="hint">${esc(adv.why)}</div></div>
+    <div class="fg"><span class="lab">${T("Le parcours doit passer par")}</span><div class="opts"><label><input type="checkbox" id="sg-dp" ${last.dogpark ? "checked" : ""}><span>${T("Un parc à chiens")}</span></label><label><input type="checkbox" id="sg-w" ${last.water ? "checked" : ""}><span>${T("Un point d'eau potable")}</span></label></div></div>
+    ${awCfg().home ? `<div class="fg"><span class="lab">${T("Départ")}</span><div class="opts"><label><input type="radio" name="sg-from" value="here" ${last.from !== "home" ? "checked" : ""}><span>${T("Ma position")}</span></label><label><input type="radio" name="sg-from" value="home" ${last.from === "home" ? "checked" : ""}><span>${T("La maison")}</span></label></div></div>` : ""}
+    <div class="hint">${T("L'app cherche les parcs, forêts, parcs à chiens et points d'eau autour de vous (OpenStreetMap), tient compte de la météo et trace une boucle à pied pour {n}.", {n: esc(d.name || T("votre chien"))})}</div>`,
+    () => { const m = +((document.querySelector('input[name="sg-min"]:checked') || {}).value || adv.min), f = (document.querySelector('input[name="sg-from"]:checked') || {}).value || "here";
+      closeSheet(); runSuggest({min: m, dogpark: !!($("#sg-dp") || {}).checked, water: !!($("#sg-w") || {}).checked, from: f, seed: 0}); });
+}
+function sugCard(){
+  const g = S.sug; if (!g) return ""; const wx = g.wx, notes = [];
+  if (wx && wx.t >= 26) notes.push(T("Il fait {t}° : parcours à l'ombre privilégié, évitez le bitume chaud et emportez de l'eau.", {t: wx.t}));
+  else if (wx && wx.t <= 0) notes.push(T("Il fait {t}° : attention au gel et au sel sur les pattes.", {t: wx.t}));
+  if (wx && wx.p > .2) notes.push(T("Il pleut en ce moment."));
+  if (g.capped) notes.push(T("Durée réduite à cause de la chaleur."));
+  const kinds = {}; g.hl.forEach(h => { kinds[h.k] = (kinds[h.k] || 0) + 1; });
+  const chips = Object.keys(SUG_K).filter(k => kinds[k]).map(k => `<span class="sug-chip" style="--c:${SUG_K[k][1]}">${SUG_K[k][0]}${T(SUG_K[k][2])}${kinds[k] > 1 ? ` <b class="num">${kinds[k]}</b>` : ""}</span>`).join("");
+  const walking = !!walkNow();
+  return `<div class="card sug-card"><div class="sug-h"><div><div class="sug-t">${esc(g.title)}</div><div class="sug-m num">${fmtKm(g.dist)} · ~${g.min} min${wx ? ` · ${wx.t}°` : ""}</div></div><button class="sug-x" data-act="sugX" aria-label="${T("Fermer")}">×</button></div>
+    ${chips ? `<div class="sug-chips">${chips}</div>` : `<div class="sug-n">${T("Pas de parc repéré sur ce trajet : il suit les chemins piétons les plus proches.")}</div>`}
+    ${notes.map(n => `<div class="sug-n">${esc(n)}</div>`).join("")}
+    <div class="sug-b"><button class="btn ghost" data-act="sugAgain">${T("Autre idée")}</button><button class="btn" data-act="sugGo" ${walking ? "disabled" : ""}>${T(walking ? "Balade en cours" : "Démarrer la balade")}</button></div>
+    <div class="sug-src">${T("Données OpenStreetMap · itinéraire FOSSGIS · météo Open-Meteo")}</div></div>`;
+}
 function walksMapView(){
   const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f), d = dog() || {};
   if (S.mapSel && !list.some(l => l.id === S.mapSel)) S.mapSel = null;
@@ -4006,17 +4145,22 @@ function walksMapView(){
   const seg = `<div class="seg" role="group" style="margin:4px 0 12px">${[[7, "7 jours"], [30, "30 jours"], ["all", "Tout"]].map(([v, l]) => `<button class="${String(f) === String(v) ? "on" : ""}" data-act="mapF" data-v="${v}" aria-pressed="${String(f) === String(v)}">${T(l)}</button>`).join("")}</div>`;
   const rows = list.slice(0, 80).map(l => { const m = memberOf(l.mid), on = l.id === S.mapSel;
     return `<button class="row mr-row ${on ? "on" : ""}" data-act="mapPick" data-id="${esc(l.id)}"><span class="ico" style="--c:${on ? "var(--orange)" : "var(--green)"}">${QL.balade ? QL.balade.i : I.paw}</span><div class="main"><div class="t">${esc(cap(fmt(parseYmd(l.date), {weekday: "short", day: "numeric", month: "short"})))} · ${esc(l.at || "")}</div><div class="s">${[fmtKm(l.dist || 0), l.dur ? l.dur + " min" : "", (m && m.name) || l.byName || ""].filter(Boolean).map(esc).join(" · ")}</div></div><span class="chev">${on ? T("Détails") : I.chevR}</span></button>`; }).join("");
-  return subBar(d.name || T("Chien")) + pageHead(T("Carte des balades"), d.name) + seg
-    + `<div class="rmap wmap" id="wm-map">${list.length ? "" : `<div class="wm-empty">${I_MAP}<span>${T("Aucune balade suivie par GPS sur cette période.")}</span></div>`}</div>`
+  return subBar(d.name || T("Chien")) + pageHead(T("Carte des balades"), d.name)
+    + `<button class="card sug-cta" data-act="sugOpen" ${S.sugBusy ? "disabled" : ""}><span class="ico" style="--c:#5E5CE6">${I_ROUTE}</span><div class="main"><div class="t">${T("Proposer une balade")}</div><div class="s">${esc(T("Une boucle adaptée à {n}, autour de vous", {n: d.name || T("votre chien")}))}</div></div>${S.sugBusy ? `<span class="sug-spin"></span>` : `<span class="chev">${I.chevR}</span>`}</button>`
+    + (S.sugBusy ? `<div class="sug-busy">${T("Recherche des parcs, chemins et points d'eau autour de vous…")}</div>` : "")
+    + (S.sugErr ? `<div class="sug-err">${esc(S.sugErr)}</div>` : "")
+    + seg
+    + `<div class="rmap wmap" id="wm-map">${list.length || S.sug ? "" : `<div class="wm-empty">${I_MAP}<span>${T("Aucune balade suivie par GPS sur cette période.")}</span></div>`}</div>`
+    + sugCard()
     + `<div class="wv-g" style="margin-top:12px">${st(list.length, T(list.length > 1 ? "balades" : "balade"))}${st(fmtKm(km), T("Distance"))}${st(min >= 60 ? Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0") : min + " min", T("Durée"))}</div>`
     + (list.length ? `<div class="sec"><div class="sec-h"><h2>${T("Trajets")}</h2></div><div class="card list">${rows}</div><div class="foot">${T("Touchez un trajet pour le voir sur la carte, puis encore une fois pour les détails.")}</div></div>` : `<div class="foot" style="margin-top:14px">${T("Lancez une balade depuis Aujourd'hui : avec le GPS activé, le trajet s'ajoute ici.")}</div>`);
 }
 function paintWalksMap(){
   const box = document.getElementById("wm-map"); if (!box) return; const f = S.mapF || 30, list = walkLogs(f === "all" ? 0 : f);
-  if (!list.length) { if (S.wm) { liveMapDrop(S.wm); S.wm = null; } return; }
-  const routes = list.map(l => ({id: l.id, pts: polyDec(l.route)})), o = {sel: S.mapSel, home: awCfg().home, onPick: id => { S.mapSel = S.mapSel === id ? null : id; render(); }};
+  if (!list.length && !S.sug) { if (S.wm) { liveMapDrop(S.wm); S.wm = null; } return; }
+  const routes = list.map(l => ({id: l.id, pts: polyDec(l.route)})), o = {sel: S.mapSel, sug: S.sug || null, home: awCfg().home, locate: true, onPick: id => { S.sug = null; S.mapSel = S.mapSel === id ? null : id; render(); }};
   if (S.wm && S.wm.style === mapStyleURL() && (!S.wm.dead || ML_FAIL)) { if (box !== S.wm.el) box.replaceWith(S.wm.el);
-    if (S.wm.dead) { S.wm.el.innerHTML = ""; drawRoutes(S.wm.el, routes, o); return; }
+    if (S.wm.dead) { S.wm.el.innerHTML = ""; staticMap(S.wm.el, routes, o); return; }
     if (S.wm.ready) { liveMapSet(S.wm, routes, o); S.wm.map.resize(); } else { S.wm.routes = routes; S.wm.o = o; } return; }
   if (S.wm) liveMapDrop(S.wm);
   S.wm = {el: box, style: mapStyleURL()}; liveMap(box, routes, o, S.wm);
@@ -7227,6 +7371,10 @@ document.addEventListener("click", async e => {
     case "msgDel": mmClose(); await del("notes", el.dataset.id); break;
     case "msgJump": { const t = document.querySelector(`#chat-root #msg-${CSS.escape(el.dataset.id)}`) || document.getElementById("msg-" + el.dataset.id); if (t) { t.scrollIntoView({block: "center", behavior: "smooth"}); t.classList.remove("blink"); void t.offsetWidth; t.classList.add("blink"); } break; }
     case "recStart": recStart(); break;
+    case "sugOpen": sugSheet(); break;
+    case "sugAgain": if (S.sug) runSuggest(Object.assign({}, S.sug.opts, {seed: (S.sug.opts.seed || 0) + 1})); break;
+    case "sugX": S.sug = null; S.sugErr = ""; render(); break;
+    case "sugGo": if (!walkNow()) { const st0 = new Date().toISOString(); gpsBegin(st0); await setDay(ymd(new Date()), {walk: {start: st0, mid: ME || ""}}); toast(T("Balade lancée : suivez le tracé violet")); render(); } break;
     case "mapF": S.mapF = el.dataset.v === "all" ? "all" : +el.dataset.v; S.mapSel = null; render(); break;
     case "mapRoute": case "mapPick": if (act === "mapPick" && S.mapSel === el.dataset.id) { walkView(el.dataset.id); break; } S.mapSel = S.mapSel === el.dataset.id && act === "mapRoute" ? null : el.dataset.id; render(); if (act === "mapPick") { const m = document.getElementById("wm-map"); if (m) m.scrollIntoView({block: "center", behavior: "smooth"}); } break;
     case "awPref": { const on = el.getAttribute("aria-checked") !== "true", c = awCfg();
