@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["hr","Hrvatski"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); return n.startsWith("fr") ? "fr" : n.startsWith("hr") || n.startsWith("bs") || n.startsWith("sr") ? "hr" : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "91"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "92"; const APP_RELEASE = "1.2"; // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
@@ -3468,7 +3468,7 @@ const hcard = (act, attrs, color, icon, title, value, sub, warn) => `<button cla
 function go(tab, sub){ if (tab === "chien" && sub === "reglages") tab = "famille"; if (tab === "profil") { tab = "famille"; sub = "reglages"; }
   const order = tabList().map(x => x[0]); if (!order.includes(tab)) tab = order[0];
   const di = order.indexOf(tab) - order.indexOf(S.tab);
-  S.pageAnim = {cls: tab === S.tab ? (sub ? "enter-r" : "enter-l") : di > 0 ? "enter-r" : "enter-l", until: Date.now() + 500};
+  S.pageAnim = {cls: tab === S.tab ? (sub ? "enter-r" : "enter-l") : di > 0 ? "enter-r" : "enter-l", until: Date.now() + 900};
   if (tab !== S.tab) S.tabBounce = {id: tab, until: Date.now() + 500};
   S.tab = tab; S.sub = sub || null; S.editProfile = false; try { history.replaceState(null, "", "#" + tab + (sub ? "/" + sub : "")); } catch(_) {}
   render(); window.scrollTo(0, 0); }

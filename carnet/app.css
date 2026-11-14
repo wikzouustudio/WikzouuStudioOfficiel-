@@ -1865,12 +1865,15 @@ body.ig-open #tabs,body.ig-open #view{visibility:hidden}
   .sheet .fg:nth-child(2){animation-delay:.04s}.sheet .fg:nth-child(3){animation-delay:.08s}.sheet .fg:nth-child(4){animation-delay:.12s}.sheet .fg:nth-child(5){animation-delay:.16s}.sheet .fg:nth-child(n+6){animation-delay:.2s}
   @keyframes dlRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   /* pages: content cascades in */
-  .page.enter-r>*,.page.enter-l>*,.page.enter-u>*{animation-duration:.5s;animation-timing-function:var(--spring-soft)}
-  .page.enter-r>:nth-child(2),.page.enter-l>:nth-child(2),.page.enter-u>:nth-child(2){animation-delay:.03s}
-  .page.enter-r>:nth-child(3),.page.enter-l>:nth-child(3),.page.enter-u>:nth-child(3){animation-delay:.06s}
-  .page.enter-r>:nth-child(4),.page.enter-l>:nth-child(4),.page.enter-u>:nth-child(4){animation-delay:.09s}
-  .page.enter-r>:nth-child(5),.page.enter-l>:nth-child(5),.page.enter-u>:nth-child(5){animation-delay:.12s}
-  .page.enter-r>:nth-child(n+6),.page.enter-l>:nth-child(n+6),.page.enter-u>:nth-child(n+6){animation-delay:.15s}
+  .page.enter-r>*,.page.enter-l>*,.page.enter-u>*{animation-name:dlDrop;animation-duration:.55s;animation-timing-function:var(--spring-soft);animation-fill-mode:both}
+  @keyframes dlDrop{from{opacity:0;transform:translateY(-22px)}to{opacity:1;transform:none}}
+  .page.enter-r>:nth-child(2),.page.enter-l>:nth-child(2),.page.enter-u>:nth-child(2){animation-delay:.05s}
+  .page.enter-r>:nth-child(3),.page.enter-l>:nth-child(3),.page.enter-u>:nth-child(3){animation-delay:.1s}
+  .page.enter-r>:nth-child(4),.page.enter-l>:nth-child(4),.page.enter-u>:nth-child(4){animation-delay:.15s}
+  .page.enter-r>:nth-child(5),.page.enter-l>:nth-child(5),.page.enter-u>:nth-child(5){animation-delay:.2s}
+  .page.enter-r>:nth-child(6),.page.enter-l>:nth-child(6),.page.enter-u>:nth-child(6){animation-delay:.25s}
+  .page.enter-r>:nth-child(7),.page.enter-l>:nth-child(7),.page.enter-u>:nth-child(7){animation-delay:.3s}
+  .page.enter-r>:nth-child(n+8),.page.enter-l>:nth-child(n+8),.page.enter-u>:nth-child(n+8){animation-delay:.34s}
   /* ticking a task: squash, overshoot, ripple */
   .check.pop span{animation:dlTick .62s var(--spring)}
   .check.pop{position:relative}
