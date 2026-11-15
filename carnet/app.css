@@ -2117,3 +2117,7 @@ details.fold .eod-h .chev{transition:transform .45s cubic-bezier(.34,1.56,.64,1)
 .lang-list .row .flag{width:28px;height:28px}
 .lang-v .flag{width:18px;height:18px;margin-right:6px;vertical-align:-4px}
 .lang-v{display:inline-flex;align-items:center}
+
+/* sheets only ever move vertically (the header fade is wider than the sheet) */
+.sheet{overflow-x:hidden!important;overscroll-behavior-x:none;touch-action:pan-y}
+.sheet-h::before{left:-16px;right:-16px}

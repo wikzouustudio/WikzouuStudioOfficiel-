@@ -4,7 +4,7 @@
 const LANGS = [["fr","Français"],["en","English"],["de","Deutsch"],["it","Italiano"],["es","Español"],["pt","Português"],["nl","Nederlands"],["pl","Polski"],["hr","Hrvatski"],["ru","Русский"],["zh","中文"],["ja","日本語"],["ko","한국어"]];
 const navLang = () => { const n = (navigator.language || "fr").toLowerCase(); if (n.startsWith("bs") || n.startsWith("sr")) return "hr"; const c = n.slice(0, 2); return LANGS.some(x => x[0] === c) ? c : "en"; };
 // per-account settings on this device: two people can share a phone or a browser without inheriting each other's identity
-const APP_VERSION = "118"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
+const APP_VERSION = "119"; const APP_RELEASE = "1.2"; const WN_KEY = "1.2-b"; // bump WN_KEY to show the what's-new screen again // shown in Réglages: tells at a glance whether a phone has the latest version
 const PER_USER = ["carnet-me","carnet-dog","carnet-notif","carnet-sound","carnet-tuto","carnet-notes-seen","carnet-codetries","carnet-codelock"];
 let LSU = "";
 const LS = {
