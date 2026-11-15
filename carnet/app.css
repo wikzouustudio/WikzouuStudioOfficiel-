@@ -2121,3 +2121,7 @@ details.fold .eod-h .chev{transition:transform .45s cubic-bezier(.34,1.56,.64,1)
 /* sheets only ever move vertically (the header fade is wider than the sheet) */
 .sheet{overflow-x:hidden!important;overscroll-behavior-x:none;touch-action:pan-y}
 .sheet-h::before{left:-16px;right:-16px}
+
+/* live walk map: always sharp (you follow the walk), still doesn't grab the scroll; small hint in the corner */
+.rmap.walk-live.locked>*{filter:none!important}
+.rmap.walk-live.locked::after{left:auto;top:auto;right:10px;bottom:10px;transform:none;padding:6px 11px;font-size:12px}
