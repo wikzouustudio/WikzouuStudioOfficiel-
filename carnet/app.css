@@ -2111,3 +2111,9 @@ details.fold .eod-h .chev{transition:transform .45s cubic-bezier(.34,1.56,.64,1)
 .msg-open{position:absolute;inset:0;z-index:3;display:grid;place-items:center;border:0;background:none;cursor:pointer;font:inherit;padding:0;touch-action:pan-y}
 .msg-open span{display:inline-flex;padding:9px 15px;border-radius:999px;font-size:13.5px;font-weight:650;color:#fff;background:rgba(20,20,24,.55);-webkit-backdrop-filter:blur(12px) saturate(160%);backdrop-filter:blur(12px) saturate(160%);box-shadow:0 6px 18px rgba(0,0,0,.25),inset 0 0 0 .5px rgba(255,255,255,.25)}
 .msg-open.is-press{transform:none!important;filter:none}.msg-open.is-press span{transform:scale(.95)}
+
+/* language flags */
+.flag{flex:none;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.12),0 1px 3px rgba(0,0,0,.18)}
+.lang-list .row .flag{width:28px;height:28px}
+.lang-v .flag{width:18px;height:18px;margin-right:6px;vertical-align:-4px}
+.lang-v{display:inline-flex;align-items:center}

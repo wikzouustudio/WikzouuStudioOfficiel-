@@ -180,7 +180,7 @@ const L = {
     tomorrow: "Sutra", in1h: "Za 1 sat", at: "u", recap: "Danas još nije napravljeno", more: "i još {n}", food: "Hrana pri kraju", foodDays: "Ostalo je za otprilike {n} dan(a).",
     k: {pipi: "Piškenje", caca: "Kakanje", balade: "Šetnja", accident: "Nezgoda", eau: "Voda", friandise: "Poslastica", sieste: "Drijemež", jeu: "Igra", vomi: "Povraćanje", photo: "Fotografija"}}
 };
-const tx = t => L[t && t.lang] || L.fr;
+const tx = t => L[t && t.lang] || (t && t.lang && t.lang !== "fr" ? L.en : L.fr);   // new app languages get English notifications
 // each phone chooses what it wants: tasks, family, self (my own actions), weather, appts, daily (all on by default)
 const wants = (t, k) => !k || !(t.prefs && t.prefs[k] === false);
 
